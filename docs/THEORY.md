@@ -241,23 +241,42 @@ azonos alapértelmezett értékkel szerepel:
 RECT_SHEAR_FACTOR = 5/6   (model/builder.ts)
 ```
 
-Ez a Timoshenko-féle, klasszikus téglalap-keresztmetszeti érték — forrás:
-**Cowper, G. R. (1966), "The Shear Coefficient in Timoshenko's Beam Theory",
-Journal of Applied Mechanics, Vol. 33, No. 2, pp. 335–340** (ld. összefoglalóan
-[Timoshenko beam theory — Encyclopedia MDPI](https://encyclopedia.pub/entry/34559),
-amely a κ-definíció további klasszikus irodalmát is felsorolja: Mindlin–Deresiewicz
-1953, Stephen 1980, Hutchinson 1981 — a κ „helyes" értéke a mai napig nem
-egyértelmű, alak- és Poisson-tényező-függő konszenzus nélküli kérdés a
-szakirodalomban).
+Ez a klasszikus, konstans (Poisson-tényezőtől FÜGGETLEN) téglalap-
+keresztmetszeti érték — forrás: **Newlin, J. A. & Trayer, G. W., "Deflection
+of Beams with Special Reference to Shear Deformations"**, National Advisory
+Committee for Aeronautics jelentés (ld. Ahmed, A. M. & Rifai, A. M. (2021),
+["Euler-Bernoulli and Timoshenko Beam Theories: Analytical and Numerical
+Comprehensive Revision"](http://dx.doi.org/10.24018/ejers.2021.6.7.2626),
+European Journal of Engineering and Technology Research, 6(7), 20–32,
+amely a κ pontos eredetét referenciánként szétválasztva tárgyalja).
 
-**Dokumentált hatókör-korlát:** a projekt jelenleg NEM alak-specifikus κs-t
-számol (pl. kör keresztmetszetre a Cowper-féle 6/(7+6ν) helyett is az 5/6
-alapértelmezést használja) — minden `makeSection()`/`makeLayeredSection()`
-hívás a `RECT_SHEAR_FACTOR`-t örökli, hacsak a hívó explicit felül nem írja.
-Ez tudatos egyszerűsítés (a diplomaterv is egységesen 5/6-ot használ), NEM a
-mai szakirodalom szerinti legpontosabb megoldás — egy jövőbeli, alak-
-specifikus κs-bővítés önálló ADR-t és validációt igényelne (hasonlóan az
-ADR-0016/0017 dinamikai bővítésekhez).
+**PONTOSÍTÁS (a korábbi, pontatlan hivatkozás javítása):** az 5/6 érték NEM
+Cowper (1966) saját eredménye — Cowper, G. R. ("The Shear Coefficient in
+Timoshenko's Beam Theory", Journal of Applied Mechanics, Vol. 33, No. 2,
+pp. 335–340) egy ENNÉL FINOMABB, Poisson-tényezőtől FÜGGŐ formulát vezetett
+le téglalap keresztmetszetre:
+
+```
+κ_Cowper = 10·(1+ν) / (12+11·ν)
+```
+
+amely ν=0-nál pontosan 5/6-ra egyszerűsödik, de pl. acélra (ν≈0.3) κ≈0.850-et
+ad, nem 0.833-at (~2%-os eltérés). A κ „helyes" értéke a mai napig nem
+egyértelmű, alak- és Poisson-tényező-függő konszenzus nélküli kérdés a
+szakirodalomban (ld. összefoglalóan [Timoshenko beam theory — Encyclopedia
+MDPI](https://encyclopedia.pub/entry/34559): Mindlin–Deresiewicz 1953,
+Roark 1954, Stephen 1980, Hutchinson 1981 további, egymástól eltérő
+közelítéseket adnak).
+
+**Dokumentált hatókör-korlát:** a projekt jelenleg NEM Poisson-tényező-függő,
+NEM alak-specifikus κs-t számol — minden `makeSection()`/`makeLayeredSection()`
+hívás a konstans `RECT_SHEAR_FACTOR`-t (5/6) örökli, hacsak a hívó explicit
+felül nem írja, FÜGGETLENÜL a tényleges keresztmetszet-alaktól (kör,
+csőszelvény, I-/U-szelvény is ezt kapja). Ez tudatos egyszerűsítés (a
+diplomaterv is egységesen 5/6-ot használ), NEM a mai szakirodalom szerinti
+legpontosabb (Cowper-féle) megoldás — egy jövőbeli, alak- és
+Poisson-tényező-specifikus κs-bővítés önálló ADR-t és validációt igényelne
+(hasonlóan az ADR-0016/0017 dinamikai bővítésekhez).
 
 ---
 
