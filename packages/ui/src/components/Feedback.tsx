@@ -1,0 +1,103 @@
+import type { ReactNode } from 'react';
+
+export type SolverStatus =
+  | 'idle'
+  | 'editing'
+  | 'running'
+  | 'converged'
+  | 'limit-load'
+  | 'diverged'
+  | 'error';
+
+const STATUS_TEXT: Record<SolverStatus, string> = {
+  idle: 'kész',
+  editing: 'a modell módosult',
+  running: 'számítás fut',
+  converged: 'konvergált',
+  'limit-load': 'határteher elérve',
+  diverged: 'nem konvergált',
+  error: 'hiba',
+};
+
+export interface StatusPillProps {
+  readonly status: SolverStatus;
+  /** Kiegészítő szöveg, pl. „iteráció 3 / lépés 7". */
+  readonly detail?: string;
+}
+
+/**
+ * A megoldó állapota. A DESIGN-TERV 6.3 tiltja, hogy iterációs limitet elért
+ * futás „sikeresnek" látsszon — ezért a `limit-load` és `diverged` külön
+ * állapot, saját színnel és szöveggel.
+ */
+export function StatusPill({ status, detail }: StatusPillProps): JSX.Element {
+  const cls = status === 'editing' ? 'idle' : status;
+  return (
+    <span
+      className={`vem-status vem-status--${cls}`}
+      role="status"
+      aria-live={status === 'error' || status === 'diverged' ? 'assertive' : 'polite'}
+    >
+      <span className="vem-status__dot" aria-hidden="true" />
+      {STATUS_TEXT[status]}
+      {detail ? ` · ${detail}` : ''}
+    </span>
+  );
+}
+
+export interface NoteBoxProps {
+  readonly children: ReactNode;
+  readonly tone?: 'info' | 'warn' | 'error';
+}
+
+export function NoteBox({ children, tone = 'info' }: NoteBoxProps): JSX.Element {
+  const cls = tone === 'info' ? 'vem-note' : `vem-note vem-note--${tone}`;
+  return <div className={cls}>{children}</div>;
+}
+
+export interface LegendItem {
+  readonly label: string;
+  readonly fill: string;
+  readonly stroke: string;
+  /** Mintázat a színvakság-tartalékhoz (DESIGN-TERV 2.2). */
+  readonly pattern?: 'solid' | 'hatch' | 'cross';
+}
+
+export interface LegendProps {
+  readonly items: readonly LegendItem[];
+}
+
+export function Legend({ items }: LegendProps): JSX.Element {
+  return (
+    <div className="vem-legend">
+      {items.map((it) => (
+        <span className="vem-legend__item" key={it.label}>
+          <span
+            className="vem-legend__swatch"
+            style={{
+              background: it.fill,
+              borderColor: it.stroke,
+              backgroundImage:
+                it.pattern === 'hatch'
+                  ? `repeating-linear-gradient(45deg, transparent 0 2px, ${it.stroke} 2px 3px)`
+                  : it.pattern === 'cross'
+                    ? `repeating-linear-gradient(45deg, transparent 0 2px, ${it.stroke} 2px 3px),` +
+                      `repeating-linear-gradient(-45deg, transparent 0 2px, ${it.stroke} 2px 3px)`
+                    : 'none',
+            }}
+            aria-hidden="true"
+          />
+          {it.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export interface SectionLabelProps {
+  readonly children: ReactNode;
+}
+
+export function SectionLabel({ children }: SectionLabelProps): JSX.Element {
+  return <div className="vem-section-label">{children}</div>;
+}

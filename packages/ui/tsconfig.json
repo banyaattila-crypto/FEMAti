@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    // ADR-0001-mintájára: a fem-core (és fem-validation) `noUncheckedIndexedAccess:
+    // false`-lal fordul; mivel a `@femati/fem-core` package.json a NYERS forrást
+    // (`src/index.ts`) exportálja (nincs épített dist/*.d.ts a monorepóban),
+    // a TS ugyanazzal a programmal fordítja a fem-core kódot is, mint az UI-t.
+    // Ha itt `true` lenne, a fem-core saját, ADR-0001-ben indokolt "false"
+    // feltevésére épülő kódja (indexelt Float64Array-hozzáférés `!` nélkül)
+    // álhibákat adna. Az UI SAJÁT kódja továbbra is védekezőn ír (`?? `,
+    // explicit undefined-ellenőrzés), csak a fordító nem kényszeríti ki.
+    "noUncheckedIndexedAccess": false,
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
+}

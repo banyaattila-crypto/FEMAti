@@ -1,0 +1,246 @@
+/**
+ * „Történelmi mód" (P17) — a frontális megoldó animált bemutatója. Ugyanaz
+ * az overlay-architektúra, mint a `derivation/derivation.css`-ben, de NEM
+ * nyomtatható papír-nézet — interaktív, animált, képernyő-only panel.
+ */
+
+.vem-historical-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(20, 20, 20, 0.55);
+  overflow: auto;
+  padding: 28px 0 60px;
+  display: flex;
+  justify-content: center;
+}
+
+.vem-historical {
+  width: min(900px, calc(100vw - 32px));
+  margin: 0 auto;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+  padding: 24px 28px 32px;
+  box-sizing: border-box;
+  height: fit-content;
+}
+
+.vem-historical__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.vem-historical__header h1 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.vem-historical__subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.vem-historical__error {
+  color: var(--sem-error);
+}
+
+.vem-historical__animation {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.vem-historical__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.vem-historical__beam-axis {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+
+.vem-historical__element {
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke 0.15s ease;
+}
+
+.vem-historical__element--done {
+  stroke: var(--text-muted);
+  opacity: 0.5;
+}
+
+.vem-historical__element--current {
+  stroke: var(--sem-partial);
+}
+
+.vem-historical__element--pending {
+  stroke: var(--border-subtle);
+}
+
+.vem-historical__node {
+  fill: var(--surface-raised);
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.vem-historical__node--front {
+  fill: var(--sem-plastic);
+  stroke: var(--sem-plastic-edge);
+}
+
+.vem-historical__legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.vem-historical__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vem-historical__swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.vem-historical__swatch--done {
+  background: var(--text-muted);
+  opacity: 0.5;
+}
+
+.vem-historical__swatch--current {
+  background: var(--sem-partial);
+}
+
+.vem-historical__swatch--front {
+  background: var(--sem-plastic);
+}
+
+.vem-historical__controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.vem-historical__range {
+  flex: 1;
+  min-width: 160px;
+}
+
+.vem-historical__step-label {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.vem-historical__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.vem-historical__stat {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.vem-historical__stat-label {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.vem-historical__stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+}
+
+.vem-historical__compare {
+  margin-bottom: 20px;
+}
+
+.vem-historical__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.vem-historical__bar-label {
+  width: 150px;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.vem-historical__bar-track {
+  flex: 1;
+  background: var(--surface-panel);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  height: 16px;
+}
+
+.vem-historical__bar {
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
+.vem-historical__bar--front {
+  background: var(--sem-partial);
+}
+
+.vem-historical__bar--skyline {
+  background: var(--sem-elastic);
+}
+
+.vem-historical__bar-value {
+  width: 48px;
+  text-align: right;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-muted);
+}
+
+.vem-historical__explain {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 14px;
+}
+
+.vem-historical__explain h2 {
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+
+.vem-historical__explain p {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-primary);
+  margin: 0 0 10px;
+}

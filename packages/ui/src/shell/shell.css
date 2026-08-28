@@ -1,0 +1,716 @@
+/**
+ * Az alkalmazás váza — DESIGN-TERV.md 3. fejezet.
+ * A oldal maga soha nem görög: minden panel saját görgetéssel dolgozik.
+ */
+
+.vem-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 640px;
+  background: var(--surface-app);
+  overflow: hidden;
+}
+
+/* ── Fejléc ─────────────────────────────────────────────────────────────── */
+
+.vem-chrome {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
+  height: var(--h-chrome);
+  padding: 0 var(--space-5);
+  background: var(--surface-chrome);
+  color: var(--text-on-chrome);
+  flex: none;
+}
+
+.vem-chrome__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.vem-chrome__name {
+  font-size: var(--type-title-size);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.vem-chrome__subtitle {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* Rugalmas kitöltő elem a menü és a fájlnév/státusz-klaszter között —
+   a fejléc díszítő cím-tipográfiája a felhasználó kérésére elköltözött
+   innen: ld. `.vem-toolbar__headline` az eszközsorban. */
+.vem-chrome__spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.vem-chrome__file {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+/* ── Menü ───────────────────────────────────────────────────────────────── */
+
+.vem-menubar {
+  display: flex;
+  gap: 2px;
+  position: relative;
+}
+
+.vem-menubar__button {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--text-on-chrome-muted);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.vem-menubar__button:hover,
+.vem-menubar__button[aria-expanded='true'] {
+  background: var(--surface-chrome-raised);
+  color: var(--text-on-chrome);
+}
+
+.vem-menu {
+  position: absolute;
+  top: 26px;
+  left: 0;
+  min-width: 212px;
+  background: var(--surface-chrome);
+  border: 1px solid var(--border-chrome);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+  z-index: 60;
+  padding: var(--space-1) 0;
+}
+
+.vem-menu__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-5);
+  border: none;
+  background: transparent;
+  color: var(--text-on-chrome);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vem-menu__item:hover:not(:disabled) {
+  background: var(--surface-chrome-raised);
+}
+
+.vem-menu__item:disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.vem-menu__separator {
+  height: 1px;
+  margin: var(--space-1) 0;
+  background: var(--border-chrome);
+}
+
+.vem-menu__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+}
+
+/* ── Eszközsor ──────────────────────────────────────────────────────────── */
+
+.vem-toolbar {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface-toolbar);
+  border-bottom: 1px solid var(--border-strong);
+  flex: none;
+  flex-wrap: wrap;
+}
+
+.vem-toolbar__cell {
+  padding: var(--space-3) var(--space-6) var(--space-2);
+  border-right: 1px solid var(--border-divider);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.vem-toolbar__caption {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--type-label-size);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Középre igazított, díszítő cím-tipográfia — a felhasználó kifejezett
+   kérésére: a Spectral betűtípus (a design-referencia hero-cím-fontjának
+   cseréje) itt kap élő felhasználási helyet, az eszközsor cellái és a
+   jobbra igazított (SZÁMÍTÁS/Jegyzőkönyv) gombcsoport közötti, tördeléskor
+   szabadon maradó teret kitöltve. Vizuális flourish, ezért `aria-hidden`
+   (a dokumentum <title>-je már hordozza ugyanezt az információt). Szűk
+   helyen `text-overflow: ellipsis`-szel vágódik; ha a cellák egyetlen
+   sorba férnek (széles ablak), a doboz minimálisra zsugorodik.
+   SZÍN: két kör után jutottunk ide. Először `--text-primary` (a futó
+   szöveg 90%-ának színe), majd a menta `--accent`-család (de az már a
+   lehajlott alak/„kész" státusz színe, tehát ugyanúgy „mindenhol ott
+   van") — mindkettő belesimult. A `--brand-gold` család ellenben
+   TUDATOSAN fenntartott, kizárólag brand/kiemelő célra létező szín (ld.
+   tokens.css „Elsődleges gomb — arany gradiens" szakasza), az appban
+   eddig KIZÁRÓLAG a SZÁMÍTÁS gombon élt — ez ad valódi, ütős kontrasztot
+   a domináns hideg sötét/menta palettával szemben.
+   3D DOMBORNYOMÁS: egy első próbálkozás (gradiens-kitöltés +
+   hattagú, halmozott `text-shadow`-verem) túl zsúfolt, "bántó" lett —
+   a felhasználó jelzése alapján visszavettük a klasszikus, letisztult
+   embossed-trükkre: SIMA (nem gradiens) alapszín + PONTOSAN két
+   `text-shadow`: egy halvány, világos fényvisszaverődés fönt-balról,
+   egy erősebb, sötét árnyék lent-jobbról. Ez a bevált, minimális recept
+   a "domború" hatásra — nem a rétegek száma, hanem az irány adja a
+   térbeliség illúzióját. */
+.vem-toolbar__headline {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: center;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 var(--space-4);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  white-space: nowrap;
+  color: var(--brand-gold-2);
+  text-shadow:
+    -1px -1px 0 rgba(255, 255, 255, 0.28),
+    1px 1px 1px var(--shadow-flood);
+}
+
+@media (max-width: 900px) {
+  /* `visibility: hidden`, NEM `display: none` — a doboz így is megmarad,
+     csak a szöveg maga nem jelenik meg szűk viewporton. */
+  .vem-toolbar__headline {
+    visibility: hidden;
+  }
+}
+
+.vem-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  margin-left: auto;
+}
+
+/* ── Fő terület ─────────────────────────────────────────────────────────── */
+
+.vem-main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.vem-panel {
+  background: var(--surface-panel);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  flex: none;
+}
+
+.vem-panel--left,
+.vem-panel--right {
+  /* Finom, füstös bordó háttérátmenet, felhasználói kérésre — mindkét
+     oldalpanelen (bal: Modellfa/Támaszok/Terhek/Keresztmetszet/Megoldó;
+     jobb: Eredmények) egységesen. */
+  background: linear-gradient(180deg, var(--surface-panel-warm-top) 0%, var(--surface-panel-warm-bottom) 100%);
+}
+
+.vem-panel--left {
+  width: var(--w-panel-left);
+  min-width: var(--w-panel-min);
+  border-right: 1px solid var(--border-strong);
+}
+
+.vem-panel--right {
+  width: var(--w-panel-right);
+  min-width: var(--w-panel-min);
+  border-left: 1px solid var(--border-strong);
+}
+
+.vem-panel__body--padded {
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.vem-center {
+  flex: 1 1 460px;
+  min-width: 380px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--surface-canvas);
+}
+
+.vem-canvas-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-canvas-bar);
+  flex: none;
+  flex-wrap: wrap;
+}
+
+.vem-canvas-bar__title {
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.vem-canvas-host {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.vem-canvas-host svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Lebegő eszközpanelek (Támasz/Teher hozzáadása) a vászon fölött ────── */
+
+.vem-floating-panel {
+  position: absolute;
+  top: 44px;
+  z-index: 3;
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+  padding: 2px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.vem-floating-panel--supports {
+  left: var(--space-5);
+}
+
+.vem-floating-panel--loads {
+  right: var(--space-5);
+}
+
+.vem-floating-panel__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+.vem-floating-panel__btn:hover {
+  background: var(--surface-hover);
+}
+
+.vem-floating-panel__btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-light);
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+
+.vem-canvas__scale {
+  position: absolute;
+  /* A `.vem-floating-panel`-lel (44px) azonos felső eltolás — mindkettő a
+     `.vem-canvas-host`-hoz (nem a vászon feletti Kijelölés-eszközsorhoz)
+     igazodik, ezért ugyanannyival kell lejjebb kezdődnie, mint a lebegő
+     Támasz/Teher-panelek, különben a gombsorral fedésbe kerül. */
+  left: var(--space-5);
+  top: 44px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+/* ── Diagram-sáv ────────────────────────────────────────────────────────── */
+
+.vem-diagram-bar {
+  flex: none;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-canvas-bar);
+  display: flex;
+  flex-direction: column;
+}
+
+.vem-diagram-bar__tabs {
+  display: flex;
+  gap: 1px;
+  padding: var(--space-2) var(--space-6) 0;
+}
+
+.vem-tab {
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.vem-tab:hover {
+  color: var(--text-primary);
+}
+
+.vem-tab[aria-selected='true'] {
+  background: var(--surface-canvas);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.vem-diagram-bar__body {
+  /* NINCS fix magasság: a tartalom (CHART_HEIGHT/LD_CHART_HEIGHT/
+     CONVERGENCE_HEIGHT/STRESS3D_HEIGHT) szabja meg a tényleges méretet —
+     egy korábbi fix 132px érték a nála magasabb füleknél (teher–elmozdulás,
+     konvergencia, 3D feszültség) `overflow` nélkül a fülsávra lógott ki. */
+  min-height: 132px;
+  background: var(--surface-canvas);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Modellfa ───────────────────────────────────────────────────────────── */
+
+.vem-tree {
+  padding: var(--space-2) var(--space-3);
+  font-size: 12.5px;
+}
+
+.vem-tree__root {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  font-weight: 600;
+}
+
+.vem-tree__caret {
+  color: var(--text-faint);
+}
+
+.vem-tree__row {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  width: 100%;
+  padding: var(--space-1) var(--space-2) var(--space-1) 20px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.vem-tree__row:hover {
+  background: var(--surface-hover);
+}
+
+.vem-tree__marker {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--border-medium);
+  background: var(--surface-raised);
+  flex: none;
+  transform: translateY(1px);
+}
+
+.vem-tree__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vem-tree__value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  flex: none;
+}
+
+/* ── Támaszok/Terhek lista ──────────────────────────────────────────────── */
+
+.vem-item-list {
+  padding: var(--space-2) var(--space-3) var(--space-4);
+}
+
+.vem-item-empty {
+  padding: var(--space-2) var(--space-4);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.vem-item-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.vem-item-row:hover {
+  background: var(--surface-hover);
+}
+
+.vem-item-row[aria-selected='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-light);
+}
+
+.vem-item-row svg {
+  flex: none;
+}
+
+.vem-item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vem-item-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  flex: none;
+}
+
+/* ── Keresztmetszet-előnézet ────────────────────────────────────────────── */
+
+.vem-section-preview {
+  display: flex;
+  gap: var(--space-5);
+  align-items: center;
+  padding: var(--space-5);
+}
+
+.vem-section-preview__figures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Idővonal ───────────────────────────────────────────────────────────── */
+
+.vem-timeline {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-6);
+  background: var(--surface-toolbar);
+  border-top: 1px solid var(--border-strong);
+}
+
+.vem-timeline__track {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Teherlépcső-idővonal (P13) ─────────────────────────────────────────── */
+
+.vem-timeline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  background: var(--surface-toolbar);
+  border-top: 1px solid var(--border-strong);
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.vem-timeline__empty {
+  color: var(--text-faint);
+}
+
+.vem-timeline__track {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+}
+
+.vem-timeline__range {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.vem-timeline__marks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  height: 6px;
+  pointer-events: none;
+}
+
+.vem-timeline__mark {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 6px;
+  transform: translateX(-1px);
+}
+
+.vem-timeline__mark--first-yield {
+  background: var(--sem-partial-edge);
+}
+
+.vem-timeline__mark--full-hinge {
+  background: var(--sem-plastic);
+  width: 3px;
+  height: 8px;
+  top: -8px;
+}
+
+.vem-timeline__lambda {
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ── Reszponzív (DESIGN-TERV 3.3) ───────────────────────────────────────── */
+
+@media (max-width: 1099px) {
+  .vem-panel--left {
+    display: none;
+  }
+}
+
+/* Mobil fejezet-fülek (DESIGN-TERV 3.3: "< 768px — egy oszlop, fülekkel"). */
+.vem-mobile-tabs {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* < 768px-nél a bal panelt a tablet-szabály (fent) már elrejtette —
+     itt a jobb panel és a vászon közül is csak EGY látszik egyszerre,
+     a fenti fül-sáv választja ki melyik. */
+  .vem-mobile-tabs {
+    display: flex;
+    flex: none;
+    gap: 1px;
+    background: var(--border-strong);
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .vem-mobile-tabs__tab {
+    flex: 1;
+    border: none;
+    background: var(--surface-toolbar);
+    color: var(--text-muted);
+    font-size: var(--type-body-sm-size);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: var(--space-4) 0;
+    cursor: pointer;
+  }
+
+  .vem-mobile-tabs__tab[aria-selected='true'] {
+    background: var(--surface-panel);
+    color: var(--accent);
+    box-shadow: inset 0 -2px 0 var(--accent);
+  }
+
+  .vem-main {
+    overflow-x: hidden;
+  }
+
+  .vem-panel--left,
+  .vem-center,
+  .vem-panel--right {
+    display: none;
+  }
+
+  .vem-main[data-mobile-tab='model'] .vem-panel--left {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .vem-main[data-mobile-tab='canvas'] .vem-center {
+    display: flex;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .vem-main[data-mobile-tab='results'] .vem-panel--right {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+  }
+}

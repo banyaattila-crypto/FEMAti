@@ -1,0 +1,396 @@
+/**
+ * A .docx exporthoz szükséges, MÁR KISZÁMÍTOTT értékekből összeállított,
+ * lapos (csak stringeket/számokat tartalmazó) adatszerkezet.
+ *
+ * SZÁNDÉKOSAN nem számol semmit újra — a `DerivationView.tsx`-ben már
+ * meglévő objektumokat (a fem-core `deriveElementStiffness`/`deriveLayerStep`
+ * kimenetét, a `LinearResult`-ot, a `NonlinearRun`-t) alakítja át
+ * docx-barát (táblázat-sor) formára, hogy a képernyőn látott és a .docx-be
+ * exportált szám UGYANONNAN származzon (ADR-0005 szelleme).
+ */
+import type { ElementInternalForceDerivation, ElementLoadDerivation, ElementResult, LinearResult } from '@femati/fem-core';
+import type { ElementStiffnessDerivation, LayerStepDerivation } from '@femati/fem-core';
+import type { MaterialEntry, PresetEntry, SectionEntry } from '../data/catalog.js';
+import type { EditableModel } from '../model/editable.js';
+import type { NonlinearRun } from '../model/nonlinear.js';
+import type { ReportHinge } from '../report/reportData.js';
+import {
+  bendingGaussBlock,
+  convergenceBlock,
+  distributedLoadGaussBlock,
+  extrapolationBlock,
+  internalForceBlock,
+  jacobianLines,
+  keDiagonalDemo,
+  nodalLoadLine,
+  plasticLayerFormula,
+  shearGaussBlock,
+  thermalLoadGaussBlock,
+} from './formulaText.js';
+
+const DISTRIBUTED_LOAD_LABEL_TEXT: Record<'distributed-force' | 'distributed-moment' | 'self-weight', string> = {
+  'distributed-force': 'Megoszló erő',
+  'distributed-moment': 'Megoszló nyomaték',
+  'self-weight': 'Önsúly',
+};
+
+/** A 4.7 pont terhenkénti, TELJES levezetése — szöveges (docx-barát) blokkokra bontva. */
+function buildLoadFormulas(loadDerivation: ElementLoadDerivation | undefined, ei: number): readonly string[] {
+  if (loadDerivation === undefined) return [];
+  const blocks: string[] = [];
+  if (loadDerivation.distributed.length === 0 && loadDerivation.nodal.length === 0 && loadDerivation.thermal === null) {
+    blocks.push('Erre az elemre nem hat közvetlen teher (a q_e = 0 vektor helyes).');
+  }
+  for (const contribution of loadDerivation.distributed) {
+    const unit = contribution.dofOffset === 0 ? 'kN/m' : 'kNm/m';
+    blocks.push(
+      [
+        `${DISTRIBUTED_LOAD_LABEL_TEXT[contribution.kind]} (${contribution.loadId}) — q_e = ∫Nᵀ·p dx, ${contribution.points.length} pontos Gauss-integrálással:`,
+        ...contribution.points.map((gp, i) => distributedLoadGaussBlock(gp, i, unit)),
+      ].join('\n'),
+    );
+  }
+  for (const contribution of loadDerivation.nodal) {
+    const unit = contribution.dofOffset === 0 ? 'kN' : 'kNm';
+    blocks.push(
+      `${contribution.kind === 'nodal-force' ? 'Koncentrált csomóponti erő' : 'Koncentrált csomóponti nyomaték'} (${contribution.loadId}):\n${nodalLoadLine(contribution.localNode, contribution.dofOffset, contribution.value, unit)}`,
+    );
+  }
+  if (loadDerivation.thermal !== null) {
+    const thermal = loadDerivation.thermal;
+    blocks.push(
+      [
+        `Hőteher (κ₀-ból) — q_e = +∫Bᵀ·D·ε₀ dx (ADR-0006 előjel). κ₀ = ${thermal.kappa0.toExponential(3)} 1/m`,
+        ...thermal.points.map((gp, i) => thermalLoadGaussBlock(gp, i, ei, thermal.kappa0)),
+      ].join('\n'),
+    );
+  }
+  return blocks;
+}
+
+export interface DerivationExportPlastic {
+  readonly stepRows: readonly (readonly string[])[];
+  readonly convergenceFormula: string | null;
+  readonly sampleTitle: string;
+  readonly sampleFormula: string | null;
+  readonly layerRows: readonly (readonly string[])[];
+  readonly hingeRows: readonly (readonly string[])[];
+}
+
+export interface DerivationExportData {
+  readonly generatedAt: string;
+  readonly appVersion: string;
+  readonly gitCommit: string;
+  readonly presetName: string;
+  readonly presetRef: string;
+
+  readonly span: number;
+  readonly elementCount: number;
+  readonly integrationLabel: string;
+  readonly sectionName: string;
+  readonly sectionSource: string;
+  readonly materialName: string;
+  readonly materialSummary: string;
+  readonly materialSource: string;
+  readonly supportRows: readonly (readonly string[])[];
+  readonly loadRows: readonly (readonly string[])[];
+
+  readonly layerRows: readonly (readonly string[])[];
+  readonly layerASum: string;
+  readonly layerISum: string;
+  readonly me: string;
+  readonly mp: string;
+  readonly shapeFactor: string;
+  readonly meMpFormula: string;
+
+  readonly elementLength: number;
+  readonly nodeCount: number;
+  readonly dofCount: number;
+
+  readonly elementId: string;
+  readonly elementNodeX: readonly [string, string, string];
+  readonly jacobianJ: string;
+  readonly jacobianDetJ: string;
+  readonly jacobianInvJ: string;
+  readonly jacobianFormula: string;
+  readonly bendingRows: readonly (readonly string[])[];
+  readonly shearRows: readonly (readonly string[])[];
+  readonly bendingFormulas: readonly string[];
+  readonly shearFormulas: readonly string[];
+  readonly keDiagonalFormula: string;
+  readonly ei: string;
+  readonly gas: string;
+  readonly keRows: readonly string[];
+  readonly loadFormulas: readonly string[];
+  readonly loadVectorRow: string;
+
+  readonly assemblyRows: readonly (readonly string[])[];
+  readonly assemblyNote: string;
+  readonly boundaryRows: readonly (readonly string[])[];
+  readonly boundaryNote: string;
+  readonly ueRow: string;
+  readonly internalForceFormulas: readonly string[];
+
+  readonly meanBandwidth: string;
+  readonly strategyLabel: string;
+  readonly activeDofCount: number;
+
+  readonly resultGaussRows: readonly (readonly string[])[];
+  readonly extrapolationFormulas: readonly string[];
+  readonly sumFz: string;
+  readonly sumMy: string;
+
+  readonly plastic: DerivationExportPlastic | null;
+}
+
+function fixed(v: number | null, digits = 4): string {
+  return v !== null && Number.isFinite(v) ? v.toFixed(digits) : '—';
+}
+
+export interface DerivationExportContext {
+  readonly model: EditableModel;
+  readonly preset: PresetEntry;
+  readonly section: SectionEntry;
+  readonly material: MaterialEntry;
+  readonly linear: LinearResult;
+  readonly layers: readonly { readonly b: number; readonly t: number; readonly z: number }[];
+  readonly layerA: number;
+  readonly layerI: number;
+  readonly elementDerivation: ElementStiffnessDerivation;
+  readonly loadDerivation: ElementLoadDerivation | undefined;
+  readonly internalForceDerivation: ElementInternalForceDerivation | undefined;
+  readonly globalNodeIdx: readonly [number, number, number] | undefined;
+  readonly boundaryRows: readonly (readonly [string, string, string])[];
+  readonly elementResult: ElementResult | undefined;
+  readonly nonlinearRun: NonlinearRun | null;
+  readonly hinges: readonly ReportHinge[];
+  readonly plasticSampleTitle: string;
+  readonly plasticLayerDerivations: readonly {
+    readonly layerIndex: number;
+    readonly zMm: number;
+    readonly derived: LayerStepDerivation;
+  }[];
+}
+
+export function buildDerivationExportData(ctx: DerivationExportContext): DerivationExportData {
+  const { model, preset, section, material, linear, layers, layerA, layerI, elementDerivation, elementResult } = ctx;
+
+  const plastic: DerivationExportPlastic | null =
+    ctx.nonlinearRun !== null
+      ? {
+          stepRows: ctx.nonlinearRun.loadingSteps.map((s, i) => [
+            String(i + 1),
+            s.lambda.toFixed(4),
+            String(s.iterations.length),
+            (s.iterations.at(-1)?.psiNorm ?? 0).toExponential(3),
+            (s.iterations.at(-1)?.fNorm ?? 0).toExponential(3),
+            (s.iterations.at(-1)?.residualPercent ?? 0).toExponential(2),
+          ]),
+          convergenceFormula: (() => {
+            const lastIter = ctx.nonlinearRun?.loadingSteps.at(-1)?.iterations.at(-1);
+            if (lastIter === undefined || ctx.nonlinearRun === null) return null;
+            return convergenceBlock(
+              lastIter.psiNorm,
+              lastIter.fNorm,
+              lastIter.residualPercent,
+              ctx.nonlinearRun.tolerancePercent,
+              lastIter.residualPercent <= ctx.nonlinearRun.tolerancePercent,
+            );
+          })(),
+          sampleTitle: ctx.plasticSampleTitle,
+          sampleFormula:
+            ctx.plasticLayerDerivations.length > 0
+              ? plasticLayerFormula(
+                  ctx.plasticLayerDerivations.reduce(
+                    (best, r) => (Math.abs(r.derived.sigmaTrial) > Math.abs(best.derived.sigmaTrial) ? r : best),
+                    ctx.plasticLayerDerivations[0] as (typeof ctx.plasticLayerDerivations)[number],
+                  ),
+                )
+              : null,
+          layerRows: ctx.plasticLayerDerivations.map(({ layerIndex, zMm, derived }) => [
+            String(layerIndex + 1),
+            zMm.toFixed(1),
+            (derived.prevState.sigma * 1e-4).toFixed(3),
+            derived.dEps.toExponential(3),
+            (derived.sigmaTrial * 1e-4).toFixed(3),
+            derived.step.r.toFixed(3),
+            (derived.step.sigma * 1e-4).toFixed(3),
+            derived.step.state.yielded ? 'igen' : 'nem',
+          ]),
+          hingeRows: ctx.hinges.map((h, i) => [
+            String(i + 1),
+            h.kind === 'first-yield' ? 'első megfolyás' : 'képlékeny csukló',
+            h.elementId,
+            h.xApprox !== null ? h.xApprox.toFixed(2) : '—',
+            h.lambda.toFixed(3),
+          ]),
+        }
+      : null;
+
+  return {
+    generatedAt: new Intl.DateTimeFormat('hu-HU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date()),
+    appVersion: __APP_VERSION__,
+    gitCommit: __GIT_COMMIT__,
+    presetName: preset.name,
+    presetRef: preset.ref,
+
+    span: model.span,
+    elementCount: model.elementCount,
+    integrationLabel: model.integration === 'selective' ? 'szelektív redukált' : 'teljes',
+    sectionName: section.name,
+    sectionSource: section.source,
+    materialName: material.name,
+    materialSummary: `E=${(material.e).toFixed(0)} kN/cm², σY=${material.sigmaY > 0 ? material.sigmaY.toFixed(2) : '—'} kN/cm²`,
+    materialSource: material.source,
+    supportRows: model.supports.map((s) => [
+      s.id,
+      s.x.toFixed(2),
+      s.type === 'fixed' ? 'befogás' : s.type === 'pinned' ? 'csuklós' : 'görgős',
+    ]),
+    loadRows: model.loads.map((l) => [
+      l.id,
+      l.kind === 'point'
+        ? `P = ${l.p.toFixed(1)} kN, x = ${l.x.toFixed(2)} m`
+        : l.kind === 'moment'
+          ? `M = ${l.m.toFixed(1)} kNm, x = ${l.x.toFixed(2)} m`
+          : l.q1 === l.q2
+            ? `q = ${l.q1.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
+            : `q = ${l.q1.toFixed(1)}→${l.q2.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`,
+    ]),
+
+    layerRows: layers.map((l, i) => [
+      String(i + 1),
+      (l.b * 1e3).toFixed(2),
+      (l.t * 1e3).toFixed(2),
+      (l.z * 1e3).toFixed(2),
+    ]),
+    layerASum: `${(layerA * 1e4).toFixed(2)} cm²`,
+    layerISum: `${(layerI * 1e8).toFixed(0)} cm⁴`,
+    me: fixed(linear.props.me, 2),
+    mp: fixed(linear.props.mp, 2),
+    shapeFactor: fixed(linear.props.shapeFactor, 3),
+    meMpFormula:
+      linear.props.me !== null && linear.props.mp !== null
+        ? [
+            `Mₑ = σY·Wₑ = ${material.sigmaY.toFixed(2)} kN/cm² · ${(linear.props.elasticModulus * 1e6).toFixed(1)} cm³ = ${fixed(linear.props.me, 2)} kNm`,
+            `Mₚ = σY·Wₚ = ${material.sigmaY.toFixed(2)} kN/cm² · ${(linear.props.plasticModulus * 1e6).toFixed(1)} cm³ = ${fixed(linear.props.mp, 2)} kNm`,
+            `c = Mₚ/Mₑ = ${fixed(linear.props.shapeFactor, 3)}`,
+          ].join('\n')
+        : `Az anyagnak (${material.name}) nincs megadott folyáshatára (σY) — Mₑ és Mₚ NEM értelmezhető. A c = Wₚ/Wₑ alaki tényező σY-tól függetlenül érvényes: c = ${fixed(linear.props.shapeFactor, 3)}.`,
+
+    elementLength: elementDerivation.length,
+    nodeCount: linear.nodes.length,
+    dofCount: linear.dofCount,
+
+    elementId: elementDerivation.elementId,
+    elementNodeX: [
+      fixed(elementDerivation.nodeX[0], 3),
+      fixed(elementDerivation.nodeX[1], 3),
+      fixed(elementDerivation.nodeX[2], 3),
+    ],
+    jacobianJ: fixed(elementDerivation.bendingPoints[0]?.jacobian.j ?? 0, 5),
+    jacobianDetJ: fixed(elementDerivation.bendingPoints[0]?.jacobian.detJ ?? 0, 5),
+    jacobianInvJ: fixed(elementDerivation.bendingPoints[0]?.jacobian.invJ ?? 0, 5),
+    jacobianFormula: jacobianLines(
+      elementDerivation.bendingPoints[0]?.dn ?? [0, 0, 0],
+      elementDerivation.nodeX,
+      elementDerivation.bendingPoints[0]?.jacobian.j ?? 0,
+      elementDerivation.bendingPoints[0]?.jacobian.invJ ?? 0,
+    ),
+    bendingRows: elementDerivation.bendingPoints.map((gp) => [
+      fixed(gp.xi),
+      fixed(gp.w),
+      fixed(gp.n[0]),
+      fixed(gp.n[1]),
+      fixed(gp.n[2]),
+      fixed(gp.dn[0]),
+      fixed(gp.dn[1]),
+      fixed(gp.dn[2]),
+    ]),
+    shearRows: elementDerivation.shearPoints.map((gp) => [fixed(gp.xi), fixed(gp.w), fixed(gp.n[0]), fixed(gp.n[1]), fixed(gp.n[2])]),
+    bendingFormulas: elementDerivation.bendingPoints.map((gp, i) => bendingGaussBlock(gp, i, elementDerivation.stiffness.ei)),
+    shearFormulas: elementDerivation.shearPoints.map((gp, i) => shearGaussBlock(gp, i, elementDerivation.stiffness.gas)),
+    keDiagonalFormula: keDiagonalDemo(
+      elementDerivation.bendingPoints,
+      elementDerivation.shearPoints,
+      elementDerivation.stiffness.ei,
+      elementDerivation.stiffness.gas,
+      elementDerivation.ke.get(1, 1),
+    ),
+    ei: fixed(elementDerivation.stiffness.ei, 1),
+    gas: fixed(elementDerivation.stiffness.gas, 1),
+    keRows: Array.from({ length: 6 }, (_, i) =>
+      Array.from({ length: 6 }, (_, j) => elementDerivation.ke.get(i, j).toExponential(3)).join('  '),
+    ),
+    loadFormulas: buildLoadFormulas(ctx.loadDerivation, elementDerivation.stiffness.ei),
+    loadVectorRow: `[${Array.from(elementDerivation.loadVector).map((v) => v.toExponential(3)).join(', ')}]`,
+
+    assemblyRows:
+      ctx.globalNodeIdx !== undefined
+        ? (['w₁', 'φ₁', 'w₂', 'φ₂', 'w₃', 'φ₃'] as const).map((label, i) => {
+            const nodeIdx = (ctx.globalNodeIdx as readonly [number, number, number])[Math.floor(i / 2)] ?? 0;
+            return [String(i), String(nodeIdx), label, String(2 * nodeIdx + (i % 2))];
+          })
+        : [],
+    assemblyNote:
+      ctx.globalNodeIdx !== undefined
+        ? `K_global[I,J] += Kₑ[i,j] minden (i,j) lokális párra. Példa: Kₑ[φ₁,φ₁] = ${elementDerivation.ke.get(1, 1).toExponential(3)} → K_global[${2 * ctx.globalNodeIdx[0] + 1}, ${2 * ctx.globalNodeIdx[0] + 1}] (HOZZÁADVA, nem felülírva).`
+        : '',
+    boundaryRows: ctx.boundaryRows,
+    boundaryNote:
+      linear.strategy === 'elimination'
+        ? `Eliminációs stratégia: az előírt DOF-ok kimaradnak a megoldandó rendszerből — a teljes ${linear.dofCount} DOF-ból ${linear.activeDofCount} marad aktív.`
+        : 'Penalty stratégia: az előírt DOF-ok nagy merevségű "rugóval" kényszerítve maradnak a rendszerben.',
+    ueRow:
+      ctx.internalForceDerivation !== undefined
+        ? `uₑ = [${Array.from(ctx.internalForceDerivation.ue).map((v) => v.toExponential(3)).join(', ')}]`
+        : '',
+    internalForceFormulas:
+      ctx.internalForceDerivation !== undefined
+        ? ctx.internalForceDerivation.points.map((gp, i) =>
+            internalForceBlock(
+              i,
+              gp.xi,
+              gp.x,
+              gp.bKappa,
+              gp.bGamma,
+              gp.kappa,
+              gp.gamma,
+              gp.m,
+              gp.t,
+              elementDerivation.stiffness.ei,
+              elementDerivation.stiffness.gas,
+              (ctx.internalForceDerivation as ElementInternalForceDerivation).kappa0,
+            ),
+          )
+        : [],
+
+    meanBandwidth: fixed(linear.meanBandwidth, 2),
+    strategyLabel: linear.strategy === 'elimination' ? 'eliminációs (kizárt DOF)' : 'penalty',
+    activeDofCount: linear.activeDofCount,
+
+    resultGaussRows:
+      elementResult?.gaussPoints.map((gp, i) => [String(i + 1), fixed(gp.x, 3), fixed(gp.m, 2), fixed(gp.t, 2)]) ?? [],
+    extrapolationFormulas: (() => {
+      const gp0 = elementResult?.gaussPoints[0];
+      const gp1 = elementResult?.gaussPoints[1];
+      const gp2 = elementResult?.gaussPoints[2];
+      const xi0 = elementDerivation.bendingPoints[0]?.xi;
+      const xi1 = elementDerivation.bendingPoints[1]?.xi;
+      const xi2 = elementDerivation.bendingPoints[2]?.xi;
+      if (gp0 === undefined || gp1 === undefined || gp2 === undefined || xi0 === undefined || xi1 === undefined || xi2 === undefined) {
+        return [];
+      }
+      const xis: readonly [number, number, number] = [xi0, xi1, xi2];
+      const mValues: readonly [number, number, number] = [gp0.m, gp1.m, gp2.m];
+      return [
+        extrapolationBlock('M', mValues, xis, -1, 'ξ=-1 (bal csp.)', 'kNm'),
+        extrapolationBlock('M', mValues, xis, 1, 'ξ=+1 (jobb csp.)', 'kNm'),
+      ];
+    })(),
+    sumFz: fixed(linear.equilibrium.sumFz, 4),
+    sumMy: fixed(linear.equilibrium.sumMy, 4),
+
+    plastic,
+  };
+}

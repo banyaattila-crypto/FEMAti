@@ -1,0 +1,225 @@
+/**
+ * Számítási jegyzőkönyv — nyomtatható HTML → PDF (P15).
+ *
+ * A jegyzőkönyv SZÁNDÉKOSAN nem a munkaasztal (tokens.css) sötét CAE-palettáját
+ * használja, hanem egy önálló, papírra szánt fekete-fehér stílust — ezért a
+ * színei itt, egy helyen vannak definiálva, nem a globális tokenkészletben.
+ *
+ * Nyomtatáskor a "csak ezt az elemet nyomtasd" technikát alkalmazzuk
+ * (mindent elrejtünk, majd a `.vem-report`-ot és leszármazottait újra
+ * láthatóvá tesszük) — ez teszi lehetővé, hogy a munkaasztal (vászon,
+ * panelek) NE kerüljön a nyomtatott/PDF kimenetbe.
+ */
+
+.vem-report-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(20, 20, 20, 0.55);
+  overflow: auto;
+  padding: 28px 0 60px;
+}
+
+.vem-report-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 0 14px;
+}
+
+.vem-report-toolbar__inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-raised);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+  padding: 8px 12px;
+}
+
+.vem-report {
+  --report-text: #1a1a18;
+  --report-muted: #55524a;
+  --report-faint: #8a8578;
+  --report-border: #34322c;
+  --report-border-light: #c8c3b6;
+  --report-accent: #1f5c9e;
+  --report-warn: #a02c2c;
+  --report-page-w: 210mm;
+  --report-margin: 16mm;
+
+  width: var(--report-page-w);
+  margin: 0 auto;
+  background: #ffffff;
+  color: var(--report-text);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  padding: var(--report-margin);
+  box-sizing: border-box;
+}
+
+.vem-report h1 {
+  font-size: 19px;
+  margin: 0 0 4px;
+}
+
+.vem-report h2 {
+  font-size: 13.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--report-muted);
+  border-bottom: 1px solid var(--report-border-light);
+  margin: 26px 0 10px;
+  padding-bottom: 4px;
+}
+
+.vem-report__section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.vem-report__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--report-border);
+  padding-bottom: 10px;
+}
+
+.vem-report__header-meta {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--report-muted);
+}
+
+.vem-report__subtitle {
+  color: var(--report-muted);
+  font-size: 12.5px;
+  margin: 0;
+}
+
+.vem-report table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.vem-report th,
+.vem-report td {
+  text-align: left;
+  padding: 3px 8px 3px 0;
+  border-bottom: 1px solid var(--report-border-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.vem-report th {
+  color: var(--report-muted);
+  font-weight: 600;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vem-report__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.vem-report__note {
+  font-size: 11px;
+  color: var(--report-muted);
+  border-left: 3px solid var(--report-border-light);
+  padding: 4px 10px;
+  margin-top: 8px;
+}
+
+.vem-report__note--warn {
+  border-left-color: var(--report-warn);
+  color: var(--report-warn);
+}
+
+.vem-report__chart {
+  border: 1px solid var(--report-border-light);
+  border-radius: 2px;
+  padding: 4px;
+  margin-top: 8px;
+}
+
+.vem-report__footer {
+  margin-top: 28px;
+  padding-top: 8px;
+  border-top: 1px solid var(--report-border-light);
+  font-size: 10px;
+  color: var(--report-muted);
+  text-align: center;
+}
+
+.vem-report__tone-ok {
+  color: #2f7a4d;
+}
+
+.vem-report__tone-error {
+  color: var(--report-warn);
+  font-weight: 600;
+}
+
+@page {
+  size: A4;
+  margin: 16mm;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .vem-report,
+  .vem-report * {
+    visibility: visible;
+  }
+
+  .vem-report-overlay {
+    position: static;
+    background: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .vem-report-toolbar {
+    display: none;
+  }
+
+  .vem-report {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .vem-report__footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+  }
+
+  .vem-report__section {
+    break-inside: avoid;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

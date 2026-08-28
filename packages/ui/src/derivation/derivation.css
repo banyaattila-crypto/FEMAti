@@ -1,0 +1,266 @@
+/**
+ * Levezetés — nyomtatható HTML → PDF (P15/A). Ugyanaz a nyomtatási architektúra,
+ * mint a `report/report.css`-ben (önálló papír-stílus, "csak ezt nyomtasd"
+ * technika) — külön fájlban, mert a levezetés más (interaktív elem-/Gauss-pont
+ * választó) képernyő-elemeket is tartalmaz, amiket a nyomtatás elrejt.
+ */
+
+.vem-derivation-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(20, 20, 20, 0.55);
+  overflow: auto;
+  padding: 28px 0 60px;
+}
+
+.vem-derivation-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 0 14px;
+}
+
+.vem-derivation-toolbar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-raised);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+  padding: 8px 12px;
+  max-width: 900px;
+}
+
+.vem-derivation-toolbar__inner label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.vem-derivation {
+  --der-text: #1a1a18;
+  --der-muted: #55524a;
+  --der-faint: #8a8578;
+  --der-border: #34322c;
+  --der-border-light: #c8c3b6;
+  --der-accent: #1f5c9e;
+  --der-warn: #a02c2c;
+  --der-formula-bg: #f4f2ec;
+  --der-page-w: 210mm;
+  --der-margin: 16mm;
+
+  width: var(--der-page-w);
+  margin: 0 auto;
+  background: #ffffff;
+  color: var(--der-text);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  padding: var(--der-margin);
+  box-sizing: border-box;
+}
+
+.vem-derivation h1 {
+  font-size: 19px;
+  margin: 0 0 4px;
+}
+
+.vem-derivation h2 {
+  font-size: 13.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--der-muted);
+  border-bottom: 1px solid var(--der-border-light);
+  margin: 26px 0 10px;
+  padding-bottom: 4px;
+}
+
+.vem-derivation h3 {
+  font-size: 12px;
+  color: var(--der-text);
+  margin: 16px 0 6px;
+}
+
+.vem-derivation__section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.vem-derivation__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--der-border);
+  padding-bottom: 10px;
+}
+
+.vem-derivation__header-meta {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--der-muted);
+}
+
+.vem-derivation__subtitle {
+  color: var(--der-muted);
+  font-size: 12.5px;
+  margin: 0;
+}
+
+.vem-derivation table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.vem-derivation th,
+.vem-derivation td {
+  text-align: left;
+  padding: 3px 8px 3px 0;
+  border-bottom: 1px solid var(--der-border-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.vem-derivation th {
+  color: var(--der-muted);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vem-derivation__formula {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--der-formula-bg);
+  border: 1px solid var(--der-border-light);
+  border-radius: 2px;
+  padding: 6px 10px;
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+
+/** LaTeX (KaTeX) képletblokk — a `Formula.tsx`/`FormulaBlock` komponens kimenete. */
+.vem-derivation__formula--tex {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.vem-derivation__formula-label {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  color: var(--der-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vem-formula {
+  display: block;
+}
+
+.vem-formula .katex-display {
+  margin: 2px 0;
+  text-align: left;
+}
+
+.vem-formula .katex {
+  font-size: 1em;
+}
+
+.vem-derivation__note {
+  font-size: 11px;
+  color: var(--der-muted);
+  border-left: 3px solid var(--der-border-light);
+  padding: 4px 10px;
+  margin-top: 8px;
+}
+
+.vem-derivation__note--warn {
+  border-left-color: var(--der-warn);
+  color: var(--der-warn);
+}
+
+.vem-derivation__footer {
+  margin-top: 28px;
+  padding-top: 8px;
+  border-top: 1px solid var(--der-border-light);
+  font-size: 10px;
+  color: var(--der-muted);
+  text-align: center;
+}
+
+.vem-derivation__matrix {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  overflow-x: auto;
+}
+
+.vem-derivation__matrix td {
+  text-align: right;
+  padding: 2px 6px;
+  border-bottom: none;
+}
+
+@page {
+  size: A4;
+  margin: 16mm;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .vem-derivation,
+  .vem-derivation * {
+    visibility: visible;
+  }
+
+  .vem-derivation-overlay {
+    position: static;
+    background: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .vem-derivation-toolbar {
+    display: none;
+  }
+
+  .vem-derivation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .vem-derivation__footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+  }
+
+  .vem-derivation__section {
+    break-inside: avoid;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

@@ -1,0 +1,45 @@
+.vem-error-boundary {
+  position: fixed;
+  inset: 0;
+  background: var(--surface-app);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-5);
+}
+
+.vem-error-boundary__box {
+  max-width: 480px;
+  background: var(--surface-raised);
+  border: 1px solid var(--sem-error);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+  padding: var(--space-6);
+}
+
+.vem-error-boundary__box h1 {
+  margin: 0 0 var(--space-3);
+  font-size: 16px;
+  color: var(--sem-error);
+}
+
+.vem-error-boundary__box p {
+  margin: 0 0 var(--space-4);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.vem-error-boundary__details {
+  margin-bottom: var(--space-4);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.vem-error-boundary__details pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-top: var(--space-2);
+  color: var(--text-faint);
+}

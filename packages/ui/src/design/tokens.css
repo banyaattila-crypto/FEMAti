@@ -1,0 +1,160 @@
+/**
+ * FEMAti design tokenek — a DESIGN-TERV.md 2. fejezete.
+ *
+ * EGYETLEN paletta (B — Sötét CAE-munkaasztal, a "FEMAti Landing"
+ * design-referenciából átvéve: sötét alap, türkiz akcentus, arany
+ * elsődleges gombok, Spectral cím-tipográfia). Nincs témaváltás,
+ * nincs prefers-color-scheme ág. A tokenek célja nem a témázhatóság, hanem
+ * hogy egy szín jelentése egy helyen legyen definiálva.
+ *
+ * A komponensek soha nem írnak be nyers hex-értéket.
+ */
+
+:root {
+  /* ── Felületek ──────────────────────────────────────────────────────── */
+  /* A felhasználó jelzése után ("a háttér túl mélyen sötét") minden
+     felszín- és szegélyszín egyenletesen, mérsékelten (+~12/+~8
+     RGB-csatornánként) világosodott az eredeti (majdnem-fekete) tónushoz
+     képest — a hideg, sötét CAE-munkaasztal karakter megmarad, csak
+     kevésbé "mély". */
+  --surface-app: #191c20;
+  --surface-chrome: #1d2126;
+  --surface-chrome-raised: #252b32;
+  --surface-toolbar: #1d2126;
+  --surface-panel: #1d2126;
+  --surface-canvas: #191c20;
+  --surface-canvas-bar: #1d2126;
+  --surface-raised: #22272d;
+  --surface-note: #22272d;
+  --surface-hover: #272d34;
+  /* A két oldalpanel (bal: Modellfa/Támaszok/Terhek/Keresztmetszet/
+     Megoldó; jobb: Eredmények) felülről lefelé egy finom, füstös bordó
+     árnyalatba hajló háttérátmenetet kap — felhasználói kérésre, a
+     `.vem-panel--left`/`.vem-panel--right` szabályaiban (`shell.css`). */
+  --surface-panel-warm-top: #1d2126;
+  --surface-panel-warm-bottom: #2b1d21;
+
+  /* ── Szegélyek ──────────────────────────────────────────────────────── */
+  --border-strong: #323a42;
+  --border-medium: #2b3239;
+  --border-subtle: #262c33;
+  --border-divider: #262c33;
+  --border-note: #323a42;
+  --border-chrome: #262c33;
+
+  /* ── Szöveg ─────────────────────────────────────────────────────────── */
+  --text-primary: #f2f4f6;
+  --text-secondary: #c8d0d8;
+  --text-muted: #9aa5b0;
+  --text-faint: #5f6b76;
+  --text-note: #9aa5b0;
+  --text-on-chrome: #e2e6ea;
+  --text-on-chrome-muted: #7d8894;
+  --text-on-accent: #0d1014;
+
+  /* ── Akcentus ───────────────────────────────────────────────────────── */
+  --accent: #4fd6b4;
+  --accent-hover: #7fe8cd;
+  --accent-light: #8ce4ce;
+  --accent-soft: rgba(79, 214, 180, 0.14);
+
+  /* ── Elsődleges gomb — arany gradiens (landing CTA stílus) ──────────── */
+  --brand-gold-1: #f3dfa0;
+  --brand-gold-2: #c9a961;
+  --brand-gold-3: #a3813e;
+  --brand-gold-border: #8a6c2f;
+  --brand-gold-text: #241a08;
+
+  /* ── Szemantikus színek — mechanikai jelentéssel ────────────────────── */
+  --sem-elastic: #5c6975;
+  --sem-elastic-edge: #3d4854;
+  --sem-partial: #ffb84d;
+  --sem-partial-edge: #b9791f;
+  --sem-plastic: #ff5f56;
+  --sem-plastic-edge: #a3241d;
+  --sem-load: #5c9ee0;
+  --sem-support: #7c8894;
+  --sem-deformed: #4fd6b4;
+  --sem-undeformed: #2a323a;
+  --sem-analytic: #ff5f56;
+  --sem-ok: #4fd6b4;
+  --sem-warn: #ffb84d;
+  --sem-error: #ff5f56;
+
+  /* ── Katalógus-jelölők — DEKORATÍV, nem szemantikus (docs/UI-CONVENTIONS.md
+     1. pont: "mikor kell új tokent felvenni" 4. szabálya) ──────────────── */
+  /* A Szelvény/Anyag combobox opciói előtti színes ● jelölő valódi
+     anyagszínt idéz (acél/alumínium/beton/fa) — ez NEM mechanikai
+     állapotot kódol, ezért nem `--sem-*`, annak ellenére, hogy némelyik
+     hex-érték közel esik egy `--sem-*` tónushoz (ez véletlen egybeesés,
+     nem indok az összevonásra, ld. `--sem-deformed`/`--accent` esete). */
+  --catalog-steel: #9aa8b8;
+  --catalog-aluminum: #d3dbe0;
+  --catalog-concrete: #a89f92;
+  --catalog-timber: #c1875a;
+
+  /* ── Tipográfia ─────────────────────────────────────────────────────── */
+  --font-ui: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-serif: 'Spectral', Georgia, serif;
+
+  --type-label-size: 10.5px;
+  --type-label-weight: 600;
+  --type-label-tracking: 0.09em;
+  --type-field-label-size: 10.5px;
+  --type-body-size: 13px;
+  --type-body-sm-size: 11.5px;
+  --type-value-size: 13px;
+  --type-value-lg-size: 15px;
+  --type-value-xl-size: 22px;
+  --type-unit-size: 11px;
+  --type-title-size: 14px;
+
+  /* ── Térköz ─────────────────────────────────────────────────────────── */
+  --space-1: 3px;
+  --space-2: 5px;
+  --space-3: 7px;
+  --space-4: 9px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 18px;
+  --space-8: 22px;
+
+  /* ── Forma ──────────────────────────────────────────────────────────── */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-pill: 999px;
+
+  /* ── Méretek ────────────────────────────────────────────────────────── */
+  --h-chrome: 38px;
+  --h-control: 28px;
+  --w-panel-left: 266px;
+  --w-panel-right: 272px;
+  --w-panel-min: 222px;
+
+  /* ── Árnyék ─────────────────────────────────────────────────────────── */
+  --shadow-menu: 0 12px 28px rgba(0, 0, 0, 0.4);
+  /* 2026-08-23: a sötét reskin előtt 0.06-os opacitásra volt hangolva —
+     az akkori világos felületen ez adott finom mélységet, sötét alapon
+     viszont gyakorlatilag láthatatlan volt (fekete árnyék fekete
+     felületen). Erősebb opacitásra/nagyobb elmosásra állítva, hogy a
+     kártyák ténylegesen kiemelkedjenek a sötét háttérből. */
+  --shadow-card: 0 2px 6px rgba(0, 0, 0, 0.4);
+  /* SVG `feDropShadow`/`flood-color` értékekhez — nem `box-shadow`
+     rövidítés, hanem önálló szín-token, mert a `--shadow-*` fenti
+     tokenek teljes `box-shadow` értéket hordoznak, egy `flood-color`
+     attribútum viszont csak egy színt vár. */
+  --shadow-flood: rgba(0, 0, 0, 0.45);
+
+  /* ── Mozgás ─────────────────────────────────────────────────────────── */
+  --motion-fast: 90ms;
+  --motion-panel: 160ms;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-panel: 0ms;
+  }
+}

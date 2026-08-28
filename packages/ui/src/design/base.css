@@ -1,0 +1,99 @@
+/**
+ * Alap stílusok és megosztott segédosztályok.
+ * A DESIGN-TERV.md 1. (elvek), 2.3 (tipográfia) és 3.2 (panelszabályok) alapján.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--surface-app);
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Fókusz: minden interaktív elem látható gyűrűt kap (DESIGN-TERV 9.2). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+input[type='range'] {
+  accent-color: var(--accent);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid var(--surface-toolbar);
+}
+::-webkit-scrollbar-track {
+  background: var(--surface-toolbar);
+}
+
+/* ── Megosztott segédosztályok ──────────────────────────────────────────── */
+
+/** Panelfejléc: UPPERCASE, ritkított, sticky (DESIGN-TERV 3.2). */
+.vem-section-label {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: var(--space-4) var(--space-5) var(--space-3);
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: inherit;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/** Minden szám monospace, tizedespont-igazítással. Kivétel nincs. */
+.vem-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+
+@keyframes vem-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

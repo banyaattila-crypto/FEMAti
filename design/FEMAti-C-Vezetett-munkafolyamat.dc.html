@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#efe9df}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:#8c3b2e;text-decoration:none} a:hover{color:#6d2b20;text-decoration:underline}
+  input[type=range]{accent-color:#8c3b2e}
+  ::-webkit-scrollbar{width:10px}
+  ::-webkit-scrollbar-thumb{background:#d8d0c2;border-radius:5px}
+  ::-webkit-scrollbar-track{background:#efe9df}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;min-height:720px;background:#efe9df;color:#23211d;font-size:14px;overflow:hidden">
+
+  <div style="width:262px;min-width:222px;flex:none;background:#e7e0d3;border-right:1px solid #d8d0c2;display:flex;flex-direction:column;overflow:auto">
+    <div style="padding:22px 22px 16px">
+      <div style="font:700 20px/1 'Source Serif 4',Georgia,serif;letter-spacing:-.01em">VEM97</div>
+      <div style="margin-top:5px;font-size:11.5px;line-height:1.5;color:#7a736a">Rugalmas–képlékeny Timoshenko gerenda végeselemes analízis</div>
+    </div>
+    <div style="height:1px;background:#d8d0c2;margin:0 22px"></div>
+    <div style="padding:16px 12px 22px;display:flex;flex-direction:column;gap:1px">
+      <sc-for list="{{ stepList }}" as="st" hint-placeholder-count="7">
+        <div onClick="{{ st.go }}" style="{{ st.style }}">
+          <div style="{{ st.num }}">{{ st.n }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="{{ st.titleStyle }}">{{ st.title }}</div>
+            <div style="font:500 10.5px/1.4 'IBM Plex Mono',monospace;color:#9a9186;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.meta }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="flex:1"></div>
+    <div style="margin:0 22px 22px;padding:12px 13px;background:#ded5c6;border-radius:3px;font:400 11px/1.55 'IBM Plex Sans';color:#6b6459">
+      A numerikus mag a BME Építőmérnöki Kar, Mechanika Tanszék 1996-os diplomatervének algoritmusait követi. Minden mechanikai mennyiség analitikus referenciához mérve.
+    </div>
+  </div>
+
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
+
+    <div style="flex:none;display:flex;align-items:center;gap:20px;padding:12px 34px;background:#faf7f2;border-bottom:1px solid #e3ddd2;flex-wrap:wrap">
+      <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="5">
+        <div style="display:flex;flex-direction:column;gap:2px;white-space:nowrap">
+          <div style="font:500 9.5px/1 'IBM Plex Sans';letter-spacing:.13em;color:#9a9186">{{ c.k }}</div>
+          <div style="font:600 13px/1 'IBM Plex Mono',monospace;color:{{ c.color }}">{{ c.v }}</div>
+        </div>
+      </sc-for>
+      <div style="flex:1"></div>
+      <div style="font:500 11.5px 'IBM Plex Mono',monospace;color:#7a736a">{{ statusText }}</div>
+    </div>
+
+    <div style="flex:1;overflow:auto;padding:34px 34px 20px">
+      <div style="max-width:1060px;margin:0 auto">
+
+        <div style="font:500 10.5px/1 'IBM Plex Sans';letter-spacing:.16em;text-transform:uppercase;color:#8c3b2e">{{ stepKicker }}</div>
+        <h1 style="margin:10px 0 0;font:600 33px/1.15 'Source Serif 4',Georgia,serif;letter-spacing:-.015em;text-wrap:pretty">{{ stepTitle }}</h1>
+        <p style="margin:10px 0 0;max-width:64ch;font:400 15px/1.65 'IBM Plex Sans';color:#5f584f;text-wrap:pretty">{{ stepLead }}</p>
+
+        <sc-if value="{{ showCanvas }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:24px;background:#faf7f2;border:1px solid #e3ddd2;border-radius:4px;padding:8px 10px 2px">
+            <svg viewBox="0 0 1100 250" preserveAspectRatio="xMidYMid meet" style="width:100%;height:238px;display:block">
+              <defs><marker id="arrC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="#8c3b2e"></path></marker></defs>
+              <sc-for list="{{ udl }}" as="a" hint-placeholder-count="0">
+                <line x1="{{ a.x }}" y1="{{ a.y1 }}" x2="{{ a.x }}" y2="{{ a.y2 }}" stroke="#8c3b2e" stroke-width="1.1" marker-end="url(#arrC)" opacity="0.75"></line>
+              </sc-for>
+              <sc-if value="{{ hasUdl }}" hint-placeholder-val="{{ true }}">
+                <g><line x1="{{ udlX1 }}" y1="58" x2="{{ udlX2 }}" y2="58" stroke="#8c3b2e" stroke-width="1.4"></line>
+                  <text x="{{ udlMid }}" y="48" text-anchor="middle" style="font:600 15px 'IBM Plex Mono',monospace;fill:#8c3b2e">{{ udlText }}</text></g>
+              </sc-if>
+              <sc-if value="{{ hasP }}" hint-placeholder-val="{{ false }}">
+                <g><line x1="{{ pX }}" y1="46" x2="{{ pX }}" y2="{{ pY2 }}" stroke="#8c3b2e" stroke-width="3" marker-end="url(#arrC)"></line>
+                  <text x="{{ pX }}" y="38" text-anchor="middle" style="font:600 16px 'IBM Plex Mono',monospace;fill:#8c3b2e">{{ pText }}</text></g>
+              </sc-if>
+              <line x1="{{ bx0 }}" y1="120" x2="{{ bx1 }}" y2="120" stroke="#d8d0c2" stroke-width="1.5" stroke-dasharray="5 4"></line>
+              <sc-for list="{{ elBars }}" as="b" hint-placeholder-count="12">
+                <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" fill="{{ b.fill }}" stroke="{{ b.stroke }}" stroke-width="0.7"></rect>
+              </sc-for>
+              <polyline points="{{ deformedPts }}" fill="none" stroke="#8c3b2e" stroke-width="2.2" stroke-linejoin="round"></polyline>
+              <sc-for list="{{ gpDots }}" as="p" hint-placeholder-count="18">
+                <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="{{ p.r }}" fill="{{ p.fill }}" stroke="#faf7f2" stroke-width="1" onClick="{{ p.pick }}" style="cursor:pointer"></circle>
+              </sc-for>
+              <sc-for list="{{ supports }}" as="s" hint-placeholder-count="3">
+                <g><path d="{{ s.d }}" fill="#5f584f" stroke="#5f584f" stroke-width="1.1"></path>
+                  <line x1="{{ s.hx1 }}" y1="{{ s.hy }}" x2="{{ s.hx2 }}" y2="{{ s.hy }}" stroke="#5f584f" stroke-width="1.8"></line></g>
+              </sc-for>
+              <sc-for list="{{ dimTicks }}" as="d" hint-placeholder-count="5">
+                <text x="{{ d.x }}" y="228" text-anchor="middle" style="font:500 12px 'IBM Plex Mono',monospace;fill:#9a9186">{{ d.t }}</text>
+              </sc-for>
+              <line x1="{{ bx0 }}" y1="212" x2="{{ bx1 }}" y2="212" stroke="#e3ddd2" stroke-width="1"></line>
+            </svg>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:14px">
+            <sc-for list="{{ presetCards }}" as="p" hint-placeholder-count="5">
+              <div onClick="{{ p.pick }}" style="{{ p.style }}">
+                <div style="display:flex;align-items:baseline;gap:8px">
+                  <div style="font:600 15px/1.3 'Source Serif 4',Georgia,serif;flex:1">{{ p.name }}</div>
+                  <div style="font:500 10.5px 'IBM Plex Mono',monospace;color:#9a9186">{{ p.ref }}</div>
+                </div>
+                <div style="margin-top:6px;font:400 12px/1.5 'IBM Plex Sans';color:#7a736a">{{ p.desc }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:22px;max-width:520px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+              <span style="font:500 12.5px 'IBM Plex Sans';color:#5f584f">Teljes hossz L</span>
+              <span style="font:600 17px 'IBM Plex Mono',monospace">{{ Ltxt }} m</span>
+            </div>
+            <input type="range" min="2" max="16" step="0.5" value="{{ L }}" onInput="{{ onL }}" style="width:100%">
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:26px;display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+            <div style="flex:0 0 168px;background:#faf7f2;border:1px solid #e3ddd2;border-radius:4px;padding:14px">
+              <svg viewBox="0 0 120 160" style="width:100%;height:170px;display:block">
+                <sc-for list="{{ secShape }}" as="r" hint-placeholder-count="3">
+                  <rect x="{{ r.x }}" y="{{ r.y }}" width="{{ r.w }}" height="{{ r.h }}" fill="#ddd8cd" stroke="#8b8377" stroke-width="0.8"></rect>
+                </sc-for>
+                <sc-for list="{{ secLayers }}" as="l" hint-placeholder-count="12">
+                  <line x1="{{ l.x1 }}" y1="{{ l.y }}" x2="{{ l.x2 }}" y2="{{ l.y }}" stroke="#8c3b2e" stroke-width="0.4" opacity="0.5"></line>
+                </sc-for>
+                <line x1="6" y1="82" x2="114" y2="82" stroke="#8c3b2e" stroke-width="1" stroke-dasharray="4 3"></line>
+              </svg>
+              <div style="margin-top:8px;text-align:center;font:500 11px 'IBM Plex Mono',monospace;color:#9a9186">{{ nL }} réteg</div>
+            </div>
+            <div style="flex:1 1 340px;min-width:280px;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <label style="flex:1 1 160px"><span style="display:block;font:500 12px/1.9 'IBM Plex Sans';color:#5f584f">Keresztmetszet</span>
+                  <select onChange="{{ onSec }}" value="{{ secId }}" style="width:100%;font:500 14px 'IBM Plex Sans';padding:8px 9px;border:1px solid #d8d0c2;background:#faf7f2;border-radius:3px;color:#23211d">
+                    <option value="IPE200">IPE 200</option><option value="IPE300">IPE 300</option><option value="IPE400">IPE 400</option>
+                    <option value="HEA200">HEA 200</option><option value="HEB300">HEB 300</option><option value="RECT">Téglalap 120×300</option>
+                  </select></label>
+                <label style="flex:1 1 140px"><span style="display:block;font:500 12px/1.9 'IBM Plex Sans';color:#5f584f">Anyag</span>
+                  <select onChange="{{ onMat }}" value="{{ matId }}" style="width:100%;font:500 14px 'IBM Plex Sans';padding:8px 9px;border:1px solid #d8d0c2;background:#faf7f2;border-radius:3px;color:#23211d">
+                    <option value="S235">S235</option><option value="S275">S275</option><option value="S355">S355</option><option value="S235H">S235 + keményedés</option>
+                  </select></label>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:5px;white-space:nowrap">
+                  <span style="font:500 12.5px 'IBM Plex Sans';color:#5f584f">Rétegszám (fiber felbontás)</span>
+                  <span style="font:600 16px 'IBM Plex Mono',monospace">{{ nL }}</span>
+                </div>
+                <input type="range" min="6" max="60" step="2" value="{{ nL }}" onInput="{{ onNL }}" style="width:100%">
+                <div style="margin-top:6px;font:400 11.5px/1.5 'IBM Plex Sans';color:#7a736a">Legalább 20 réteg javasolt — ez alatt az alaki tényező érzékelhetően alulbecsült.</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;background:#e3ddd2;border:1px solid #e3ddd2;border-radius:3px;overflow:hidden">
+                <sc-for list="{{ secStats }}" as="k" hint-placeholder-count="5">
+                  <div style="background:#faf7f2;padding:10px 11px">
+                    <div style="font:500 9.5px/1 'IBM Plex Sans';letter-spacing:.11em;text-transform:uppercase;color:#9a9186;white-space:nowrap">{{ k.k }}</div>
+                    <div style="font:600 17px/1.4 'IBM Plex Mono',monospace;color:{{ k.c }}">{{ k.v }}</div>
+                    <div style="font:400 10px 'IBM Plex Mono',monospace;color:#9a9186">{{ k.u }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:11px 13px;background:#f3ece0;border-left:2px solid #c68a2b;font:400 12px/1.6 'IBM Plex Sans';color:#6b5f45">
+                Az adatbázis értékei tájékoztató jellegűek — az első felhasználás előtt ellenőrizni kell. Forrás: {{ matSource }}.
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:24px;display:flex;gap:26px;flex-wrap:wrap">
+            <div style="flex:1 1 300px;min-width:260px;display:flex;flex-direction:column;gap:18px">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:5px;white-space:nowrap">
+                  <span style="font:500 12.5px 'IBM Plex Sans';color:#5f584f">Megoszló teher q</span>
+                  <span style="font:600 17px 'IBM Plex Mono',monospace">{{ qTxt }} kN/m</span>
+                </div>
+                <input type="range" min="0" max="80" step="1" value="{{ q }}" onInput="{{ onQ }}" style="width:100%">
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:5px;white-space:nowrap">
+                  <span style="font:500 12.5px 'IBM Plex Sans';color:#5f584f">Koncentrált teher P</span>
+                  <span style="font:600 17px 'IBM Plex Mono',monospace">{{ PTxt }} kN</span>
+                </div>
+                <input type="range" min="0" max="150" step="1" value="{{ P }}" onInput="{{ onP }}" style="width:100%">
+              </div>
+              <label style="display:flex;gap:9px;align-items:center;font:500 13px 'IBM Plex Sans';color:#5f584f;cursor:pointer">
+                <input type="checkbox" checked="{{ selfWeight }}" onChange="{{ onSW }}"> Önsúly hozzáadása ({{ swTxt }} kN/m)</label>
+            </div>
+            <div style="flex:1 1 300px;min-width:260px;padding:16px 18px;background:#faf7f2;border:1px solid #e3ddd2;border-radius:4px">
+              <div style="font:600 13px/1.4 'Source Serif 4',Georgia,serif;margin-bottom:8px">Rugalmas válasz — azonnal</div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <sc-for list="{{ liveRows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;white-space:nowrap">
+                    <span style="font-size:12.5px;color:#7a736a">{{ r.k }}</span>
+                    <span style="font:600 14px 'IBM Plex Mono',monospace;color:{{ r.c }}">{{ r.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="margin-top:12px;padding-top:11px;border-top:1px dashed #ddd6c9;font:400 11.5px/1.6 'IBM Plex Sans';color:#7a736a">
+                {{ liveNote }}
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:24px;display:flex;gap:26px;flex-wrap:wrap">
+            <div style="flex:1 1 320px;min-width:280px;display:flex;flex-direction:column;gap:20px">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:5px;white-space:nowrap">
+                  <span style="font:500 12.5px 'IBM Plex Sans';color:#5f584f">Elemszám</span>
+                  <span style="font:600 17px 'IBM Plex Mono',monospace">{{ nEl }} elem · {{ nDof }} DOF</span>
+                </div>
+                <input type="range" min="4" max="48" step="2" value="{{ nEl }}" onInput="{{ onNEl }}" style="width:100%">
+              </div>
+              <div>
+                <div style="font:500 12.5px 'IBM Plex Sans';color:#5f584f;margin-bottom:7px">Integrálási séma</div>
+                <div style="display:flex;gap:8px">
+                  <button onClick="{{ setSelective }}" style="{{ btnSel }}">szelektív redukált</button>
+                  <button onClick="{{ setFull }}" style="{{ btnFull }}">teljes</button>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1 1 320px;min-width:280px;padding:16px 18px;background:#faf7f2;border:1px solid #e3ddd2;border-radius:4px">
+              <div style="font:600 13px/1.4 'Source Serif 4',Georgia,serif;margin-bottom:8px">Záródás (shear locking) kísérlet</div>
+              <div style="font:400 12px/1.6 'IBM Plex Sans';color:#7a736a;margin-bottom:12px">
+                Karcsú gerendán a teljes integrálás mesterségesen merevvé teszi az elemet. Váltsd át a sémát, és nézd az eltérést az analitikus megoldástól.
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <sc-for list="{{ lockRows }}" as="r" hint-placeholder-count="3">
+                  <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;white-space:nowrap">
+                    <span style="font-size:12.5px;color:#7a736a">{{ r.k }}</span>
+                    <span style="font:600 14px 'IBM Plex Mono',monospace;color:{{ r.c }}">{{ r.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:24px;display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start">
+            <div style="flex:1 1 320px;min-width:280px;display:flex;flex-direction:column;gap:20px">
+              <div>
+                <div style="font:500 12.5px 'IBM Plex Sans';color:#5f584f;margin-bottom:7px">Iterációs algoritmus</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button onClick="{{ setNewton }}" style="{{ btnNewton }}">Newton–Raphson</button>
+                  <button onClick="{{ setModified }}" style="{{ btnModified }}">módosított N–R</button>
+                </div>
+                <div style="margin-top:8px;font:400 11.5px/1.6 'IBM Plex Sans';color:#7a736a">A módosított eljárás lépésenként egyszer állítja elő a tangenciális merevségi mátrixot — több iteráció, kevesebb mátrixépítés.</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:5px;white-space:nowrap">
+                  <span style="font:500 12.5px 'IBM Plex Sans';color:#5f584f">Teherlépcső Δλ</span>
+                  <span style="font:600 17px 'IBM Plex Mono',monospace">{{ dLamTxt }}</span>
+                </div>
+                <input type="range" min="0.02" max="0.25" step="0.01" value="{{ dLambda }}" onInput="{{ onDLam }}" style="width:100%">
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:5px;white-space:nowrap">
+                  <span style="font:500 12.5px 'IBM Plex Sans';color:#5f584f">Konvergencia-tolerancia</span>
+                  <span style="font:600 17px 'IBM Plex Mono',monospace">{{ tolTxt }} %</span>
+                </div>
+                <input type="range" min="0.05" max="2" step="0.05" value="{{ tol }}" onInput="{{ onTol }}" style="width:100%">
+                <div style="margin-top:6px;font:400 11.5px/1.6 'IBM Plex Sans';color:#7a736a">Kritérium: 100·√(Σψᵢ²)/√(Σfᵢ²) ≤ tolerancia</div>
+              </div>
+            </div>
+            <div style="flex:1 1 320px;min-width:280px;padding:20px;background:#23211d;border-radius:4px;color:#e8e3d9">
+              <div style="font:600 14px/1.4 'Source Serif 4',Georgia,serif;margin-bottom:9px">Növekményes megoldás indítása</div>
+              <div style="font:400 12px/1.65 'IBM Plex Sans';color:#a8a196;margin-bottom:16px">
+                A teher λ szorzóval növekszik a határteherig. A megoldó a divergenciát nem hibaként kezeli: a határteher közelében ez fizikai eredmény.
+              </div>
+              <button onClick="{{ run }}" style="width:100%;padding:12px;background:#8c3b2e;color:#fff;border:none;border-radius:3px;font:600 14px 'IBM Plex Sans';letter-spacing:.03em;cursor:pointer" style-hover="background:#a3493a">{{ runLabel }}</button>
+              <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px">
+                <sc-for list="{{ solveRows }}" as="r" hint-placeholder-count="4">
+                  <div style="display:flex;justify-content:space-between;gap:12px;white-space:nowrap">
+                    <span style="font-size:12px;color:#8f887d">{{ r.k }}</span>
+                    <span style="font:600 13px 'IBM Plex Mono',monospace;color:{{ r.c }}">{{ r.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStep6 }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button onClick="{{ togglePlay }}" style="width:32px;height:28px;background:#faf7f2;border:1px solid #d8d0c2;border-radius:3px;cursor:pointer">{{ playIcon }}</button>
+            <div style="flex:1;min-width:180px;display:flex;gap:2px;height:18px">
+              <sc-for list="{{ steps }}" as="s" hint-placeholder-count="12">
+                <div onClick="{{ s.pick }}" style="{{ s.style }}"></div>
+              </sc-for>
+            </div>
+            <div style="font:600 15px 'IBM Plex Mono',monospace">λ = {{ lamTxt }}</div>
+          </div>
+          <div style="margin-top:6px;font:500 11.5px 'IBM Plex Mono',monospace;color:#9a9186">{{ stepInfo }}</div>
+
+          <div style="margin-top:20px;display:flex;gap:6px;flex-wrap:wrap">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+              <div onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</div>
+            </sc-for>
+          </div>
+          <div style="margin-top:10px;background:#faf7f2;border:1px solid #e3ddd2;border-radius:4px;padding:6px 10px 2px">
+            <svg viewBox="0 0 1100 210" preserveAspectRatio="none" style="width:100%;height:210px;display:block">
+              <line x1="{{ ch.zx0 }}" y1="{{ ch.zeroY }}" x2="{{ ch.zx1 }}" y2="{{ ch.zeroY }}" stroke="#c9c1b3" stroke-width="1"></line>
+              <sc-for list="{{ ch.xticks }}" as="t" hint-placeholder-count="6">
+                <g><line x1="{{ t.x }}" y1="{{ t.y0 }}" x2="{{ t.x }}" y2="{{ t.y1 }}" stroke="#efe9df" stroke-width="1"></line>
+                  <text x="{{ t.x }}" y="204" text-anchor="middle" style="font:500 12px 'IBM Plex Mono',monospace;fill:#9a9186">{{ t.t }}</text></g>
+              </sc-for>
+              <polygon points="{{ ch.fill }}" fill="{{ ch.fillColor }}"></polygon>
+              <polyline points="{{ ch.line }}" fill="none" stroke="{{ ch.stroke }}" stroke-width="1.8"></polyline>
+              <sc-for list="{{ ch.marks }}" as="m" hint-placeholder-count="2">
+                <g><circle cx="{{ m.x }}" cy="{{ m.y }}" r="3" fill="{{ m.c }}"></circle>
+                  <text x="{{ m.tx }}" y="{{ m.ty }}" text-anchor="{{ m.anchor }}" style="font:600 13px 'IBM Plex Mono',monospace;fill:#3f3a33">{{ m.t }}</text></g>
+              </sc-for>
+              <text x="12" y="20" style="font:600 14px 'Source Serif 4',Georgia,serif;fill:#3f3a33">{{ ch.title }}</text>
+            </svg>
+          </div>
+          <div style="margin-top:8px;font:400 12px/1.6 'IBM Plex Sans';color:#7a736a">Kattints a modellvászon egy Gauss-pontjára a rétegenkénti feszültségeloszlás megnyitásához.</div>
+        </sc-if>
+
+        <sc-if value="{{ isStep7 }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:24px;background:#fff;border:1px solid #e3ddd2;box-shadow:0 2px 14px rgba(60,50,35,.07);padding:40px 46px;max-width:820px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #23211d;padding-bottom:10px">
+              <div style="font:700 21px/1.2 'Source Serif 4',Georgia,serif">Számítási jegyzőkönyv</div>
+              <div style="font:500 11px 'IBM Plex Mono',monospace;color:#7a736a">VEM97 · {{ dateTxt }}</div>
+            </div>
+            <div style="margin-top:20px;font:600 12px/1 'IBM Plex Sans';letter-spacing:.11em;text-transform:uppercase;color:#8c3b2e">1 · Modell</div>
+            <div style="margin-top:9px;display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:2px 26px">
+              <sc-for list="{{ repModel }}" as="r" hint-placeholder-count="8">
+                <div style="display:flex;justify-content:space-between;gap:14px;padding:4px 0;border-bottom:1px dotted #ddd6c9;align-items:baseline">
+                  <span style="font-size:12.5px;color:#5f584f;flex:1;min-width:0">{{ r.k }}</span><span style="font:600 12.5px 'IBM Plex Mono',monospace;flex:none;text-align:right">{{ r.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:22px;font:600 12px/1 'IBM Plex Sans';letter-spacing:.11em;text-transform:uppercase;color:#8c3b2e">2 · Eredmények</div>
+            <div style="margin-top:9px;display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:2px 26px">
+              <sc-for list="{{ repRes }}" as="r" hint-placeholder-count="8">
+                <div style="display:flex;justify-content:space-between;gap:14px;padding:4px 0;border-bottom:1px dotted #ddd6c9;align-items:baseline">
+                  <span style="font-size:12.5px;color:#5f584f;flex:1;min-width:0">{{ r.k }}</span><span style="font:600 12.5px 'IBM Plex Mono',monospace;color:{{ r.c }}">{{ r.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:22px;font:600 12px/1 'IBM Plex Sans';letter-spacing:.11em;text-transform:uppercase;color:#8c3b2e">3 · Nyomatéki ábra</div>
+            <svg viewBox="0 0 700 150" preserveAspectRatio="none" style="width:100%;height:140px;display:block;margin-top:8px">
+              <line x1="{{ rep.zx0 }}" y1="{{ rep.zeroY }}" x2="{{ rep.zx1 }}" y2="{{ rep.zeroY }}" stroke="#c9c1b3" stroke-width="1"></line>
+              <polygon points="{{ rep.fill }}" fill="rgba(140,59,46,.12)"></polygon>
+              <polyline points="{{ rep.line }}" fill="none" stroke="#8c3b2e" stroke-width="1.6"></polyline>
+              <sc-for list="{{ rep.marks }}" as="m" hint-placeholder-count="1">
+                <text x="{{ m.tx }}" y="{{ m.ty }}" text-anchor="{{ m.anchor }}" style="font:600 12px 'IBM Plex Mono',monospace;fill:#3f3a33">{{ m.t }}</text>
+              </sc-for>
+            </svg>
+            <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e3ddd2;font:400 11px/1.6 'IBM Plex Sans';color:#7a736a">
+              A számítás eredményét szakmai felelősséggel ellenőrizni kell. Elméleti háttér: Bánya Attila, <em>Rugalmas–képlékeny anyagú gerendaszerkezetek numerikus vizsgálata a végeselemes módszer segítségével</em>, BME Építőmérnöki Kar, Mechanika Tanszék, 1996.
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+            <button onClick="{{ doPrint }}" style="padding:10px 20px;background:#23211d;color:#faf7f2;border:none;border-radius:3px;font:600 13px 'IBM Plex Sans';cursor:pointer">PDF-export</button>
+            <button onClick="{{ noop }}" style="padding:10px 20px;background:#faf7f2;color:#5f584f;border:1px solid #d8d0c2;border-radius:3px;font:500 13px 'IBM Plex Sans';cursor:pointer">.vem97.json mentése</button>
+            <button onClick="{{ noop }}" style="padding:10px 20px;background:#faf7f2;color:#5f584f;border:1px solid #d8d0c2;border-radius:3px;font:500 13px 'IBM Plex Sans';cursor:pointer">CSV eredmények</button>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+
+    <div style="flex:none;display:flex;align-items:center;gap:12px;padding:14px 34px;background:#faf7f2;border-top:1px solid #e3ddd2">
+      <button onClick="{{ prev }}" style="{{ prevStyle }}">← Vissza</button>
+      <div style="flex:1;font:500 11.5px 'IBM Plex Sans';color:#9a9186">{{ hint }}</div>
+      <button onClick="{{ next }}" style="{{ nextStyle }}">{{ nextLabel }}</button>
+    </div>
+  </div>
+
+  <sc-if value="{{ inspector }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(35,33,29,.45);display:grid;place-items:center;z-index:40" onClick="{{ closeInspector }}">
+      <div onClick="{{ stop }}" style="width:min(860px,94vw);max-height:88vh;overflow:auto;background:#faf7f2;border:1px solid #d8d0c2;border-radius:5px;box-shadow:0 28px 70px rgba(50,40,25,.35)">
+        <div style="display:flex;align-items:baseline;gap:12px;padding:16px 22px;border-bottom:1px solid #e3ddd2;flex-wrap:wrap">
+          <div style="font:600 17px/1.2 'Source Serif 4',Georgia,serif">Keresztmetszet-inspektor</div>
+          <div style="font:500 11.5px 'IBM Plex Mono',monospace;color:#9a9186">{{ insTitle }}</div>
+          <div style="flex:1"></div>
+          <button onClick="{{ closeInspector }}" style="background:none;border:none;color:#9a9186;font-size:20px;cursor:pointer;line-height:1">×</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap">
+          <div style="flex:1 1 300px;min-width:270px;padding:18px 22px;border-right:1px solid #e3ddd2">
+            <div style="font:500 10px/1 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#9a9186;margin-bottom:12px">Rétegenkénti σ</div>
+            <svg viewBox="0 0 380 300" style="width:100%;height:266px;display:block">
+              <line x1="190" y1="18" x2="190" y2="282" stroke="#c9c1b3" stroke-width="1"></line>
+              <sc-for list="{{ insBars }}" as="b" hint-placeholder-count="24">
+                <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" fill="{{ b.fill }}" stroke="#faf7f2" stroke-width="0.4"></rect>
+              </sc-for>
+              <line x1="{{ insSyL }}" y1="18" x2="{{ insSyL }}" y2="282" stroke="#8c3b2e" stroke-width="1" stroke-dasharray="4 3"></line>
+              <line x1="{{ insSyR }}" y1="18" x2="{{ insSyR }}" y2="282" stroke="#8c3b2e" stroke-width="1" stroke-dasharray="4 3"></line>
+              <line x1="20" y1="{{ insNA }}" x2="360" y2="{{ insNA }}" stroke="#3f6b52" stroke-width="1.2"></line>
+              <text x="24" y="{{ insNAt }}" style="font:600 11px 'IBM Plex Mono',monospace;fill:#3f6b52">semleges tengely</text>
+              <text x="{{ insSyR }}" y="13" text-anchor="middle" style="font:600 11px 'IBM Plex Mono',monospace;fill:#8c3b2e">+σY</text>
+              <text x="{{ insSyL }}" y="13" text-anchor="middle" style="font:600 11px 'IBM Plex Mono',monospace;fill:#8c3b2e">−σY</text>
+            </svg>
+          </div>
+          <div style="flex:1 1 300px;min-width:270px;padding:18px 22px">
+            <div style="font:500 10px/1 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#9a9186;margin-bottom:12px">M–κ a tehertörténet mentén</div>
+            <svg viewBox="0 0 380 210" style="width:100%;height:180px;display:block">
+              <line x1="32" y1="184" x2="370" y2="184" stroke="#c9c1b3" stroke-width="1"></line>
+              <line x1="32" y1="14" x2="32" y2="184" stroke="#c9c1b3" stroke-width="1"></line>
+              <line x1="32" y1="{{ insMpY }}" x2="370" y2="{{ insMpY }}" stroke="#8c3b2e" stroke-width="1" stroke-dasharray="4 3"></line>
+              <text x="370" y="{{ insMpT }}" text-anchor="end" style="font:600 11px 'IBM Plex Mono',monospace;fill:#8c3b2e">Mₚ</text>
+              <polyline points="{{ insMk }}" fill="none" stroke="#23211d" stroke-width="2"></polyline>
+              <circle cx="{{ insMkX }}" cy="{{ insMkY }}" r="4" fill="#8c3b2e" stroke="#faf7f2" stroke-width="1.6"></circle>
+              <text x="200" y="204" text-anchor="middle" style="font:500 11px 'IBM Plex Mono',monospace;fill:#9a9186">κ [1/m]</text>
+            </svg>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px;font:500 12.5px/1.5 'IBM Plex Mono',monospace">
+              <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#7a736a">M</span><span>{{ insM }} kNm</span></div>
+              <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#7a736a">M / Mₚ</span><span>{{ insMratio }}</span></div>
+              <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#7a736a">κ</span><span>{{ insKap }} 1/m</span></div>
+              <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#7a736a">megfolyt rétegek</span><span style="color:#8c3b2e">{{ insYield }}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = {
+    ready: false, step: 1, preset: 'twospan', L: 12, nEl: 16, secId: 'IPE300', matId: 'S235', nL: 24,
+    q: 30, P: 0, integration: 'selective', selfWeight: false, algo: 'newton',
+    tol: 0.5, dLambda: 0.1, lin: null, nl: null, running: false, frame: 0,
+    chart: 'M', inspector: null, playing: false
+  };
+
+  componentDidMount() {
+    import(new URL('./vem-core.js', document.baseURI).href).then(m => {
+      this.M = m; this.setState({ ready: true }, () => this.applyPreset('twospan'));
+    });
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  presetL = { cantilever: 5, simple: 6, simpleP: 6, clamped: 6, twospan: 12 };
+  presetDesc = {
+    cantilever: 'Befogott konzol végponti erővel. A legegyszerűbb ellenőrzés — a kvadratikus elem itt egzakt.',
+    simple: 'Két végén megtámasztott gerenda egyenletes megoszló teherrel.',
+    simpleP: 'Kéttámaszú gerenda középen koncentrált erővel — egy képlékeny csukló alakul ki.',
+    clamped: 'Kétoldalt befogott gerenda: háromszor statikailag határozatlan, három csuklóból lesz mechanizmus.',
+    twospan: 'A diplomaterv fő feladattípusa. A nyomatéki ábra a támasz feletti csukló kialakulása után átrendeződik.'
+  };
+
+  applyPreset(id) {
+    const p = this.M.PRESETS[id];
+    this.setState({ preset: id, L: this.presetL[id], q: p.load.q, P: p.load.P, nl: null, frame: 0, inspector: null }, () => this.recompute());
+  }
+  spec() {
+    const s = this.state, p = this.M.PRESETS[s.preset];
+    return { L: s.L, nEl: s.nEl, integration: s.integration, presetId: s.preset, supports: p.supports, load: { q: s.q, P: s.P, xP: p.load.xP }, selfWeight: s.selfWeight };
+  }
+  secProps() { return this.M.sectionProps(this.M.SECTIONS[this.state.secId], this.M.MATERIALS[this.state.matId], this.state.nL, false); }
+  recompute() { if (!this.M) return; const pr = this.secProps(); this.setState({ pr, lin: this.M.solveLinear(this.spec(), pr) }); }
+  set(k, v) { this.setState({ [k]: v, nl: null, frame: 0, inspector: null }, () => this.recompute()); }
+
+  run = () => {
+    if (this.state.running) return;
+    this.setState({ running: true });
+    setTimeout(() => {
+      const pr = this.secProps();
+      const nl = this.M.solveNonlinear(this.spec(), pr, { dLambda: this.state.dLambda, lambdaMax: 6, tol: this.state.tol, minStep: 0.001, iterMax: 40, algo: this.state.algo });
+      this.setState({ nl, pr, running: false, frame: nl.history.length - 1, step: 6 });
+    }, 40);
+  };
+  togglePlay = () => {
+    if (this.state.playing) { clearInterval(this._t); this.setState({ playing: false }); return; }
+    if (!this.state.nl) return;
+    this.setState({ playing: true, frame: 0 });
+    this._t = setInterval(() => this.setState(s => {
+      if (!s.nl || s.frame >= s.nl.history.length - 1) { clearInterval(this._t); return { playing: false }; }
+      return { frame: s.frame + 1 };
+    }), 260);
+  };
+
+  mkChart(key, box, forReport) {
+    const s = this.state, M = this.M;
+    const f = s.nl && !forReport ? s.nl.framesFields[Math.min(s.frame, s.nl.framesFields.length - 1)] : (s.nl ? s.nl.framesFields[s.nl.framesFields.length - 1] : s.lin.fields);
+    if (key === 'PD') return this.chartPD(box);
+    if (key === 'CONV') return this.chartConv(box);
+    const cfg = {
+      M: { vs: f.M, title: 'M — hajlítónyomaték [kNm], a húzott oldalra rajzolva', flip: 1, stroke: '#8c3b2e', fill: 'rgba(140,59,46,.12)', d: 2 },
+      T: { vs: f.T, title: 'T — nyíróerő [kN]', flip: -1, stroke: '#3f6b52', fill: 'rgba(63,107,82,.12)', d: 2 },
+      w: { vs: f.w.map(v => v * 1000), title: 'w — lehajlás [mm]', flip: 1, stroke: '#4a5f8c', fill: 'rgba(74,95,140,.12)', d: 3 },
+      phi: { vs: f.phi.map(v => v * 1000), title: 'φ — elfordulás [10⁻³ rad]', flip: -1, stroke: '#9a7b2e', fill: 'rgba(154,123,46,.12)', d: 3 }
+    }[key];
+    const vs = cfg.vs.map(v => v * cfg.flip);
+    let lo = Math.min(0, ...vs), hi = Math.max(0, ...vs);
+    if (hi - lo < 1e-9) { hi = 1; lo = -1; }
+    const pad = (hi - lo) * 0.18; hi += pad; lo -= pad;
+    const X = x => box.x + box.w * x / s.L, Y = v => box.y + box.h * (hi - v) / (hi - lo);
+    const pts = f.x.map((x, i) => X(x).toFixed(1) + ',' + Y(vs[i]).toFixed(1)).join(' ');
+    const zeroY = Y(0);
+    let iMax = 0; cfg.vs.forEach((v, i) => { if (Math.abs(v) > Math.abs(cfg.vs[iMax])) iMax = i; });
+    const mx = X(f.x[iMax]), my = Y(vs[iMax]), right = mx > box.x + box.w * 0.72;
+    const xticks = [];
+    for (let i = 0; i <= 6; i++) { const x = s.L * i / 6; xticks.push({ x: X(x).toFixed(1), y0: box.y, y1: box.y + box.h, t: M.fmt(x, 1) }); }
+    return {
+      title: cfg.title, line: pts, fill: X(0).toFixed(1) + ',' + zeroY.toFixed(1) + ' ' + pts + ' ' + X(s.L).toFixed(1) + ',' + zeroY.toFixed(1),
+      zeroY: zeroY.toFixed(1), zx0: box.x, zx1: box.x + box.w, xticks, stroke: cfg.stroke, fillColor: cfg.fill,
+      marks: [{ x: mx.toFixed(1), y: my.toFixed(1), c: cfg.stroke, tx: (right ? mx - 8 : mx + 8).toFixed(1), ty: (my > zeroY ? my + 15 : my - 8).toFixed(1), anchor: right ? 'end' : 'start', t: M.fmt(cfg.vs[iMax], cfg.d) + ' @ ' + M.fmt(f.x[iMax], 2) + ' m' }]
+    };
+  }
+  chartPD(box) {
+    const s = this.state, M = this.M;
+    const blank = { title: 'Teher–elmozdulás görbe — futtasd az analízist', line: '', fill: '', zeroY: box.y + box.h, zx0: box.x, zx1: box.x + box.w, xticks: [], marks: [], stroke: '#8c3b2e', fillColor: 'transparent' };
+    if (!s.nl) return blank;
+    const h = s.nl.history, dm = h.map(p => Math.abs(p.disp) * 1000), lm = h.map(p => p.lam);
+    const dMax = Math.max(...dm) * 1.1 || 1, lMax = Math.max(...lm) * 1.14 || 1;
+    const X = d => box.x + box.w * d / dMax, Y = l => box.y + box.h * (1 - l / lMax);
+    const fi = Math.min(s.frame, h.length - 1);
+    const xticks = []; for (let i = 0; i <= 6; i++) { const d = dMax * i / 6; xticks.push({ x: X(d).toFixed(1), y0: box.y, y1: box.y + box.h, t: M.fmt(d, 0) }); }
+    return {
+      title: 'Teher–elmozdulás görbe · λ vs |w| [mm] a ' + M.fmt(s.nl.monitorX, 2) + ' m keresztmetszetben',
+      line: h.map((p, i) => X(dm[i]).toFixed(1) + ',' + Y(lm[i]).toFixed(1)).join(' '), fill: '',
+      zeroY: (box.y + box.h).toFixed(1), zx0: box.x, zx1: box.x + box.w, xticks, stroke: '#8c3b2e', fillColor: 'transparent',
+      marks: [{ x: X(dm[fi]).toFixed(1), y: Y(lm[fi]).toFixed(1), c: '#8c3b2e', tx: (X(dm[fi]) + 9).toFixed(1), ty: (Y(lm[fi]) - 8).toFixed(1), anchor: 'start', t: 'λ = ' + M.fmt(lm[fi], 3) }]
+    };
+  }
+  chartConv(box) {
+    const s = this.state, M = this.M;
+    const blank = { title: 'Konvergencia-napló — futtasd az analízist', line: '', fill: '', zeroY: box.y + box.h, zx0: box.x, zx1: box.x + box.w, xticks: [], marks: [], stroke: '#3f6b52', fillColor: 'transparent' };
+    if (!s.nl) return blank;
+    const all = []; s.nl.convLog.forEach(g => g.res.forEach(r => all.push(Math.max(r, 1e-6))));
+    if (!all.length) return blank;
+    const lg = Math.log10, hi = Math.max(2, ...all.map(lg)), lo = Math.min(-4, ...all.map(lg));
+    const X = i => box.x + box.w * i / Math.max(1, all.length - 1), Y = v => box.y + box.h * (hi - lg(v)) / (hi - lo);
+    return {
+      title: 'Konvergencia-napló · 100·‖ψ‖/‖f‖ [%] log skálán · ' + s.nl.totalIters + ' iteráció / ' + s.nl.steps + ' teherlépcső',
+      line: all.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' '), fill: '',
+      zeroY: Y(s.tol).toFixed(1), zx0: box.x, zx1: box.x + box.w, xticks: [], stroke: '#3f6b52', fillColor: 'transparent',
+      marks: [{ x: (box.x + 5).toFixed(1), y: Y(s.tol).toFixed(1), c: '#8c3b2e', tx: (box.x + 14).toFixed(1), ty: (Y(s.tol) - 7).toFixed(1), anchor: 'start', t: 'tolerancia ' + M.fmt(s.tol, 2) + ' %' }]
+    };
+  }
+
+  renderVals() {
+    const s = this.state, M = this.M;
+    const titles = [
+      ['01 · Szerkezet', 'Válaszd ki a statikai vázat', 'A vizsgálandó gerenda támaszrendszere és fesztávja. Minden séma mellett ott a diplomaterv validációs eset-azonosítója, amelyhez zárt analitikus megoldás tartozik.'],
+      ['02 · Anyag és szelvény', 'Keresztmetszet és anyagmodell', 'A rétegelt (fiber) felbontás a keresztmetszetet vízszintes sávokra bontja. Minden réteg egytengelyű rugalmas–képlékeny törvényt követ, ebből adódik a hajlítómerevség és a képlékeny nyomaték.'],
+      ['03 · Terhek', 'Teherkép összeállítása', 'Egyparaméteres tehertörténet: a megadott teher λ szorzóval növekszik. A rugalmas válasz minden módosítás után azonnal újraszámolódik.'],
+      ['04 · Háló', 'Végeselem-felosztás', 'Három csomópontú izoparametrikus C⁰ Timoshenko elem, csomópontonként két szabadságfokkal. A nyírási tag redukált integrálása szünteti meg a záródást.'],
+      ['05 · Megoldó', 'Nemlineáris megoldás beállításai', 'Növekményes eljárás, teherlépcsőnként Newton–Raphson iterációval és R-faktoros feszültség-visszavetítéssel a megfolyt rétegekben.'],
+      ['06 · Eredmények', 'Igénybevételek és képlékeny zónák', 'Léptesd a teherlépcsőket, és nézd, ahogy a képlékeny zóna terjed és a nyomatéki ábra átrendeződik.'],
+      ['07 · Jegyzőkönyv', 'Számítási jegyzőkönyv', 'A modell, a megoldó beállításai és az eredmények nyomtatható összefoglalása.']
+    ];
+    const t = titles[s.step - 1];
+    const base = {
+      stepKicker: t[0], stepTitle: t[1], stepLead: t[2], statusText: 'mag betöltése…',
+      preset: s.preset, secId: s.secId, matId: s.matId, L: s.L, Ltxt: s.L.toFixed(1), nEl: s.nEl, nL: s.nL,
+      q: s.q, P: s.P, qTxt: s.q.toFixed(0), PTxt: s.P.toFixed(0), selfWeight: s.selfWeight,
+      dLambda: s.dLambda, dLamTxt: s.dLambda.toFixed(2), tol: s.tol, tolTxt: s.tol.toFixed(2), playIcon: '▶',
+      isStep1: s.step === 1, isStep2: s.step === 2, isStep3: s.step === 3, isStep4: s.step === 4,
+      isStep5: s.step === 5, isStep6: s.step === 6, isStep7: s.step === 7,
+      showCanvas: s.step === 1 || s.step === 3 || s.step === 4 || s.step === 6,
+      onL: e => this.set('L', +e.target.value), onNEl: e => this.set('nEl', +e.target.value),
+      onNL: e => this.set('nL', +e.target.value), onSec: e => this.set('secId', e.target.value),
+      onMat: e => this.set('matId', e.target.value), onQ: e => this.set('q', +e.target.value),
+      onP: e => this.set('P', +e.target.value), onSW: e => this.set('selfWeight', e.target.checked),
+      onDLam: e => this.setState({ dLambda: +e.target.value }), onTol: e => this.setState({ tol: +e.target.value }),
+      setSelective: () => this.set('integration', 'selective'), setFull: () => this.set('integration', 'full'),
+      setNewton: () => this.setState({ algo: 'newton' }), setModified: () => this.setState({ algo: 'modified-newton' }),
+      run: this.run, togglePlay: this.togglePlay, doPrint: () => window.print(), noop: () => { },
+      prev: () => this.setState({ step: Math.max(1, s.step - 1) }), next: () => this.setState({ step: Math.min(7, s.step + 1) }),
+      inspector: false, closeInspector: () => this.setState({ inspector: null }), stop: e => e.stopPropagation()
+    };
+    if (!s.ready || !s.lin || !s.lin.ok) return Object.assign(base, {
+      stepList: [], crumbs: [], presetCards: [], secShape: [], secLayers: [], secStats: [], liveRows: [], lockRows: [],
+      solveRows: [], tabs: [], steps: [], repModel: [], repRes: [], insBars: [], udl: [], elBars: [], gpDots: [], supports: [], dimTicks: [],
+      ch: { line: '', fill: '', xticks: [], marks: [], zeroY: 105, zx0: 56, zx1: 1080, stroke: '#8c3b2e', fillColor: 'transparent', title: '' },
+      rep: { line: '', fill: '', marks: [], zeroY: 75, zx0: 40, zx1: 690 },
+      prevStyle: 'padding:9px 18px;border:1px solid #d8d0c2;background:#fff;border-radius:3px;font:500 13px "IBM Plex Sans";color:#9a9186',
+      nextStyle: 'padding:9px 20px;border:none;background:#23211d;color:#faf7f2;border-radius:3px;font:600 13px "IBM Plex Sans"',
+      nextLabel: 'Tovább →', hint: '', matSource: '', swTxt: '0', nDof: 0, lamTxt: '—', stepInfo: '', runLabel: 'ANALÍZIS INDÍTÁSA', dateTxt: '', liveNote: ''
+    });
+
+    const pr = s.pr, lin = s.lin, P = M.PRESETS[s.preset], mat = M.MATERIALS[s.matId], sec = M.SECTIONS[s.secId];
+    const nl = s.nl, fi = nl ? Math.min(s.frame, nl.history.length - 1) : 0;
+    const hist = nl ? nl.history[fi] : null;
+    const fields = nl && s.step >= 6 ? nl.framesFields[fi] : lin.fields;
+    const lam = nl && s.step >= 6 ? hist.lam : 1;
+    const an = M.analytic(this.spec(), pr);
+
+    // lépéslista
+    const metas = [
+      M.PRESETS[s.preset].name.split(',')[0] + ' · L = ' + M.fmt(s.L, 1) + ' m',
+      sec.name + ' · ' + mat.id + ' · ' + pr.layers.length + ' réteg',
+      (s.q ? 'q = ' + M.fmt(s.q, 0) + ' kN/m' : '') + (s.P ? (s.q ? ' + ' : '') + 'P = ' + M.fmt(s.P, 0) + ' kN' : ''),
+      s.nEl + ' elem · ' + lin.mesh.nDof + ' DOF · ' + (s.integration === 'selective' ? 'szelektív' : 'teljes'),
+      (s.algo === 'newton' ? 'Newton–Raphson' : 'mód. N–R') + ' · Δλ = ' + M.fmt(s.dLambda, 2),
+      nl ? nl.steps + ' lépés · λᵤ = ' + M.fmt(nl.lambdaU, 3) : 'nincs futás',
+      nl ? 'exportálható' : 'analízis szükséges'
+    ];
+    const stepList = titles.map((tt, i) => {
+      const n = i + 1, cur = n === s.step, done = n < s.step;
+      return {
+        n: String(n).padStart(2, '0'), title: tt[1], meta: metas[i], go: () => this.setState({ step: n }),
+        style: 'display:flex;gap:11px;align-items:flex-start;padding:9px 10px;border-radius:3px;cursor:pointer;background:' + (cur ? '#faf7f2' : 'transparent'),
+        num: 'width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;font:600 10.5px "IBM Plex Mono",monospace;background:' + (cur ? '#8c3b2e' : done ? '#c3b8a4' : '#d8d0c2') + ';color:' + (cur || done ? '#faf7f2' : '#8b8377'),
+        titleStyle: 'font:' + (cur ? '600' : '500') + ' 13px/1.3 "IBM Plex Sans";color:' + (cur ? '#23211d' : '#5f584f')
+      };
+    });
+
+    const crumbs = [
+      { k: 'SZERKEZET', v: P.ref, color: '#23211d' },
+      { k: 'SZELVÉNY', v: sec.name, color: '#23211d' },
+      { k: 'Mp', v: M.fmt(pr.Mp, 1) + ' kNm', color: '#23211d' },
+      { k: 'w max', v: M.fmt(Math.abs(fields.w.reduce((a, v) => Math.abs(v) > Math.abs(a) ? v : a, 0)) * 1000, 2) + ' mm', color: '#23211d' },
+      { k: 'λ  teherszorzó', v: nl ? M.fmt(lam, 3) : '1.000', color: nl ? '#8c3b2e' : '#9a9186' }
+    ];
+
+    // vászon
+    const bx0 = 70, bx1 = 1030, beamY = 120, X = x => bx0 + (bx1 - bx0) * x / s.L;
+    const wAbs = Math.max(1e-9, ...fields.w.map(Math.abs)), defScale = 52 / wAbs;
+    const elBars = lin.mesh.els.map((el, e) => {
+      const x1 = X(lin.mesh.x[el[0]]), x2 = X(lin.mesh.x[el[2]]), yf = hist && s.step >= 6 ? hist.yieldFrac[e] : 0;
+      return {
+        x: (x1 + 0.6).toFixed(1), y: (beamY - 6).toFixed(1), w: Math.max(1, x2 - x1 - 1.2).toFixed(1), h: 12,
+        fill: yf >= 0.82 ? '#8c3b2e' : yf > 0.05 ? '#c68a2b' : '#cfc7b8', stroke: yf >= 0.82 ? '#5f2419' : yf > 0.05 ? '#94661c' : '#a89f8e'
+      };
+    });
+    const gpDots = M.gpInfo(lin.mesh).map(g => {
+      const yf = hist && s.step >= 6 ? hist.yieldGP[g.e * 3 + g.g] : 0;
+      return { cx: X(g.x).toFixed(1), cy: beamY, r: yf > 0.05 ? 3.6 : 2.2, fill: yf >= 0.82 ? '#5f2419' : yf > 0.05 ? '#94661c' : '#9a9186', pick: () => nl && this.setState({ inspector: { e: g.e, g: g.g, x: g.x } }) };
+    });
+    const supports = P.supports.map(sp => {
+      const x = X(sp.r * s.L), y = beamY + 7;
+      if (sp.type === 'fixed') return { d: 'M' + (x - 2.5) + ',' + (y - 30) + ' L' + (x + 2.5) + ',' + (y - 30) + ' L' + (x + 2.5) + ',' + (y + 16) + ' L' + (x - 2.5) + ',' + (y + 16) + ' Z', hx1: x - 20, hx2: x + 20, hy: y + 16 };
+      if (sp.type === 'pinned') return { d: 'M' + x + ',' + y + ' L' + (x - 13) + ',' + (y + 20) + ' L' + (x + 13) + ',' + (y + 20) + ' Z', hx1: x - 20, hx2: x + 20, hy: y + 23 };
+      return { d: 'M' + x + ',' + y + ' L' + (x - 13) + ',' + (y + 17) + ' L' + (x + 13) + ',' + (y + 17) + ' Z', hx1: x - 20, hx2: x + 20, hy: y + 23 };
+    });
+    const dimTicks = []; for (let i = 0; i <= 4; i++) { const x = s.L * i / 4; dimTicks.push({ x: X(x).toFixed(1), t: M.fmt(x, 1) + ' m' }); }
+    const udl = []; if (s.q > 0) for (let i = 0; i <= 24; i++) udl.push({ x: X(s.L * i / 24).toFixed(1), y1: 58, y2: beamY - 12 });
+
+    // szelvényrajz
+    const secShape = [], secLayers = [], sy = 140 / sec.h, cx = 60;
+    if (sec.kind === 'rect') secShape.push({ x: (cx - sec.b * sy / 2).toFixed(1), y: 12, w: (sec.b * sy).toFixed(1), h: (sec.h * sy).toFixed(1) });
+    else {
+      secShape.push({ x: (cx - sec.b * sy / 2).toFixed(1), y: 12, w: (sec.b * sy).toFixed(1), h: (sec.tf * sy).toFixed(1) });
+      secShape.push({ x: (cx - sec.tw * sy / 2).toFixed(1), y: (12 + sec.tf * sy).toFixed(1), w: Math.max(1.2, sec.tw * sy).toFixed(1), h: ((sec.h - 2 * sec.tf) * sy).toFixed(1) });
+      secShape.push({ x: (cx - sec.b * sy / 2).toFixed(1), y: (12 + (sec.h - sec.tf) * sy).toFixed(1), w: (sec.b * sy).toFixed(1), h: (sec.tf * sy).toFixed(1) });
+    }
+    pr.layers.forEach(L => {
+      const y = 12 + (L.z + pr.h / 2) * 1000 * sy, hw = L.b * 1000 * sy / 2;
+      secLayers.push({ x1: (cx - hw).toFixed(1), x2: (cx + hw).toFixed(1), y: y.toFixed(1) });
+    });
+    const secStats = [
+      { k: 'A', v: M.fmt(pr.A * 1e4, 1), u: 'cm²', c: '#23211d' },
+      { k: 'I', v: M.fmt(pr.I * 1e8, 0), u: 'cm⁴', c: '#23211d' },
+      { k: 'Mₑ', v: M.fmt(pr.Me, 1), u: 'kNm', c: '#23211d' },
+      { k: 'Mₚ', v: M.fmt(pr.Mp, 1), u: 'kNm', c: '#8c3b2e' },
+      { k: 'c = Mₚ/Mₑ', v: M.fmt(pr.c, 3), u: 'alaki tényező', c: '#8c3b2e' }
+    ];
+
+    const sw = pr.A * pr.rho * 9.81 / 1000;
+    const liveRows = [
+      { k: 'w max', v: M.fmt(Math.abs(lin.wmax) * 1000, 3) + ' mm', c: '#23211d' },
+      { k: 'M max', v: M.fmt(Math.abs(lin.Mmax), 2) + ' kNm', c: Math.abs(lin.Mmax) > pr.Me ? '#8c3b2e' : '#23211d' },
+      { k: 'M max / Mₑ', v: M.fmt(Math.abs(lin.Mmax) / pr.Me, 3), c: Math.abs(lin.Mmax) > pr.Me ? '#8c3b2e' : '#3f6b52' },
+      { k: 'ΣR − ΣF (egyensúly)', v: M.fmt(lin.sumR + lin.sumF, 6) + ' kN', c: '#3f6b52' }
+    ];
+    const liveNote = Math.abs(lin.Mmax) > pr.Me
+      ? 'A rugalmas nyomaték már meghaladja Mₑ-t — a keresztmetszet szélső szálai megfolytak. Nemlineáris analízis szükséges.'
+      : 'A szerkezet még végig rugalmas. Növeld a terhet, hogy elérd a megfolyást (Mₑ = ' + M.fmt(pr.Me, 1) + ' kNm).';
+
+    const other = s.integration === 'selective' ? 'full' : 'selective';
+    const linOther = M.solveLinear(Object.assign({}, this.spec(), { integration: other }), pr);
+    const lockRows = [
+      { k: 'szelektív redukált w max', v: M.fmt(Math.abs(s.integration === 'selective' ? lin.wmax : linOther.wmax) * 1000, 4) + ' mm', c: '#3f6b52' },
+      { k: 'teljes integrálás w max', v: M.fmt(Math.abs(s.integration === 'full' ? lin.wmax : linOther.wmax) * 1000, 4) + ' mm', c: '#8c3b2e' },
+      { k: 'karcsúság L/h', v: M.fmt(s.L / pr.h, 1), c: '#23211d' },
+      { k: 'hibabecslő (egyensúlyi maradék)', v: M.fmt(lin.errPct, 2) + ' %', c: lin.errPct > 5 ? '#8c3b2e' : '#3f6b52' }
+    ];
+
+    const solveRows = nl ? [
+      { k: 'teherlépcsők', v: String(nl.steps), c: '#e8e3d9' },
+      { k: 'összes iteráció', v: String(nl.totalIters), c: '#e8e3d9' },
+      { k: 'határteherszorzó λᵤ', v: M.fmt(nl.lambdaU, 3), c: '#e0a05a' },
+      { k: 'állapot', v: nl.status === 'limit-load-reached' ? 'határteher elérve' : 'ok', c: '#e0a05a' }
+    ] : [{ k: 'állapot', v: 'nincs futás', c: '#8f887d' }];
+
+    const tabs = [['M', 'M nyomaték'], ['T', 'T nyíróerő'], ['w', 'w lehajlás'], ['phi', 'φ elfordulás'], ['PD', 'λ–δ görbe'], ['CONV', 'konvergencia']].map(([k, lb]) => ({
+      label: lb, pick: () => this.setState({ chart: k }),
+      style: 'padding:6px 14px;border-radius:3px;cursor:pointer;font:' + (s.chart === k ? '600' : '500') + ' 12.5px "IBM Plex Sans";border:1px solid ' + (s.chart === k ? '#8c3b2e' : '#ddd6c9') + ';background:' + (s.chart === k ? '#8c3b2e' : '#faf7f2') + ';color:' + (s.chart === k ? '#faf7f2' : '#5f584f')
+    }));
+
+    const femU = nl ? nl.lambdaU * (s.q > 0 ? s.q : s.P) : null;
+    const devU = (nl && an.Pu) ? 100 * (femU - an.Pu) / an.Pu : null;
+    const repModel = [
+      { k: 'Statikai váz', v: P.name.split(',')[0] }, { k: 'Fesztáv L', v: M.fmt(s.L, 2) + ' m' },
+      { k: 'Keresztmetszet', v: sec.name }, { k: 'Anyag', v: mat.id + ' (σY = ' + M.fmt(mat.sigmaY, 1) + ' kN/cm²)' },
+      { k: 'Rétegszám', v: String(pr.layers.length) }, { k: 'Elemszám / DOF', v: s.nEl + ' / ' + lin.mesh.nDof },
+      { k: 'Integrálás', v: s.integration === 'selective' ? 'szelektív redukált' : 'teljes' },
+      { k: 'Teher', v: (s.q ? 'q = ' + M.fmt(s.q, 1) + ' kN/m' : '') + (s.P ? (s.q ? ' + ' : '') + 'P = ' + M.fmt(s.P, 1) + ' kN' : '') },
+      { k: 'Megoldó', v: s.algo === 'newton' ? 'Newton–Raphson' : 'módosított N–R' },
+      { k: 'Tolerancia', v: M.fmt(s.tol, 2) + ' %' }
+    ];
+    const repRes = [
+      { k: 'w max (rugalmas)', v: M.fmt(Math.abs(lin.wmax) * 1000, 3) + ' mm', c: '#23211d' },
+      { k: 'M max (rugalmas)', v: M.fmt(Math.abs(lin.Mmax), 2) + ' kNm', c: '#23211d' },
+      { k: 'Mₑ / Mₚ', v: M.fmt(pr.Me, 1) + ' / ' + M.fmt(pr.Mp, 1) + ' kNm', c: '#23211d' },
+      { k: 'alaki tényező c', v: M.fmt(pr.c, 3), c: '#23211d' },
+      { k: 'határteherszorzó λᵤ', v: nl ? M.fmt(nl.lambdaU, 3) : '—', c: '#8c3b2e' },
+      { k: 'határteher (VEM)', v: femU ? M.fmt(femU, 2) + (s.q > 0 ? ' kN/m' : ' kN') : '—', c: '#8c3b2e' },
+      { k: an.uLabel, v: an.Pu ? M.fmt(an.Pu, 2) + (s.q > 0 ? ' kN/m' : ' kN') : '—', c: '#23211d' },
+      { k: 'eltérés az elmélettől', v: devU === null ? '—' : M.fmt(devU, 2) + ' %', c: devU !== null && Math.abs(devU) < 4 ? '#3f6b52' : '#c68a2b' },
+      { k: 'globális egyensúly', v: M.fmt(lin.sumR + lin.sumF, 6) + ' kN', c: '#3f6b52' },
+      { k: 'hibabecslő', v: M.fmt(lin.errPct, 2) + ' %', c: '#23211d' }
+    ];
+
+    // inspektor
+    let ins = { insBars: [], insSyL: 190, insSyR: 190, insNA: 150, insNAt: 146, insMk: '', insMkX: 32, insMkY: 184, insMpY: 40, insMpT: 36, insM: '—', insMratio: '—', insKap: '—', insYield: '—', insTitle: '' };
+    if (s.inspector && nl) {
+      const { e, g } = s.inspector, nLay = pr.layers.length, off = (e * 3 + g) * nLay;
+      const sig = []; for (let l = 0; l < nLay; l++) sig.push(hist.sig[off + l] / 1e4);
+      const sYc = pr.sY / 1e4, SX = v => 190 + 152 * v / (sYc * 1.35), LY = z => 150 + 128 * z / pr.h;
+      const bars = pr.layers.map((L, i) => {
+        const y = LY(L.z - L.t / 2), h = Math.max(1.2, LY(L.z + L.t / 2) - y), v = sig[i];
+        const yl = Math.abs(v) >= sYc * 0.999;
+        return { x: (v >= 0 ? 190 : SX(v)).toFixed(1), y: y.toFixed(1), w: Math.max(0.6, Math.abs(SX(v) - 190)).toFixed(1), h: h.toFixed(1), fill: yl ? '#8c3b2e' : v >= 0 ? '#6f7f95' : '#93a0b2' };
+      });
+      let na = 150; for (let i = 1; i < nLay; i++) if (sig[i - 1] * sig[i] < 0) na = LY(pr.layers[i].z);
+      const mk = nl.history.map(h2 => ({ k: M.gpKappa(nl.mesh, h2.u, e, g), m: h2.M[e][g] }));
+      const kMax = Math.max(1e-9, ...mk.map(p => Math.abs(p.k))) * 1.1, mMax = Math.max(pr.Mp, ...mk.map(p => Math.abs(p.m))) * 1.14;
+      const KX = k => 32 + 338 * Math.abs(k) / kMax, MY = m => 184 - 170 * Math.abs(m) / mMax, cur = mk[fi];
+      ins = {
+        insBars: bars, insSyL: SX(-sYc).toFixed(1), insSyR: SX(sYc).toFixed(1), insNA: na.toFixed(1), insNAt: (na - 5).toFixed(1),
+        insMk: mk.slice(0, fi + 1).map(p => KX(p.k).toFixed(1) + ',' + MY(p.m).toFixed(1)).join(' '),
+        insMkX: KX(cur.k).toFixed(1), insMkY: MY(cur.m).toFixed(1), insMpY: MY(pr.Mp).toFixed(1), insMpT: (MY(pr.Mp) - 5).toFixed(1),
+        insM: M.fmt(cur.m, 2), insMratio: M.fmt(Math.abs(cur.m) / pr.Mp, 3), insKap: M.fmt(cur.k, 5),
+        insYield: sig.filter(v => Math.abs(v) >= sYc * 0.999).length + ' / ' + nLay,
+        insTitle: 'elem ' + (e + 1) + ' · Gauss-pont ' + (g + 1) + ' · x = ' + M.fmt(s.inspector.x, 3) + ' m · λ = ' + M.fmt(lam, 3)
+      };
+    }
+
+    const btn = on => 'padding:8px 15px;font:' + (on ? '600' : '500') + ' 12.5px "IBM Plex Sans";border:1px solid ' + (on ? '#8c3b2e' : '#d8d0c2') + ';background:' + (on ? '#8c3b2e' : '#faf7f2') + ';color:' + (on ? '#faf7f2' : '#5f584f') + ';border-radius:3px;cursor:pointer';
+    const hints = ['Válassz sémát, majd add meg a fesztávot.', 'A rétegszám a képlékeny viselkedés pontosságát szabja meg.', 'A rugalmas megoldás minden változtatás után azonnal frissül.', 'Sűrítsd a hálót, ha a hibabecslő 5 % fölé megy.', 'Az analízis a jelenlegi beállításokkal indul.', 'Léptesd a teherlépcsőket, és nyisd meg egy Gauss-pont inspektorát.', 'A jegyzőkönyv nyomtatásra kész.'];
+
+    return Object.assign(base, {
+      statusText: s.running ? 'számítás fut…' : nl ? (nl.status === 'limit-load-reached' ? 'határteher elérve · λᵤ = ' + M.fmt(nl.lambdaU, 3) : 'konvergált') : 'lineáris megoldás kész',
+      stepList, crumbs,
+      presetCards: Object.values(M.PRESETS).map(p => ({
+        name: p.name, ref: p.ref, desc: this.presetDesc[p.id], pick: () => this.applyPreset(p.id),
+        style: 'padding:14px 16px;border:1px solid ' + (s.preset === p.id ? '#8c3b2e' : '#e3ddd2') + ';background:' + (s.preset === p.id ? '#f8efe9' : '#faf7f2') + ';border-radius:4px;cursor:pointer'
+      })),
+      udl, elBars, gpDots, supports, dimTicks, bx0, bx1,
+      deformedPts: fields.x.map((x, i) => X(x).toFixed(1) + ',' + (beamY + fields.w[i] * defScale).toFixed(1)).join(' '),
+      hasUdl: s.q > 0, udlX1: X(0).toFixed(1), udlX2: X(s.L).toFixed(1), udlMid: ((bx0 + bx1) / 2).toFixed(1), udlText: 'q = ' + M.fmt(s.q * lam, 2) + ' kN/m',
+      hasP: s.P > 0, pX: X(P.load.xP * s.L).toFixed(1), pY2: beamY - 12, pText: 'P = ' + M.fmt(s.P * lam, 2) + ' kN',
+      secShape, secLayers, secStats, matSource: mat.source, swTxt: M.fmt(sw, 3),
+      liveRows, liveNote, lockRows, solveRows, nDof: lin.mesh.nDof,
+      btnSel: btn(s.integration === 'selective'), btnFull: btn(s.integration === 'full'),
+      btnNewton: btn(s.algo === 'newton'), btnModified: btn(s.algo === 'modified-newton'),
+      runLabel: s.running ? 'SZÁMÍTÁS FUT…' : 'ANALÍZIS INDÍTÁSA',
+      tabs, ch: this.mkChart(s.chart, { x: 56, y: 28, w: 1024, h: 158 }, false),
+      rep: this.mkChart('M', { x: 40, y: 14, w: 650, h: 116 }, true),
+      lamTxt: M.fmt(lam, 3),
+      stepInfo: nl ? 'teherlépcső ' + fi + ' / ' + (nl.history.length - 1) + ' · ' + hist.iters + ' iteráció · reziduum ' + M.fmt(hist.res, 3) + ' %' : 'nincs nemlineáris futás',
+      steps: nl ? nl.history.map((h, i) => ({
+        pick: () => this.setState({ frame: i, playing: false }),
+        style: 'flex:1;min-width:3px;cursor:pointer;border-radius:1px;background:' + (i <= fi ? (h.yieldFrac.some(v => v >= 0.82) ? '#8c3b2e' : h.yieldFrac.some(v => v > 0.05) ? '#c68a2b' : '#a8b5ab') : '#e3ddd2')
+      })) : [{ style: 'flex:1;background:#e3ddd2;border-radius:1px', pick: () => { } }],
+      playIcon: s.playing ? '❚❚' : '▶',
+      repModel, repRes, dateTxt: new Date().toLocaleDateString('hu-HU'),
+      prevStyle: 'padding:9px 18px;border:1px solid #d8d0c2;background:#fff;border-radius:3px;font:500 13px "IBM Plex Sans";color:' + (s.step === 1 ? '#c3b8a4' : '#5f584f') + ';cursor:pointer',
+      nextStyle: 'padding:9px 20px;border:none;background:' + (s.step === 7 ? '#c3b8a4' : '#23211d') + ';color:#faf7f2;border-radius:3px;font:600 13px "IBM Plex Sans";cursor:pointer',
+      nextLabel: s.step === 5 ? 'Analízis →' : s.step === 7 ? 'Kész' : 'Tovább →',
+      hint: hints[s.step - 1],
+      inspector: !!(s.inspector && nl)
+    }, ins);
+  }
+}
+</script>
+</body>
+</html>

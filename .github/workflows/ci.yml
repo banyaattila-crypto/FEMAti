@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # A sorrend szándékos: a típusellenőrzés a tesztek ELŐTT fut.
+      # A Vitest esbuild-del transzpilál típusellenőrzés nélkül, ezért a
+      # zöld teszt önmagában NEM bizonyítja a típushelyességet.
+      - name: Típusellenőrzés
+        run: pnpm -r typecheck
+
+      - name: Lint
+        run: pnpm exec eslint .
+
+      - name: Design-token ellenőrzés (nincs nyers hex)
+        run: node scripts/check-design-tokens.mjs
+
+      - name: Halott CSS ellenőrzés
+        run: node scripts/check-dead-css.mjs
+
+      - name: Tesztek
+        run: pnpm -r test
+
+      - name: Lefedettség (fem-core, küszöb 90%)
+        run: pnpm --filter @femati/fem-core coverage
+
+      - name: Build
+        run: pnpm -r build

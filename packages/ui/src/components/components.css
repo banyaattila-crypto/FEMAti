@@ -1,0 +1,533 @@
+/**
+ * Alapkomponensek stílusa — DESIGN-TERV.md 4.1.
+ * Kizárólag tokeneket használ; nyers hex-érték itt nem szerepelhet.
+ */
+
+/* ── Gomb ───────────────────────────────────────────────────────────────── */
+
+.vem-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--h-control);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease);
+}
+
+.vem-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.vem-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vem-btn--primary {
+  background: linear-gradient(180deg, var(--brand-gold-1) 0%, var(--brand-gold-2) 48%, var(--brand-gold-3) 100%);
+  border-color: var(--brand-gold-border);
+  color: var(--brand-gold-text);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0 var(--space-7);
+  height: 34px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 -2px 4px rgba(0, 0, 0, 0.25) inset;
+}
+
+.vem-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.vem-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.vem-btn--sm {
+  height: 24px;
+  padding: 0 var(--space-4);
+  font-size: 11.5px;
+}
+
+.vem-spinner {
+  width: 11px;
+  height: 11px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: vem-spin 800ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vem-spinner {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* ── Szegmentált vezérlő ────────────────────────────────────────────────── */
+
+.vem-segmented {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.vem-segmented__item {
+  height: var(--h-control);
+  padding: 0 var(--space-5);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--motion-fast) var(--ease);
+}
+
+.vem-segmented__item:hover:not([aria-pressed='true']) {
+  background: var(--surface-hover);
+}
+
+.vem-segmented__item[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+}
+
+/* ── Mezők ──────────────────────────────────────────────────────────────── */
+
+.vem-field__label {
+  display: block;
+  font-size: var(--type-field-label-size);
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.vem-slider {
+  display: flex;
+  gap: var(--space-5);
+  align-items: flex-end;
+}
+
+.vem-slider__input {
+  flex: 1;
+  min-width: 0;
+  margin: var(--space-1) 0 0;
+}
+
+.vem-slider__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-value-lg-size);
+  font-weight: 600;
+  line-height: 1;
+  padding-bottom: var(--space-1);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.vem-slider__number {
+  width: 72px;
+  height: var(--h-control);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-value-size);
+  font-weight: 600;
+  text-align: right;
+  flex: none;
+}
+
+.vem-slider__number:focus {
+  outline: 2px solid var(--accent-light);
+  outline-offset: -1px;
+}
+
+.vem-select {
+  width: 100%;
+  height: var(--h-control);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  /* A natív legördülő popup (opciólista) böngészőnként a rendszer
+     témáját követi — `color-scheme: dark` nélkül a Chromium/Firefox
+     alapból VILÁGOS (fehér) hátterű popuppal renderelné, ami ütne a
+     `.vem-select` sötét felszínével és az opciók színes szöveg-
+     előtagjaival. Ez a deklaráció kéri a böngészőt, hogy a saját (nem
+     stílusozható) natív widget-részeket is sötét témában rajzolja. */
+  color-scheme: dark;
+}
+
+/* ── Combobox — saját, ikonos legördülő (Field.tsx `Select` helyett, ahol
+   valódi ikon/szín szükséges — ld. `Combobox.tsx` fejléc-kommentje) ──── */
+
+.vem-combobox {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.vem-combobox__trigger {
+  width: 100%;
+  height: var(--h-control);
+  padding: 0 var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.vem-combobox__trigger:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.vem-combobox__trigger:focus-visible {
+  outline: 2px solid var(--accent-light);
+  outline-offset: -1px;
+}
+
+.vem-combobox__trigger:disabled {
+  cursor: not-allowed;
+  color: var(--text-faint);
+}
+
+.vem-combobox__trigger-icon {
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.vem-combobox__trigger-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vem-combobox__chevron {
+  flex: none;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.vem-combobox__panel {
+  position: absolute;
+  top: calc(var(--h-control) + 4px);
+  left: 0;
+  min-width: 100%;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--surface-chrome);
+  border: 1px solid var(--border-chrome);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+  z-index: 60;
+  padding: var(--space-1) 0;
+}
+
+.vem-combobox__group-label {
+  padding: var(--space-2) var(--space-5) 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.vem-combobox__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5);
+  font-size: 12px;
+  color: var(--text-on-chrome);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.vem-combobox__option--highlighted {
+  background: var(--surface-chrome-raised);
+}
+
+.vem-combobox__option[aria-selected='true'] {
+  color: var(--accent-light);
+  font-weight: 600;
+}
+
+.vem-combobox__option-icon {
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.vem-checkbox {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+/* ── Érték megjelenítése ────────────────────────────────────────────────── */
+
+.vem-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.vem-value__num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-value-size);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.vem-value__unit {
+  font-family: var(--font-mono);
+  font-size: var(--type-unit-size);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.vem-value--large .vem-value__num {
+  font-size: var(--type-value-lg-size);
+  font-weight: 600;
+}
+
+.vem-value--hero .vem-value__num {
+  font-size: var(--type-value-xl-size);
+  font-weight: 700;
+}
+
+.vem-value--ok .vem-value__num {
+  color: var(--sem-ok);
+}
+.vem-value--warn .vem-value__num {
+  color: var(--sem-warn);
+}
+.vem-value--error .vem-value__num {
+  color: var(--sem-error);
+}
+
+/* ── Eredménysor és -tábla ──────────────────────────────────────────────── */
+
+.vem-result-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.vem-result-row__label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vem-result-row__value {
+  flex: none;
+  text-align: right;
+}
+
+/* ── Státusz ────────────────────────────────────────────────────────────── */
+
+.vem-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 3px var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-chrome-raised);
+  font-size: 11px;
+  color: var(--text-on-chrome);
+  white-space: nowrap;
+}
+
+.vem-status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  flex: none;
+}
+
+.vem-status--idle {
+  color: var(--text-on-chrome-muted);
+}
+.vem-status--running {
+  color: var(--accent-light);
+}
+.vem-status--converged {
+  color: var(--sem-ok);
+}
+.vem-status--limit-load {
+  color: var(--sem-warn);
+}
+.vem-status--diverged,
+.vem-status--error {
+  color: var(--sem-error);
+}
+
+/* ── Megjegyzés-doboz ───────────────────────────────────────────────────── */
+
+.vem-note {
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-note);
+  border: 1px solid var(--border-note);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-note);
+}
+
+.vem-note--warn {
+  border-left: 3px solid var(--sem-warn);
+}
+
+.vem-note--error {
+  border-left: 3px solid var(--sem-error);
+  color: var(--sem-plastic-edge);
+}
+
+/* ── Jelmagyarázat ──────────────────────────────────────────────────────── */
+
+.vem-legend {
+  display: flex;
+  gap: var(--space-5);
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: var(--type-body-sm-size);
+  color: var(--text-secondary);
+}
+
+.vem-legend__item {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  white-space: nowrap;
+}
+
+.vem-legend__swatch {
+  width: 13px;
+  height: 7px;
+  flex: none;
+  border: 1px solid;
+}
+
+/* ── Keresztmetszet-inspektor (P13) ─────────────────────────────────────── */
+
+.vem-inspector-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 22, 26, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.vem-inspector {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+  max-height: 88vh;
+  overflow: auto;
+}
+
+.vem-inspector__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-divider);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  position: sticky;
+  top: 0;
+  background: var(--surface-raised);
+}
+
+.vem-inspector__readouts {
+  display: flex;
+  gap: var(--space-5);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.vem-inspector__unload-tag {
+  color: var(--sem-partial-edge);
+  font-weight: 600;
+}
+
+.vem-inspector__equilibrium {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface-note);
+  border: 1px solid var(--border-note);
+  border-radius: 3px;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vem-section-label-sm {
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}

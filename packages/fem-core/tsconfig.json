@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // ADR-0001: a noUncheckedIndexedAccess itt szándékosan KI van kapcsolva.
+    // Indoklás: a mag Float64Array-eken dolgozik fix, előre ellenőrzött
+    // dimenziókkal; a flag a TypedArray-indexelést is `number | undefined`-dá
+    // teszi, ami a numerikus hurkokban vagy `!` operátort (tiltott) vagy
+    // felesleges elágazást kényszerítene. Cserébe minden publikus belépési pont
+    // explicit dimenzió-ellenőrzést végez (assertDim), és ezt teszt fedi.
+    "noUncheckedIndexedAccess": false,
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.ts"]
+}

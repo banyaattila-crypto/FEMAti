@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#0d1014}
+  body{font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:#4fd6b4;text-decoration:none} a:hover{color:#7fe8cd}
+  input[type=range]{accent-color:#4fd6b4;height:3px}
+  select,option{background:#161b21;color:#e2e6ea}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#2a323a;border-radius:5px}
+  ::-webkit-scrollbar-track{background:#0d1014}
+  @keyframes vemPulse{0%,100%{opacity:.35}50%{opacity:1}}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;min-height:740px;background:#0d1014;color:#e2e6ea;font-size:13px;overflow:hidden">
+
+  <div style="display:flex;align-items:center;gap:16px;height:46px;padding:0 16px;background:#11151a;border-bottom:1px solid #1e242b;flex:none">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="width:22px;height:22px;border-radius:3px;background:#4fd6b4;display:grid;place-items:center;font:700 11px/1 'JetBrains Mono',monospace;color:#0d1014">V</div>
+      <div style="font-weight:600;letter-spacing:.04em;font-size:14px">VEM97</div>
+    </div>
+    <div style="width:1px;height:20px;background:#232a31"></div>
+    <div style="font:500 11.5px 'JetBrains Mono',monospace;color:#7d8894">{{ crumb }}</div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:baseline;gap:8px;padding:4px 12px;background:#161b21;border:1px solid #232a31;border-radius:4px">
+      <span style="font:500 12px 'JetBrains Mono',monospace;color:#7d8894">λ</span>
+      <span style="font:700 15px 'JetBrains Mono',monospace;color:#4fd6b4">{{ lamTxt }}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:4px;background:{{ statusBg }};font:500 11.5px 'JetBrains Mono',monospace;color:{{ statusFg }}">
+      <span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>{{ statusText }}
+    </div>
+    <button onClick="{{ run }}" style="padding:8px 20px;background:#4fd6b4;color:#08110e;border:none;border-radius:4px;font:600 12.5px 'IBM Plex Sans';letter-spacing:.04em;cursor:pointer" style-hover="background:#6ee6c8">FUTTATÁS</button>
+  </div>
+
+  <div style="flex:1;display:flex;min-height:0;overflow-x:auto;overflow-y:hidden">
+
+    <div style="flex:1 1 520px;min-width:400px;position:relative;min-height:340px;max-height:100%;background:radial-gradient(ellipse at 50% 40%,#161c23 0%,#0d1014 72%)">
+      <svg viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid meet" style="position:absolute;left:270px;top:0;width:calc(100% - 270px);height:100%">
+        <defs>
+          <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="#5c9ee0"></path></marker>
+          <linearGradient id="glowB" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4fd6b4" stop-opacity="0.28"></stop><stop offset="100%" stop-color="#4fd6b4" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
+        <sc-for list="{{ grid }}" as="g" hint-placeholder-count="10">
+          <line x1="{{ g.x }}" y1="40" x2="{{ g.x }}" y2="380" stroke="#181e25" stroke-width="1"></line>
+        </sc-for>
+        <sc-for list="{{ gridH }}" as="g" hint-placeholder-count="6">
+          <line x1="76" y1="{{ g.y }}" x2="1124" y2="{{ g.y }}" stroke="#161c22" stroke-width="1"></line>
+        </sc-for>
+
+        <sc-for list="{{ udl }}" as="a" hint-placeholder-count="0">
+          <line x1="{{ a.x }}" y1="{{ a.y1 }}" x2="{{ a.x }}" y2="{{ a.y2 }}" stroke="#5c9ee0" stroke-width="1.2" marker-end="url(#arrB)" opacity="0.85"></line>
+        </sc-for>
+        <sc-if value="{{ hasUdl }}" hint-placeholder-val="{{ true }}">
+          <g><line x1="{{ udlX1 }}" y1="112" x2="{{ udlX2 }}" y2="112" stroke="#5c9ee0" stroke-width="1.4"></line>
+            <text x="{{ udlMid }}" y="102" text-anchor="middle" style="font:600 16px 'JetBrains Mono',monospace;fill:#7fb6ea">{{ udlText }}</text></g>
+        </sc-if>
+        <sc-if value="{{ hasP }}" hint-placeholder-val="{{ false }}">
+          <g><line x1="{{ pX }}" y1="96" x2="{{ pX }}" y2="{{ pY2 }}" stroke="#5c9ee0" stroke-width="3.2" marker-end="url(#arrB)"></line>
+            <text x="{{ pX }}" y="86" text-anchor="middle" style="font:600 17px 'JetBrains Mono',monospace;fill:#7fb6ea">{{ pText }}</text></g>
+        </sc-if>
+
+        <line x1="{{ bx0 }}" y1="200" x2="{{ bx1 }}" y2="200" stroke="#2c343d" stroke-width="1.5" stroke-dasharray="6 5"></line>
+        <sc-for list="{{ elBars }}" as="b" hint-placeholder-count="16">
+          <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="1.5" fill="{{ b.fill }}" stroke="{{ b.stroke }}" stroke-width="0.8"></rect>
+        </sc-for>
+        <polyline points="{{ deformedFill }}" fill="url(#glowB)" stroke="none"></polyline>
+        <polyline points="{{ deformedPts }}" fill="none" stroke="#4fd6b4" stroke-width="2.6" stroke-linejoin="round"></polyline>
+        <sc-for list="{{ gpDots }}" as="p" hint-placeholder-count="24">
+          <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="{{ p.r }}" fill="{{ p.fill }}" stroke="{{ p.stroke }}" stroke-width="1.2" onClick="{{ p.pick }}" style="cursor:pointer"></circle>
+        </sc-for>
+        <sc-for list="{{ supports }}" as="s" hint-placeholder-count="3">
+          <g><path d="{{ s.d }}" fill="#4a5762" stroke="#697682" stroke-width="1.2"></path>
+            <line x1="{{ s.hx1 }}" y1="{{ s.hy }}" x2="{{ s.hx2 }}" y2="{{ s.hy }}" stroke="#697682" stroke-width="2"></line></g>
+        </sc-for>
+        <sc-for list="{{ dimTicks }}" as="d" hint-placeholder-count="5">
+          <text x="{{ d.x }}" y="372" text-anchor="middle" style="font:500 13px 'JetBrains Mono',monospace;fill:#4c5761">{{ d.t }}</text>
+        </sc-for>
+      </svg>
+
+      <div style="position:absolute;left:14px;top:14px;width:246px;background:rgba(17,21,26,.93);border:1px solid #232a31;border-radius:6px;backdrop-filter:blur(8px)">
+        <div style="padding:9px 12px 7px;font:600 10px/1 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#5f6b76;border-bottom:1px solid #1e242b">Modell</div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:9px">
+          <select onChange="{{ onPreset }}" value="{{ preset }}" style="width:100%;font:500 12px 'IBM Plex Sans';padding:6px 7px;border:1px solid #2a323a;background:#161b21;color:#e2e6ea;border-radius:4px">
+            <option value="cantilever">Konzol, végponti P</option><option value="simple">Kéttámaszú, egyenletes q</option>
+            <option value="simpleP">Kéttámaszú, középen P</option><option value="clamped">Kétoldalt befogott, q</option>
+            <option value="twospan">Kétnyílású folytatólagos, q</option>
+          </select>
+          <div style="display:flex;gap:7px">
+            <select onChange="{{ onSec }}" value="{{ secId }}" style="flex:1.2;min-width:0;font:500 12px 'IBM Plex Sans';padding:6px 7px;border:1px solid #2a323a;background:#161b21;color:#e2e6ea;border-radius:4px">
+              <option value="IPE200">IPE 200</option><option value="IPE300">IPE 300</option><option value="IPE400">IPE 400</option>
+              <option value="HEA200">HEA 200</option><option value="HEB300">HEB 300</option><option value="RECT">Tégl. 120×300</option>
+            </select>
+            <select onChange="{{ onMat }}" value="{{ matId }}" style="flex:1;min-width:0;font:500 12px 'IBM Plex Sans';padding:6px 7px;border:1px solid #2a323a;background:#161b21;color:#e2e6ea;border-radius:4px">
+              <option value="S235">S235</option><option value="S275">S275</option><option value="S355">S355</option><option value="S235H">S235+H′</option>
+            </select>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font:500 10.5px 'IBM Plex Sans';color:#7d8894;margin-bottom:2px;white-space:nowrap"><span>Fesztáv L</span><span style="font-family:'JetBrains Mono',monospace;color:#e2e6ea">{{ Ltxt }} m</span></div>
+            <input type="range" min="2" max="16" step="0.5" value="{{ L }}" onInput="{{ onL }}" style="width:100%">
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font:500 10.5px 'IBM Plex Sans';color:#7d8894;margin-bottom:2px;white-space:nowrap"><span>Elemszám</span><span style="font-family:'JetBrains Mono',monospace;color:#e2e6ea">{{ nEl }}</span></div>
+            <input type="range" min="4" max="48" step="2" value="{{ nEl }}" onInput="{{ onNEl }}" style="width:100%">
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font:500 10.5px 'IBM Plex Sans';color:#7d8894;margin-bottom:2px;white-space:nowrap"><span>Rétegszám</span><span style="font-family:'JetBrains Mono',monospace;color:#e2e6ea">{{ nL }}</span></div>
+            <input type="range" min="6" max="60" step="2" value="{{ nL }}" onInput="{{ onNL }}" style="width:100%">
+          </div>
+          <div style="display:flex;gap:5px">
+            <button onClick="{{ setSelective }}" style="{{ btnSel }}">szelektív</button>
+            <button onClick="{{ setFull }}" style="{{ btnFull }}">teljes</button>
+          </div>
+          <div style="font:400 10.5px/1.5 'IBM Plex Sans';color:#5f6b76">Redukált nyírási integrálás a záródás (shear locking) ellen — kapcsold „teljes"-re és nézd a lehajlást.</div>
+        </div>
+      </div>
+
+      <div style="position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+        <div style="display:flex;gap:6px;align-items:center;padding:4px 9px;background:rgba(17,21,26,.9);border:1px solid #232a31;border-radius:4px;font-size:11px;color:#9aa5b0;white-space:nowrap"><span style="width:11px;height:6px;background:#3d4854;border-radius:1px"></span>rugalmas</div>
+        <div style="display:flex;gap:6px;align-items:center;padding:4px 9px;background:rgba(17,21,26,.9);border:1px solid #232a31;border-radius:4px;font-size:11px;color:#9aa5b0;white-space:nowrap"><span style="width:11px;height:6px;background:#ffb84d;border-radius:1px"></span>részben képlékeny</div>
+        <div style="display:flex;gap:6px;align-items:center;padding:4px 9px;background:rgba(17,21,26,.9);border:1px solid #232a31;border-radius:4px;font-size:11px;color:#9aa5b0;white-space:nowrap"><span style="width:11px;height:6px;background:#ff5f56;border-radius:1px"></span>képlékeny csukló</div>
+        <div style="margin-top:4px;padding:4px 9px;background:rgba(17,21,26,.9);border:1px solid #232a31;border-radius:4px;font:500 11px 'JetBrains Mono',monospace;color:#5f6b76">deformáció ×{{ defScaleTxt }}</div>
+      </div>
+
+      <div style="position:absolute;left:14px;bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button onClick="{{ togglePlay }}" style="width:30px;height:26px;background:#1b2128;border:1px solid #2a323a;color:#e2e6ea;border-radius:4px;cursor:pointer;font-size:11px">{{ playIcon }}</button>
+        <div style="font:500 11px 'JetBrains Mono',monospace;color:#7d8894">{{ frameLabel }}</div>
+        <div style="font:500 11px 'JetBrains Mono',monospace;color:#5f6b76">kattints egy Gauss-pontra a keresztmetszet-inspektorhoz</div>
+      </div>
+    </div>
+
+    <div style="width:352px;flex:0 0 352px;max-height:100%;background:#11151a;border-left:1px solid #1e242b;display:flex;flex-direction:column;min-height:0;overflow:auto">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1e242b">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="background:#11151a;padding:11px 13px">
+            <div style="font:500 10px/1 'IBM Plex Sans';letter-spacing:.11em;text-transform:uppercase;color:#5f6b76;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.label }}</div>
+            <div style="font:700 20px/1.25 'JetBrains Mono',monospace;color:{{ k.color }};margin-top:5px">{{ k.value }}</div>
+            <div style="font:400 10.5px/1 'JetBrains Mono',monospace;color:#4c5761">{{ k.unit }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding:12px 13px 6px;font:600 10px/1 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#5f6b76">Határteher-ellenőrzés</div>
+      <div style="margin:0 13px;padding:11px 12px;background:#161b21;border:1px solid #232a31;border-radius:6px">
+        <div style="font:500 11.5px/1.5 'JetBrains Mono',monospace;color:#9aa5b0;margin-bottom:8px">{{ anULabel }}</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;white-space:nowrap">
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#7d8894">plasztikus elmélet</span><span style="font:600 12.5px 'JetBrains Mono',monospace">{{ anU }}</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#7d8894">végeselem</span><span style="font:600 12.5px 'JetBrains Mono',monospace;color:#ffb84d">{{ femU }}</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#7d8894">eltérés</span><span style="font:600 12.5px 'JetBrains Mono',monospace;color:{{ devColor }}">{{ devU }}</span></div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;padding:14px 13px 6px">
+        <div style="font:600 10px/1 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#5f6b76;flex:1">Hálófüggetlenség</div>
+        <button onClick="{{ runStudy }}" style="padding:4px 10px;background:#1b2128;border:1px solid #2a323a;color:#4fd6b4;border-radius:4px;font:500 11px 'IBM Plex Sans';cursor:pointer" style-hover="background:#222a32">{{ studyBtn }}</button>
+      </div>
+      <div style="margin:0 13px;padding:10px 12px;background:#161b21;border:1px solid #232a31;border-radius:6px">
+        <svg viewBox="0 0 300 120" style="width:100%;height:118px;display:block">
+          <line x1="34" y1="104" x2="292" y2="104" stroke="#2a323a" stroke-width="1"></line>
+          <line x1="34" y1="10" x2="34" y2="104" stroke="#2a323a" stroke-width="1"></line>
+          <line x1="34" y1="{{ study.refY }}" x2="292" y2="{{ study.refY }}" stroke="#ff5f56" stroke-width="1" stroke-dasharray="4 3"></line>
+          <text x="292" y="{{ study.refT }}" text-anchor="end" style="font:600 10px 'JetBrains Mono',monospace;fill:#ff5f56">analitikus</text>
+          <polyline points="{{ study.line }}" fill="none" stroke="#4fd6b4" stroke-width="1.8"></polyline>
+          <sc-for list="{{ study.pts }}" as="p" hint-placeholder-count="0">
+            <g><circle cx="{{ p.x }}" cy="{{ p.y }}" r="2.8" fill="#4fd6b4"></circle>
+              <text x="{{ p.x }}" y="116" text-anchor="middle" style="font:500 9.5px 'JetBrains Mono',monospace;fill:#5f6b76">{{ p.t }}</text></g>
+          </sc-for>
+          <text x="4" y="14" style="font:500 10px 'JetBrains Mono',monospace;fill:#5f6b76">qᵤ</text>
+        </svg>
+        <div style="font:400 10.5px/1.5 'IBM Plex Sans';color:#5f6b76;margin-top:4px">{{ study.note }}</div>
+      </div>
+
+      <div style="padding:14px 13px 6px;font:600 10px/1 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#5f6b76">Iterációs napló</div>
+      <div style="margin:0 13px 14px;border:1px solid #232a31;border-radius:6px;overflow:hidden">
+        <div style="display:flex;padding:6px 10px;background:#161b21;font:500 10px 'IBM Plex Sans';letter-spacing:.09em;text-transform:uppercase;color:#5f6b76">
+          <div style="width:34px">#</div><div style="flex:1">λ</div><div style="width:34px;text-align:right">it.</div><div style="width:66px;text-align:right">‖ψ‖/‖f‖</div>
+        </div>
+        <sc-for list="{{ logRows }}" as="r" hint-placeholder-count="6">
+          <div onClick="{{ r.pick }}" style="{{ r.style }}">
+            <div style="width:34px;color:#5f6b76">{{ r.i }}</div><div style="flex:1">{{ r.lam }}</div>
+            <div style="width:34px;text-align:right;color:#9aa5b0">{{ r.it }}</div><div style="width:66px;text-align:right;color:{{ r.rc }}">{{ r.res }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:none;background:#11151a;border-top:1px solid #1e242b;display:flex;flex-wrap:wrap">
+    <div style="flex:1 1 420px;min-width:340px;border-right:1px solid #1e242b;padding:8px 12px 4px">
+      <div style="display:flex;gap:4px;margin-bottom:2px;flex-wrap:wrap">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+          <div onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</div>
+        </sc-for>
+      </div>
+      <svg viewBox="0 0 700 150" preserveAspectRatio="none" style="width:100%;height:150px;display:block">
+        <line x1="{{ ch.zx0 }}" y1="{{ ch.zeroY }}" x2="{{ ch.zx1 }}" y2="{{ ch.zeroY }}" stroke="#2a323a" stroke-width="1"></line>
+        <sc-for list="{{ ch.xticks }}" as="t" hint-placeholder-count="6">
+          <g><line x1="{{ t.x }}" y1="{{ t.y0 }}" x2="{{ t.x }}" y2="{{ t.y1 }}" stroke="#181e25" stroke-width="1"></line>
+            <text x="{{ t.x }}" y="146" text-anchor="middle" style="font:500 10px 'JetBrains Mono',monospace;fill:#4c5761">{{ t.t }}</text></g>
+        </sc-for>
+        <polygon points="{{ ch.fill }}" fill="{{ ch.fillColor }}"></polygon>
+        <polyline points="{{ ch.line }}" fill="none" stroke="{{ ch.stroke }}" stroke-width="1.6"></polyline>
+        <sc-for list="{{ ch.marks }}" as="m" hint-placeholder-count="1">
+          <g><circle cx="{{ m.x }}" cy="{{ m.y }}" r="2.8" fill="{{ m.c }}"></circle>
+            <text x="{{ m.tx }}" y="{{ m.ty }}" text-anchor="{{ m.anchor }}" style="font:600 11px 'JetBrains Mono',monospace;fill:#c8d0d8">{{ m.t }}</text></g>
+        </sc-for>
+        <text x="8" y="15" style="font:500 11.5px 'IBM Plex Sans';fill:#9aa5b0">{{ ch.title }}</text>
+      </svg>
+    </div>
+
+    <div style="flex:1 1 380px;min-width:320px;padding:8px 12px 4px">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px">
+        <div style="font:500 11.5px 'IBM Plex Sans';color:#9aa5b0">Teher–elmozdulás görbe</div>
+        <div style="font:500 10.5px 'JetBrains Mono',monospace;color:#4c5761">λ vs |w| a {{ monX }} m keresztmetszetben</div>
+      </div>
+      <svg viewBox="0 0 700 150" preserveAspectRatio="none" style="width:100%;height:150px;display:block">
+        <line x1="46" y1="132" x2="690" y2="132" stroke="#2a323a" stroke-width="1"></line>
+        <line x1="46" y1="10" x2="46" y2="132" stroke="#2a323a" stroke-width="1"></line>
+        <line x1="46" y1="{{ pd.limY }}" x2="690" y2="{{ pd.limY }}" stroke="#ff5f56" stroke-width="1" stroke-dasharray="5 4"></line>
+        <polyline points="{{ pd.elastic }}" fill="none" stroke="#3d4854" stroke-width="1.4" stroke-dasharray="5 4"></polyline>
+        <polyline points="{{ pd.line }}" fill="none" stroke="#ffb84d" stroke-width="2"></polyline>
+        <circle cx="{{ pd.cx }}" cy="{{ pd.cy }}" r="4.5" fill="#ffb84d" stroke="#11151a" stroke-width="2"></circle>
+        <text x="690" y="{{ pd.limT }}" text-anchor="end" style="font:600 10.5px 'JetBrains Mono',monospace;fill:#ff5f56">{{ pd.limTxt }}</text>
+        <text x="52" y="146" style="font:500 10px 'JetBrains Mono',monospace;fill:#4c5761">|w| [mm]</text>
+      </svg>
+    </div>
+  </div>
+
+  <div style="flex:none;display:flex;align-items:center;gap:12px;padding:8px 16px;background:#0d1014;border-top:1px solid #1e242b;flex-wrap:wrap">
+    <div style="font:600 10px 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#5f6b76">Teherlépcsők</div>
+    <div style="flex:1;min-width:180px;display:flex;gap:2px;height:16px">
+      <sc-for list="{{ steps }}" as="s" hint-placeholder-count="14">
+        <div onClick="{{ s.pick }}" style="{{ s.style }}"></div>
+      </sc-for>
+    </div>
+    <div style="font:500 11px 'JetBrains Mono',monospace;color:#7d8894">{{ stepInfo }}</div>
+  </div>
+
+  <sc-if value="{{ inspector }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(6,8,10,.72);display:grid;place-items:center;z-index:40" onClick="{{ closeInspector }}">
+      <div onClick="{{ stop }}" style="width:min(900px,94vw);max-height:88vh;overflow:auto;background:#11151a;border:1px solid #2a323a;border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,.6)">
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #1e242b;flex-wrap:wrap">
+          <div style="font-weight:600;font-size:14px">Keresztmetszet-inspektor</div>
+          <div style="font:500 11.5px 'JetBrains Mono',monospace;color:#5f6b76">{{ insTitle }}</div>
+          <div style="flex:1"></div>
+          <button onClick="{{ closeInspector }}" style="background:none;border:none;color:#7d8894;font-size:20px;cursor:pointer;line-height:1">×</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap">
+          <div style="flex:1 1 300px;min-width:270px;padding:14px 16px;border-right:1px solid #1e242b">
+            <div style="font:600 10px/1 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#5f6b76;margin-bottom:10px">Rétegenkénti σ</div>
+            <svg viewBox="0 0 380 300" style="width:100%;height:270px;display:block">
+              <line x1="190" y1="18" x2="190" y2="282" stroke="#2a323a" stroke-width="1"></line>
+              <sc-for list="{{ insBars }}" as="b" hint-placeholder-count="24">
+                <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" fill="{{ b.fill }}" stroke="#11151a" stroke-width="0.4"></rect>
+              </sc-for>
+              <line x1="{{ insSyL }}" y1="18" x2="{{ insSyL }}" y2="282" stroke="#ff5f56" stroke-width="1" stroke-dasharray="4 3"></line>
+              <line x1="{{ insSyR }}" y1="18" x2="{{ insSyR }}" y2="282" stroke="#ff5f56" stroke-width="1" stroke-dasharray="4 3"></line>
+              <line x1="20" y1="{{ insNA }}" x2="360" y2="{{ insNA }}" stroke="#4fd6b4" stroke-width="1.2"></line>
+              <text x="24" y="{{ insNAt }}" style="font:600 11px 'JetBrains Mono',monospace;fill:#4fd6b4">semleges tengely</text>
+              <text x="{{ insSyR }}" y="13" text-anchor="middle" style="font:600 11px 'JetBrains Mono',monospace;fill:#ff5f56">+σY</text>
+              <text x="{{ insSyL }}" y="13" text-anchor="middle" style="font:600 11px 'JetBrains Mono',monospace;fill:#ff5f56">−σY</text>
+            </svg>
+          </div>
+          <div style="flex:1 1 300px;min-width:270px;padding:14px 16px">
+            <div style="font:600 10px/1 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;color:#5f6b76;margin-bottom:10px">M–κ a tehertörténet mentén</div>
+            <svg viewBox="0 0 380 210" style="width:100%;height:180px;display:block">
+              <line x1="32" y1="184" x2="370" y2="184" stroke="#2a323a" stroke-width="1"></line>
+              <line x1="32" y1="14" x2="32" y2="184" stroke="#2a323a" stroke-width="1"></line>
+              <line x1="32" y1="{{ insMpY }}" x2="370" y2="{{ insMpY }}" stroke="#ff5f56" stroke-width="1" stroke-dasharray="4 3"></line>
+              <text x="370" y="{{ insMpT }}" text-anchor="end" style="font:600 11px 'JetBrains Mono',monospace;fill:#ff5f56">Mₚ</text>
+              <polyline points="{{ insMk }}" fill="none" stroke="#4fd6b4" stroke-width="2"></polyline>
+              <circle cx="{{ insMkX }}" cy="{{ insMkY }}" r="4" fill="#4fd6b4" stroke="#11151a" stroke-width="1.6"></circle>
+              <text x="200" y="204" text-anchor="middle" style="font:500 10.5px 'JetBrains Mono',monospace;fill:#4c5761">κ [1/m]</text>
+            </svg>
+            <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;font:500 12px/1.5 'JetBrains Mono',monospace">
+              <div style="display:flex;justify-content:space-between"><span style="color:#7d8894">M</span><span>{{ insM }} kNm</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:#7d8894">M / Mₚ</span><span style="color:#ffb84d">{{ insMratio }}</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:#7d8894">κ</span><span>{{ insKap }} 1/m</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:#7d8894">megfolyt rétegek</span><span style="color:#ff5f56">{{ insYield }}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = {
+    ready: false, preset: 'clamped', L: 6, nEl: 20, secId: 'IPE300', matId: 'S235', nL: 28,
+    q: 40, P: 0, integration: 'selective', selfWeight: false,
+    tol: 0.5, dLambda: 0.08, lin: null, nl: null, running: false, frame: 0,
+    chart: 'M', inspector: null, playing: false, study: null, studying: false
+  };
+
+  componentDidMount() {
+    import(new URL('./vem-core.js', document.baseURI).href).then(m => {
+      this.M = m; this.setState({ ready: true }, () => this.applyPreset('clamped'));
+    });
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  presetL = { cantilever: 5, simple: 6, simpleP: 6, clamped: 6, twospan: 12 };
+
+  applyPreset(id) {
+    const p = this.M.PRESETS[id];
+    this.setState({ preset: id, L: this.presetL[id], q: p.load.q, P: p.load.P, nl: null, study: null, frame: 0, inspector: null }, () => this.recompute());
+  }
+  spec() {
+    const s = this.state, p = this.M.PRESETS[s.preset];
+    return { L: s.L, nEl: s.nEl, integration: s.integration, presetId: s.preset, supports: p.supports, load: { q: s.q, P: s.P, xP: p.load.xP }, selfWeight: s.selfWeight };
+  }
+  secProps() { return this.M.sectionProps(this.M.SECTIONS[this.state.secId], this.M.MATERIALS[this.state.matId], this.state.nL, false); }
+  recompute() { if (!this.M) return; const pr = this.secProps(); this.setState({ pr, lin: this.M.solveLinear(this.spec(), pr) }); }
+  set(k, v) { this.setState({ [k]: v, nl: null, study: null, frame: 0, inspector: null }, () => this.recompute()); }
+
+  run = () => {
+    if (this.state.running) return;
+    this.setState({ running: true });
+    setTimeout(() => {
+      const pr = this.secProps();
+      const nl = this.M.solveNonlinear(this.spec(), pr, { dLambda: this.state.dLambda, lambdaMax: 6, tol: this.state.tol, minStep: 0.001, iterMax: 40 });
+      this.setState({ nl, pr, running: false, frame: nl.history.length - 1 });
+    }, 40);
+  };
+
+  runStudy = () => {
+    if (this.state.studying) return;
+    this.setState({ studying: true });
+    setTimeout(() => {
+      const pr = this.secProps();
+      const list = [4, 8, 12, 20, 32].filter(n => this.state.preset !== 'twospan' || n % 2 === 0);
+      const st = this.M.meshStudy(this.spec(), pr, list);
+      this.setState({ study: st, studying: false });
+    }, 40);
+  };
+
+  togglePlay = () => {
+    if (this.state.playing) { clearInterval(this._t); this.setState({ playing: false }); return; }
+    if (!this.state.nl) return;
+    this.setState({ playing: true, frame: 0 });
+    this._t = setInterval(() => this.setState(s => {
+      if (!s.nl || s.frame >= s.nl.history.length - 1) { clearInterval(this._t); return { playing: false }; }
+      return { frame: s.frame + 1 };
+    }), 240);
+  };
+
+  chartOf(key, box) {
+    const s = this.state, M = this.M;
+    const f = s.nl ? s.nl.framesFields[Math.min(s.frame, s.nl.framesFields.length - 1)] : s.lin.fields;
+    const cfg = {
+      M: { vs: f.M, title: 'M — hajlítónyomaték [kNm]', flip: 1, stroke: '#4fd6b4', fill: 'rgba(79,214,180,.13)', d: 2 },
+      T: { vs: f.T, title: 'T — nyíróerő [kN]', flip: -1, stroke: '#5c9ee0', fill: 'rgba(92,158,224,.13)', d: 2 },
+      w: { vs: f.w.map(v => v * 1000), title: 'w — lehajlás [mm]', flip: 1, stroke: '#c98ae0', fill: 'rgba(201,138,224,.13)', d: 3 },
+      phi: { vs: f.phi.map(v => v * 1000), title: 'φ — elfordulás [10⁻³ rad]', flip: -1, stroke: '#ffb84d', fill: 'rgba(255,184,77,.13)', d: 3 }
+    }[key];
+    const vs = cfg.vs.map(v => v * cfg.flip);
+    let lo = Math.min(0, ...vs), hi = Math.max(0, ...vs);
+    if (hi - lo < 1e-9) { hi = 1; lo = -1; }
+    const pad = (hi - lo) * 0.2; hi += pad; lo -= pad;
+    const X = x => box.x + box.w * x / s.L, Y = v => box.y + box.h * (hi - v) / (hi - lo);
+    const pts = f.x.map((x, i) => X(x).toFixed(1) + ',' + Y(vs[i]).toFixed(1)).join(' ');
+    const zeroY = Y(0);
+    let iMax = 0; cfg.vs.forEach((v, i) => { if (Math.abs(v) > Math.abs(cfg.vs[iMax])) iMax = i; });
+    const mx = X(f.x[iMax]), my = Y(vs[iMax]), right = mx > box.x + box.w * 0.72;
+    const xticks = [];
+    for (let i = 0; i <= 6; i++) { const x = s.L * i / 6; xticks.push({ x: X(x).toFixed(1), y0: box.y, y1: box.y + box.h, t: M.fmt(x, 1) }); }
+    return {
+      title: cfg.title, line: pts, fill: X(0).toFixed(1) + ',' + zeroY.toFixed(1) + ' ' + pts + ' ' + X(s.L).toFixed(1) + ',' + zeroY.toFixed(1),
+      zeroY: zeroY.toFixed(1), zx0: box.x, zx1: box.x + box.w, xticks, stroke: cfg.stroke, fillColor: cfg.fill,
+      marks: [{ x: mx.toFixed(1), y: my.toFixed(1), c: cfg.stroke, tx: (right ? mx - 7 : mx + 7).toFixed(1), ty: (my > zeroY ? my + 13 : my - 7).toFixed(1), anchor: right ? 'end' : 'start', t: M.fmt(cfg.vs[iMax], cfg.d) }]
+    };
+  }
+
+  renderVals() {
+    const s = this.state, M = this.M;
+    const base = {
+      crumb: 'kesz/…/vem97', lamTxt: '—', statusText: 'mag betöltése…', statusBg: '#1b2128', statusFg: '#7d8894',
+      preset: s.preset, secId: s.secId, matId: s.matId, L: s.L, nEl: s.nEl, nL: s.nL, Ltxt: s.L.toFixed(1), playIcon: '▶',
+      onPreset: e => this.applyPreset(e.target.value), onL: e => this.set('L', +e.target.value),
+      onNEl: e => this.set('nEl', +e.target.value), onNL: e => this.set('nL', +e.target.value),
+      onSec: e => this.set('secId', e.target.value), onMat: e => this.set('matId', e.target.value),
+      setSelective: () => this.set('integration', 'selective'), setFull: () => this.set('integration', 'full'),
+      run: this.run, runStudy: this.runStudy, togglePlay: this.togglePlay,
+      studyBtn: 'futtatás', inspector: false, closeInspector: () => this.setState({ inspector: null }), stop: e => e.stopPropagation(),
+      defScaleTxt: '—', frameLabel: 'modell betöltése', anULabel: '—', anU: '—', femU: '—', devU: '—', devColor: '#7d8894',
+      monX: '—', stepInfo: '—', crumb: 'vem97', btnSel: '', btnFull: '',
+      hasUdl: false, hasP: false, udlX1: 0, udlX2: 0, udlMid: 0, udlText: '', pX: 0, pY2: 0, pText: '',
+      deformedPts: '', deformedFill: '', bx0: 76, bx1: 1124
+    };
+    if (!s.ready || !s.lin || !s.lin.ok) return Object.assign(base, {
+      grid: [], gridH: [], udl: [], elBars: [], gpDots: [], supports: [], dimTicks: [], kpis: [], logRows: [], tabs: [], steps: [], insBars: [],
+      ch: { line: '', fill: '', xticks: [], marks: [], zeroY: 75, zx0: 46, zx1: 690, stroke: '#4fd6b4', fillColor: 'transparent', title: '' },
+      pd: { line: '', elastic: '', cx: 46, cy: 132, limY: 20, limT: 16, limTxt: '' }, study: { line: '', pts: [], refY: 20, refT: 16, note: '' }
+    });
+
+    const pr = s.pr, lin = s.lin, P = M.PRESETS[s.preset];
+    const nl = s.nl, fi = nl ? Math.min(s.frame, nl.history.length - 1) : 0;
+    const hist = nl ? nl.history[fi] : null;
+    const fields = nl ? nl.framesFields[fi] : lin.fields;
+    const lam = nl ? hist.lam : 1;
+    const an = M.analytic(this.spec(), pr);
+
+    const bx0 = 76, bx1 = 1124, beamY = 200, X = x => bx0 + (bx1 - bx0) * x / s.L;
+    const wAbs = Math.max(1e-9, ...fields.w.map(Math.abs)), defScale = 82 / wAbs;
+    const dpts = fields.x.map((x, i) => X(x).toFixed(1) + ',' + (beamY + fields.w[i] * defScale).toFixed(1));
+    const grid = []; for (let i = 0; i <= 10; i++) grid.push({ x: (bx0 + (bx1 - bx0) * i / 10).toFixed(1) });
+    const gridH = []; for (let i = 0; i <= 6; i++) gridH.push({ y: (60 + i * 52).toFixed(1) });
+
+    const elBars = lin.mesh.els.map((el, e) => {
+      const x1 = X(lin.mesh.x[el[0]]), x2 = X(lin.mesh.x[el[2]]), yf = hist ? hist.yieldFrac[e] : 0;
+      return {
+        x: (x1 + 0.7).toFixed(1), y: (beamY - 6).toFixed(1), w: Math.max(1, x2 - x1 - 1.4).toFixed(1), h: 12,
+        fill: yf >= 0.82 ? '#ff5f56' : yf > 0.05 ? '#ffb84d' : '#3d4854', stroke: yf >= 0.82 ? '#ff8f88' : yf > 0.05 ? '#d8963a' : '#4d5a66'
+      };
+    });
+    const gpDots = M.gpInfo(lin.mesh).map(g => {
+      const yf = hist ? hist.yieldGP[g.e * 3 + g.g] : 0;
+      return { cx: X(g.x).toFixed(1), cy: beamY, r: yf > 0.05 ? 4 : 2.4, fill: yf >= 0.82 ? '#ff5f56' : yf > 0.05 ? '#ffb84d' : '#66727e', stroke: '#0d1014', pick: () => this.setState({ inspector: { e: g.e, g: g.g, x: g.x } }) };
+    });
+    const supports = P.supports.map(sp => {
+      const x = X(sp.r * s.L), y = beamY + 8;
+      if (sp.type === 'fixed') return { d: 'M' + (x - 3) + ',' + (y - 40) + ' L' + (x + 3) + ',' + (y - 40) + ' L' + (x + 3) + ',' + (y + 20) + ' L' + (x - 3) + ',' + (y + 20) + ' Z', hx1: x - 24, hx2: x + 24, hy: y + 20 };
+      if (sp.type === 'pinned') return { d: 'M' + x + ',' + y + ' L' + (x - 15) + ',' + (y + 24) + ' L' + (x + 15) + ',' + (y + 24) + ' Z', hx1: x - 24, hx2: x + 24, hy: y + 27 };
+      return { d: 'M' + x + ',' + y + ' L' + (x - 15) + ',' + (y + 20) + ' L' + (x + 15) + ',' + (y + 20) + ' Z', hx1: x - 24, hx2: x + 24, hy: y + 27 };
+    });
+    const dimTicks = []; for (let i = 0; i <= 4; i++) { const x = s.L * i / 4; dimTicks.push({ x: X(x).toFixed(1), t: M.fmt(x, 1) + ' m' }); }
+    const udl = []; if (s.q > 0) for (let i = 0; i <= 28; i++) udl.push({ x: X(s.L * i / 28).toFixed(1), y1: 112, y2: beamY - 14 });
+
+    const wmaxF = fields.w.reduce((a, v) => Math.abs(v) > Math.abs(a) ? v : a, 0);
+    const MmaxF = fields.M.reduce((a, v) => Math.abs(v) > Math.abs(a) ? v : a, 0);
+    const yGP = hist ? hist.yieldGP.filter(v => v > 0.05).length : 0;
+    const kpis = [
+      { label: 'w max', value: M.fmt(Math.abs(wmaxF) * 1000, 2), unit: 'mm', color: '#e2e6ea' },
+      { label: 'M max', value: M.fmt(Math.abs(MmaxF), 1), unit: 'kNm  ·  Mₚ = ' + M.fmt(pr.Mp, 1), color: Math.abs(MmaxF) > pr.Mp * 0.99 ? '#ff5f56' : '#e2e6ea' },
+      { label: 'megfolyt Gauss-pont', value: yGP + ' / ' + (lin.mesh.els.length * 3), unit: 'képlékeny zóna', color: yGP ? '#ffb84d' : '#66727e' },
+      { label: 'alaki tényező c', value: M.fmt(pr.c, 3), unit: 'Mₚ/Mₑ  ·  ' + pr.layers.length + ' réteg', color: '#4fd6b4' }
+    ];
+
+    const logRows = nl ? nl.convLog.slice(-9).map((g, i) => {
+      const idx = nl.convLog.length - Math.min(9, nl.convLog.length) + i;
+      const r = g.res.length ? g.res[g.res.length - 1] : 0;
+      return {
+        i: g.halved ? '↺' : String(idx + 1), lam: M.fmt(g.lam, 3), it: String(g.res.length), res: M.fmt(r, 3),
+        rc: g.halved ? '#ff5f56' : r <= s.tol ? '#4fd6b4' : '#ffb84d', pick: () => { },
+        style: 'display:flex;padding:5px 10px;font:500 11px "JetBrains Mono",monospace;border-top:1px solid #1a2027;background:' + (g.halved ? 'rgba(255,95,86,.07)' : 'transparent')
+      };
+    }) : [{ i: '—', lam: '—', it: '—', res: '—', rc: '#4c5761', pick: () => { }, style: 'display:flex;padding:5px 10px;font:500 11px "JetBrains Mono",monospace;border-top:1px solid #1a2027' }];
+
+    const tabs = [['M', 'M'], ['T', 'T'], ['w', 'w'], ['phi', 'φ']].map(([k, lb]) => ({
+      label: lb, pick: () => this.setState({ chart: k }),
+      style: 'padding:3px 13px;border-radius:3px;cursor:pointer;font:' + (s.chart === k ? '600' : '500') + ' 11.5px "JetBrains Mono",monospace;background:' + (s.chart === k ? '#1f2a30' : 'transparent') + ';color:' + (s.chart === k ? '#4fd6b4' : '#66727e')
+    }));
+
+    // teher–elmozdulás
+    let pd = { line: '', elastic: '', cx: 46, cy: 132, limY: 20, limT: 16, limTxt: 'futtasd az analízist' };
+    if (nl) {
+      const h = nl.history, dm = h.map(p => Math.abs(p.disp) * 1000), lm = h.map(p => p.lam);
+      const dMax = Math.max(...dm) * 1.1 || 1, lMax = Math.max(...lm) * 1.15 || 1;
+      const PX = d => 46 + 644 * d / dMax, PY = l => 132 - 122 * l / lMax;
+      const k = h.length > 2 ? lm[1] / (dm[1] || 1) : 1, eEnd = Math.min(dMax, lMax / k);
+      pd = {
+        line: h.map((p, i) => PX(dm[i]).toFixed(1) + ',' + PY(lm[i]).toFixed(1)).join(' '),
+        elastic: '46,132 ' + PX(eEnd).toFixed(1) + ',' + PY(k * eEnd).toFixed(1),
+        cx: PX(dm[fi]).toFixed(1), cy: PY(lm[fi]).toFixed(1),
+        limY: PY(nl.lambdaU).toFixed(1), limT: (PY(nl.lambdaU) - 5).toFixed(1),
+        limTxt: 'λᵤ = ' + M.fmt(nl.lambdaU, 3)
+      };
+    }
+
+    // hálófüggetlenség
+    let study = { line: '', pts: [], refY: 20, refT: 16, note: 'A képlékeny csukló csak Gauss-pontban alakulhat ki, ezért a határteher fölülről közelít. Futtasd le a tanulmányt.' };
+    if (s.study) {
+      const ref = an.Pu, q0 = s.q > 0 ? s.q : s.P;
+      const vals = s.study.map(r => r.lambdaU * q0);
+      const hi = Math.max(ref, ...vals) * 1.06, lo = Math.min(ref, ...vals) * 0.94;
+      const SX = i => 34 + 258 * i / Math.max(1, s.study.length - 1), SY = v => 104 - 94 * (v - lo) / (hi - lo);
+      study = {
+        line: vals.map((v, i) => SX(i).toFixed(1) + ',' + SY(v).toFixed(1)).join(' '),
+        pts: s.study.map((r, i) => ({ x: SX(i).toFixed(1), y: SY(vals[i]).toFixed(1), t: String(r.nEl) })),
+        refY: SY(ref).toFixed(1), refT: (SY(ref) - 4).toFixed(1),
+        note: 'Elemszám → qᵤ. Eltérés 4 elemnél ' + M.fmt(100 * (vals[0] - ref) / ref, 1) + ' %, ' + s.study[s.study.length - 1].nEl + ' elemnél ' + M.fmt(100 * (vals[vals.length - 1] - ref) / ref, 1) + ' %. Monoton konvergencia — a mag helyesen viselkedik.'
+      };
+    }
+
+    // inspektor
+    let ins = { insBars: [], insSyL: 190, insSyR: 190, insNA: 150, insNAt: 146, insMk: '', insMkX: 32, insMkY: 184, insMpY: 40, insMpT: 36, insM: '—', insMratio: '—', insKap: '—', insYield: '—', insTitle: '' };
+    if (s.inspector && nl) {
+      const { e, g } = s.inspector, nLay = pr.layers.length, off = (e * 3 + g) * nLay;
+      const sig = []; for (let l = 0; l < nLay; l++) sig.push(hist.sig[off + l] / 1e4);
+      const sYc = pr.sY / 1e4, SX = v => 190 + 152 * v / (sYc * 1.35), LY = z => 150 + 128 * z / pr.h;
+      const bars = pr.layers.map((L, i) => {
+        const y = LY(L.z - L.t / 2), h = Math.max(1.2, LY(L.z + L.t / 2) - y), v = sig[i];
+        const yl = Math.abs(v) >= sYc * 0.999;
+        return { x: (v >= 0 ? 190 : SX(v)).toFixed(1), y: y.toFixed(1), w: Math.max(0.6, Math.abs(SX(v) - 190)).toFixed(1), h: h.toFixed(1), fill: yl ? '#ff5f56' : v >= 0 ? '#4fd6b4' : '#2f9e85' };
+      });
+      let na = 150; for (let i = 1; i < nLay; i++) if (sig[i - 1] * sig[i] < 0) na = LY(pr.layers[i].z);
+      const mk = nl.history.map(h2 => ({ k: M.gpKappa(nl.mesh, h2.u, e, g), m: h2.M[e][g] }));
+      const kMax = Math.max(1e-9, ...mk.map(p => Math.abs(p.k))) * 1.1, mMax = Math.max(pr.Mp, ...mk.map(p => Math.abs(p.m))) * 1.14;
+      const KX = k => 32 + 338 * Math.abs(k) / kMax, MY = m => 184 - 170 * Math.abs(m) / mMax, cur = mk[fi];
+      ins = {
+        insBars: bars, insSyL: SX(-sYc).toFixed(1), insSyR: SX(sYc).toFixed(1), insNA: na.toFixed(1), insNAt: (na - 5).toFixed(1),
+        insMk: mk.slice(0, fi + 1).map(p => KX(p.k).toFixed(1) + ',' + MY(p.m).toFixed(1)).join(' '),
+        insMkX: KX(cur.k).toFixed(1), insMkY: MY(cur.m).toFixed(1), insMpY: MY(pr.Mp).toFixed(1), insMpT: (MY(pr.Mp) - 5).toFixed(1),
+        insM: M.fmt(cur.m, 2), insMratio: M.fmt(Math.abs(cur.m) / pr.Mp, 3), insKap: M.fmt(cur.k, 5),
+        insYield: sig.filter(v => Math.abs(v) >= sYc * 0.999).length + ' / ' + nLay,
+        insTitle: 'elem ' + (e + 1) + ' · GP ' + (g + 1) + ' · x = ' + M.fmt(s.inspector.x, 3) + ' m · λ = ' + M.fmt(lam, 3)
+      };
+    }
+
+    const femU = nl ? nl.lambdaU * (s.q > 0 ? s.q : s.P) : null;
+    const devU = (nl && an.Pu) ? 100 * (femU - an.Pu) / an.Pu : null;
+    const btn = on => 'flex:1;padding:5px 4px;font:' + (on ? '600' : '500') + ' 11px "IBM Plex Sans";border:1px solid ' + (on ? '#4fd6b4' : '#2a323a') + ';background:' + (on ? 'rgba(79,214,180,.14)' : '#161b21') + ';color:' + (on ? '#4fd6b4' : '#7d8894') + ';border-radius:4px;cursor:pointer';
+
+    return Object.assign(base, {
+      crumb: M.PRESETS[s.preset].name + '  ·  ' + M.SECTIONS[s.secId].name + '  ·  ' + s.matId + '  ·  ' + s.nEl + ' elem / ' + pr.layers.length + ' réteg  ·  ref. ' + P.ref,
+      lamTxt: M.fmt(lam, 3),
+      statusText: s.running ? 'számítás fut' : nl ? (nl.status === 'limit-load-reached' ? 'határteher elérve' : 'konvergált') : 'lineáris kész',
+      statusBg: s.running ? 'rgba(255,184,77,.14)' : nl && nl.status === 'limit-load-reached' ? 'rgba(255,95,86,.14)' : 'rgba(79,214,180,.12)',
+      statusFg: s.running ? '#ffb84d' : nl && nl.status === 'limit-load-reached' ? '#ff5f56' : '#4fd6b4',
+      btnSel: btn(s.integration === 'selective'), btnFull: btn(s.integration === 'full'),
+      grid, gridH, udl, elBars, gpDots, supports, dimTicks, bx0, bx1,
+      deformedPts: dpts.join(' '), deformedFill: X(0).toFixed(1) + ',' + beamY + ' ' + dpts.join(' ') + ' ' + X(s.L).toFixed(1) + ',' + beamY,
+      hasUdl: s.q > 0, udlX1: X(0).toFixed(1), udlX2: X(s.L).toFixed(1), udlMid: ((bx0 + bx1) / 2).toFixed(1), udlText: 'q = ' + M.fmt(s.q * lam, 2) + ' kN/m',
+      hasP: s.P > 0, pX: X(P.load.xP * s.L).toFixed(1), pY2: beamY - 14, pText: 'P = ' + M.fmt(s.P * lam, 2) + ' kN',
+      defScaleTxt: M.fmt(defScale, 0), frameLabel: nl ? 'teherlépcső ' + fi + ' / ' + (nl.history.length - 1) : 'rugalmas állapot · nincs nemlineáris futás',
+      kpis, logRows, tabs, ch: this.chartOf(s.chart, { x: 46, y: 22, w: 644, h: 104 }), pd, study,
+      studyBtn: s.studying ? 'számol…' : 'futtatás',
+      monX: nl ? M.fmt(nl.monitorX, 2) : '—',
+      anULabel: an.uLabel, anU: an.Pu ? M.fmt(an.Pu, 2) + (s.q > 0 ? ' kN/m' : ' kN') : '—',
+      femU: femU ? M.fmt(femU, 2) + (s.q > 0 ? ' kN/m' : ' kN') : '—',
+      devU: devU === null ? '—' : M.fmt(devU, 2) + ' %', devColor: devU === null ? '#7d8894' : Math.abs(devU) < 4 ? '#4fd6b4' : '#ffb84d',
+      steps: nl ? nl.history.map((h, i) => ({
+        pick: () => this.setState({ frame: i, playing: false }),
+        style: 'flex:1;min-width:3px;cursor:pointer;border-radius:2px;background:' + (i <= fi ? (h.yieldFrac.some(v => v >= 0.82) ? '#ff5f56' : h.yieldFrac.some(v => v > 0.05) ? '#ffb84d' : '#4fd6b4') : '#1e242b') + ';opacity:' + (i <= fi ? 1 : 0.6) + ';outline:' + (i === fi ? '2px solid #e2e6ea' : 'none')
+      })) : [{ style: 'flex:1;background:#1e242b;border-radius:2px', pick: () => { } }],
+      stepInfo: nl ? 'lépés ' + fi + '/' + (nl.history.length - 1) + ' · ' + hist.iters + ' iteráció · reziduum ' + M.fmt(hist.res, 3) + ' % · összesen ' + nl.totalIters + ' iteráció' : 'nincs futás',
+      playIcon: s.playing ? '❚❚' : '▶',
+      inspector: !!(s.inspector && nl)
+    }, ins);
+  }
+}
+</script>
+</body>
+</html>
