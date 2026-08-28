@@ -17,10 +17,11 @@
  */
 
 import { DenseMatrix } from '../linalg/dense.js';
-import { DOF_PER_ELEMENT, bRows } from './bMatrix.js';
+import { DOF_PER_ELEMENT, bRows, nRows } from './bMatrix.js';
+import { GAUSS_3 } from './quadrature.js';
 import { quadratureFor } from './quadrature.js';
 import type { IntegrationScheme } from '../model/types.js';
-import type { SectionStiffness } from './constitutive.js';
+import type { SectionMass, SectionStiffness } from './constitutive.js';
 
 export interface ElementGeometry {
   /** A három csomópont globális x koordinátája [m]: [bal, közép, jobb] */
@@ -75,6 +76,32 @@ export function elementStiffness(
   }
 
   return k;
+}
+
+/**
+ * Az elemi (konzisztens) tömegmátrix (6×6) — ADR-0016.
+ *
+ *   Mₑ = ∫ (m'·Nwᵀ·Nw + m'ᵩ·Nᵩᵀ·Nᵩ)·|J| dξ
+ *
+ * A w és a φ mező EGYMÁSTÓL FÜGGETLENÜL, ugyanazokkal a kvadratikus
+ * alakfüggvényekkel interpolál (nincs w–φ kereszttag, ld. `nRows`) — ezért a
+ * transzlációs és a forgási tehetetlenségi tag külön-külön, de AZONOS
+ * (teljes, 3 pontos) kvadratúrával integrálódik. A merevségi mátrixtól
+ * eltérően itt nincs szelektív/redukált integrálás: a tömegmátrix-integrandus
+ * (Nᵢ·Nⱼ, legfeljebb negyedfokú) nem szenved a nyírási záródáshoz hasonló
+ * jelenségtől, amit a redukált integrálás orvosolna — ld. ADR-0016 1. nyitott
+ * kérdése (a döntés maga még NEM végleges, ez az első, validálandó lépés).
+ */
+export function elementMass(geom: ElementGeometry, mass: SectionMass): DenseMatrix {
+  const m = new DenseMatrix(DOF_PER_ELEMENT, DOF_PER_ELEMENT);
+
+  for (const gp of GAUSS_3) {
+    const { w, phi, detJ } = nRows(geom.nodeX, gp.xi, geom.elementId);
+    addOuterProduct(m, w, mass.massPerLength * detJ * gp.w);
+    addOuterProduct(m, phi, mass.rotaryInertiaPerLength * detJ * gp.w);
+  }
+
+  return m;
 }
 
 /**

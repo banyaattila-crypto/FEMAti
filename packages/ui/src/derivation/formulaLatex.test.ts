@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import katex from 'katex';
-import { deriveElementInternalForces, deriveElementLoadVector, deriveElementStiffness, solveLinear } from '@femati/fem-core';
+import { deriveElementInternalForces, deriveElementLoadVector, deriveElementMass, deriveElementStiffness, solveLinear } from '@femati/fem-core';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from '../model/editable.js';
 import { compileLayeredModel } from '../model/nonlinear.js';
@@ -11,6 +11,8 @@ import {
   extrapolationTex,
   jacobianTex,
   keDiagonalTex,
+  massDiagonalTex,
+  massGaussTex,
   meMpTex,
   nodalLoadTex,
   shearGaussTex,
@@ -105,5 +107,31 @@ describe('formulaLatex', () => {
     expect(extrapLines.at(-1)).toContain(expected.toFixed(3));
 
     renderAll(convergenceTex(1.2e-3, 45.6, 0.00263, 1e-4, false));
+  });
+
+  it('a tömegmátrix-levezetés (ADR-0016) LaTeX-sorai is érvényes szintaxisúak, és a végső Mₑ-értéket tartalmazzák', () => {
+    resetEntityIds();
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = presetToEditable(preset, 'simple', 6, 4, 'IPE300', 'S235', false, 'selective');
+    const model = compileLayeredModel(editable);
+    const elementId = model.elements[0]?.id as unknown as string;
+    const massDerived = deriveElementMass(model, elementId);
+
+    const gp0 = massDerived.points[0];
+    if (gp0 === undefined) throw new Error('nincs Gauss-pont');
+    const gaussLines = massGaussTex(gp0, 0, massDerived.mass.massPerLength, massDerived.mass.rotaryInertiaPerLength);
+    renderAll(gaussLines);
+    expect(gaussLines.join('\n')).toContain(gp0.n[0].toFixed(4));
+
+    const meW = massDerived.me.get(0, 0);
+    const mePhi = massDerived.me.get(1, 1);
+    const diagLines = massDiagonalTex(massDerived.points, massDerived.mass.massPerLength, massDerived.mass.rotaryInertiaPerLength, meW, mePhi);
+    renderAll(diagLines);
+    // A w-blokk összegző sorának tartalmaznia kell a tényleges Mₑ[0,0] négy tizedesjegyre kerekített értékét.
+    const wSumLine = diagLines.find((l) => l.startsWith('\\sum') && l.includes('M_e[1,1]'));
+    expect(wSumLine).toContain(meW.toFixed(4));
+    // A φ-blokk összegző sorának (az utolsó sor) tartalmaznia kell a tényleges Mₑ[1,1] hat tizedesjegyre kerekített értékét.
+    expect(diagLines.at(-1)).toContain(mePhi.toFixed(6));
   });
 });

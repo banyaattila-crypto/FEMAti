@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveElementInternalForces, deriveElementLoadVector, deriveElementStiffness, solveLinear } from '@femati/fem-core';
+import { deriveElementInternalForces, deriveElementLoadVector, deriveElementMass, deriveElementStiffness, solveLinear } from '@femati/fem-core';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from '../model/editable.js';
 import { compileLayeredModel } from '../model/nonlinear.js';
@@ -10,6 +10,8 @@ import {
   extrapolationBlock,
   internalForceBlock,
   keDiagonalDemo,
+  massDiagonalDemo,
+  massGaussBlock,
   nodalLoadLine,
   shapeDerivativeLines,
   shapeFunctionLines,
@@ -141,5 +143,43 @@ describe('formulaText', () => {
 
     const notConvergedBlock = convergenceBlock(1.2e-3, 45.6, 2.63e-1, 1e-4, false);
     expect(notConvergedBlock).toContain('további iteráció szükséges');
+  });
+
+  it('a tömegmátrix-levezetés (ADR-0016) szöveges blokkjai a mag SZÁMAIT tartalmazzák, és a Mₑ[1,1]/Mₑ[2,2] tagonkénti összege egyezik a valódi mátrixelemmel', () => {
+    resetEntityIds();
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = presetToEditable(preset, 'simple', 6, 4, 'IPE300', 'S235', false, 'selective');
+    const model = compileLayeredModel(editable);
+    const elementId = model.elements[0]?.id as unknown as string;
+    const massDerived = deriveElementMass(model, elementId);
+
+    const gp0 = massDerived.points[0];
+    if (gp0 === undefined) throw new Error('nincs Gauss-pont');
+    const block = massGaussBlock(gp0, 0, massDerived.mass.massPerLength, massDerived.mass.rotaryInertiaPerLength);
+    expect(block).toContain('w-sor');
+    expect(block).toContain('φ-sor');
+    expect(block).toContain(gp0.n[0].toFixed(4));
+
+    const meW = massDerived.me.get(0, 0);
+    const mePhi = massDerived.me.get(1, 1);
+    const demo = massDiagonalDemo(massDerived.points, massDerived.mass.massPerLength, massDerived.mass.rotaryInertiaPerLength, meW, mePhi);
+    expect(demo).toContain(meW.toFixed(4));
+    expect(demo).toContain(mePhi.toFixed(6));
+
+    // A demo-ban számolt w-blokk-összegnek numerikusan is meg kell egyeznie a valódi Mₑ[0,0]-val
+    // (nRows()-ból: N_w[0] a w1 helyén lévő N₁ — csak a transzlációs tag ad járulékot).
+    const wSum = massDerived.points.reduce((s, gp) => {
+      const n = gp.nRows.w[0] ?? 0;
+      return s + massDerived.mass.massPerLength * gp.jacobian.detJ * gp.w * n * n;
+    }, 0);
+    expect(wSum).toBeCloseTo(meW, 8);
+
+    // Ugyanez a φ-blokkra (N_φ[1] a φ1 helyén lévő N₁, a forgási tehetetlenségi taggal).
+    const phiSum = massDerived.points.reduce((s, gp) => {
+      const n = gp.nRows.phi[1] ?? 0;
+      return s + massDerived.mass.rotaryInertiaPerLength * gp.jacobian.detJ * gp.w * n * n;
+    }, 0);
+    expect(phiSum).toBeCloseTo(mePhi, 12);
   });
 });

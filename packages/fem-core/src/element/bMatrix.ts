@@ -105,6 +105,46 @@ export function bMatrix(
   return b;
 }
 
+/** Az alakfüggvény-sorok egy Gauss-pontban — a tömegmátrixhoz. */
+export interface NRows {
+  /** Nᵢ a w szabadságfokok helyén, 0 a φ helyén (1×6) */
+  readonly w: Float64Array;
+  /** Nᵢ a φ szabadságfokok helyén, 0 a w helyén (1×6) */
+  readonly phi: Float64Array;
+  /** A Jacobi-determináns az adott pontban */
+  readonly detJ: number;
+}
+
+/**
+ * Az alakfüggvények (nem a deriváltjaik) DOF-helyekre szórt sorai.
+ *
+ * A konzisztens tömegmátrix ∫ Nᵢ·Nⱼ alakú tagokból épül fel — w és φ
+ * EGYMÁSTÓL FÜGGETLENÜL, ugyanazokkal a kvadratikus alakfüggvényekkel
+ * interpolál (ld. `shapeFunctions.ts`), ezért a transzlációs és a forgási
+ * tehetetlenségi tag nem csatolt (w–φ kereszttag nincs).
+ */
+export function nRows(
+  nodeX: readonly [number, number, number],
+  xi: number,
+  elementId = '?',
+): NRows {
+  const { n, dn } = shapeFunctions(xi);
+
+  const j = dn[0] * nodeX[0] + dn[1] * nodeX[1] + dn[2] * nodeX[2];
+  if (!(j > 0) || !Number.isFinite(j)) {
+    throw new DegenerateElementError(elementId, j);
+  }
+
+  const w = new Float64Array(DOF_PER_ELEMENT);
+  const phi = new Float64Array(DOF_PER_ELEMENT);
+  for (let i = 0; i < 3; i++) {
+    w[2 * i] = n[i];
+    phi[2 * i + 1] = n[i];
+  }
+
+  return { w, phi, detJ: j };
+}
+
 /**
  * Alakváltozások az elemi elmozdulásvektorból: ε = B·uₑ.
  * (Diplomaterv (3.30).)

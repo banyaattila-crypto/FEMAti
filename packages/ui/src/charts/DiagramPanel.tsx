@@ -11,11 +11,13 @@ import { useModelStore } from '../state/modelStore.js';
 import { useAppStore } from '../state/appStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
+import { useModalResult } from '../solve/useModalResult.js';
 import { findSection } from '../data/catalog.js';
 import { DiagramChart, CHART_HEIGHT, type ChartElementSpan } from './DiagramChart.js';
 import { LoadDisplacementChart, LD_CHART_HEIGHT } from './LoadDisplacementChart.js';
 import { ConvergencePanel, CONVERGENCE_HEIGHT } from './ConvergencePanel.js';
 import { Beam3DStress, STRESS3D_HEIGHT } from './Beam3DStress.js';
+import { ModalPanel } from './ModalPanel.js';
 import { interpolateAt } from './interpolate.js';
 import { exportSvgElement } from './exportSvg.js';
 import * as fmt from '../format/numbers.js';
@@ -29,11 +31,18 @@ export interface DiagramPanelProps {
 export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): JSX.Element {
   const model = useModelStore((s) => s.model);
   const { result, error } = useLiveResult(model);
+  const modalOutcome = useModalResult(model, activeDiagram === 'modal');
   const nonlinearRun = useNonlinearStore((s) => s.run);
   const nonlinearError = useNonlinearStore((s) => s.error);
   const activeStep = useAppStore((s) => s.activeStep);
+  const activeMode = useAppStore((s) => s.activeMode);
+  const setActiveMode = useAppStore((s) => s.setActiveMode);
   const [hoverX, setHoverX] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  if (activeDiagram === 'modal') {
+    return <ModalPanel outcome={modalOutcome} activeMode={activeMode} onActiveModeChange={setActiveMode} span={model.span} />;
+  }
 
   if (activeDiagram === 'load-displacement' || activeDiagram === 'convergence') {
     if (nonlinearError !== null) {

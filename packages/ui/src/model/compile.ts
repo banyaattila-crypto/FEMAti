@@ -19,11 +19,13 @@ import {
   iProfile,
   selfWeight as selfWeightLoad,
   solveLinear,
+  solveModal,
   uniformMesh,
   InvalidModelError,
   type Material,
   type LinearResult,
   type Model,
+  type ModalResult,
   type Section,
   type SectionShape,
 } from '@femati/fem-core';
@@ -132,5 +134,30 @@ export function solveEditableModel(editable: EditableModel): SolveOutcome {
       return { model, result: null, error: messages.join(' ') || error.message };
     }
     return { model, result: null, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export interface ModalOutcome {
+  readonly model: Model;
+  readonly modal: ModalResult | null;
+  readonly error: string | null;
+}
+
+/**
+ * A modell modális (sajátfrekvencia) analízise, hibatűrő módon — ADR-0016.
+ * A `LinearResult`-hoz hasonlóan a felület sosem omlik össze egy
+ * érvénytelen vagy szinguláris tömegmátrixú modelltől.
+ */
+export function solveModalModel(editable: EditableModel): ModalOutcome {
+  const model = compileModel(editable);
+  try {
+    const modal = solveModal(model);
+    return { model, modal, error: null };
+  } catch (error) {
+    if (error instanceof InvalidModelError) {
+      const messages = error.diagnostics.filter((d) => d.severity === 'error').map((d) => d.message);
+      return { model, modal: null, error: messages.join(' ') || error.message };
+    }
+    return { model, modal: null, error: error instanceof Error ? error.message : String(error) };
   }
 }

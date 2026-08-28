@@ -9,7 +9,7 @@
  * kiszámított értékeit rendezi LaTeX "képlet = behelyettesített számok =
  * eredmény" alakba.
  */
-import type { DistributedLoadGaussDetail, GaussStepDetail, ThermalLoadGaussDetail } from '@femati/fem-core';
+import type { DistributedLoadGaussDetail, GaussStepDetail, MassGaussStepDetail, ThermalLoadGaussDetail } from '@femati/fem-core';
 import type { PlasticLayerRow } from './derivationData.js';
 
 function f(v: number, digits = 4): string {
@@ -119,6 +119,68 @@ export function keDiagonalTex(
       (t) => `${t.label}:\\quad ${f(t.factor, 2)}\\cdot(${paren(t.b, 3)})^2 = ${f(t.term, 2)}`,
     ),
     `\\sum = ${f(total, 2)}\\quad (K_e[1,1]\\text{ a végső mátrixban}: ${f(keValue, 2)})`,
+  ];
+}
+
+/**
+ * Egy tömegmátrix Gauss-pont TELJES, behelyettesített levezetése (ADR-0016)
+ * — a `bendingGaussTex`/`shearGaussTex` mintáját követi, de a w/φ DOF-
+ * helyekre szórt alakfüggvény-sorokra (`nRows`), nem a deriváltakra épül,
+ * és mindkét tagot (transzlációs m', forgási tehetetlenség m'ᵩ) kiírja.
+ */
+export function massGaussTex(
+  gp: MassGaussStepDetail,
+  index: number,
+  massPerLength: number,
+  rotaryInertiaPerLength: number,
+): readonly string[] {
+  const wFactor = massPerLength * gp.jacobian.detJ * gp.w;
+  const phiFactor = rotaryInertiaPerLength * gp.jacobian.detJ * gp.w;
+  const nw = gp.nRows.w;
+  const nphi = gp.nRows.phi;
+  return [
+    `\\text{Gauss-pont } T_{${index + 1}}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
+    ...shapeFunctionTex(gp.xi, gp.n),
+    `N_w = [N_1,\\ 0,\\ N_2,\\ 0,\\ N_3,\\ 0] = [${f(nw[0] ?? 0, 3)},\\ ${f(nw[1] ?? 0, 3)},\\ ${f(nw[2] ?? 0, 3)},\\ ${f(nw[3] ?? 0, 3)},\\ ${f(nw[4] ?? 0, 3)},\\ ${f(nw[5] ?? 0, 3)}]`,
+    `N_\\varphi = [0,\\ N_1,\\ 0,\\ N_2,\\ 0,\\ N_3] = [${f(nphi[0] ?? 0, 3)},\\ ${f(nphi[1] ?? 0, 3)},\\ ${f(nphi[2] ?? 0, 3)},\\ ${f(nphi[3] ?? 0, 3)},\\ ${f(nphi[4] ?? 0, 3)},\\ ${f(nphi[5] ?? 0, 3)}]`,
+    `m'\\cdot|J|\\cdot w = ${f(massPerLength, 4)}\\cdot ${f(gp.jacobian.detJ, 5)}\\cdot ${f(gp.w, 4)} = ${f(wFactor, 5)}`,
+    `m'_\\varphi\\cdot|J|\\cdot w = ${f(rotaryInertiaPerLength, 6)}\\cdot ${f(gp.jacobian.detJ, 5)}\\cdot ${f(gp.w, 4)} = ${f(phiFactor, 6)}`,
+  ];
+}
+
+/**
+ * A Mₑ[w₁,w₁] és Mₑ[φ₁,φ₁] főátló-elemek tagonkénti, LaTeX-ben kiírt
+ * összegzése — a `keDiagonalTex` tömegmátrix-párja. A w és φ sor a
+ * `nRows()` szerkezete miatt SOSEM csatolt (nincs kereszttag), ezért a két
+ * főátló-elem KÜLÖN, egy-egy taglistából adódik össze (nem egyetlen közös
+ * összegből, ellentétben a hajlítás+nyírás Kₑ-jével).
+ */
+export function massDiagonalTex(
+  points: readonly MassGaussStepDetail[],
+  massPerLength: number,
+  rotaryInertiaPerLength: number,
+  meWValue: number,
+  mePhiValue: number,
+): readonly string[] {
+  const wTerms = points.map((gp, i) => {
+    const n = gp.nRows.w[0] ?? 0;
+    const factor = massPerLength * gp.jacobian.detJ * gp.w;
+    return { label: `T_{${i + 1}}`, n, factor, term: factor * n * n };
+  });
+  const phiTerms = points.map((gp, i) => {
+    const n = gp.nRows.phi[1] ?? 0;
+    const factor = rotaryInertiaPerLength * gp.jacobian.detJ * gp.w;
+    return { label: `T_{${i + 1}}`, n, factor, term: factor * n * n };
+  });
+  const wTotal = wTerms.reduce((s, t) => s + t.term, 0);
+  const phiTotal = phiTerms.reduce((s, t) => s + t.term, 0);
+  return [
+    `M_e[w_1,w_1] = \\sum\\left(m'\\cdot|J|\\cdot w\\cdot N_w[1]^2\\right)`,
+    ...wTerms.map((t) => `${t.label}:\\quad ${f(t.factor, 4)}\\cdot(${paren(t.n, 3)})^2 = ${f(t.term, 4)}`),
+    `\\sum = ${f(wTotal, 4)}\\quad (M_e[1,1]\\text{ a végső mátrixban}: ${f(meWValue, 4)})`,
+    `M_e[\\varphi_1,\\varphi_1] = \\sum\\left(m'_\\varphi\\cdot|J|\\cdot w\\cdot N_\\varphi[2]^2\\right)`,
+    ...phiTerms.map((t) => `${t.label}:\\quad ${f(t.factor, 6)}\\cdot(${paren(t.n, 3)})^2 = ${f(t.term, 6)}`),
+    `\\sum = ${f(phiTotal, 6)}\\quad (M_e[2,2]\\text{ a végső mátrixban}: ${f(mePhiValue, 6)})`,
   ];
 }
 

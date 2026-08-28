@@ -16,6 +16,7 @@
 import { DenseMatrix } from '../linalg/dense.js';
 import { DimensionError } from '../linalg/errors.js';
 import { geometricProperties } from '../section/properties.js';
+import { G_ACCEL } from '../units/convert.js';
 import type { Material, MaterialId, Section } from '../model/types.js';
 
 export interface SectionStiffness {
@@ -134,4 +135,32 @@ export function constitutiveMatrix(stiffness: SectionStiffness): DenseMatrix {
   d.set(0, 0, stiffness.ei);
   d.set(1, 1, stiffness.gas);
   return d;
+}
+
+/** Az elem tömegjellemzői egységnyi hosszra (ADR-0016). */
+export interface SectionMass {
+  /** Vonalmenti (transzlációs) tömeg m' = γ·A/g [kN·s²/m²] */
+  readonly massPerLength: number;
+  /** Vonalmenti forgási tehetetlenség m'ᵩ = γ·I/g [kN·s²] */
+  readonly rotaryInertiaPerLength: number;
+}
+
+/**
+ * A tömegjellemzők előállítása a MÁR kiszámított keresztmetszeti
+ * merevségből (`area`/`inertia` — rétegelt szelvénynél is helyesen
+ * összegzett) és az anyag fajsúlyából (`gamma`, ugyanaz, amit az önsúly-
+ * tehervektor is használ, ld. `assembly/loadVector.ts`).
+ *
+ * A Material-nak nincs külön "sűrűség" mezője — a fajsúlyt (kN/m³) UGYANAZZAL
+ * a `G_ACCEL`-lel (EN 1990, `units/convert.ts`) osztjuk vissza tömeggé, amivel
+ * a `makeMaterial()` builder a `density`-ből számítja a `gamma`-t (ld.
+ * `specificWeightFromDensity`) — a két irány (tömeg→súly, súly→tömeg)
+ * konzisztens ugyanazzal az állandóval.
+ */
+export function sectionMass(stiffness: SectionStiffness, material: Material): SectionMass {
+  const gamma = material.gamma as number;
+  return {
+    massPerLength: (gamma * stiffness.area) / G_ACCEL,
+    rotaryInertiaPerLength: (gamma * stiffness.inertia) / G_ACCEL,
+  };
 }

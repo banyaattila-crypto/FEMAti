@@ -22,7 +22,13 @@
  * függvényeket hívja (ld. `packages/fem-core/test/derivation.test.ts`).
  */
 import { useMemo, useState } from 'react';
-import { deriveElementInternalForces, deriveElementLoadVector, deriveElementStiffness, elementGlobalNodeIndices } from '@femati/fem-core';
+import {
+  deriveElementInternalForces,
+  deriveElementLoadVector,
+  deriveElementMass,
+  deriveElementStiffness,
+  elementGlobalNodeIndices,
+} from '@femati/fem-core';
 import './derivation.css';
 import { findMaterial, findPreset, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
 import { useAppStore } from '../state/appStore.js';
@@ -49,6 +55,8 @@ import {
   jacobianTex,
   keDiagonalTex,
   layerSumTex,
+  massDiagonalTex,
+  massGaussTex,
   meMpTex,
   nodalLoadTex,
   plasticLayerTex,
@@ -101,6 +109,7 @@ export function DerivationView(): JSX.Element | null {
   const yMaxMm = lastLayer !== undefined ? ((lastLayer.z as number) + (lastLayer.t as number) / 2) * 1e3 : 0;
 
   const elementDerivation = deriveElementStiffness(data.model, elementId);
+  const massDerivation = deriveElementMass(data.model, elementId);
   const loadDerivation = deriveElementLoadVector(data.model, elementId);
   const internalForceDerivation = deriveElementInternalForces(data.model, elementId, data.linear.displacements);
   const globalNodeIdx = elementGlobalNodeIndices(data.model, elementId);
@@ -127,6 +136,7 @@ export function DerivationView(): JSX.Element | null {
       layerA,
       layerI,
       elementDerivation,
+      massDerivation,
       loadDerivation,
       internalForceDerivation,
       globalNodeIdx,
@@ -601,6 +611,89 @@ export function DerivationView(): JSX.Element | null {
               [{Array.from(elementDerivation.loadVector).map((v) => v.toExponential(3)).join(', ')}]
             </div>
           )}
+        </section>
+
+        {/* 4A. A VÁLASZTOTT ELEM TÖMEGMÁTRIX-LEVEZETÉSE (ADR-0016) */}
+        <section className="vem-derivation__section">
+          <h2>4A. A(z) {elementId} elem tömegmátrix-levezetése (ADR-0016)</h2>
+          <p>
+            A tömegmátrix mindkét tagja (transzlációs m', forgási tehetetlenség m'ᵩ) AZONOS, teljes (3 pontos
+            Gauss) kvadratúrával integrálódik — nincs szelektív séma, ellentétben a merevségi mátrixszal (ld.{' '}
+            <code>element/timoshenko3.ts</code> <code>elementMass</code> dokumentációja). Csak VÉGEREDMÉNY: a
+            sajátérték-megoldás (Jacobi-forgatás) NEM kap lépésenkénti animált nézetet (ld. ADR-0016
+            "UI-integráció" szakasz) — ez a pont az elem-szintű tömegmátrix-összeállítás, nem a modális megoldás.
+          </p>
+          <FormulaBlock
+            lines={[
+              `m' = \\gamma\\cdot A / g = ${fmtNum(massDerivation.mass.massPerLength, 4)}\\ \\tfrac{\\text{kN}\\cdot\\text{s}^2}{\\text{m}^2}`,
+              `m'_\\varphi = \\gamma\\cdot I / g = ${massDerivation.mass.rotaryInertiaPerLength.toExponential(4)}\\ \\text{kN}\\cdot\\text{s}^2`,
+            ]}
+          />
+
+          <h3>4A.1 Gauss-pontok — N alakfüggvények és a w/φ DOF-helyekre szórt sorok (nRows)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>ξ</th>
+                <th>w</th>
+                <th>N₁</th>
+                <th>N₂</th>
+                <th>N₃</th>
+                <th>w-sor (N_w)</th>
+                <th>φ-sor (N_φ)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {massDerivation.points.map((gp, i) => (
+                <tr key={i}>
+                  <td>{fmtNum(gp.xi, 4)}</td>
+                  <td>{fmtNum(gp.w, 4)}</td>
+                  <td>{fmtNum(gp.n[0])}</td>
+                  <td>{fmtNum(gp.n[1])}</td>
+                  <td>{fmtNum(gp.n[2])}</td>
+                  <td>[{Array.from(gp.nRows.w).map((v) => fmtNum(v, 3)).join(', ')}]</td>
+                  <td>[{Array.from(gp.nRows.phi).map((v) => fmtNum(v, 3)).join(', ')}]</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {massDerivation.points.map((gp, i) => (
+            <FormulaBlock
+              key={i}
+              lines={massGaussTex(gp, i, massDerivation.mass.massPerLength, massDerivation.mass.rotaryInertiaPerLength)}
+            />
+          ))}
+
+          <h3>4A.2 Mₑ integrálás — konkrét, ellenőrizhető példa két mátrixelemre</h3>
+          <p>
+            A Mₑ w-blokkja és φ-blokkja EGYMÁSTÓL FÜGGETLEN (nincs w–φ kereszttag, ld. <code>nRows()</code>{' '}
+            dokumentációja) — az alábbi példa ezért KÉT KÜLÖN, teljesen kiírt mátrixelemre mutatja be az
+            összegzést, egyet-egyet mindkét tagból:
+          </p>
+          <FormulaBlock
+            lines={massDiagonalTex(
+              massDerivation.points,
+              massDerivation.mass.massPerLength,
+              massDerivation.mass.rotaryInertiaPerLength,
+              massDerivation.me.get(0, 0),
+              massDerivation.me.get(1, 1),
+            )}
+          />
+
+          <h3>4A.3 A 6×6 Mₑ mátrix végső alakja</h3>
+          <div className="vem-derivation__matrix">
+            <table>
+              <tbody>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <tr key={i}>
+                    {Array.from({ length: 6 }, (_, j) => (
+                      <td key={j}>{massDerivation.me.get(i, j).toExponential(3)}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         {/* 5. KOMPILÁLÁS ÉS MEGOLDÁS */}

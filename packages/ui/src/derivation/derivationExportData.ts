@@ -9,7 +9,7 @@
  * exportált szám UGYANONNAN származzon (ADR-0005 szelleme).
  */
 import type { ElementInternalForceDerivation, ElementLoadDerivation, ElementResult, LinearResult } from '@femati/fem-core';
-import type { ElementStiffnessDerivation, LayerStepDerivation } from '@femati/fem-core';
+import type { ElementMassDerivation, ElementStiffnessDerivation, LayerStepDerivation } from '@femati/fem-core';
 import type { MaterialEntry, PresetEntry, SectionEntry } from '../data/catalog.js';
 import type { EditableModel } from '../model/editable.js';
 import type { NonlinearRun } from '../model/nonlinear.js';
@@ -22,6 +22,8 @@ import {
   internalForceBlock,
   jacobianLines,
   keDiagonalDemo,
+  massDiagonalDemo,
+  massGaussBlock,
   nodalLoadLine,
   plasticLayerFormula,
   shearGaussBlock,
@@ -124,6 +126,13 @@ export interface DerivationExportData {
   readonly loadFormulas: readonly string[];
   readonly loadVectorRow: string;
 
+  readonly massPerLength: string;
+  readonly rotaryInertiaPerLength: string;
+  readonly massRows: readonly (readonly string[])[];
+  readonly massFormulas: readonly string[];
+  readonly massDiagonalFormula: string;
+  readonly meRows: readonly string[];
+
   readonly assemblyRows: readonly (readonly string[])[];
   readonly assemblyNote: string;
   readonly boundaryRows: readonly (readonly string[])[];
@@ -157,6 +166,7 @@ export interface DerivationExportContext {
   readonly layerA: number;
   readonly layerI: number;
   readonly elementDerivation: ElementStiffnessDerivation;
+  readonly massDerivation: ElementMassDerivation;
   readonly loadDerivation: ElementLoadDerivation | undefined;
   readonly internalForceDerivation: ElementInternalForceDerivation | undefined;
   readonly globalNodeIdx: readonly [number, number, number] | undefined;
@@ -324,6 +334,29 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
     ),
     loadFormulas: buildLoadFormulas(ctx.loadDerivation, elementDerivation.stiffness.ei),
     loadVectorRow: `[${Array.from(elementDerivation.loadVector).map((v) => v.toExponential(3)).join(', ')}]`,
+
+    massPerLength: fixed(ctx.massDerivation.mass.massPerLength, 4),
+    rotaryInertiaPerLength: ctx.massDerivation.mass.rotaryInertiaPerLength.toExponential(4),
+    massRows: ctx.massDerivation.points.map((gp) => [
+      fixed(gp.xi),
+      fixed(gp.w),
+      fixed(gp.n[0]),
+      fixed(gp.n[1]),
+      fixed(gp.n[2]),
+    ]),
+    massFormulas: ctx.massDerivation.points.map((gp, i) =>
+      massGaussBlock(gp, i, ctx.massDerivation.mass.massPerLength, ctx.massDerivation.mass.rotaryInertiaPerLength),
+    ),
+    massDiagonalFormula: massDiagonalDemo(
+      ctx.massDerivation.points,
+      ctx.massDerivation.mass.massPerLength,
+      ctx.massDerivation.mass.rotaryInertiaPerLength,
+      ctx.massDerivation.me.get(0, 0),
+      ctx.massDerivation.me.get(1, 1),
+    ),
+    meRows: Array.from({ length: 6 }, (_, i) =>
+      Array.from({ length: 6 }, (_, j) => ctx.massDerivation.me.get(i, j).toExponential(3)).join('  '),
+    ),
 
     assemblyRows:
       ctx.globalNodeIdx !== undefined

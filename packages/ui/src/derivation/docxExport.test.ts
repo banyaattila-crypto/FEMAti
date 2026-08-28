@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deriveElementInternalForces,
   deriveElementLoadVector,
+  deriveElementMass,
   deriveElementStiffness,
   elementGlobalNodeIndices,
   solveLinear,
@@ -23,6 +24,7 @@ describe('docxExport — a teljes 4.7/5/6 bővítés nem töri el a .docx gener�
 
     const linear = solveLinear(model);
     const elementDerivation = deriveElementStiffness(model, elementId);
+    const massDerivation = deriveElementMass(model, elementId);
     const loadDerivation = deriveElementLoadVector(model, elementId);
     const internalForceDerivation = deriveElementInternalForces(model, elementId, linear.displacements);
     const globalNodeIdx = elementGlobalNodeIndices(model, elementId);
@@ -49,6 +51,7 @@ describe('docxExport — a teljes 4.7/5/6 bővítés nem töri el a .docx gener�
       layerA,
       layerI,
       elementDerivation,
+      massDerivation,
       loadDerivation,
       internalForceDerivation,
       globalNodeIdx,
@@ -67,6 +70,12 @@ describe('docxExport — a teljes 4.7/5/6 bővítés nem töri el a .docx gener�
     expect(exportData.assemblyRows.length).toBe(6);
     expect(exportData.boundaryRows.length).toBeGreaterThan(0);
     expect(exportData.internalForceFormulas.length).toBeGreaterThan(0);
+
+    // ADR-0016: a tömegmátrix-levezetés (4A pont) mezői is meg vannak töltve.
+    expect(exportData.massRows.length).toBe(3);
+    expect(exportData.massFormulas.length).toBe(3);
+    expect(exportData.meRows.length).toBe(6);
+    expect(exportData.massDiagonalFormula).toContain('Mₑ[w₁,w₁]');
 
     const blob = await buildDerivationDocx(exportData);
     expect(blob.size).toBeGreaterThan(0);

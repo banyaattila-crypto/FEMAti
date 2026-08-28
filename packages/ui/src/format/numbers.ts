@@ -53,6 +53,22 @@ export const shear = make(2, 'kN');
 /** Erő [kN], 2 tizedes. */
 export const force = make(2, 'kN');
 
+// ─── Modális analízis (ADR-0016) ───────────────────────────────────────────────
+
+/** Sajátfrekvencia [Hz], 3 tizedes. */
+export const frequencyHz = make(3, 'Hz');
+
+/** Sajátkörfrekvencia [rad/s], 2 tizedes. */
+export const angularFrequency = make(2, 'rad/s');
+
+/**
+ * Módalak-amplitúdó — DIMENZIÓTLAN (M-ortonormált sajátvektor, ld.
+ * `solver/modal.ts`), a fizikai lehajlástól ELTÉRŐEN nincs mértékegysége és
+ * az abszolút nagysága önmagában nem értelmezhető, csak az ALAKJA (a
+ * relatív arányok a hossz mentén).
+ */
+export const modeShape = make(4, '');
+
 // ─── Merevségek és keresztmetszeti jellemzők ─────────────────────────────────
 
 /** Hajlítómerevség EI [kNm²], egész. */

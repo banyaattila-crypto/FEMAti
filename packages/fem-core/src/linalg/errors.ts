@@ -30,6 +30,25 @@ export class SingularMatrixError extends Error {
   }
 }
 
+/**
+ * A mátrix nem pozitív definit — a Cholesky-felbontás egy pivotja nem pozitív.
+ * Modális analízisnél (ADR-0016) ez azt jelenti, hogy a tömegmátrix
+ * szinguláris (pl. egy aktív szabadságfokhoz nem tartozik tömeg).
+ */
+export class NotPositiveDefiniteError extends Error {
+  override readonly name = 'NotPositiveDefiniteError';
+  /** A hibás pivot sorszáma. */
+  readonly index: number;
+
+  constructor(index: number, hint?: string) {
+    super(
+      `A mátrix nem pozitív definit a(z) ${index}. pivotnál. ` +
+        (hint ?? 'Modális analízisnél ellenőrizze, hogy minden aktív szabadságfokhoz tartozik-e tömeg.'),
+    );
+    this.index = index;
+  }
+}
+
 /** A leképezés nem megfordítható: |J| ≤ 0 (Diplomaterv 3.7–3.9). */
 export class DegenerateElementError extends Error {
   override readonly name = 'DegenerateElementError';

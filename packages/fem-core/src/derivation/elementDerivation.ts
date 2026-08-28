@@ -22,12 +22,12 @@ import {
   type DistributedLoadGaussDetail,
   type ThermalLoadGaussDetail,
 } from '../assembly/loadVector.js';
-import { bRows, type BRows } from '../element/bMatrix.js';
-import { sectionStiffness, type SectionStiffness } from '../element/constitutive.js';
+import { bRows, nRows, type BRows, type NRows } from '../element/bMatrix.js';
+import { sectionMass, sectionStiffness, type SectionMass, type SectionStiffness } from '../element/constitutive.js';
 import { jacobian, type JacobianValues } from '../element/jacobian.js';
-import { quadratureFor, STRESS_POINTS } from '../element/quadrature.js';
+import { GAUSS_3, quadratureFor, STRESS_POINTS } from '../element/quadrature.js';
 import { shapeFunctions } from '../element/shapeFunctions.js';
-import { elementStiffness, internalForces } from '../element/timoshenko3.js';
+import { elementMass, elementStiffness, internalForces } from '../element/timoshenko3.js';
 import { type DenseMatrix } from '../linalg/dense.js';
 import type { IntegrationScheme, Material, MaterialId, Model, Section } from '../model/types.js';
 
@@ -117,6 +117,80 @@ export function deriveElementStiffness(model: Model, elementId: string): Element
     ke,
     loadVector,
   };
+}
+
+/** Egy Gauss-pont teljes köztes állapota a tömegmátrix-levezetéshez (ADR-0016). */
+export interface MassGaussStepDetail {
+  readonly xi: number;
+  readonly w: number;
+  /** N₁, N₂, N₃ az adott ξ-ben — UGYANAZ a függvény, mint a merevségi levezetésnél. */
+  readonly n: readonly [number, number, number];
+  readonly jacobian: JacobianValues;
+  /** A w/φ DOF-helyekre szórt alakfüggvény-sorok (ld. `element/bMatrix.ts` `nRows`). */
+  readonly nRows: NRows;
+}
+
+export interface ElementMassDerivation {
+  readonly elementId: string;
+  readonly nodeX: readonly [number, number, number];
+  readonly length: number;
+  readonly mass: SectionMass;
+  /**
+   * A tömegmátrix mindkét tagja (transzlációs, forgási tehetetlenség) AZONOS,
+   * teljes (3 pontos Gauss) kvadratúrával integrálódik — nincs szelektív
+   * séma, ellentétben a merevségi mátrixszal (ld. `element/timoshenko3.ts`
+   * `elementMass` dokumentációja).
+   */
+  readonly points: readonly MassGaussStepDetail[];
+  /** A 6×6 elemi tömegmátrix — SZÓ SZERINT `elementMass(...)` eredménye. */
+  readonly me: DenseMatrix;
+}
+
+function massGaussStep(
+  nodeX: readonly [number, number, number],
+  xi: number,
+  w: number,
+  elementId: string,
+): MassGaussStepDetail {
+  const { n } = shapeFunctions(xi);
+  return { xi, w, n, jacobian: jacobian(nodeX, xi, elementId), nRows: nRows(nodeX, xi, elementId) };
+}
+
+/**
+ * Egy elem teljes tömegmátrix-levezetése a modellből (ADR-0016) —
+ * UGYANAZZAL az "újraszámolással" garanciával, mint `deriveElementStiffness`:
+ * a `me` mező BIT-AZONOS azzal, amit `assembly/massAssembler.ts` ténylegesen
+ * összead (ld. `derivation.test.ts`).
+ *
+ * @throws Error ha az elem, a szelvénye vagy az anyaga nem található a modellben
+ */
+export function deriveElementMass(model: Model, elementId: string): ElementMassDerivation {
+  const element = model.elements.find((e) => (e.id as string) === elementId);
+  if (element === undefined) {
+    throw new Error(`A(z) "${elementId}" elem nem található a modellben.`);
+  }
+  const nodeById = new Map(model.nodes.map((n) => [n.id as string, n.x as number]));
+  const nodeX: [number, number, number] = [
+    nodeById.get(element.nodes[0] as string) ?? 0,
+    nodeById.get(element.nodes[1] as string) ?? 0,
+    nodeById.get(element.nodes[2] as string) ?? 0,
+  ];
+
+  const materials = new Map<string, Material>(model.materials.map((m) => [m.id as string, m]));
+  const sections = new Map<string, Section>(model.sections.map((s) => [s.id as string, s]));
+  const material = materials.get(element.materialId as string);
+  const section = sections.get(element.sectionId as string);
+  if (material === undefined || section === undefined) {
+    throw new Error(`A(z) "${elementId}" elem anyaga vagy keresztmetszete nem oldható fel.`);
+  }
+  const lookup = (id: MaterialId): Material | undefined => materials.get(id as string);
+  const stiffness = sectionStiffness(section, material, lookup);
+  const mass = sectionMass(stiffness, material);
+
+  const points = GAUSS_3.map((gp) => massGaussStep(nodeX, gp.xi, gp.w, elementId));
+  const me = elementMass({ nodeX, elementId }, mass);
+
+  return { elementId, nodeX, length: Math.abs(nodeX[2] - nodeX[0]), mass, points, me };
 }
 
 /** Egy megoszló teher (erő/nyomaték/önsúly) járuléka az elemi tehervektorhoz — a 4.7 pont bontásához. */

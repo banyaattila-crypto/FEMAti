@@ -5,3 +5,6 @@ export * from './nonlinearElement.js';
 export * from './newtonRaphson.js';
 export * from './loadStepper.js';
 export * from './frontal.js';
+export * from './modal.js';
+export * from './damping.js';
+export * from './transient.js';

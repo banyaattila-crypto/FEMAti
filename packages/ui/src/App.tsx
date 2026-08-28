@@ -28,6 +28,7 @@ const DIAGRAM_TABS: readonly { id: DiagramTab; label: string }[] = [
   { id: 'stress3d', label: '3D feszültség' },
   { id: 'load-displacement', label: 'teher–elmozdulás' },
   { id: 'convergence', label: 'konvergencia' },
+  { id: 'modal', label: 'modális' },
 ];
 
 /** <768px-nél a fejezet-fülek — DESIGN-TERV 3.3 "egy oszlop, fülekkel". */

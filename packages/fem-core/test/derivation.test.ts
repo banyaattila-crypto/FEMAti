@@ -5,18 +5,24 @@ import {
   buildModel,
   deriveElementInternalForces,
   deriveElementLoadVector,
+  deriveElementMass,
   deriveElementStiffness,
   deriveLayerStep,
   distributedForce,
   elementLoadVector,
+  elementMass,
   elementStiffness,
   fixed,
   generateLayers,
   iProfile,
   makeLayeredSection,
   makeMaterial,
+  makeSection,
+  rect,
   resetLoadIds,
   runLoadStepper,
+  sectionMass,
+  sectionStiffness,
   solveLinear,
   uniformMesh,
   selfWeight,
@@ -41,6 +47,48 @@ function buildLayeredModel(elementCount: number): Model {
     loads: [distributedForce(0, 6, -8, -8, 'Q1'), selfWeight(1, 'G1')],
   });
 }
+
+describe('deriveElementMass — bit-azonosság (ADR-0016)', () => {
+  const rectMat = makeMaterial('S235r', 'Acél S235', { e: 2.1e8, density: 7850 });
+  const sec = makeSection('R1', 'Téglalap 20/40', rect(0.2, 0.4));
+  const mesh = uniformMesh(6, 3, { sectionId: 'R1', materialId: 'S235r' });
+  const model: Model = buildModel({
+    nodes: mesh.nodes,
+    elements: mesh.elements,
+    materials: [rectMat],
+    sections: [sec],
+    boundaries: [fixed('N0')],
+  });
+
+  it('az Mₑ SZÓ SZERINT elementMass(...) eredménye — bit-azonos', () => {
+    const elementId = model.elements[1]?.id as unknown as string;
+    const derived = deriveElementMass(model, elementId);
+
+    const stiffness = sectionStiffness(sec, rectMat);
+    const expectedMass = sectionMass(stiffness, rectMat);
+    const expectedMe = elementMass({ nodeX: derived.nodeX, elementId }, expectedMass);
+
+    expect(derived.me.data).toEqual(expectedMe.data);
+  });
+
+  it('3 Gauss-pontot ad vissza (teljes integrálás, nincs szelektív séma)', () => {
+    const elementId = model.elements[0]?.id as unknown as string;
+    const derived = deriveElementMass(model, elementId);
+    expect(derived.points).toHaveLength(3);
+  });
+
+  it('minden Gauss-pontban ΣNᵢ = 1 (partíció, ugyanaz az alakfüggvény, mint a merevségnél)', () => {
+    const elementId = model.elements[0]?.id as unknown as string;
+    const derived = deriveElementMass(model, elementId);
+    for (const p of derived.points) {
+      expect(p.n[0] + p.n[1] + p.n[2]).toBeCloseTo(1, 13);
+    }
+  });
+
+  it('ismeretlen elemre hibát dob', () => {
+    expect(() => deriveElementMass(model, 'NEM-LETEZIK')).toThrow();
+  });
+});
 
 describe('deriveElementStiffness — bit-azonosság (ADR-0005, P15/A elfogadási kritérium)', () => {
   const model = buildLayeredModel(6);

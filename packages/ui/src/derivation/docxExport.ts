@@ -131,6 +131,24 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
     mono(`Összegzés: q_e = ${data.loadVectorRow}`),
   );
 
+  // ── 4A. A választott elem tömegmátrix-levezetése (ADR-0016) ────────────
+  push(
+    heading(`4A. A(z) ${data.elementId} elem tömegmátrix-levezetése (ADR-0016)`, HeadingLevel.HEADING_1),
+    para(
+      'A tömegmátrix mindkét tagja (transzlációs m\', forgási tehetetlenség m\'ᵩ) AZONOS, teljes (3 pontos ' +
+        'Gauss) kvadratúrával integrálódik — nincs szelektív séma, ellentétben a merevségi mátrixszal. Csak ' +
+        'VÉGEREDMÉNY: a sajátérték-megoldás (Jacobi-forgatás) nem kap lépésenkénti levezetést itt.',
+    ),
+    mono(`m' = γ·A/g = ${data.massPerLength} kN·s²/m²\nm'ᵩ = γ·I/g = ${data.rotaryInertiaPerLength} kN·s²`),
+    heading('4A.1 Gauss-pontok — táblázat és teljes, behelyettesített levezetés', HeadingLevel.HEADING_2),
+    table(['ξ', 'w', 'N₁', 'N₂', 'N₃'], data.massRows),
+    ...data.massFormulas.map((f) => mono(f)),
+    heading('4A.2 Mₑ integrálás — konkrét példa két mátrixelemre', HeadingLevel.HEADING_2),
+    mono(data.massDiagonalFormula),
+    heading('4A.3 A 6×6 Mₑ mátrix', HeadingLevel.HEADING_2),
+    ...data.meRows.map((row) => mono(row)),
+  );
+
   // ── 5. Kompilálás és megoldás ─────────────────────────────────────────
   push(
     heading('5. Kompilálás és megoldás', HeadingLevel.HEADING_1),

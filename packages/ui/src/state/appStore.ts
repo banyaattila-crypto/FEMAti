@@ -20,7 +20,7 @@ import type { SolverStatus } from '../components/Feedback.js';
 
 export type SolverAlgorithm = 'newton' | 'modified-newton';
 export type LoadHistoryMode = 'monotonic' | 'unloading';
-export type DiagramTab = 'M' | 'T' | 'w' | 'phi' | 'load-displacement' | 'convergence' | 'stress3d';
+export type DiagramTab = 'M' | 'T' | 'w' | 'phi' | 'load-displacement' | 'convergence' | 'stress3d' | 'modal';
 export type TheoryTopic = 'thesis96' | 'timoshenko' | 'integration' | 'reforb' | 'about';
 /** <768px-nél melyik panel látszik (DESIGN-TERV 3.3: "egy oszlop, fülekkel"). */
 export type MobileTab = 'model' | 'canvas' | 'results';
@@ -51,6 +51,8 @@ export interface AppState {
   activeDiagram: DiagramTab;
   /** Az idővonalon éppen megjelenített teherlépcső indexe */
   activeStep: number;
+  /** A "Modális" fülön éppen megjelenített módus indexe (ADR-0016). */
+  activeMode: number;
   showGaussPoints: boolean;
   /** M diagram a húzott oldalra rajzolva (DESIGN-TERV 5.4, kapcsolható konvenció). */
   momentTensionSide: boolean;
@@ -78,6 +80,7 @@ export interface AppState {
   setPeakLambda: (v: number) => void;
   setActiveDiagram: (v: DiagramTab) => void;
   setActiveStep: (v: number) => void;
+  setActiveMode: (v: number) => void;
   setShowGaussPoints: (v: boolean) => void;
   setMomentTensionSide: (v: boolean) => void;
   setStatus: (status: SolverStatus, detail?: string) => void;
@@ -104,6 +107,7 @@ export const useAppStore = create<AppState>()((set) => ({
 
   activeDiagram: 'M',
   activeStep: 0,
+  activeMode: 0,
   showGaussPoints: false,
   momentTensionSide: true,
   inspector: null,
@@ -123,6 +127,7 @@ export const useAppStore = create<AppState>()((set) => ({
 
   setActiveDiagram: (v) => set({ activeDiagram: v }),
   setActiveStep: (v) => set({ activeStep: v }),
+  setActiveMode: (v) => set({ activeMode: v }),
   setShowGaussPoints: (v) => set({ showGaussPoints: v }),
   setMomentTensionSide: (v) => set({ momentTensionSide: v }),
   setStatus: (status, detail = '') => set({ status, statusDetail: detail }),

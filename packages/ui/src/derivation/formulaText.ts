@@ -11,7 +11,7 @@
  * fem-core forráskód fejléceiben dokumentált, publikált formulák — nem új
  * levezetés, csak szöveges megjelenítés (ADR-0005 szelleme).
  */
-import type { DistributedLoadGaussDetail, GaussStepDetail, ThermalLoadGaussDetail } from '@femati/fem-core';
+import type { DistributedLoadGaussDetail, GaussStepDetail, MassGaussStepDetail, ThermalLoadGaussDetail } from '@femati/fem-core';
 import type { PlasticLayerRow } from './derivationData.js';
 
 function f(v: number, digits = 4): string {
@@ -117,6 +117,58 @@ export function keDiagonalDemo(
     `Kₑ[φ₁,φ₁] (2. sor/oszlop, index 1) = Σ (EI·|J|·w·B_κ[1]²) + Σ (GAs·|J|·w·B_γ[1]²)`,
     ...[...bendingTerms, ...shearTerms].map((t) => `  ${t.label}: ${f(t.factor, 2)}·(${f(t.b, 3)})² = ${f(t.term, 2)}`),
     `Összeg = ${f(total, 2)}  (a végső Kₑ mátrixban ugyanez az érték: ${f(keValue, 2)})`,
+  ].join('\n');
+}
+
+/**
+ * Egy tömegmátrix Gauss-pont TELJES, behelyettesített levezetése (ADR-0016)
+ * — a `bendingGaussBlock`/`shearGaussBlock` szöveges párja, a w/φ DOF-
+ * helyekre szórt alakfüggvény-sorokra (`nRows`) építve.
+ */
+export function massGaussBlock(gp: MassGaussStepDetail, index: number, massPerLength: number, rotaryInertiaPerLength: number): string {
+  const wFactor = massPerLength * gp.jacobian.detJ * gp.w;
+  const phiFactor = rotaryInertiaPerLength * gp.jacobian.detJ * gp.w;
+  return [
+    `— Gauss-pont T${index + 1}: ξ = ${f(gp.xi)}, súly w = ${f(gp.w)} —`,
+    shapeFunctionLines(gp.xi, gp.n),
+    `w-sor: N_w = [N₁, 0, N₂, 0, N₃, 0] = [${Array.from(gp.nRows.w).map((v) => f(v, 3)).join(', ')}]`,
+    `φ-sor: N_φ = [0, N₁, 0, N₂, 0, N₃] = [${Array.from(gp.nRows.phi).map((v) => f(v, 3)).join(', ')}]`,
+    `Transzlációs hozzájárulás a Mₑ-hez: m'·|J|·w = ${f(massPerLength, 4)}·${f(gp.jacobian.detJ, 5)}·${f(gp.w, 4)} = ${f(wFactor, 5)}`,
+    `Forgási tehetetlenségi hozzájárulás a Mₑ-hez: m'φ·|J|·w = ${f(rotaryInertiaPerLength, 6)}·${f(gp.jacobian.detJ, 5)}·${f(gp.w, 4)} = ${f(phiFactor, 6)}`,
+  ].join('\n');
+}
+
+/**
+ * A Mₑ[w₁,w₁] és Mₑ[φ₁,φ₁] főátló-elemek tagonkénti, TELJES összegzése —
+ * a `keDiagonalDemo` tömegmátrix-párja. A két főátló-elem KÜLÖN taglistából
+ * adódik össze, mert a w-sor és a φ-sor sosem csatolt (nincs kereszttag).
+ */
+export function massDiagonalDemo(
+  points: readonly MassGaussStepDetail[],
+  massPerLength: number,
+  rotaryInertiaPerLength: number,
+  meWValue: number,
+  mePhiValue: number,
+): string {
+  const wTerms = points.map((gp, i) => {
+    const n = gp.nRows.w[0] ?? 0;
+    const factor = massPerLength * gp.jacobian.detJ * gp.w;
+    return { label: `T${i + 1}`, n, factor, term: factor * n * n };
+  });
+  const phiTerms = points.map((gp, i) => {
+    const n = gp.nRows.phi[1] ?? 0;
+    const factor = rotaryInertiaPerLength * gp.jacobian.detJ * gp.w;
+    return { label: `T${i + 1}`, n, factor, term: factor * n * n };
+  });
+  const wTotal = wTerms.reduce((s, t) => s + t.term, 0);
+  const phiTotal = phiTerms.reduce((s, t) => s + t.term, 0);
+  return [
+    `Mₑ[w₁,w₁] (1. sor/oszlop, index 0) = Σ (m'·|J|·w·N_w[0]²)`,
+    ...wTerms.map((t) => `  ${t.label}: ${f(t.factor, 4)}·(${f(t.n, 3)})² = ${f(t.term, 4)}`),
+    `Összeg = ${f(wTotal, 4)}  (a végső Mₑ mátrixban ugyanez az érték: ${f(meWValue, 4)})`,
+    `Mₑ[φ₁,φ₁] (2. sor/oszlop, index 1) = Σ (m'φ·|J|·w·N_φ[1]²)`,
+    ...phiTerms.map((t) => `  ${t.label}: ${f(t.factor, 6)}·(${f(t.n, 3)})² = ${f(t.term, 6)}`),
+    `Összeg = ${f(phiTotal, 6)}  (a végső Mₑ mátrixban ugyanez az érték: ${f(mePhiValue, 6)})`,
   ].join('\n');
 }
 
