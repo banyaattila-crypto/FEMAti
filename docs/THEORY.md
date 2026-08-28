@@ -234,12 +234,20 @@ katalógusszelvényt.
 
 A `GAs = κs·G·A` nyírási merevségben szereplő κs (Diplomaterv (2.2), a
 `SectionStiffness.gas` mezője, ld. 1. pont) a modellben `Section.shearFactor`
-néven, MINDEN keresztmetszet-alakra (téglalap, kör, csőszelvény, I-/U-szelvény)
-azonos alapértelmezett értékkel szerepel:
+néven szerepel. A `model/builder.ts` `makeSection()`/`makeLayeredSection()`
+API-jának alapértelmezése (ha a hívó nem ad meg mást) VÁLTOZATLANUL a
+konstans
 
 ```
 RECT_SHEAR_FACTOR = 5/6   (model/builder.ts)
 ```
+
+de a felület (`ui/model/compile.ts` — lineáris/parametrikus út — és
+`ui/model/nonlinear.ts` — rétegelt/nemlineáris út) MOST MÁR explicit,
+alak- és Poisson-tényező-specifikus értéket ad át
+(`section/properties.ts` `recommendedShearFactor(shape, nu)`, ld. lent) —
+tehát a ténylegesen futtatott modellekben (mindkét analízis-úton) a
+finomabb Cowper-formula érvényesül, nem a konstans 5/6.
 
 Ez a klasszikus, konstans (Poisson-tényezőtől FÜGGETLEN) téglalap-
 keresztmetszeti érték — forrás: **Newlin, J. A. & Trayer, G. W., "Deflection
@@ -268,15 +276,31 @@ MDPI](https://encyclopedia.pub/entry/34559): Mindlin–Deresiewicz 1953,
 Roark 1954, Stephen 1980, Hutchinson 1981 további, egymástól eltérő
 közelítéseket adnak).
 
-**Dokumentált hatókör-korlát:** a projekt jelenleg NEM Poisson-tényező-függő,
-NEM alak-specifikus κs-t számol — minden `makeSection()`/`makeLayeredSection()`
-hívás a konstans `RECT_SHEAR_FACTOR`-t (5/6) örökli, hacsak a hívó explicit
-felül nem írja, FÜGGETLENÜL a tényleges keresztmetszet-alaktól (kör,
-csőszelvény, I-/U-szelvény is ezt kapja). Ez tudatos egyszerűsítés (a
-diplomaterv is egységesen 5/6-ot használ), NEM a mai szakirodalom szerinti
-legpontosabb (Cowper-féle) megoldás — egy jövőbeli, alak- és
-Poisson-tényező-specifikus κs-bővítés önálló ADR-t és validációt igényelne
-(hasonlóan az ADR-0016/0017 dinamikai bővítésekhez).
+**MEGVALÓSÍTVA (2026-08-29):** `recommendedShearFactor(shape, nu)` —
+Cowper-formulák téglalapra, körre és vékonyfalú csőre:
+
+```
+téglalap:       κ = 10·(1+ν) / (12+11·ν)
+kör:            κ = 6·(1+ν)  / (7+6·ν)
+vékonyfalú cső: κ = 2·(1+ν)  / (4+3·ν)
+```
+
+Mindhárom ν=0-nál a korábbi, konstans érték határesetét adja vissza
+(téglalap: 5/6; cső: 1/2, ami egybeesett a korábbi, hardcodeolt
+konstanssal is). **Az I-szelvényre (és U-szelvényre) VÁLTOZATLANUL** a
+korábbi, egyszerűbb "a nyírást gyakorlatilag a gerinc veszi fel" közelítés
+(Aweb/A) marad érvényben — Cowper saját I-szelvény formulája jóval
+bonyolultabb (öv/gerinc arányoktól függő), ennek levezetése/validálása egy
+KÉSŐBBI, külön lépés lenne.
+
+A `nu` paraméter KÖTELEZŐ (nincs hallgatólagos alapértelmezés) —
+`recommendedShearFactor(shape, nu)` szignatúrával, hogy a hívó ne
+felejtse el megadni a tényleges anyag Poisson-tényezőjét (ADR-0001 elve:
+explicit dimenzió-/paraméter-ellenőrzés a publikus belépési pontokon).
+
+**Teszt:** `section.test.ts` "nyírási alaktényező" leírásblokk — a ν=0
+határeset egyezése a korábbi konstansokkal, a ν=0.3 Cowper-érték,
+és minden alak/ν-kombinációra a (0,1] tartományba esés.
 
 ---
 

@@ -145,22 +145,38 @@ describe('alaki tényező c = Mp/Mₑ — Diplomaterv 4. táblázat (54. oldal)'
   });
 });
 
-describe('nyírási alaktényező', () => {
-  it('téglalapra 5/6 — a diplomaterv A/1.2 alakja', () => {
-    expect(recommendedShearFactor(rect(0.2, 0.4))).toBeCloseTo(5 / 6, 14);
-    expect(recommendedShearFactor(rect(0.2, 0.4))).toBeCloseTo(1 / 1.2, 14);
+describe('nyírási alaktényező — Cowper (1966), Poisson-tényezőtől függő', () => {
+  it('téglalapra ν=0-nál pontosan 5/6 — a diplomaterv A/1.2 alakjának határesete', () => {
+    expect(recommendedShearFactor(rect(0.2, 0.4), 0)).toBeCloseTo(5 / 6, 14);
+    expect(recommendedShearFactor(rect(0.2, 0.4), 0)).toBeCloseTo(1 / 1.2, 14);
   });
 
-  it('I-szelvénynél a gerinc arányából (IPE 300 ≈ 0.41)', () => {
-    expect(recommendedShearFactor(iProfile(0.3, 0.15, 0.0071, 0.0107))).toBeCloseTo(0.41, 2);
+  it('téglalapra ν=0.3-nál (acél) a Cowper-képlet szerinti értéket adja', () => {
+    // κ = 10·(1+ν)/(12+11·ν) = 10·1.3/15.3
+    expect(recommendedShearFactor(rect(0.2, 0.4), 0.3)).toBeCloseTo((10 * 1.3) / 15.3, 12);
   });
 
-  it('minden alakra 0 és 1 közé esik', () => {
+  it('körre ν=0-nál 6/7, ν=0.3-nál a Cowper-képlet szerint', () => {
+    expect(recommendedShearFactor(circle(0.3), 0)).toBeCloseTo(6 / 7, 12);
+    expect(recommendedShearFactor(circle(0.3), 0.3)).toBeCloseTo((6 * 1.3) / 8.8, 12);
+  });
+
+  it('csőszelvényre ν=0-nál 1/2 (egyezik a korábbi, hardcodeolt konstanssal)', () => {
+    expect(recommendedShearFactor(tube(0.3, 0.02), 0)).toBeCloseTo(0.5, 12);
+  });
+
+  it('I-szelvénynél a gerinc arányából (IPE 300 ≈ 0.41) — NEM Cowper-formula, ν-től független', () => {
+    expect(recommendedShearFactor(iProfile(0.3, 0.15, 0.0071, 0.0107), 0.3)).toBeCloseTo(0.41, 2);
+  });
+
+  it('minden alakra és realisztikus ν-tartományra (0–0.5) 0 és 1 közé esik', () => {
     const shapes = [rect(0.2, 0.4), circle(0.3), tube(0.3, 0.02), iProfile(0.4, 0.18, 0.0086, 0.0135)];
     for (const s of shapes) {
-      const ks = recommendedShearFactor(s);
-      expect(ks).toBeGreaterThan(0);
-      expect(ks).toBeLessThanOrEqual(1);
+      for (const nu of [0, 0.2, 0.3, 0.5]) {
+        const ks = recommendedShearFactor(s, nu);
+        expect(ks).toBeGreaterThan(0);
+        expect(ks).toBeLessThanOrEqual(1);
+      }
     }
   });
 });

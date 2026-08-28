@@ -104,7 +104,7 @@ export function compileLayeredModel(editable: EditableModel): Model {
     sec.id,
     sec.name,
     rawLayers.map((l) => ({ b: l.b, t: l.t, z: l.z })),
-    recommendedShearFactor(shape),
+    recommendedShearFactor(shape, material.nu as number),
   );
 
   const mesh = uniformMesh(editable.span, editable.elementCount, {

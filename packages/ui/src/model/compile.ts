@@ -18,6 +18,7 @@ import {
   tube as tubeShape,
   iProfile,
   selfWeight as selfWeightLoad,
+  recommendedShearFactor,
   solveLinear,
   solveModal,
   uniformMesh,
@@ -67,7 +68,8 @@ function buildCatalogParts(materialId: string, sectionId: string): { material: M
     ...(mat.sigmaY > 0 ? { sigmaY: mat.sigmaY * 1e4 } : {}),
     ...(mat.hPrime > 0 ? { hPrime: mat.hPrime * 1e4 } : {}),
   });
-  const section = makeSection(sec.id, sec.name, toShape(sec));
+  const shape = toShape(sec);
+  const section = makeSection(sec.id, sec.name, shape, recommendedShearFactor(shape, material.nu as number));
   return { material, section };
 }
 

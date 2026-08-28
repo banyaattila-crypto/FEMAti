@@ -114,22 +114,42 @@ function finish(
 }
 
 /**
- * Ajánlott nyírási alaktényező κs.
+ * Ajánlott nyírási alaktényező κs — Cowper (1966) Poisson-tényezőtől függő
+ * formulái (ld. `docs/THEORY.md` 10.1, pontosítva Ahmed & Rifai (2021),
+ * DOI 10.24018/ejers.2021.6.7.2626 alapján):
  *
- * A diplomaterv a nyírási merevséget G·A/1.2 alakban használja (2-2. ábra),
- * ami téglalapra κs = 1/1.2 = 5/6. A modellben megadott érték élvez
- * elsőbbséget; ez a függvény csak javaslatot ad új szelvény felvételekor.
+ *   téglalap:  κ = 10·(1+ν) / (12+11·ν)
+ *   kör:       κ = 6·(1+ν)  / (7+6·ν)
+ *   vékonyfalú cső: κ = 2·(1+ν) / (4+3·ν)
+ *
+ * ν=0-nál a téglalap-képlet PONTOSAN 5/6-ra egyszerűsödik (ez volt eddig a
+ * projekt egyetlen, konstans κs-értéke, `model/builder.ts`
+ * `RECT_SHEAR_FACTOR`) — ez a bővítés tehát nem ELLENTMOND a korábbi
+ * értéknek, hanem egy hiányzó paraméterrel (ν) finomítja.
+ *
+ * Az I-szelvényre Cowper saját formulája jóval bonyolultabb (öv/gerinc
+ * arányoktól függő, nem zárt egytagú kifejezés) — a projekt itt TUDATOSAN
+ * megmarad a korábbi, egyszerűbb "a nyírást gyakorlatilag a gerinc veszi
+ * fel" közelítésnél (Aweb/A), amíg egy jövőbeli lépés nem vezeti le/
+ * validálja a pontos Cowper I-szelvény formulát.
+ *
+ * A modellben explicit megadott `shearFactor` élvez elsőbbséget; ez a
+ * függvény csak javaslatot ad új szelvény felvételekor / az alapértelmezés
+ * előállításához (ld. `ui/model/compile.ts`, `ui/model/nonlinear.ts`).
+ *
+ * @param nu Poisson-tényező [–] — KÖTELEZŐ, nincs hallgatólagos
+ *   alapértelmezés (a κs pontossága ν-től érdemben függ, ld. fent).
  */
-export function recommendedShearFactor(shape: SectionShape): number {
+export function recommendedShearFactor(shape: SectionShape, nu: number): number {
   switch (shape.kind) {
     case 'rect':
-      return 5 / 6;
+      return (10 * (1 + nu)) / (12 + 11 * nu);
     case 'circle':
-      return 0.9;
+      return (6 * (1 + nu)) / (7 + 6 * nu);
     case 'tube':
-      return 0.5;
+      return (2 * (1 + nu)) / (4 + 3 * nu);
     case 'i-profile': {
-      // Közelítés: a nyírást gyakorlatilag a gerinc veszi fel.
+      // Közelítés: a nyírást gyakorlatilag a gerinc veszi fel (NEM Cowper-formula).
       const h = shape.h as number;
       const b = shape.b as number;
       const tw = shape.tw as number;
