@@ -230,6 +230,35 @@ nagyobb az övek aránya..." teszt); a P-02 eset ezért egy INP300-stílusú, va
 gerincű I-szelvényt (`iProfile(0.3, 0.125, 0.009, 0.015)`) használ, nem egy mai
 katalógusszelvényt.
 
+### 10.1 Nyírási korrekciós tényező (κs, `shearFactor`)
+
+A `GAs = κs·G·A` nyírási merevségben szereplő κs (Diplomaterv (2.2), a
+`SectionStiffness.gas` mezője, ld. 1. pont) a modellben `Section.shearFactor`
+néven, MINDEN keresztmetszet-alakra (téglalap, kör, csőszelvény, I-/U-szelvény)
+azonos alapértelmezett értékkel szerepel:
+
+```
+RECT_SHEAR_FACTOR = 5/6   (model/builder.ts)
+```
+
+Ez a Timoshenko-féle, klasszikus téglalap-keresztmetszeti érték — forrás:
+**Cowper, G. R. (1966), "The Shear Coefficient in Timoshenko's Beam Theory",
+Journal of Applied Mechanics, Vol. 33, No. 2, pp. 335–340** (ld. összefoglalóan
+[Timoshenko beam theory — Encyclopedia MDPI](https://encyclopedia.pub/entry/34559),
+amely a κ-definíció további klasszikus irodalmát is felsorolja: Mindlin–Deresiewicz
+1953, Stephen 1980, Hutchinson 1981 — a κ „helyes" értéke a mai napig nem
+egyértelmű, alak- és Poisson-tényező-függő konszenzus nélküli kérdés a
+szakirodalomban).
+
+**Dokumentált hatókör-korlát:** a projekt jelenleg NEM alak-specifikus κs-t
+számol (pl. kör keresztmetszetre a Cowper-féle 6/(7+6ν) helyett is az 5/6
+alapértelmezést használja) — minden `makeSection()`/`makeLayeredSection()`
+hívás a `RECT_SHEAR_FACTOR`-t örökli, hacsak a hívó explicit felül nem írja.
+Ez tudatos egyszerűsítés (a diplomaterv is egységesen 5/6-ot használ), NEM a
+mai szakirodalom szerinti legpontosabb megoldás — egy jövőbeli, alak-
+specifikus κs-bővítés önálló ADR-t és validációt igényelne (hasonlóan az
+ADR-0016/0017 dinamikai bővítésekhez).
+
 ---
 
 ## 11. Egységek — `units/brands.ts`, `units/convert.ts`
