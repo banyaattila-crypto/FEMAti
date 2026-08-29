@@ -2,7 +2,7 @@ import { SegmentedControl } from '../components/Button.js';
 import { Checkbox, Slider } from '../components/Field.js';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { SectionShapeDiagram } from '../components/SectionShapeDiagram.js';
-import { findMaterial, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
+import { findMaterial, findPreset, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import type { EditableLoad, EditableSupport, SupportType } from '../model/editable.js';
@@ -215,7 +215,7 @@ export function LeftPanel(): JSX.Element {
               <span className="vem-tree__caret" aria-hidden="true">
                 ▾
               </span>
-              {model.presetId}
+              {findPreset(model.presetId).name}
             </div>
             {tree.map((n) => (
               <div className="vem-tree__row" key={n.label}>
