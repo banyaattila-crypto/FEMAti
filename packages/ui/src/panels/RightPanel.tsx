@@ -1,4 +1,5 @@
-import { NoteBox, SectionLabel } from '../components/Feedback.js';
+import { shearMomentInteraction } from '@femati/fem-core';
+import { Card, NoteBox } from '../components/Feedback.js';
 import { ResultRow } from '../components/Value.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
@@ -19,74 +20,87 @@ export function RightPanel(): JSX.Element {
   const nonlinearRun = useNonlinearStore((s) => s.run);
   const lastLoadingStep = nonlinearRun?.loadingSteps.at(-1);
 
+  const interaction =
+    result && result.props.mp !== null && result.props.vpl !== null
+      ? shearMomentInteraction(result.extremes.m.value, result.extremes.t.value, result.props.mp, result.props.vpl)
+      : null;
+
   return (
     <aside className="vem-panel vem-panel--right" aria-label="Eredmények">
-      <SectionLabel>Eredmények</SectionLabel>
-      <div>
-        <ResultRow label="w max (lehajlás)" formatted={fmt.deflection(result?.extremes.w.value ?? null)} />
-        <ResultRow label="φ max" formatted={fmt.rotation(result?.extremes.phi.value ?? null)} />
-        <ResultRow label="M max" formatted={fmt.moment(result?.extremes.m.value ?? null)} />
-        <ResultRow label="T max" formatted={fmt.shear(result?.extremes.t.value ?? null)} />
-        <ResultRow label="EI" formatted={fmt.bendingStiffness(result?.props.ei ?? null)} />
-        <ResultRow label="GAs" formatted={fmt.shearStiffness(result?.props.gas ?? null)} />
-        <ResultRow label="szabadságfokok" formatted={fmt.count(result?.dofCount ?? null, 'DOF')} />
-        <ResultRow
-          label="hibabecslő (legrosszabb elem)"
-          formatted={fmt.percent(result?.errorEstimate ?? null)}
-          title="Az elemhatárokon az átlagolás előtti igénybevétel-ugrás, a mező szélsőértékére normálva (Diplomaterv 3.1.7.4)"
-        />
-      </div>
+      <div className="vem-panel__stack">
+        <Card title="Eredmények">
+          {/* A négy fő eredmény (a szerkezet válaszának lényege) nagyobb
+              súllyal jelenik meg, mint a részletadatok alatta — a korábbi
+              minta minden sort azonos vizuális súllyal mutatott. */}
+          <ResultRow label="w max (lehajlás)" formatted={fmt.deflection(result?.extremes.w.value ?? null)} emphasis="hero" />
+          <ResultRow label="φ max" formatted={fmt.rotation(result?.extremes.phi.value ?? null)} emphasis="hero" />
+          <ResultRow label="M max" formatted={fmt.moment(result?.extremes.m.value ?? null)} emphasis="hero" />
+          <ResultRow label="T max" formatted={fmt.shear(result?.extremes.t.value ?? null)} emphasis="hero" />
+          <ResultRow label="EI" formatted={fmt.bendingStiffness(result?.props.ei ?? null)} />
+          <ResultRow label="GAs" formatted={fmt.shearStiffness(result?.props.gas ?? null)} />
+          <ResultRow label="szabadságfokok" formatted={fmt.count(result?.dofCount ?? null, 'DOF')} />
+          <ResultRow
+            label="hibabecslő (legrosszabb elem)"
+            formatted={fmt.percent(result?.errorEstimate ?? null)}
+            title="Az elemhatárokon az átlagolás előtti igénybevétel-ugrás, a mező szélsőértékére normálva (Diplomaterv 3.1.7.4)"
+          />
+        </Card>
 
-      <SectionLabel>Reakciók · egyensúly</SectionLabel>
-      <div>
-        {result
-          ? result.reactions.map((r) => (
-              <ResultRow key={r.nodeId} label={`R (x = ${r.x.toFixed(2)} m)`} formatted={fmt.force(r.fz)} />
-            ))
-          : model.supports.map((s) => <ResultRow key={s.id} label={`R (x = ${s.x.toFixed(2)} m)`} formatted={fmt.force(null)} />)}
-        <ResultRow
-          label="ΣFz ellenőrzés"
-          formatted={fmt.force(result?.equilibrium.sumFz ?? null)}
-          tone={result ? (result.equilibrium.satisfied ? 'ok' : 'error') : 'neutral'}
-        />
-        <ResultRow
-          label="ΣMy ellenőrzés"
-          formatted={fmt.moment(result?.equilibrium.sumMy ?? null)}
-          tone={result ? (result.equilibrium.satisfied ? 'ok' : 'error') : 'neutral'}
-        />
-      </div>
+        <Card title="Reakciók · egyensúly">
+          {result
+            ? result.reactions.map((r) => (
+                <ResultRow key={r.nodeId} label={`R (x = ${r.x.toFixed(2)} m)`} formatted={fmt.force(r.fz)} />
+              ))
+            : model.supports.map((s) => <ResultRow key={s.id} label={`R (x = ${s.x.toFixed(2)} m)`} formatted={fmt.force(null)} />)}
+          <ResultRow
+            label="ΣFz ellenőrzés"
+            formatted={fmt.force(result?.equilibrium.sumFz ?? null)}
+            tone={result ? (result.equilibrium.satisfied ? 'ok' : 'error') : 'neutral'}
+          />
+          <ResultRow
+            label="ΣMy ellenőrzés"
+            formatted={fmt.moment(result?.equilibrium.sumMy ?? null)}
+            tone={result ? (result.equilibrium.satisfied ? 'ok' : 'error') : 'neutral'}
+          />
+        </Card>
 
-      <SectionLabel>Határteher-ellenőrzés</SectionLabel>
-      <div>
-        <ResultRow
-          label="rugalmas teherbírás Mₑ"
-          formatted={fmt.moment(result?.props.me ?? null)}
-          title="σY · Kₑ — csak akkor számítható, ha az anyagnak van folyáshatára"
-        />
-        <ResultRow
-          label="képlékeny teherbírás Mₚ"
-          formatted={fmt.moment(result?.props.mp ?? null)}
-          title="σY · Kₚ — elméleti, keresztmetszet-szintű teherbírás"
-        />
-        <ResultRow label="alaki tényező c = Mₚ/Mₑ" formatted={fmt.shapeFactor(result?.props.shapeFactor ?? null)} />
-        <ResultRow
-          label="számított teherszorzó (nemlineáris)"
-          formatted={fmt.lambda(lastLoadingStep?.lambda ?? null)}
-          tone={nonlinearRun?.status === 'limit-load-reached' ? 'warn' : nonlinearRun?.status === 'converged' ? 'ok' : 'neutral'}
-          title="A runLoadStepper által ténylegesen elért λ — 'limit-load-reached' esetén a numerikus határteher közelítése"
-        />
-      </div>
+        <Card title="Határteher-ellenőrzés">
+          <ResultRow
+            label="rugalmas teherbírás Mₑ"
+            formatted={fmt.moment(result?.props.me ?? null)}
+            title="σY · Kₑ — csak akkor számítható, ha az anyagnak van folyáshatára"
+          />
+          <ResultRow
+            label="képlékeny teherbírás Mₚ"
+            formatted={fmt.moment(result?.props.mp ?? null)}
+            title="σY · Kₚ — elméleti, keresztmetszet-szintű teherbírás"
+          />
+          <ResultRow label="alaki tényező c = Mₚ/Mₑ" formatted={fmt.shapeFactor(result?.props.shapeFactor ?? null)} />
+          <ResultRow
+            label="képlékeny nyíróerő-teherbírás Vpl"
+            formatted={fmt.shear(result?.props.vpl ?? null)}
+            title="Vpl = κs·A·σY/√3 — az effektív nyírási területből (κs·A), NEM a szabvány Av-jéből (ADR-0018)"
+          />
+          <ResultRow
+            label="M-V kihasználtság"
+            formatted={fmt.percent(interaction !== null ? interaction.utilization * 100 : null)}
+            tone={interaction !== null ? (interaction.utilization <= 1 ? 'ok' : 'error') : 'neutral'}
+            emphasis="large"
+            title="EN 1993-1-1 6.2.8 stílusú, UTÓLAGOS ellenőrzés a globális M-max és T-max értékekből — ha nem azonos keresztmetszeti helyen lépnek fel, ez egy KONZERVATÍV (biztonság felé téves) becslés, nem pontos helyi érték (ADR-0018)"
+          />
+          <ResultRow
+            label="számított teherszorzó (nemlineáris)"
+            formatted={fmt.lambda(lastLoadingStep?.lambda ?? null)}
+            tone={nonlinearRun?.status === 'limit-load-reached' ? 'warn' : nonlinearRun?.status === 'converged' ? 'ok' : 'neutral'}
+            title="A runLoadStepper által ténylegesen elért λ — 'limit-load-reached' esetén a numerikus határteher közelítése"
+          />
+        </Card>
 
-      {error !== null ? (
-        <div style={{ padding: 'var(--space-5)' }}>
-          <NoteBox tone="error">A modell jelenleg nem futtatható: {error}</NoteBox>
-        </div>
-      ) : null}
-      {result === null && error === null ? (
-        <div style={{ padding: 'var(--space-5)' }}>
+        {error !== null ? <NoteBox tone="error">A modell jelenleg nem futtatható: {error}</NoteBox> : null}
+        {result === null && error === null ? (
           <NoteBox tone="warn">Nincs számítható modell (nincsenek elemek vagy támaszok).</NoteBox>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </aside>
   );
 }

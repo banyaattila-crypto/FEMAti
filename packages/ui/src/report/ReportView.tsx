@@ -335,7 +335,6 @@ export function ReportView(): JSX.Element | null {
                     title={f.title}
                     xs={xs}
                     ys={f.ys}
-                    color="var(--report-accent)"
                     span={model.span}
                     elements={elements}
                     format={f.format}

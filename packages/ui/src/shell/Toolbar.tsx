@@ -19,11 +19,11 @@ interface CellProps {
 function Cell({ caption, hint, minWidth, children }: CellProps): JSX.Element {
   return (
     <div className="vem-toolbar__cell" style={{ minWidth }}>
-      {children}
       <div className="vem-toolbar__caption">
         <span>{caption}</span>
         {hint ? <span className="vem-num">{hint}</span> : null}
       </div>
+      {children}
     </div>
   );
 }

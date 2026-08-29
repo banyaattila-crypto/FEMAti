@@ -54,7 +54,7 @@ const SECTION_ICON: Record<SectionKind, JSX.Element> = {
   ),
 };
 
-function MaterialSwatch({ color }: { readonly color: string }): JSX.Element {
+export function MaterialSwatch({ color }: { readonly color: string }): JSX.Element {
   return (
     <svg viewBox="0 0 16 16" width="16" height="16">
       <circle cx="8" cy="8" r="6" fill={color} stroke="var(--border-strong)" strokeWidth="0.75" />
@@ -62,7 +62,7 @@ function MaterialSwatch({ color }: { readonly color: string }): JSX.Element {
   );
 }
 
-const MATERIAL_COLOR: Record<MaterialFamily, string> = {
+export const MATERIAL_COLOR: Record<MaterialFamily, string> = {
   steel: 'var(--catalog-steel)',
   aluminum: 'var(--catalog-aluminum)',
   concrete: 'var(--catalog-concrete)',

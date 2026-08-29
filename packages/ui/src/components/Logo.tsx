@@ -1,12 +1,26 @@
+import { useId } from 'react';
+import { JET_LEGEND_STOPS, jetColor } from '../charts/colormap.js';
+
 /**
- * FEMAti márkajel — a felhasználóval közösen kiválasztott "csomóponti-V"
- * koncepció: egy lehajlott gerenda-görbe végeselem-csomópontokkal, ami
- * egyszerre idézi a Timoshenko-gerenda lehajlását és a végeselemes
- * diszkretizációt, és alakja "V"-ként (FEMAti kezdőbetűje) is olvasható.
+ * FEMAti márkajel — "csomóponti-V" koncepció: egy lehajlott gerenda-görbe
+ * végeselem-csomópontokkal, ami egyszerre idézi a Timoshenko-gerenda
+ * lehajlását és a végeselemes diszkretizációt, alakja "V"-ként (FEMAti
+ * kezdőbetűje) is olvasható.
+ *
+ * 2026-08-29 újratervezés: a görbe a `charts/colormap.ts` hőtérkép-
+ * skáláját kapta (ugyanaz, mint a diagramokon/3D feszültségképen — "a szín
+ * az adaton legyen, ne a kereten" elv, ld. ADR-jegyzetek), a korábbi
+ * szaggatott alapvonal ELTÁVOLÍTVA (folyó-keresztmetszetre hasonlított).
  *
  * `variant="mark"`: kis méretű, csak a görbe (fejléc, favicon).
- * `variant="full"`: a BME · 1996 plakettel kiegészítve (nagyobb felület,
- * pl. a "Súgó → A diplomatervről" oldal fejléce).
+ * `variant="full"`: a görbe + "FEM@ti" felirat (Spectral szerif, teal „@").
+ *
+ * KORÁBBAN a `full` változat egy "BME · 1996" plakettet is tartalmazott —
+ * a projekt 2026-08-29-i döntése (a diplomaterv-hűség keretének tudatos
+ * elhagyása, ld. memória: `project-femati-scope-pivot`) után ez a logóból
+ * ELTÁVOLÍTVA: a márkajel mostantól termék-semleges. A történeti eredet
+ * (BME, 1996, Bánya Attila) továbbra is olvasható a "Súgó → Elmélet → A
+ * diplomatervről" oldal szövegében — csak a logó-asszetben nem él tovább.
  */
 interface LogoProps {
   readonly variant: 'mark' | 'full';
@@ -15,61 +29,53 @@ interface LogoProps {
 }
 
 export function Logo({ variant, theme, size }: LogoProps): JSX.Element {
-  const line = theme === 'dark' ? 'var(--text-on-chrome-muted)' : 'var(--border-medium)';
-  const curve = theme === 'dark' ? 'var(--accent-light)' : 'var(--accent)';
-  const dot = theme === 'dark' ? 'var(--accent-light)' : 'var(--accent-hover)';
-  const plaqueBg = 'var(--surface-chrome)';
-  const plaqueText = 'var(--text-on-chrome)';
-  const dateText = theme === 'dark' ? 'var(--text-on-chrome-muted)' : 'var(--text-faint)';
+  const gradientId = `vem-logo-heat-${useId()}`;
+  const endDot = theme === 'dark' ? 'var(--accent-light)' : 'var(--accent)';
+  const peakDot = jetColor(1);
+
+  const gradient = (
+    <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+      {JET_LEGEND_STOPS.map(([t, c]) => (
+        <stop key={t} offset={`${t * 100}%`} stopColor={c} />
+      ))}
+    </linearGradient>
+  );
 
   if (variant === 'mark') {
     const s = size ?? 20;
     return (
       <svg width={s} height={s} viewBox="18 24 94 54" role="img" aria-label="FEMAti">
-        <path d="M27 34 L103 34" stroke={line} strokeWidth="1.6" strokeDasharray="3 3" fill="none" />
+        <defs>{gradient}</defs>
         <path
           d="M27 34 C 47 34, 43 66, 65 66 C 87 66, 83 34, 103 34"
-          stroke={curve}
+          stroke={`url(#${gradientId})`}
           strokeWidth="5.5"
           strokeLinecap="round"
           fill="none"
         />
-        <circle cx="27" cy="34" r="5" fill={dot} />
-        <circle cx="65" cy="66" r="6.5" fill={dot} />
-        <circle cx="103" cy="34" r="5" fill={dot} />
+        <circle cx="27" cy="34" r="5" fill={endDot} />
+        <circle cx="65" cy="66" r="6.5" fill={peakDot} />
+        <circle cx="103" cy="34" r="5" fill={endDot} />
       </svg>
     );
   }
 
   const s = size ?? 110;
   return (
-    <svg width={s} height={(s * 108) / 130} viewBox="0 0 130 108" role="img" aria-label="FEMAti — BME, 1996">
-      <path d="M27 34 L103 34" stroke={line} strokeWidth="1.5" strokeDasharray="3 3" fill="none" />
+    <svg width={s} height={(s * 82) / 100} viewBox="16 22 100 82" role="img" aria-label="FEM@ti">
+      <defs>{gradient}</defs>
       <path
         d="M27 34 C 47 34, 43 66, 65 66 C 87 66, 83 34, 103 34"
-        stroke={curve}
+        stroke={`url(#${gradientId})`}
         strokeWidth="4"
         strokeLinecap="round"
         fill="none"
       />
-      <circle cx="27" cy="34" r="4.5" fill={dot} />
-      <circle cx="65" cy="66" r="6" fill={dot} />
-      <circle cx="103" cy="34" r="4.5" fill={dot} />
-      <rect x="24" y="86" width="36" height="18" rx="3" fill={plaqueBg} />
-      <text
-        x="42"
-        y="98.5"
-        textAnchor="middle"
-        fontFamily="var(--font-mono)"
-        fontSize="9.5"
-        fontWeight="600"
-        fill={plaqueText}
-        letterSpacing="0.5"
-      >
-        BME
-      </text>
-      <text x="66" y="98.5" fontFamily="var(--font-mono)" fontSize="9.5" fontWeight="500" fill={dateText}>
-        · 1996
+      <circle cx="27" cy="34" r="4.5" fill={endDot} />
+      <circle cx="65" cy="66" r="6" fill={peakDot} />
+      <circle cx="103" cy="34" r="4.5" fill={endDot} />
+      <text x="65" y="92" textAnchor="middle" fontFamily="var(--font-serif)" fontSize="19" fontWeight="700" fill="var(--text-primary)">
+        FEM<tspan fill="var(--accent)">@</tspan>ti
       </text>
     </svg>
   );

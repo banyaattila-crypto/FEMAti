@@ -103,7 +103,6 @@ export function ModalPanel({ outcome, activeMode, onActiveModeChange, span }: Mo
           title={`${modeIndex + 1}. módalak — f = ${fmt.frequencyHz(mode.frequencyHz).value} Hz`}
           xs={xs}
           ys={ys}
-          color="var(--accent)"
           span={span}
           elements={elements}
           format={fmt.modeShape}

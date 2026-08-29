@@ -10,9 +10,10 @@
  * - Elemenkénti hibabecslő-sáv az x-tengely alatt, színkóddal.
  * - Analitikus referencia (ha van) szaggatott vonallal.
  */
-import { useCallback, useRef } from 'react';
+import { useCallback, useId, useRef } from 'react';
 import { AXIS_X0, AXIS_X1, VIEW_WIDTH } from '../canvas/useModelTransform.js';
 import { findExtreme, interpolateAt } from './interpolate.js';
+import { jetColor } from './colormap.js';
 import type { Formatted } from '../format/numbers.js';
 
 export const CHART_HEIGHT = 132;
@@ -32,7 +33,6 @@ export interface DiagramChartProps {
   readonly xs: readonly number[];
   readonly ys: readonly number[];
   readonly analyticYs?: readonly number[];
-  readonly color: string;
   readonly span: number;
   readonly elements: readonly ChartElementSpan[];
   readonly format: (v: number | null) => Formatted;
@@ -62,7 +62,6 @@ export function DiagramChart({
   xs,
   ys,
   analyticYs,
-  color,
   span,
   elements,
   format,
@@ -72,6 +71,7 @@ export function DiagramChart({
   svgRef,
 }: DiagramChartProps): JSX.Element {
   const localRef = useRef<SVGSVGElement | null>(null);
+  const gradientId = `vem-heat-${useId()}`;
 
   const sx = useCallback((x: number): number => AXIS_X0 + (x / span) * (AXIS_X1 - AXIS_X0), [span]);
   const sy = makeScale(ys, analyticYs, flip);
@@ -81,6 +81,19 @@ export function DiagramChart({
   const analyticPath = analyticYs
     ? xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${sx(x).toFixed(2)},${sy(analyticYs[i] ?? 0).toFixed(2)}`).join(' ')
     : null;
+
+  // Hőtérkép-jellegű kitöltés/vonal — a szín az ADATON (a mező nagyságán)
+  // él, nem dekoráció (2026-08-29 újratervezés, ANSYS/GstarCAD referencia
+  // alapján: "a szín az adaton legyen, ne a kereten"). |y|/maxAbs → jet
+  // színskála, ugyanaz, mint a 3D feszültségképen (`colormap.ts`).
+  const maxAbsForColor = Math.max(...ys.map((v) => Math.abs(v)), 1e-12);
+  const HEAT_STEPS = 24;
+  const heatStops = Array.from({ length: HEAT_STEPS + 1 }, (_, i) => {
+    const t = i / HEAT_STEPS;
+    const x = t * span;
+    const y = interpolateAt(xs, ys, x) ?? 0;
+    return { offset: t * 100, color: jetColor(Math.abs(y) / maxAbsForColor) };
+  });
 
   const extreme = findExtreme(xs, ys);
   const hoverY = hoverX !== null ? interpolateAt(xs, ys, hoverX) : null;
@@ -129,6 +142,14 @@ export function DiagramChart({
         onPointerMove={onMove}
         onPointerLeave={() => onHoverX(null)}
       >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+            {heatStops.map((s, i) => (
+              <stop key={i} offset={`${s.offset}%`} stopColor={s.color} />
+            ))}
+          </linearGradient>
+        </defs>
+
         {/* alapvonal */}
         <line x1={AXIS_X0} y1={BASELINE} x2={AXIS_X1} y2={BASELINE} stroke="var(--border-medium)" strokeWidth={1} />
 
@@ -150,19 +171,19 @@ export function DiagramChart({
           <path d={analyticPath} fill="none" stroke="var(--sem-analytic)" strokeWidth={1.4} strokeDasharray="5 3" />
         ) : null}
 
-        {/* kitöltés + kontúr */}
-        {areaPath ? <path d={areaPath} fill={color} opacity={0.18} /> : null}
-        <path d={path} fill="none" stroke={color} strokeWidth={2} />
+        {/* kitöltés + kontúr — hőtérkép-színezve a mező nagysága szerint */}
+        {areaPath ? <path d={areaPath} fill={`url(#${gradientId})`} opacity={0.55} /> : null}
+        <path d={path} fill="none" stroke={`url(#${gradientId})`} strokeWidth={2.5} />
 
         {/* nullátmenetek */}
         {zeroCrossings.map((x, i) => (
           <circle key={i} cx={sx(x)} cy={BASELINE} r={2.4} fill="var(--text-faint)" />
         ))}
 
-        {/* szélsőérték felirat */}
+        {/* szélsőérték felirat — mindig a legforróbb (piros) szín, hiszen a szélsőérték a maximum */}
         {extreme ? (
           <g>
-            <circle cx={sx(extreme.x)} cy={sy(extreme.value)} r={3} fill={color} />
+            <circle cx={sx(extreme.x)} cy={sy(extreme.value)} r={3.5} fill={jetColor(1)} stroke="var(--surface-canvas)" strokeWidth={1} />
             <text
               x={sx(extreme.x)}
               y={sy(extreme.value) + (extreme.value >= 0 ? -11 : 22)}
@@ -179,7 +200,16 @@ export function DiagramChart({
         {hoverX !== null ? (
           <g>
             <line x1={sx(hoverX)} y1={4} x2={sx(hoverX)} y2={CHART_HEIGHT - 4} stroke="var(--text-faint)" strokeWidth={1} strokeDasharray="3 2" />
-            {hoverY !== null ? <circle cx={sx(hoverX)} cy={sy(hoverY)} r={3.5} fill={color} stroke="var(--surface-canvas)" strokeWidth={1} /> : null}
+            {hoverY !== null ? (
+              <circle
+                cx={sx(hoverX)}
+                cy={sy(hoverY)}
+                r={3.5}
+                fill={jetColor(Math.abs(hoverY) / maxAbsForColor)}
+                stroke="var(--surface-canvas)"
+                strokeWidth={1}
+              />
+            ) : null}
           </g>
         ) : null}
 

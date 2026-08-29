@@ -69,6 +69,10 @@ export interface AppState {
   theoryTopic: TheoryTopic;
   /** A hálófüggetlenségi (h-konvergencia) vizsgálat nyitva van-e. */
   meshConvergenceOpen: boolean;
+  /** A "Névjegy" (About) párbeszédablak nyitva van-e. */
+  aboutOpen: boolean;
+  /** A szelvény-/anyagadatbázis böngésző nyitva van-e. */
+  databaseOpen: boolean;
   /** Csak <768px-nél releváns — melyik panel aktív. */
   mobileTab: MobileTab;
 
@@ -92,6 +96,8 @@ export interface AppState {
   openTheory: (topic: TheoryTopic) => void;
   setTheoryOpen: (v: boolean) => void;
   setMeshConvergenceOpen: (v: boolean) => void;
+  setAboutOpen: (v: boolean) => void;
+  setDatabaseOpen: (v: boolean) => void;
   setMobileTab: (v: MobileTab) => void;
 }
 
@@ -117,6 +123,8 @@ export const useAppStore = create<AppState>()((set) => ({
   theoryOpen: false,
   theoryTopic: 'timoshenko',
   meshConvergenceOpen: false,
+  aboutOpen: false,
+  databaseOpen: false,
   mobileTab: 'canvas',
 
   setAlgorithm: (v) => set({ algorithm: v }),
@@ -139,5 +147,7 @@ export const useAppStore = create<AppState>()((set) => ({
   openTheory: (topic) => set({ theoryOpen: true, theoryTopic: topic }),
   setTheoryOpen: (v) => set({ theoryOpen: v }),
   setMeshConvergenceOpen: (v) => set({ meshConvergenceOpen: v }),
+  setAboutOpen: (v) => set({ aboutOpen: v }),
+  setDatabaseOpen: (v) => set({ databaseOpen: v }),
   setMobileTab: (v) => set({ mobileTab: v }),
 }));

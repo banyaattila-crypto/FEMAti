@@ -142,22 +142,35 @@
 }
 
 .vem-toolbar__cell {
-  padding: var(--space-3) var(--space-6) var(--space-2);
-  border-right: 1px solid var(--border-divider);
+  padding: var(--space-4) var(--space-6);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--space-2);
+  /* A korábbi teli `border-right` osztóvonalak helyett egy halvány,
+     rövidebb elválasztó — kevésbé "táblázat", inkább csoportosított
+     vezérlő-klaszter (2026-08-29 újratervezés). */
+  position: relative;
+}
+
+.vem-toolbar__cell + .vem-toolbar__cell::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 30%;
+  bottom: 30%;
+  width: 1px;
+  background: var(--border-divider);
 }
 
 .vem-toolbar__caption {
   display: flex;
   justify-content: space-between;
   gap: var(--space-3);
-  font-size: var(--type-label-size);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-faint);
   white-space: nowrap;
 }
 
@@ -265,6 +278,16 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* A bal/jobb panel belső "kártya-oszlopa" (2026-08-29 újratervezés) —
+   a korábbi, panelhátteren úszó szekciólista helyett tagolt, nagyvonalú
+   réssel elválasztott kártyák. */
+.vem-panel__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-9);
+  padding: var(--space-6) var(--space-5);
 }
 
 .vem-center {
@@ -385,30 +408,37 @@
 
 .vem-diagram-bar__tabs {
   display: flex;
-  gap: 1px;
-  padding: var(--space-2) var(--space-6) 0;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-6) var(--space-2);
 }
 
+/* Pill-alakú, szegmentált-vezérlő-szerű fülek a korábbi lapos
+   böngészőfül-minta helyett (2026-08-29 újratervezés) — ugyanaz a nyelv,
+   mint a `.vem-segmented__item`-é, hogy a felület konzisztens vezérlő-
+   szótárat használjon mindenhol. */
 .vem-tab {
   padding: var(--space-2) var(--space-5);
   border: 1px solid transparent;
-  border-bottom: none;
   background: transparent;
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-radius: var(--radius-pill);
+  transition:
+    background var(--motion-panel) var(--ease),
+    color var(--motion-panel) var(--ease);
 }
 
 .vem-tab:hover {
   color: var(--text-primary);
+  background: var(--surface-hover);
 }
 
 .vem-tab[aria-selected='true'] {
-  background: var(--surface-canvas);
-  border-color: var(--border-subtle);
-  color: var(--text-primary);
+  background: var(--accent-soft);
+  color: var(--accent-light);
+  font-weight: 600;
 }
 
 .vem-diagram-bar__body {
@@ -509,6 +539,7 @@
   text-align: left;
   font-size: 12.5px;
   color: var(--text-primary);
+  transition: background var(--motion-panel) var(--ease);
 }
 
 .vem-item-row:hover {

@@ -101,3 +101,23 @@ export interface SectionLabelProps {
 export function SectionLabel({ children }: SectionLabelProps): JSX.Element {
   return <div className="vem-section-label">{children}</div>;
 }
+
+export interface CardProps {
+  readonly title: ReactNode;
+  readonly children: ReactNode;
+}
+
+/**
+ * Önálló, emelt felületű szekció-blokk (2026-08-29 újratervezés) — a bal/
+ * jobb panel korábbi, közvetlenül a panel hátterén úszó lista-sorai helyett
+ * minden logikai csoport (Modellfa, Eredmények stb.) saját kártyát kap,
+ * hogy vizuálisan is elkülönüljön.
+ */
+export function Card({ title, children }: CardProps): JSX.Element {
+  return (
+    <section className="vem-card">
+      <SectionLabel>{title}</SectionLabel>
+      <div className="vem-card__body">{children}</div>
+    </section>
+  );
+}

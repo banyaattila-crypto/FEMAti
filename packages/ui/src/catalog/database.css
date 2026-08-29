@@ -1,0 +1,43 @@
+/**
+ * Szelvény- és anyagadatbázis böngésző (2026-08-29) — a `.vem-theory*`
+ * overlay-architektúrára épül (`theory/theory.css`), csak a katalógus-
+ * specifikus részleteket (nav-csoportcímkék, kételoszlopos méret/számított
+ * blokk) egészíti ki.
+ */
+
+.vem-theory.vem-db {
+  width: min(980px, calc(100vw - 32px));
+}
+
+.vem-db__nav-group {
+  margin: var(--space-5) 0 var(--space-2);
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.vem-db__nav-group:first-of-type {
+  margin-top: 0;
+}
+
+.vem-db__nav-subgroup {
+  margin: var(--space-3) 0 2px;
+  padding: 0 10px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.vem-db__columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .vem-db__columns {
+    grid-template-columns: 1fr;
+  }
+}

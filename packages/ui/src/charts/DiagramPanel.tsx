@@ -156,7 +156,6 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
           title={active.title}
           xs={xs}
           ys={active.ys}
-          color="var(--accent)"
           span={model.span}
           elements={elements}
           format={active.format}

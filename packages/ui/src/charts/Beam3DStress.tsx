@@ -14,6 +14,7 @@
  * geometria sematikus.
  */
 import { interpolateAt } from './interpolate.js';
+import { JET_LEGEND_STOPS, jetColor } from './colormap.js';
 
 export const STRESS3D_HEIGHT = 300;
 
@@ -27,43 +28,7 @@ export interface Beam3DStressProps {
 }
 
 const SEGMENTS = 36;
-
-/** 5 megállójú "jet"-szerű kontúr-színskála, 0 (kék) → 1 (piros). */
-const STOPS: readonly [number, string][] = [
-  [0, '#2a5fb0'],
-  [0.25, '#2fb0c9'],
-  [0.5, '#5fbf7f'],
-  [0.75, '#e0b23a'],
-  [1, '#c93b2e'],
-];
-
-function hexToRgb(hex: string): readonly [number, number, number] {
-  const n = parseInt(hex.slice(1), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-const LAST_STOP_COLOR = STOPS[STOPS.length - 1]?.[1] ?? '#c93b2e';
-
-function jetColor(t: number): string {
-  const clamped = Math.min(1, Math.max(0, t));
-  for (let i = 0; i < STOPS.length - 1; i++) {
-    const stop0 = STOPS[i];
-    const stop1 = STOPS[i + 1];
-    if (stop0 === undefined || stop1 === undefined) continue;
-    const [t0, c0] = stop0;
-    const [t1, c1] = stop1;
-    if (clamped >= t0 && clamped <= t1) {
-      const f = t1 !== t0 ? (clamped - t0) / (t1 - t0) : 0;
-      const [r0, g0, b0] = hexToRgb(c0);
-      const [r1, g1, b1] = hexToRgb(c1);
-      const r = Math.round(r0 + (r1 - r0) * f);
-      const g = Math.round(g0 + (g1 - g0) * f);
-      const b = Math.round(b0 + (b1 - b0) * f);
-      return `rgb(${r},${g},${b})`;
-    }
-  }
-  return LAST_STOP_COLOR;
-}
+const STOPS = JET_LEGEND_STOPS;
 
 const P0 = { x: 30, y: 190 };
 const P1 = { x: 430, y: 60 };
@@ -112,7 +77,7 @@ export function Beam3DStress({ xs, ms, inertia, sectionHeightMm }: Beam3DStressP
         key={`top-${i}`}
         points={`${near0.x},${near0.y} ${near1.x},${near1.y} ${far1.x},${far1.y} ${far0.x},${far0.y}`}
         fill={color}
-        stroke="#221d18"
+        stroke="var(--surface-app)"
         strokeWidth={0.4}
       />,
     );
@@ -122,7 +87,7 @@ export function Beam3DStress({ xs, ms, inertia, sectionHeightMm }: Beam3DStressP
         points={`${near0.x},${near0.y} ${near1.x},${near1.y} ${bot1.x},${bot1.y} ${bot0.x},${bot0.y}`}
         fill={color}
         fillOpacity={0.82}
-        stroke="#221d18"
+        stroke="var(--surface-app)"
         strokeWidth={0.4}
       />,
     );

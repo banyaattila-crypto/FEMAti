@@ -41,6 +41,14 @@ textarea {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
+/* Szövegkijelölés a saját palettából, ne a böngésző alapértelmezett
+   (rendszer-)kékje — 2026-08-29 újratervezés. */
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
 }
 
 a {

@@ -21,12 +21,22 @@
   cursor: pointer;
   white-space: nowrap;
   transition:
-    background var(--motion-fast) var(--ease),
-    border-color var(--motion-fast) var(--ease);
+    background var(--motion-panel) var(--ease),
+    border-color var(--motion-panel) var(--ease),
+    transform var(--motion-panel) var(--ease),
+    box-shadow var(--motion-panel) var(--ease);
 }
 
 .vem-btn:hover:not(:disabled) {
   background: var(--surface-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
+}
+
+.vem-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .vem-btn:disabled {
@@ -96,11 +106,15 @@
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--motion-fast) var(--ease);
+  transition:
+    background var(--motion-panel) var(--ease),
+    color var(--motion-panel) var(--ease),
+    border-color var(--motion-panel) var(--ease);
 }
 
 .vem-segmented__item:hover:not([aria-pressed='true']) {
   background: var(--surface-hover);
+  border-color: var(--border-strong);
 }
 
 .vem-segmented__item[aria-pressed='true'] {
@@ -339,6 +353,10 @@
 .vem-value--hero .vem-value__num {
   font-size: var(--type-value-xl-size);
   font-weight: 700;
+  /* A "hero" súlyú fő eredmények (w/φ/M/T max) az akcentusszínben — ez adja
+     a valódi vizuális horgonyt a jobb panelnek, nem csak a méret. Szemantikus
+     tónus (ok/warn/error, pl. az M-V kihasználtságnál) alább FELÜLÍRJA ezt. */
+  color: var(--accent-light);
 }
 
 .vem-value--ok .vem-value__num {
@@ -351,6 +369,50 @@
   color: var(--sem-error);
 }
 
+/* ── Kártya (2026-08-29 újratervezés) ───────────────────────────────────── */
+/* A korábbi, közvetlenül a panel hátterén úszó szekció-listák helyett minden
+   logikai csoport (Modellfa, Eredmények stb.) saját, emelt felületű blokk —
+   ez adja a "kártya-alapú, tágasabb elrendezés" hatását (ld. `Feedback.tsx`
+   `Card`). */
+
+.vem-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card-raised);
+  overflow: hidden;
+  transition: border-color var(--motion-panel) var(--ease);
+}
+
+.vem-card:hover {
+  border-color: var(--border-strong);
+}
+
+/* A kártyán belüli fejléc NEM sticky/teljes szélességű elválasztó többé
+   (az a korábbi, panel-szintű minta volt) — helyette a kártya saját,
+   halvány alsó vonala zárja le. A tipográfia is oldottabb: a korábbi
+   UPPERCASE, ritkított "jelentés-címke" stílus önmagában is erősen
+   "mérnöki dokumentum" hatású volt — normál szövegre váltva, kicsit
+   nagyobb méretben és félkövéren, cím-szerűbb (2026-08-29 újratervezés). */
+.vem-card > .vem-section-label {
+  position: static;
+  background: transparent;
+  border-bottom: 1px solid var(--border-card);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.vem-card__body {
+  padding-bottom: var(--space-2);
+}
+
+.vem-card .vem-result-row:last-child {
+  border-bottom: none;
+}
+
 /* ── Eredménysor és -tábla ──────────────────────────────────────────────── */
 
 .vem-result-row {
@@ -360,6 +422,13 @@
   gap: var(--space-5);
   padding: var(--space-2) var(--space-5);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+/* A "hero" súlyú sorok (a fő eredmények) extra függőleges levegőt kapnak,
+   hogy a nagyobb szám ne tűnjön csak "összenyomottnak" a többi közé. */
+.vem-result-row:has(.vem-value--hero) {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
 }
 
 .vem-result-row__label {
@@ -426,12 +495,17 @@
   color: var(--text-note);
 }
 
+/* A korábbi `border-left` akcentus egy jól ismert "AI-generált UI" tell
+   (side-tab minta) volt — a teljes szegély színezése és halvány háttértónus
+   ugyanazt a szemantikát adja, kevésbé sablonos módon (2026-08-29). */
 .vem-note--warn {
-  border-left: 3px solid var(--sem-warn);
+  border-color: var(--sem-warn);
+  background: color-mix(in srgb, var(--sem-warn) 10%, var(--surface-note));
 }
 
 .vem-note--error {
-  border-left: 3px solid var(--sem-error);
+  border-color: var(--sem-error);
+  background: color-mix(in srgb, var(--sem-error) 10%, var(--surface-note));
   color: var(--sem-plastic-edge);
 }
 

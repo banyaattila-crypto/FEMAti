@@ -33,7 +33,8 @@ import {
 import { findMaterial, findSection, type SectionEntry } from '../data/catalog.js';
 import type { EditableModel } from './editable.js';
 
-function toShape(section: SectionEntry): SectionShape {
+/** A katalógus-szelvény [mm] adatainak átalakítása fem-core `SectionShape`-re [m]. */
+export function toShape(section: SectionEntry): SectionShape {
   const cm = (mm: number): number => mm / 1000;
   switch (section.kind) {
     // A "U" (nyitott csatorna, UPN) szelvény ennél az 1D — kizárólag a

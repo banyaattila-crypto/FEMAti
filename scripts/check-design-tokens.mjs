@@ -43,11 +43,13 @@ const ALLOWED_FILES = new Set([
   // rögzítve, a fájl saját fejléc-kommentje is ezt dokumentálja.
   'packages/ui/src/derivation/derivation.css',
   'packages/ui/src/report/report.css',
-  // Numerikus "jet" kontúr-színskála (0=kék..1=piros) a 3D feszültség-
-  // vizualizációhoz — a hex értékeket a `hexToRgb()` PARSZOLJA lineáris
-  // interpolációhoz, ezért ezek matematikailag nem lehetnek `var()`
-  // string-ek, csak literál hex-számok.
-  'packages/ui/src/charts/Beam3DStress.tsx',
+  // Numerikus "jet" kontúr-színskála (0=kék..1=piros) — a hex értékeket a
+  // `hexToRgb()` PARSZOLJA lineáris interpolációhoz, ezért ezek
+  // matematikailag nem lehetnek `var()` string-ek, csak literál hex-számok.
+  // 2026-08-29: a `Beam3DStress.tsx`-ből kiemelve `colormap.ts`-be, hogy a
+  // fő M/T/w/φ diagramok (`DiagramChart.tsx`) is ugyanezt a skálát
+  // használhassák — a színskála MOST már innen, egyetlen helyről ered.
+  'packages/ui/src/charts/colormap.ts',
 ]);
 
 const HEX_PATTERN = /#[0-9a-fA-F]{3,8}\b/g;

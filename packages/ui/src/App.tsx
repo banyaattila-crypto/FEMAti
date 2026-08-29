@@ -13,6 +13,8 @@ import { DerivationView } from './derivation/DerivationView.js';
 import { HistoricalView } from './historical/HistoricalView.js';
 import { TheoryView } from './theory/TheoryView.js';
 import { MeshConvergenceView } from './meshconvergence/MeshConvergenceView.js';
+import { AboutDialog } from './shell/AboutDialog.js';
+import { DatabaseView } from './catalog/DatabaseView.js';
 import { findPreset } from './data/catalog.js';
 import { useAppStore, type DiagramTab, type MobileTab } from './state/appStore.js';
 import { useModelStore } from './state/modelStore.js';
@@ -165,6 +167,12 @@ export function App(): JSX.Element {
       } else if (e.key === 'Escape' && s.meshConvergenceOpen) {
         e.preventDefault();
         s.setMeshConvergenceOpen(false);
+      } else if (e.key === 'Escape' && s.aboutOpen) {
+        e.preventDefault();
+        s.setAboutOpen(false);
+      } else if (e.key === 'Escape' && s.databaseOpen) {
+        e.preventDefault();
+        s.setDatabaseOpen(false);
       }
     };
     document.addEventListener('keydown', onKey);
@@ -187,7 +195,8 @@ export function App(): JSX.Element {
       items: [
         { label: 'Visszavonás', shortcut: 'Ctrl+Z', onSelect: undo, disabled: !canUndo },
         { label: 'Újra', shortcut: 'Ctrl+Y', onSelect: redo, disabled: !canRedo },
-        { label: 'Kijelölt elem törlése', shortcut: 'Del', onSelect: removeSelected, disabled: selection === null },
+        { label: 'Kijelölt elem törlése', shortcut: 'Del', onSelect: removeSelected, disabled: selection === null, separatorAfter: true },
+        { label: 'Szelvény, anyag adatbázis', onSelect: () => s.setDatabaseOpen(true) },
       ],
     },
     {
@@ -231,8 +240,7 @@ export function App(): JSX.Element {
     {
       label: 'Súgó',
       items: [
-        { label: 'Billentyűparancsok', shortcut: '?', disabled: true },
-        { label: 'A diplomatervről', onSelect: () => s.openTheory('about') },
+        { label: 'Névjegy', onSelect: () => s.setAboutOpen(true) },
       ],
     },
   ];
@@ -312,6 +320,8 @@ export function App(): JSX.Element {
       <HistoricalView />
       <TheoryView />
       <MeshConvergenceView />
+      <AboutDialog />
+      <DatabaseView />
     </div>
   );
 }

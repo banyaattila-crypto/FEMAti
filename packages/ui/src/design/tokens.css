@@ -106,7 +106,7 @@
   --type-body-sm-size: 11.5px;
   --type-value-size: 13px;
   --type-value-lg-size: 15px;
-  --type-value-xl-size: 22px;
+  --type-value-xl-size: 17px;
   --type-unit-size: 11px;
   --type-title-size: 14px;
 
@@ -119,10 +119,29 @@
   --space-6: 14px;
   --space-7: 18px;
   --space-8: 22px;
+  /* A kártyák közötti (nagyvonalú) rés — 2026-08-29 újratervezés. */
+  --space-9: 16px;
+
+  /* ── Kártya-felszín ─────────────────────────────────────────────────── */
+  /* A 2026-08-29 újratervezés (VEM97-örökség lecserélése) bevezette a
+     "kártya" mintát: minden szekció-csoport (Modellfa, Támaszok, Terhek,
+     Eredmények stb.) önálló, emelt felületű, saját árnyékú blokk lesz a
+     korábbi, közvetlenül a panel hátterén úszó lista-sorok helyett. */
+  /* Az első verzió (#20252b) alig különbözött a panel hátterétől (#1d2126)
+     — a kártyák szinte észrevehetetlenül úsztak bele a panelbe. A
+     felhasználó visszajelzése után ("nem látok semmit") ÉRDEMBEN
+     világosabbra váltva, hogy a kártyák ténylegesen "kiemelkedjenek". */
+  --surface-card: #272e37;
+  --surface-card-hover: #303947;
+  --border-card: #3d4856;
 
   /* ── Forma ──────────────────────────────────────────────────────────── */
-  --radius-sm: 2px;
-  --radius-md: 3px;
+  /* A 2px/3px sugár túl éles/technikai (rajzasztal-jellegű) hatást keltett
+     — a kártya-minta bevezetésével a teljes sugár-skála nagyobbra váltott,
+     hogy a felület lekerekítettebb, mai SaaS-dashboard karaktert kapjon. */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
   --radius-pill: 999px;
 
   /* ── Méretek ────────────────────────────────────────────────────────── */
@@ -140,6 +159,10 @@
      felületen). Erősebb opacitásra/nagyobb elmosásra állítva, hogy a
      kártyák ténylegesen kiemelkedjenek a sötét háttérből. */
   --shadow-card: 0 2px 6px rgba(0, 0, 0, 0.4);
+  /* A szekció-kártyák (2026-08-29) árnyéka — nagyobb elmosás/eltolás, hogy
+     ténylegesen "kiemelkedjen" a panel hátteréből, ne csak egy vékony
+     körvonal legyen. */
+  --shadow-card-raised: 0 4px 14px rgba(0, 0, 0, 0.32);
   /* SVG `feDropShadow`/`flood-color` értékekhez — nem `box-shadow`
      rövidítés, hanem önálló szín-token, mert a `--shadow-*` fenti
      tokenek teljes `box-shadow` értéket hordoznak, egy `flood-color`
