@@ -1,8 +1,10 @@
+import { geometricProperties } from '@femati/fem-core';
 import { SegmentedControl } from '../components/Button.js';
 import { Checkbox, Slider } from '../components/Field.js';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { SectionShapeDiagram } from '../components/SectionShapeDiagram.js';
 import { findMaterial, findPreset, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
+import { toShape } from '../model/compile.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import type { EditableLoad, EditableSupport, SupportType } from '../model/editable.js';
@@ -195,6 +197,7 @@ export function LeftPanel(): JSX.Element {
   const setSelfWeight = useModelStore((state) => state.setSelfWeight);
   const section = findSection(model.sectionId);
   const material = findMaterial(model.materialId);
+  const sectionProps = geometricProperties(toShape(section));
 
   const tree: readonly { label: string; value: string }[] = [
     { label: 'Geometria', value: `${fmt.length(model.span).value} m` },
@@ -236,8 +239,8 @@ export function LeftPanel(): JSX.Element {
           <div className="vem-section-preview">
             <SectionShapeDiagram section={section} />
             <div className="vem-section-preview__figures">
-              <div>A = {section.aCat !== undefined ? `${section.aCat.toFixed(2)} cm²` : '—'}</div>
-              <div>I = {section.iCat !== undefined ? `${section.iCat} cm⁴` : '—'}</div>
+              <div>A = {(sectionProps.area * 1e4).toFixed(2)} cm²</div>
+              <div>I = {(sectionProps.inertia * 1e8).toFixed(0)} cm⁴</div>
             </div>
           </div>
           <div style={{ padding: '0 var(--space-5)' }}>
