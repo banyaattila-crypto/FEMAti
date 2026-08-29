@@ -31,6 +31,7 @@ import {
 } from '../assembly/assembler.js';
 import { buildLoadVector, elementKappa0, unsupportedLoads } from '../assembly/loadVector.js';
 import { describeDof, type ConstraintStrategy } from '../assembly/dofMap.js';
+import { plasticShearCapacity } from '../material/shearMomentInteraction.js';
 import { isRunnable, validateModel, type Diagnostic } from '../model/validate.js';
 import { averageAtNodes, extrapolateElementToNodes, type AveragedField } from '../post/extrapolation.js';
 import { estimateElementError } from '../post/errorEstimator.js';
@@ -106,6 +107,11 @@ export interface SectionProps {
   readonly me: number | null;
   /** Képlékeny nyomatéki teherbírás Mp = σY·Kp [kNm]; null, ha nincs σY */
   readonly mp: number | null;
+  /**
+   * Képlékeny nyíróerő-teherbírás Vpl = κs·A·σY/√3 [kN]; null, ha nincs σY
+   * (ADR-0018, A) út — EN 1993-1-1 6.2.8 stílusú, utólagos ellenőrzéshez).
+   */
+  readonly vpl: number | null;
 }
 
 export interface EquilibriumCheck {
@@ -619,6 +625,10 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
     shapeFactor: stiffness?.shapeFactor ?? 0,
     me: sigmaY !== null && stiffness ? sigmaY * stiffness.elasticModulus : null,
     mp: sigmaY !== null && stiffness ? sigmaY * stiffness.plasticModulus : null,
+    vpl:
+      sigmaY !== null && stiffness && material
+        ? plasticShearCapacity(sigmaY, stiffness.gas / (material.g as number))
+        : null,
   };
 
   return {

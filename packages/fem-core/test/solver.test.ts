@@ -483,4 +483,29 @@ describe('keresztmetszeti jellemzők a kimenetben (SectionProps)', () => {
     expect(result.props.me).toBeNull();
     expect(result.props.mp).toBeNull();
   });
+
+  it('Vpl = κs·A·σY/√3 a kimenetben (ADR-0018)', () => {
+    const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
+    const model = buildModel({
+      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
+      boundaries: [fixed('N0')], loads: [nodalForce('N2', -1, 'F1')],
+    });
+    const result = solveLinear(model);
+    const sigmaY = MAT.sigmaY as number;
+    const g = MAT.g as number;
+    const effectiveShearArea = result.props.gas / g; // = κs·A
+    expect(result.props.vpl).toBeCloseTo((effectiveShearArea * sigmaY) / Math.sqrt(3), 6);
+  });
+
+  it('σY nélküli anyagnál Vpl null', () => {
+    const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
+    const noYield = makeMaterial('X', 'Rugalmas', { e: 2.1e8 });
+    const model = buildModel({
+      nodes: mesh.nodes,
+      elements: mesh.elements.map((e) => ({ ...e, materialId: 'X' as never })),
+      materials: [noYield], sections: [SEC], boundaries: [fixed('N0')], loads: [nodalForce('N2', -1, 'F1')],
+    });
+    const result = solveLinear(model);
+    expect(result.props.vpl).toBeNull();
+  });
 });

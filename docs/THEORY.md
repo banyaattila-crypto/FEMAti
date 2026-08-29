@@ -654,3 +654,39 @@ egyezik. A `FrontalResult.steps` tömb (elemenkénti front-szélesség
 belépés/kilépés előtt-után) és a `skylineMeanBandwidth` mező a P17 UI
 "front kialakulása és mozgása" animációjához és a Skyline-profillal való
 összevetéshez készült.
+
+---
+
+## 19. Képlékeny hajlítás–nyírás (M-V) interakció — `material/shearMomentInteraction.ts`
+
+| Képlet | Forrás | Kód |
+|---|---|---|
+| `Vpl = A_eff·σY/√3` | EN 1993-1-1 6.2.6(2) elve, A_eff-fel a szabvány Av-je HELYETT (ld. lent) | `plasticShearCapacity()` |
+| `ρ = (2·\|V\|/Vpl − 1)²` ha `\|V\| > 0.5·Vpl`, különben `ρ=0` | EN 1993-1-1 **6.2.8(2)** | `shearMomentInteraction()` |
+| `Mv,Rd = (1−ρ)·Mpl,Rd` | EN 1993-1-1 **6.2.8(2)** | `shearMomentInteraction()` |
+
+**NEM a diplomaterv része** — ez a "profi App" irányba mutató bővítés
+egyike (ADR-0018), a diplomaterv-hűség tudatos elhagyása UTÁN (ld. memória:
+`project-femati-scope-pivot`). A diplomaterv (és a projekt eddigi
+képlékenységi modellje, ld. 13–14. pont) a nyírást MINDIG rugalmasnak
+tekinti (3.52, 63. oldal) — ez az ADR-0018 A) útja ezt NEM változtatja meg
+(a radial-return és a tangens merevségi mátrix VÁLTOZATLAN), csak egy
+FÜGGETLEN, utólagos teherbírás-ellenőrzést ad hozzá.
+
+**Modellezési egyszerűsítés:** az EN 1993-1-1 a nyírt keresztmetszetet
+(Av) szelvény-specifikus formulákkal definiálja (I-szelvénynél a gerinc,
+téglalapnál egy redukált terület stb.). A projekt EZ HELYETT a MÁR
+meglévő, effektív nyírási területet (`κs·A`, ugyanaz, amit a `GAs = κs·G·A`
+merevség is használ — ld. 10.1 pont) használja A_eff gyanánt — ez NEM
+szabvány szerinti Av, hanem a modell saját, konzisztens mennyisége.
+
+**Teszt:** `shearMomentInteraction.test.ts` (9 teszt) — a szabvány saját
+határesetei (V=0, V=0.5·Vpl küszöb, V=Vpl teljes redukció, V=0.75·Vpl
+közbenső eset a ρ=0.25 zárt alakú ellenőrzésével), előjelfüggetlenség,
+Vpl=0 degenerált eset. `solver.test.ts` (+2 teszt): a `LinearResult.props.
+vpl` mező helyes számítása/`null`-ja a kimenetben.
+
+**Hatókör-korlát:** csak UTÓLAGOS ellenőrzés — a `vpl` a `SectionProps`-ban
+elérhető, de a UI-ban MÉG NINCS megjelenítve, és a nemlineáris megoldó
+folyási feltétele/tangens merevsége VÁLTOZATLANUL csak M-alapú (ld.
+ADR-0018 "MI MARADT NYITVA" szakasza).
