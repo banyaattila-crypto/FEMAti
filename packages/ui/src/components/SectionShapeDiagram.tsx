@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { SectionEntry } from '../data/catalog.js';
 
 export interface SectionShapeDiagramProps {
@@ -90,6 +91,7 @@ function Leader({ from, to, label, anchor }: { readonly from: readonly [number, 
  * méretben újrahasználhassa, ugyanazzal a rajzoló-logikával.
  */
 export function SectionShapeDiagram({ section, width, height }: SectionShapeDiagramProps): JSX.Element {
+  const gradientId = `section-metal-${useId()}`;
   const scale = Math.min((W - 2 * PAD) / section.b, (H - 2 * PAD) / section.h);
   const h = section.h * scale;
   const b = section.b * scale;
@@ -99,8 +101,8 @@ export function SectionShapeDiagram({ section, width, height }: SectionShapeDiag
   const left = cx - b / 2;
   const bottom = top + h;
 
-  const fill = 'var(--sem-elastic)';
-  const stroke = 'var(--sem-elastic-edge)';
+  const fill = `url(#${gradientId})`;
+  const stroke = 'var(--accent-light)';
 
   const w = width ?? (VIEW_W / VIEW_H) * (height ?? 109);
   const hpx = height ?? (VIEW_H / VIEW_W) * w;
@@ -181,6 +183,17 @@ export function SectionShapeDiagram({ section, width, height }: SectionShapeDiag
 
   return (
     <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} style={{ width: w, height: hpx, flex: 'none' }} aria-hidden="true">
+      <defs>
+        {/* "Mély fém" kitöltés (2026-08-29, 3 koncepció közül választva) — a
+            fényforrás balról fentről jön, a sem-elastic tokenből
+            color-mix()-elt világos csúcsfénnyel, a sem-elastic-edge-be
+            sötétedve. */}
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="color-mix(in srgb, var(--sem-elastic) 55%, white)" />
+          <stop offset="0.5" stopColor="var(--sem-elastic)" />
+          <stop offset="1" stopColor="var(--sem-elastic-edge)" />
+        </linearGradient>
+      </defs>
       {shape}
       {/* Semleges tengely */}
       <line x1={MARGIN_L + 2} y1={H / 2} x2={MARGIN_L + W - 2} y2={H / 2} stroke="var(--sem-plastic)" strokeWidth={0.8} strokeDasharray="4 3" />
