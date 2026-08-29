@@ -13,7 +13,7 @@
  * kör-swatch (`--catalog-*` tokenek, `docs/UI-CONVENTIONS.md` 1. pont) —
  * nem szöveg-szín, hanem egy tényleges kitöltött SVG-kör.
  */
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { MATERIALS, MATERIAL_FAMILY_GROUP, SECTIONS, SECTION_KIND_GROUP, type MaterialFamily, type SectionKind } from './catalog.js';
 import type { ComboboxOption } from '../components/Combobox.js';
 
@@ -60,20 +60,85 @@ const SECTION_ICON: Record<SectionKind, JSX.Element> = {
   ),
 };
 
-export function MaterialSwatch({ color }: { readonly color: string }): JSX.Element {
-  return (
-    <svg viewBox="0 0 16 16" width="16" height="16">
-      <circle cx="8" cy="8" r="6" fill={color} stroke="var(--border-strong)" strokeWidth="0.75" />
-    </svg>
-  );
-}
-
 export const MATERIAL_COLOR: Record<MaterialFamily, string> = {
   steel: 'var(--catalog-steel)',
   aluminum: 'var(--catalog-aluminum)',
   concrete: 'var(--catalog-concrete)',
   timber: 'var(--catalog-timber)',
 };
+
+/**
+ * Anyagcsaládonként ELTÉRŐ, "élethű" kitöltés — nem csak egy szín, hanem az
+ * anyag TAPINTÁSÁT idéző mintázat (2026-08-29, felhasználói visszajelzés:
+ * a korábbi sima színes kör nem volt eléggé "élethű"). A fém családok
+ * (acél/alumínium) ugyanazt a "mély fém" színátmenet-receptet kapják, mint
+ * a szelvényrajz (`SectionShapeDiagram.tsx`) — közös vizuális nyelv —, a
+ * beton finom szemcsés (aggregátum-) mintázatot, a fa pedig évgyűrű-íveket.
+ */
+function MaterialFill({ family, defsId }: { readonly family: MaterialFamily; readonly defsId: string }): JSX.Element {
+  const base = MATERIAL_COLOR[family];
+  switch (family) {
+    case 'steel':
+    case 'aluminum':
+      return (
+        <linearGradient id={defsId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={`color-mix(in srgb, ${base} 45%, white)`} />
+          <stop offset="0.5" stopColor={base} />
+          <stop offset="1" stopColor={`color-mix(in srgb, ${base} 55%, black)`} />
+        </linearGradient>
+      );
+    case 'concrete':
+      return (
+        <pattern id={defsId} width="5" height="5" patternUnits="userSpaceOnUse">
+          <rect width="5" height="5" fill={base} />
+          <circle cx="1.2" cy="1.4" r="0.55" fill={`color-mix(in srgb, ${base} 55%, black)`} />
+          <circle cx="3.6" cy="2.6" r="0.45" fill={`color-mix(in srgb, ${base} 40%, black)`} />
+          <circle cx="2.4" cy="4.2" r="0.5" fill={`color-mix(in srgb, ${base} 60%, white)`} />
+        </pattern>
+      );
+    case 'timber':
+      return (
+        <linearGradient id={defsId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={`color-mix(in srgb, ${base} 70%, white)`} />
+          <stop offset="1" stopColor={`color-mix(in srgb, ${base} 80%, black)`} />
+        </linearGradient>
+      );
+  }
+}
+
+/** A fa családnál a kitöltés fölé rajzolt évgyűrű-ívek (a `defsId` gradiensen felül). */
+function TimberGrain({ base }: { readonly base: string }): JSX.Element | null {
+  const stroke = `color-mix(in srgb, ${base} 45%, black)`;
+  return (
+    <g stroke={stroke} strokeWidth="0.5" fill="none" opacity="0.55">
+      <path d="M2 6 Q8 4.2 14 6" />
+      <path d="M2 9 Q8 7.5 14 9" />
+      <path d="M2 12 Q8 10.8 14 12" />
+    </g>
+  );
+}
+
+export function MaterialSwatch({ family, size = 16 }: { readonly family: MaterialFamily; readonly size?: number }): JSX.Element {
+  const defsId = `material-fill-${useId()}`;
+  const clipId = `material-clip-${useId()}`;
+  const base = MATERIAL_COLOR[family];
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size}>
+      <defs>
+        <MaterialFill family={family} defsId={defsId} />
+        <clipPath id={clipId}>
+          <circle cx="8" cy="8" r="6" />
+        </clipPath>
+      </defs>
+      <circle cx="8" cy="8" r="6" fill={`url(#${defsId})`} stroke="var(--border-strong)" strokeWidth="0.75" />
+      {family === 'timber' ? (
+        <g clipPath={`url(#${clipId})`}>
+          <TimberGrain base={base} />
+        </g>
+      ) : null}
+    </svg>
+  );
+}
 
 /** A "Szelvény" combobox opciói, típus szerint csoportosítva, alak-ikonnal. */
 export function sectionComboOptions(): readonly ComboboxOption[] {
@@ -91,6 +156,6 @@ export function materialComboOptions(): readonly ComboboxOption[] {
     value: m.id,
     label: m.name,
     group: MATERIAL_FAMILY_GROUP[m.family],
-    icon: <MaterialSwatch color={MATERIAL_COLOR[m.family]} />,
+    icon: <MaterialSwatch family={m.family} />,
   }));
 }

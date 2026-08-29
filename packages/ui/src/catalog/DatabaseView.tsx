@@ -25,7 +25,7 @@ import { geometricProperties } from '@femati/fem-core';
 import { NoteBox } from '../components/Feedback.js';
 import { ResultRow } from '../components/Value.js';
 import { SectionShapeDiagram } from '../components/SectionShapeDiagram.js';
-import { MaterialSwatch, MATERIAL_COLOR } from '../data/catalogIcons.js';
+import { MaterialSwatch } from '../data/catalogIcons.js';
 import {
   MATERIALS,
   SECTIONS,
@@ -82,13 +82,77 @@ const SECTIONS_BY_KIND = groupBy(SECTIONS, (s) => s.kind);
 const MATERIAL_FAMILIES = Array.from(MATERIALS_BY_FAMILY.keys()) as readonly MaterialFamily[];
 const SECTION_KINDS = Array.from(SECTIONS_BY_KIND.keys()) as readonly SectionKind[];
 
+/** Ezrelékben formázott alakváltozás-érték (εc1, εc2, εcu2, εc3, εcu3). */
+const permille = (v: number): Formatted => num(v * 1000, 2, '‰');
+
+/**
+ * Vastagságfüggő acél folyáshatár-osztály (EN 10025-2 7. táblázat) — a
+ * `fem-db` D) fázisban bővült adat. TISZTÁN referencia: a megoldó jelenleg
+ * egyetlen `sigmaY`-t rendel minden rétegnek, ezt a bővítést az E) fázis
+ * kötné be ténylegesen a rétegelt magba (ld. `types.ts` `fy1` doc-komment).
+ */
+function SteelThicknessClass({ material }: { readonly material: MaterialEntry }): JSX.Element {
+  return (
+    <div style={{ marginTop: 'var(--space-4)' }}>
+      <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+        Vastagságfüggő folyáshatár-osztály (EN 10025-2)
+      </div>
+      <ResultRow label={`Fy1 (t ≤ ${material.thicknessThreshold} mm)`} formatted={num(material.fy1 as number, 1, 'kN/cm²')} />
+      <ResultRow label={`Fy2 (t > ${material.thicknessThreshold} mm)`} formatted={num(material.fy2 as number, 1, 'kN/cm²')} />
+      <ResultRow label="Fu1" formatted={num(material.fu1 as number, 1, 'kN/cm²')} />
+      <ResultRow label="Fu2" formatted={num(material.fu2 as number, 1, 'kN/cm²')} />
+      {material.alphaFi !== undefined ? (
+        <ResultRow label="Hőtágulási együttható tűzhatás esetén αfi" formatted={num(material.alphaFi * 1e6, 2, '×10⁻⁶ /°C')} />
+      ) : null}
+      <NoteBox tone="info">
+        Referencia-adat — a megoldó jelenleg egyetlen folyáshatárt (fentebb) rendel a teljes
+        keresztmetszethez; a vastagságosztály szerinti választás a rétegelt modellben (E) fázis) még
+        nincs bekötve.
+      </NoteBox>
+    </div>
+  );
+}
+
+/**
+ * EC2 (EN 1992-1-1 3.1.7) feszültség-alakváltozás modell paraméterei —
+ * ugyanaz a "referencia, a megoldó még nem használja" jegyzet, mint az
+ * acél vastagságosztálynál. `φ(∞,t0)` ÁLTALÁNOS reprezentatív érték, nem
+ * projektfüggő (RH, terhelési kor) számítás.
+ */
+function ConcreteEC2Params({ material }: { readonly material: MaterialEntry }): JSX.Element {
+  return (
+    <div style={{ marginTop: 'var(--space-4)' }}>
+      <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+        EC2 feszültség-alakváltozás modell (EN 1992-1-1 3.1.7)
+      </div>
+      <ResultRow label="Jellemző nyomószilárdság fck" formatted={num(material.fck as number, 2, 'kN/cm²')} emphasis="large" />
+      <ResultRow label="Középértékű húzószilárdság fctm" formatted={num(material.fctm as number, 3, 'kN/cm²')} />
+      <ResultRow label="Jellemző húzószilárdság fctk,0.05" formatted={num(material.fctk005 as number, 3, 'kN/cm²')} />
+      <ResultRow label="Rugalmassági modulus tényező γcE" formatted={num(material.gammaCE as number, 2, '')} />
+      <ResultRow label="Végső kúszási tényező φ(∞,t0)" formatted={num(material.phiInfinity as number, 2, '')} />
+      <ResultRow label="Folyási határnyúlás εc1 (nemlineáris modell)" formatted={permille(material.epsC1 as number)} />
+      <ResultRow label="Folyási határnyúlás εc2 (parabola-téglalap)" formatted={permille(material.epsC2 as number)} />
+      <ResultRow label="Szakadási határnyúlás εcu2 (parabola-téglalap)" formatted={permille(material.epsCu2 as number)} />
+      <ResultRow label="Folyási határnyúlás εc3 (bilineáris)" formatted={permille(material.epsC3 as number)} />
+      <ResultRow label="Szakadási határnyúlás εcu3 (bilineáris)" formatted={permille(material.epsCu3 as number)} />
+      <ResultRow label="Nyomószilárdság-csökkentő tényező η" formatted={num(material.eta as number, 2, '')} />
+      <ResultRow label="Parabola-téglalap kitevő n" formatted={num(material.n as number, 1, '')} />
+      <NoteBox tone="info">
+        Referencia-adat — a megoldó jelenleg a rétegelt magban egyszerű, kétegyenes (rugalmas–
+        tökéletesen képlékeny/lineáris keményedő) törvényt használ minden rétegre; az EC2
+        parabola-téglalap modell tényleges bekötése (F) fázis) még nincs implementálva.
+      </NoteBox>
+    </div>
+  );
+}
+
 function MaterialDetail({ material, onClose }: { readonly material: MaterialEntry; readonly onClose: () => void }): JSX.Element {
   const g = material.e / (2 * (1 + material.nu));
   return (
     <>
       <header className="vem-theory__header">
         <div className="vem-theory__header-title">
-          <MaterialSwatch color={MATERIAL_COLOR[material.family]} />
+          <MaterialSwatch family={material.family} />
           <div>
             <h2>{material.name}</h2>
             <p className="vem-theory__subtitle">{MATERIAL_FAMILY_GROUP[material.family]}</p>
@@ -99,6 +163,9 @@ function MaterialDetail({ material, onClose }: { readonly material: MaterialEntr
         </button>
       </header>
       <div className="vem-theory__body">
+        <div className="vem-db__figure">
+          <MaterialSwatch family={material.family} size={120} />
+        </div>
         <ResultRow label="Rugalmassági modulus E" formatted={num(material.e, 0, 'kN/cm²')} emphasis="large" />
         <ResultRow label="Poisson-tényező ν" formatted={num(material.nu, 2, '')} />
         <ResultRow label="Nyírási modulus G = E/2(1+ν)" formatted={num(g, 0, 'kN/cm²')} />
@@ -113,6 +180,8 @@ function MaterialDetail({ material, onClose }: { readonly material: MaterialEntr
         ) : null}
         <ResultRow label="Hőtágulási együttható α" formatted={num(material.alpha * 1e6, 2, '×10⁻⁶ /°C')} />
         <ResultRow label="Sűrűség ρ" formatted={num(material.density, 0, 'kg/m³')} />
+        {material.fy1 !== undefined ? <SteelThicknessClass material={material} /> : null}
+        {material.fck !== undefined ? <ConcreteEC2Params material={material} /> : null}
         <div style={{ marginTop: 'var(--space-4)' }}>
           <NoteBox tone={material.verified ? 'info' : 'warn'}>
             Forrás: {material.source}

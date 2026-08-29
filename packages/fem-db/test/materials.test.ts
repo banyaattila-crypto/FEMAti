@@ -32,6 +32,29 @@ describe('MATERIALS', () => {
     }
   });
 
+  it('a beton fctm/fctk,0.05 értékek megegyeznek az EN 1992-1-1 (3.1) táblázat (3.16)/(3.17) zárt alakú képletével', () => {
+    // fctm = 0.30·fck^(2/3) [MPa], fctk,0.05 = 0.7·fctm — fck ≤ 50 MPa esetén.
+    const concrete = MATERIALS.filter((m) => m.family === 'concrete');
+    expect(concrete.length).toBeGreaterThan(0);
+    for (const m of concrete) {
+      if (m.fck === undefined) continue;
+      const fckMPa = m.fck * 10; // kN/cm² → MPa
+      const fctmMPa = 0.3 * fckMPa ** (2 / 3);
+      const fctmKNcm2 = fctmMPa / 10;
+      expect(m.fctm).toBeCloseTo(fctmKNcm2, 2);
+      expect(m.fctk005).toBeCloseTo(0.7 * fctmKNcm2, 2);
+    }
+  });
+
+  it('acélnál a vékonyabb vastagságosztály folyáshatára (fy1) megegyezik a `sigmaY` mezővel, a vastagabb (fy2) annál kisebb', () => {
+    const steelWithClasses = MATERIALS.filter((m) => m.family === 'steel' && m.fy1 !== undefined);
+    expect(steelWithClasses.length).toBeGreaterThan(0);
+    for (const m of steelWithClasses) {
+      expect(m.fy1).toBeCloseTo(m.sigmaY, 6);
+      expect(m.fy2 as number).toBeLessThan(m.fy1 as number);
+    }
+  });
+
   it('nincs kettőzött id', () => {
     const ids = MATERIALS.map((m) => m.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -46,7 +69,17 @@ describe('MATERIALS', () => {
 
   it('a `family` szerinti csoportosítás a várt tagságot adja (UI-csoportosítás alapja)', () => {
     const byFamily = (family: string): string[] => MATERIALS.filter((m) => m.family === family).map((m) => m.id);
-    expect(byFamily('steel')).toEqual(['S235', 'S275', 'S355', 'S420', 'S460', 'S235H']);
+    expect(byFamily('steel')).toEqual([
+      'S235',
+      'S275',
+      'S355',
+      'S420',
+      'S460',
+      'S235H',
+      'S460N',
+      'X5CRNI1810',
+      'GJS400',
+    ]);
     expect(byFamily('aluminum')).toEqual(['AW6082']);
     expect(byFamily('concrete')).toEqual(['C1620', 'C2025', 'C25', 'C3037', 'C3545', 'C4050', 'C4555', 'C5060']);
     expect(byFamily('timber')).toEqual(['C18', 'C30', 'C24', 'GL24h']);

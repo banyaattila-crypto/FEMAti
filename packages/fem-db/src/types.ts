@@ -36,6 +36,55 @@ export interface MaterialEntry {
   readonly verified: boolean;
   /** Kiegészítő megjegyzés a felülethez (pl. fa/beton diplomaterv-figyelmeztetés). */
   readonly note?: string;
+
+  // ── Vastagságfüggő acélosztály (EN 10025-2 7. táblázat) — CSAK acélnál ──
+  // FONTOS: ezeket a mezőket a megoldó (fem-core) MÉG NEM használja — a
+  // rétegelt képlékenységi mag jelenleg egyetlen `sigmaY`-t rendel minden
+  // réteghez (ADR-0019/D fázis: adatmodell-bővítés; a tényleges vastagság-
+  // függő folyáshatár-választás a rétegelésben egy KÉSŐBBI, külön
+  // jóváhagyott lépés — ld. terv E) fázis). Egyelőre TISZTÁN referencia-adat
+  // a katalógus-nézetben, ugyanúgy, mint az `aCat`/`iCat` a szelvényeknél.
+  /** Folyáshatár a vékonyabb vastagságosztályban [kN/cm²] (t ≤ `thicknessThreshold`) */
+  readonly fy1?: number;
+  /** Folyáshatár a vastagabb vastagságosztályban [kN/cm²] (t > `thicknessThreshold`) */
+  readonly fy2?: number;
+  /** Szakítószilárdság a vékonyabb vastagságosztályban [kN/cm²] */
+  readonly fu1?: number;
+  /** Szakítószilárdság a vastagabb vastagságosztályban [kN/cm²] */
+  readonly fu2?: number;
+  /** A vastagságosztályok határa [mm] (jellemzően 40 mm, EN 10025-2) */
+  readonly thicknessThreshold?: number;
+  /** Hőtágulási együttható tűzhatás esetén [1/°C] */
+  readonly alphaFi?: number;
+
+  // ── EC2 beton feszültség-alakváltozás modell (EN 1992-1-1 3.1.7) ────────
+  // CSAK betonnál — ugyanaz a "referencia-adat, a megoldó még nem használja"
+  // megjegyzés érvényes, mint fent (E)/F) fázis vezeti be ténylegesen a
+  // parabola-téglalap modellt a rétegelt magba).
+  /** Jellemző (karakterisztikus) nyomószilárdság fck [kN/cm²] */
+  readonly fck?: number;
+  /** Középértékű húzószilárdság fctm [kN/cm²] */
+  readonly fctm?: number;
+  /** Jellemző húzószilárdság (5%-os kvantilis) fctk,0.05 [kN/cm²] */
+  readonly fctk005?: number;
+  /** Rugalmassági modulus biztonsági/bizonytalansági tényezője γcE [-] */
+  readonly gammaCE?: number;
+  /** Végső (t=∞) kúszási tényező φ(∞,t0) [-] — ÁLTALÁNOS, projektfüggő becslés, ld. `note` */
+  readonly phiInfinity?: number;
+  /** Folyási határnyúlás a nemlineáris (nem a design) modellhez ε_c1 [-] */
+  readonly epsC1?: number;
+  /** Folyási határnyúlás a parabola-téglalap modellhez ε_c2 [-] */
+  readonly epsC2?: number;
+  /** Szakadási határnyúlás a parabola-téglalap modellhez ε_cu2 [-] */
+  readonly epsCu2?: number;
+  /** Folyási határnyúlás a bilineáris modellhez ε_c3 [-] */
+  readonly epsC3?: number;
+  /** Szakadási határnyúlás a bilineáris modellhez ε_cu3 [-] */
+  readonly epsCu3?: number;
+  /** Nyomószilárdság-csökkentő tényező η [-] (fck ≤ 50 MPa esetén 1,0) */
+  readonly eta?: number;
+  /** A parabola-téglalap modell kitevője n [-] (fck ≤ 50 MPa esetén 2,0) */
+  readonly n?: number;
 }
 
 export type SectionKind = 'I' | 'U' | 'circle' | 'tube' | 'rect' | 'rhs';
