@@ -97,6 +97,14 @@ export type SectionShape =
       readonly tw: Meter;
       /** övvastagság */
       readonly tf: Meter;
+    }
+  | {
+      /** Zárt szelvény (RHS/SHS), egyenletes falvastagsággal — B) fázis, ld. docs/ADR. */
+      readonly kind: 'rhs';
+      readonly h: Meter;
+      readonly b: Meter;
+      /** falvastagság (körben, minden oldalon egyenlő) */
+      readonly t: Meter;
     };
 
 /**

@@ -8,6 +8,7 @@ import {
   makeSection,
   rect,
   recommendedShearFactor,
+  rhs,
   sectionStiffness,
   tube,
   constitutiveMatrix,
@@ -43,6 +44,14 @@ describe('keresztmetszeti jellemzők — zárt képletek', () => {
     const di = 0.18;
     expect(p.area).toBeCloseTo((Math.PI * (0.04 - di * di)) / 4, 14);
     expect(p.inertia).toBeCloseTo((Math.PI * (0.2 ** 4 - di ** 4)) / 64, 16);
+  });
+
+  it('zárt szelvény (RHS): A és I a külső mínusz belső téglalapból', () => {
+    const p = geometricProperties(rhs(0.2, 0.1, 0.01));
+    const bi = 0.08; // 0.1 - 2*0.01
+    const hi = 0.18; // 0.2 - 2*0.01
+    expect(p.area).toBeCloseTo(0.2 * 0.1 - hi * bi, 14);
+    expect(p.inertia).toBeCloseTo((0.1 * 0.2 ** 3 - bi * hi ** 3) / 12, 16);
   });
 
   it('IPE 300 névleges kontúrból: A = 51.88 cm², I = 7998 cm⁴', () => {
@@ -135,8 +144,26 @@ describe('alaki tényező c = Mp/Mₑ — Diplomaterv 4. táblázat (54. oldal)'
     expect(webOnly.shapeFactor).toBeCloseTo(1.5, 10);
   });
 
+  it('zárt szelvény (RHS) alaki tényezője vékony falnál kisebb, vastag (tömörhöz közelítő) falnál a tömör téglalapéhoz tart', () => {
+    // Ugyanaz az irány, mint a cső↔kör párnál: a vékonyfalú határeset
+    // KISEBB c-t ad, mint a tömör alak — az anyag a semleges száltól távol
+    // koncentrálódik, ez arányaiban jobban növeli Kₑ-t, mint Kp-t.
+    const thin = geometricProperties(rhs(0.2, 0.1, 0.002));
+    const thick = geometricProperties(rhs(0.2, 0.1, 0.045)); // közel tömör (t < min(h,b)/2 = 0.05)
+    const solid = geometricProperties(rect(0.1, 0.2));
+    expect(thin.shapeFactor).toBeLessThan(thick.shapeFactor);
+    expect(thick.shapeFactor).toBeLessThan(solid.shapeFactor);
+    expect(thick.shapeFactor).toBeCloseTo(solid.shapeFactor, 1);
+  });
+
   it('minden alak alaki tényezője 1 és 2 között van', () => {
-    const shapes = [rect(0.2, 0.4), circle(0.3), tube(0.3, 0.02), iProfile(0.4, 0.18, 0.0086, 0.0135)];
+    const shapes = [
+      rect(0.2, 0.4),
+      circle(0.3),
+      tube(0.3, 0.02),
+      iProfile(0.4, 0.18, 0.0086, 0.0135),
+      rhs(0.2, 0.1, 0.008),
+    ];
     for (const s of shapes) {
       const c = geometricProperties(s).shapeFactor;
       expect(c).toBeGreaterThan(1);
@@ -169,8 +196,20 @@ describe('nyírási alaktényező — Cowper (1966), Poisson-tényezőtől függ
     expect(recommendedShearFactor(iProfile(0.3, 0.15, 0.0071, 0.0107), 0.3)).toBeCloseTo(0.41, 2);
   });
 
+  it('zárt szelvénynél (RHS) a két oldalfal arányából — NEM Cowper-formula, ν-től független', () => {
+    const s = rhs(0.2, 0.1, 0.008);
+    const area = 0.1 * 0.2 - (0.1 - 0.016) * (0.2 - 0.016);
+    expect(recommendedShearFactor(s, 0.3)).toBeCloseTo((0.2 * (2 * 0.008)) / area, 12);
+  });
+
   it('minden alakra és realisztikus ν-tartományra (0–0.5) 0 és 1 közé esik', () => {
-    const shapes = [rect(0.2, 0.4), circle(0.3), tube(0.3, 0.02), iProfile(0.4, 0.18, 0.0086, 0.0135)];
+    const shapes = [
+      rect(0.2, 0.4),
+      circle(0.3),
+      tube(0.3, 0.02),
+      iProfile(0.4, 0.18, 0.0086, 0.0135),
+      rhs(0.2, 0.1, 0.008),
+    ];
     for (const s of shapes) {
       for (const nu of [0, 0.2, 0.3, 0.5]) {
         const ks = recommendedShearFactor(s, nu);

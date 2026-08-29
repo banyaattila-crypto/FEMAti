@@ -16,6 +16,7 @@ import {
   rect,
   circle as circleShape,
   tube as tubeShape,
+  rhs as rhsShape,
   iProfile,
   selfWeight as selfWeightLoad,
   recommendedShearFactor,
@@ -53,6 +54,8 @@ export function toShape(section: SectionEntry): SectionShape {
       return tubeShape(cm(section.d ?? section.h), cm(section.t ?? 8));
     case 'rect':
       return rect(cm(section.b), cm(section.h));
+    case 'rhs':
+      return rhsShape(cm(section.h), cm(section.b), cm(section.t ?? 8));
   }
 }
 

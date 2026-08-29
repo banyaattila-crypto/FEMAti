@@ -30,6 +30,7 @@ export const SECTION_KIND_GROUP: Record<SectionKind, string> = {
   circle: 'Kör keresztmetszetek',
   tube: 'Körgyűrű (cső) keresztmetszetek',
   rect: 'Téglalap keresztmetszetek',
+  rhs: 'Zárt szelvények (RHS / SHS)',
 };
 
 export const MATERIAL_FAMILY_GROUP: Record<MaterialFamily, string> = {

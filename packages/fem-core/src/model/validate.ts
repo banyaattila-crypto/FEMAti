@@ -411,6 +411,16 @@ function checkShape(s: Extract<Section, { kind: 'parametric' }>, out: Diagnostic
         out.push(err('INVALID_DIMENSION', `A(z) "${s.name}" I-szelvény övei elfedik a gerincet.`, id));
       }
       break;
+    case 'rhs':
+      positive(sh.h as number, 'magasság');
+      positive(sh.b as number, 'szélesség');
+      positive(sh.t as number, 'falvastagság');
+      if (2 * (sh.t as number) >= Math.min(sh.h as number, sh.b as number)) {
+        out.push(
+          err('INVALID_DIMENSION', `A(z) "${s.name}" zárt szelvény falvastagsága kitölti a belső üreget.`, id),
+        );
+      }
+      break;
   }
 }
 

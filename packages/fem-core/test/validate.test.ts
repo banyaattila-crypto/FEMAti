@@ -17,6 +17,7 @@ import {
   pinned,
   rect,
   resetLoadIds,
+  rhs,
   sectionId,
   springSupport,
   supportDisplacement,
@@ -246,6 +247,17 @@ describe('keresztmetszet-geometria', () => {
 
   it('érvényes csövet elfogad', () => {
     const d = validateModel(withSection(makeSection('R1', 'Cső', tube(0.2, 0.01))));
+    expect(d.filter((x) => x.severity === 'error')).toEqual([]);
+  });
+
+  it('a zárt szelvény (RHS) falvastagsága nem töltheti ki a belső üreget', () => {
+    expect(codes(withSection(makeSection('R1', 'Rossz RHS', rhs(0.2, 0.1, 0.06))))).toContain(
+      'INVALID_DIMENSION',
+    );
+  });
+
+  it('érvényes zárt szelvényt (RHS) elfogad', () => {
+    const d = validateModel(withSection(makeSection('R1', 'RHS', rhs(0.2, 0.1, 0.008))));
     expect(d.filter((x) => x.severity === 'error')).toEqual([]);
   });
 

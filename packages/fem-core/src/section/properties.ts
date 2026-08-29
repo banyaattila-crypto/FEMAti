@@ -91,6 +91,22 @@ export function geometricProperties(shape: SectionShape): GeometricProperties {
       const s0 = (b * tf * (h - tf)) / 2 + (tw * (hw / 2) ** 2) / 2;
       return finish(area, inertia, h / 2, 2 * s0, h);
     }
+
+    case 'rhs': {
+      const h = shape.h as number;
+      const b = shape.b as number;
+      const t = shape.t as number;
+      const hi = h - 2 * t; // belső üreg magassága
+      const bi = b - 2 * t; // belső üreg szélessége
+      // Külső tömör téglalap mínusz a belső üreg (mindkettő zárt alakban) —
+      // ugyanaz a "rect mínusz rect" elv, mint a `tube`-nál (kör mínusz kör).
+      const area = b * h - bi * hi;
+      const inertia = (b * h ** 3 - bi * hi ** 3) / 12;
+      // Kp(rect) = w·H²/4 — a külső és a belső (üreg) téglalap Kp-jének
+      // különbsége, ugyanaz a levezetés, mint a `rect` esetben fentebb.
+      const plasticModulus = (b * h * h - bi * hi * hi) / 4;
+      return finish(area, inertia, h / 2, plasticModulus, h);
+    }
   }
 }
 
@@ -156,6 +172,17 @@ export function recommendedShearFactor(shape: SectionShape, nu: number): number 
       const tf = shape.tf as number;
       const area = 2 * b * tf + (h - 2 * tf) * tw;
       return (h * tw) / area;
+    }
+
+    case 'rhs': {
+      // Ugyanaz a közelítés, mint az i-profile ágnál (NEM Cowper-formula) —
+      // a nyírást a két FÜGGŐLEGES oldalfal veszi fel, az alsó/felső fal
+      // ehhez elhanyagolható járulékot ad.
+      const h = shape.h as number;
+      const b = shape.b as number;
+      const t = shape.t as number;
+      const area = b * h - (b - 2 * t) * (h - 2 * t);
+      return (h * (2 * t)) / area;
     }
   }
 }

@@ -57,6 +57,8 @@ function shapeHeight(shape: SectionShape): number {
       return shape.d as number;
     case 'i-profile':
       return shape.h as number;
+    case 'rhs':
+      return shape.h as number;
   }
 }
 
@@ -90,6 +92,18 @@ function contourWidth(shape: SectionShape, z: number): number {
       const hw = h - 2 * tf; // gerincmagasság
       if (Math.abs(z) > h / 2) return 0;
       return Math.abs(z) <= hw / 2 ? (shape.tw as number) : (shape.b as number);
+    }
+
+    case 'rhs': {
+      // Zárt szelvény — a felül/alul lévő falsávban a TELJES külső
+      // szélesség (b) a kontúr, a középső, üreges sávban a KÉT oldalfal
+      // (2·t) — pontosan ugyanaz a minta, mint az i-profile öv/gerinc
+      // váltásánál, csak itt a "gerinc" a két oldalfal együttes vastagsága.
+      const h = shape.h as number;
+      const t = shape.t as number;
+      const hi = h - 2 * t; // a belső üreg magassága
+      if (Math.abs(z) > h / 2) return 0;
+      return Math.abs(z) <= hi / 2 ? 2 * t : (shape.b as number);
     }
   }
 }

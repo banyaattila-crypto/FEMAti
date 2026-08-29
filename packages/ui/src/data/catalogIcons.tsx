@@ -52,6 +52,12 @@ const SECTION_ICON: Record<SectionKind, JSX.Element> = {
       <rect x="3" y="5" width="10" height="6" rx="0.6" />
     </Icon>
   ),
+  rhs: (
+    <Icon>
+      <rect x="2.5" y="4" width="11" height="8" rx="0.6" />
+      <rect x="4.5" y="6" width="7" height="4" rx="0.4" />
+    </Icon>
+  ),
 };
 
 export function MaterialSwatch({ color }: { readonly color: string }): JSX.Element {

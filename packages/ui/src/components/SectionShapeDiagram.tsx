@@ -178,6 +178,18 @@ export function SectionShapeDiagram({ section, width, height }: SectionShapeDiag
           </>
         );
       }
+      case 'rhs': {
+        const t = (section.t ?? 8) * scale;
+        return (
+          <>
+            <rect x={left} y={top} width={b} height={h} fill={fill} stroke={stroke} strokeWidth={0.8} />
+            <rect x={left + t} y={top + t} width={b - 2 * t} height={h - 2 * t} fill="var(--surface-panel)" stroke={stroke} strokeWidth={0.8} />
+            <VDim x={W + MARGIN_L + 8} y1={top} y2={bottom} label="h" />
+            <HDim y={H + 8} x1={left} x2={right} label="b" />
+            <Leader from={[right - t / 2, top + t / 2]} to={[W + MARGIN_L + 8, top]} label="t" anchor="start" />
+          </>
+        );
+      }
     }
   })();
 

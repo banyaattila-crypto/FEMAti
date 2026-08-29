@@ -134,26 +134,39 @@ function deviationPct(computed: number, catalog: number | undefined): number | n
   return ((computed - catalog) / catalog) * 100;
 }
 
+function dimensionRowsFor(section: SectionEntry): readonly { readonly label: string; readonly v: number | undefined }[] {
+  switch (section.kind) {
+    case 'circle':
+      return [{ label: 'Átmérő d', v: section.d ?? section.h }];
+    case 'tube':
+      return [
+        { label: 'Átmérő d', v: section.d ?? section.h },
+        { label: 'Falvastagság t', v: section.t },
+      ];
+    case 'rect':
+      return [
+        { label: 'Magasság h', v: section.h },
+        { label: 'Szélesség b', v: section.b },
+      ];
+    case 'rhs':
+      return [
+        { label: 'Magasság h', v: section.h },
+        { label: 'Szélesség b', v: section.b },
+        { label: 'Falvastagság t', v: section.t },
+      ];
+    case 'I':
+    case 'U':
+      return [
+        { label: 'Magasság h', v: section.h },
+        { label: 'Szélesség b', v: section.b },
+        { label: 'Gerincvastagság tw', v: section.tw },
+        { label: 'Övvastagság tf', v: section.tf },
+      ];
+  }
+}
+
 function DimensionRows({ section }: { readonly section: SectionEntry }): JSX.Element {
-  const rows: { readonly label: string; readonly v: number | undefined }[] =
-    section.kind === 'circle'
-      ? [{ label: 'Átmérő d', v: section.d ?? section.h }]
-      : section.kind === 'tube'
-        ? [
-            { label: 'Átmérő d', v: section.d ?? section.h },
-            { label: 'Falvastagság t', v: section.t },
-          ]
-        : section.kind === 'rect'
-          ? [
-              { label: 'Magasság h', v: section.h },
-              { label: 'Szélesség b', v: section.b },
-            ]
-          : [
-              { label: 'Magasság h', v: section.h },
-              { label: 'Szélesség b', v: section.b },
-              { label: 'Gerincvastagság tw', v: section.tw },
-              { label: 'Övvastagság tf', v: section.tf },
-            ];
+  const rows = dimensionRowsFor(section);
   return (
     <>
       {rows.map((r) => (
@@ -174,6 +187,8 @@ function shapeFormulaTex(kind: SectionKind): string {
       return 'A = \\dfrac{\\pi d^2}{4} \\qquad I = \\dfrac{\\pi d^4}{64}';
     case 'tube':
       return 'A = \\dfrac{\\pi}{4}\\left(d^2-(d-2t)^2\\right) \\qquad I = \\dfrac{\\pi}{64}\\left(d^4-(d-2t)^4\\right)';
+    case 'rhs':
+      return 'A = b\\,h - (b-2t)(h-2t) \\qquad I = \\dfrac{b\\,h^3 - (b-2t)(h-2t)^3}{12}';
     case 'I':
     case 'U':
       return 'A = 2\\,b\\,t_f + (h-2t_f)\\,t_w \\qquad I = \\dfrac{b\\,h^3}{12} - \\dfrac{(b-t_w)(h-2t_f)^3}{12}';

@@ -33,6 +33,7 @@ import {
   pinned,
   rect,
   resetLoadIds,
+  rhs,
   roller,
   runLoadStepper,
   selfWeight,
@@ -57,6 +58,13 @@ const shapeArb: fc.Arbitrary<SectionShape> = fc.oneof(
       tfFrac: fc.double({ min: 0.02, max: 0.15, noNaN: true }),
     })
     .map((p) => iProfile(p.h, p.b, p.tw, p.h * p.tfFrac)),
+  fc
+    .record({
+      h: fc.double({ min: 0.1, max: 1, noNaN: true }),
+      b: fc.double({ min: 0.1, max: 1, noNaN: true }),
+      tFrac: fc.double({ min: 0.02, max: 0.3, noNaN: true }),
+    })
+    .map((p) => rhs(p.h, p.b, (Math.min(p.h, p.b) / 2) * p.tFrac)),
 );
 
 /** Megtámasztási minta a hálón — MINDIG kinematikailag határozott (nem mechanizmus). */
@@ -86,6 +94,7 @@ function characteristicDepth(shape: SectionShape): number {
     case 'tube':
       return shape.d as number;
     case 'i-profile':
+    case 'rhs':
       return shape.h as number;
   }
 }
