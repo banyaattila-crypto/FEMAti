@@ -11,6 +11,7 @@ import {
   sectionStiffness,
   tube,
 } from '../src/index.js';
+import { DimensionError } from '../src/linalg/errors.js';
 import { mustGet } from './helpers/assert.js';
 
 const steel = makeMaterial('S1', 'Acél', { e: 2.1e8, sigmaY: 2.35e5, hPrime: 0 });
@@ -155,6 +156,20 @@ describe('rétegszám-konvergencia — a generált rétegzésből számított me
     );
     const stiffness = sectionStiffness(section, steel);
     expect(Math.abs(stiffness.shapeFactor - closed.shapeFactor) / closed.shapeFactor).toBeLessThan(0.01);
+  });
+});
+
+describe('sectionStiffness — rétegelt keresztmetszet szélsőséges bemenetei', () => {
+  it('réteg nélküli rétegelt szelvényre DimensionError-t dob', () => {
+    const section = makeLayeredSection('L-empty', 'Üres rétegzés', []);
+    expect(() => sectionStiffness(section, steel)).toThrow(DimensionError);
+  });
+
+  it('egyetlen, nulla vastagságú, súlyponti (z=0) réteg esetén yMax=0 — Wel és c is 0-ra esik vissza (nem oszt nullával)', () => {
+    const section = makeLayeredSection('L-degenerate', 'Elfajult réteg', [{ b: 0.1, t: 0, z: 0 }]);
+    const stiffness = sectionStiffness(section, steel);
+    expect(stiffness.elasticModulus).toBe(0);
+    expect(stiffness.shapeFactor).toBe(0);
   });
 });
 

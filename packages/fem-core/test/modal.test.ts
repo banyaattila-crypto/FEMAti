@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildModel,
+  InvalidModelError,
   makeMaterial,
   makeSection,
   norm2,
@@ -41,6 +42,20 @@ function simplySupported(length: number, elementCount: number): Model {
 function eulerBernoulliOmega1(length: number, ei: number, massPerLength: number): number {
   return (Math.PI / length) ** 2 * Math.sqrt(ei / massPerLength);
 }
+
+describe('solveModal — érvénytelen modell', () => {
+  it('támasz nélküli (mechanizmus) modellre InvalidModelError-t dob, a validáció ugyanúgy fut, mint solveLinear-nél', () => {
+    const mesh = uniformMesh(10, 4, { sectionId: 'R1', materialId: 'S235' });
+    const noSupport: Model = buildModel({
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [STEEL],
+      sections: [SEC],
+      boundaries: [],
+    });
+    expect(() => solveModal(noSupport)).toThrow(InvalidModelError);
+  });
+});
 
 describe('solveModal — mechanikai validáció zárt alak ellen (ADR-0016)', () => {
   it('karcsú kéttámaszú gerenda első sajátfrekvenciája közel esik az Euler–Bernoulli-referenciához', () => {

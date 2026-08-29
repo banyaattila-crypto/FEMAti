@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   DOF_PER_ELEMENT,
+  assemble,
+  assembleMass,
+  buildModel,
   elementMass,
+  fixed,
   makeMaterial,
+  makeSection,
+  rect,
   sectionMass,
+  uniformMesh,
   type SectionStiffness,
 } from '../src/index.js';
 
@@ -132,5 +139,33 @@ describe('elemi tömegmátrix (ADR-0016)', () => {
       sumLong += long.get(i, j);
     }
     expectRelative(sumLong / sumShort, 2, 1e-12);
+  });
+});
+
+describe('assembleMass — védelmi ág (a modell-validáció már kiszűrte volna)', () => {
+  it('ha egy elem anyaga nem oldható fel a modellben, az elemet csendben kihagyja (nem dob, a mátrix a többi hozzájárulás nélkül épül)', () => {
+    const mesh = uniformMesh(4, 2, { sectionId: 'R', materialId: 'S235' });
+    const material = makeMaterial('S235', 'Acél S235', { e: 2.1e8, density: 7850 });
+    const section = makeSection('R', 'Téglalap', rect(0.2, 0.4));
+    const model = buildModel({
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [material],
+      sections: [section],
+      boundaries: [fixed('N0')],
+    });
+    const system = assemble(model, { strategy: 'elimination' });
+
+    // Az `assembleMass` közvetlen hívásakor a model.materials ÜRES — ez a
+    // `buildModel`/`validateModel` normál útján sosem fordulhatna elő, de az
+    // alacsony szintű `assembleMass` saját védelmi ágát (massAssembler.ts:
+    // `if (!material) continue`) közvetlenül teszteljük.
+    const modelWithoutMaterials = { ...model, materials: [] };
+    const m = assembleMass(modelWithoutMaterials, system.map, system.elements);
+    for (let i = 0; i < system.map.activeDofs; i++) {
+      for (let j = 0; j < system.map.activeDofs; j++) {
+        expect(m.get(i, j)).toBe(0);
+      }
+    }
   });
 });

@@ -13,6 +13,7 @@ import {
   internalForces,
   interpolate,
   jacobian,
+  nRows,
   quadratureFor,
   rigidBodyModes,
   shapeDerivativesX,
@@ -230,6 +231,16 @@ describe('B mátrix (Diplomaterv 3.14)', () => {
     expect(kappa[4]).toBe(0);
     // φ szabadságfokok: 1, 3, 5 — nem mind zérus
     expect(Math.abs(kappa[1]) + Math.abs(kappa[3]) + Math.abs(kappa[5])).toBeGreaterThan(0);
+  });
+
+  it('degenerált (megfordíthatatlan) elemre bRows is DegenerateElementError-t dob — saját ág, nem csak jacobian()-é', () => {
+    const bad: readonly [number, number, number] = [0, -3, 4];
+    expect(() => bRows(bad, -1, 'E8')).toThrow(DegenerateElementError);
+  });
+
+  it('degenerált elemre nRows is DegenerateElementError-t dob (a tömegmátrix alakfüggvény-soraihoz)', () => {
+    const bad: readonly [number, number, number] = [0, -3, 4];
+    expect(() => nRows(bad, -1, 'E9')).toThrow(DegenerateElementError);
   });
 
   it('a nyírási sor a konvenciót követi: γ = φ − dw/dx', () => {

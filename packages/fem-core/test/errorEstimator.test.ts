@@ -42,6 +42,18 @@ describe('estimateElementError', () => {
     expect(error[0]).toBe(0);
   });
 
+  it('ha az elemenkénti tömbök hosszúsága eltér (hibás hívás), a hiányzó elemeket csendben átugorja', () => {
+    // `elementNodalValues` rövidebb, mint `elementNodeIndices` — a 2. elemhez
+    // nincs érték. Ez a `estimateElementError` saját védelmi ágát
+    // (errorEstimator.ts: `if (indices === undefined || values === undefined)
+    // continue`) teszteli, nem a normál (egyező hosszú tömbös) hívási utat.
+    const shortValues: readonly [number, number, number][] = [[0, 1, 10]];
+    const averaged = averageAtNodes(elementNodeIndices, shortValues, 5);
+    const error = estimateElementError(elementNodeIndices, shortValues, averaged, 100);
+    expect(error[0]).toBeCloseTo(0, 12);
+    expect(error[1]).toBe(0); // a hiányzó (2.) elemre a Float64Array kezdő 0 értéke marad
+  });
+
   it('nulla szélsőérték esetén az 1-es padlóra normál (nem oszt nullával)', () => {
     const elementNodalValues: readonly [number, number, number][] = [
       [0, 1, 3],

@@ -97,6 +97,28 @@ describe('buildDofMap', () => {
     expect(() => buildDofMap({ ...m, nodes: [] })).toThrow(DimensionError);
   });
 
+  it('nem létező csomópontra hivatkozó megtámasztást csendben átugorja (védelmi ág, nem dob)', () => {
+    // A `buildModel`/`validateModel` normál úton kiszűrné ezt — itt
+    // közvetlenül a `buildDofMap`-et hívjuk, hogy az alacsony szintű
+    // függvény saját védelmi ágát (dofMap.ts `if (i === undefined) continue`)
+    // közvetlenül teszteljük, a validáció megkerülésével.
+    const m = beam(1);
+    const baseline = buildDofMap(m);
+    const withGhostBoundary: Model = { ...m, boundaries: [...m.boundaries, fixed('N-ghost')] };
+    const map = buildDofMap(withGhostBoundary);
+    // A szellem-csomópontra hivatkozó megtámasztás nem hoz létre új
+    // szabadságfokot, és nem köt meg egyet sem a valódi csomópontok közül.
+    expect(map.totalDofs).toBe(baseline.totalDofs);
+    expect(map.activeDofs).toBe(baseline.activeDofs);
+  });
+
+  it('nem létező csomópontra hivatkozó támaszmozgást csendben átugorja (védelmi ág, nem dob)', () => {
+    const m = beam(1);
+    const withGhostLoad: Model = { ...m, loads: [supportDisplacement('N-ghost', -0.01, 0.002)] };
+    const map = buildDofMap(withGhostLoad);
+    expect(map.prescribedValue.some((v) => v !== 0)).toBe(false);
+  });
+
   it('elementDofs a rögzített [w,φ,w,φ,w,φ] sorrendet adja', () => {
     const dofs = elementDofs([2, 3, 4]);
     expect([...dofs]).toEqual([4, 5, 6, 7, 8, 9]);

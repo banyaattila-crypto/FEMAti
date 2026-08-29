@@ -114,6 +114,24 @@ describe('updateLayerPlasticState — már megfolyt, tehermentesítés (elágaz�
   });
 });
 
+describe('updateLayerPlasticState — nulla alakváltozás-növekmény, pontosan a folyási határon', () => {
+  it('dEps=0, state.sigma pontosan σY-on (yielded=false bemenettel): nem oszt nullával (Δσ_trial=0 → R=1 védelmi ág)', () => {
+    // Ez a réteg egy KORÁBBI lépésben pontosan a folyási határra állt be,
+    // de a hívó (pl. újraszámolás ugyanarra a lépésre) `yielded: false`
+    // állapotot ad át — dEps=0 mellett Δσ_trial=0, ezért a normál
+    // R = fTrial/Δσ_trial osztás nullával osztana; ilyenkor R a védelmi
+    // ág szerint 1-re esik vissza (ld. a forráskód 130. sorának `?? `
+    // helyett `!== 0 ? … : 1` védelme).
+    const e = 2e8;
+    const sigmaY = 2.35e5;
+    const stateAtYield = { sigma: sigmaY, epsPEff: 0, yielded: false };
+    const r = updateLayerPlasticState(stateAtYield, e, sigmaY, 0, 0);
+    expect(r.r).toBe(1);
+    expect(r.sigma).toBeCloseTo(sigmaY, 10);
+    expect(r.state.yielded).toBe(true);
+  });
+});
+
 describe("updateLayerPlasticState — degenerált eset: H' ≤ -E (lágyulás, E+H'≤0)", () => {
   it('nem osztunk nullával/negatívval: a képlékeny alakváltozás-növekmény ilyenkor R·Δε', () => {
     const e = 2e8;
