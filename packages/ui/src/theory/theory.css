@@ -88,6 +88,13 @@
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 12px;
   margin-bottom: 16px;
+  /* A tartalom (`.vem-theory__content`) görgethető — a fejléc (és benne a
+     Bezár gomb) MINDIG látható marad, görgetéstől függetlenül (felhasználói
+     visszajelzés: a gomb korábban a tartalom aljára "temetve" volt). */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-raised);
 }
 
 .vem-theory__header h2 {

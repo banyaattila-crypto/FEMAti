@@ -1,15 +1,20 @@
 /**
- * Szelvény- és anyagadatbázis böngésző — Szerkesztés → Szelvény, anyag
- * adatbázis (2026-08-29).
+ * Szelvény- és anyagadatbázis böngésző — Szerkesztés → „Szelvény adatbázis"
+ * / „Anyag adatbázis" (2026-08-29, 2. kör: külön menüpont/ablak szelvényre
+ * és anyagra, kereső mező, önállóan görgethető navigáció, egyetlen fejléc-
+ * Bezár gomb, nagy méretjelzéses keresztmetszet-illusztráció).
  *
  * A `@femati/fem-db` katalógus (19 anyag, 22 szelvény) minden rekordját
- * megjeleníti: keresztmetszet-ábra (valós arányokból, `SectionShapeDiagram`
- * — ugyanaz a rajzoló-logika, mint a bal panel élő előnézete), a
- * katalógus-adatok, a `fem-core` `geometricProperties()`-ből SZÁMOLT
- * jellemzők (nem a katalógus-értékek megismétlése — a kettő ELTÉRHET, ld.
- * a "katalógus vs. számított" eltérés-sor), a vonatkozó zárt alakú
- * képletek (KaTeX, `derivation/Formula.tsx`), és a forrás/`verified`
- * figyelmeztetés (`UNVERIFIED_WARNING`, ugyanaz, mint a bal panelen).
+ * megjeleníti: keresztmetszet-ábra (valós arányokból, méretjelző-
+ * feliratokkal — `SectionShapeDiagram`, ugyanaz a rajzoló-logika, mint a
+ * bal panel élő előnézete), a katalógus-adatok, a `fem-core`
+ * `geometricProperties()`-ből SZÁMOLT jellemzők (nem a katalógus-értékek
+ * megismétlése — a kettő ELTÉRHET, ld. a "katalógus vs. számított"
+ * eltérés-sor), a vonatkozó zárt alakú képletek (KaTeX,
+ * `derivation/Formula.tsx` — a teljes készlet: terület, másodrendű
+ * nyomaték, rugalmas/képlékeny modulus, alaki tényező), és a forrás/
+ * `verified` figyelmeztetés (`UNVERIFIED_WARNING`, ugyanaz, mint a bal
+ * panelen).
  *
  * Ugyanazt az overlay-architektúrát használja, mint a `theory/TheoryView.tsx`
  * (`.vem-theory*` osztályok) — két külön böngésző-nézet, egy közös vizuális
@@ -38,8 +43,6 @@ import { useAppStore } from '../state/appStore.js';
 import type { Formatted } from '../format/numbers.js';
 import './database.css';
 
-type Selection = { readonly kind: 'material'; readonly id: string } | { readonly kind: 'section'; readonly id: string };
-
 const num = (v: number, digits: number, unit: string): Formatted => ({ value: v.toFixed(digits), unit });
 
 const numWithDeviation = (v: number, digits: number, unit: string, devPct: number | null): Formatted => ({
@@ -58,10 +61,28 @@ function groupBy<T, K extends string>(items: readonly T[], key: (t: T) => K): Re
   return map;
 }
 
+/** A csoportosított listát a kereső-szöveggel szűri; üres csoportok eltűnnek. */
+function filterGroups<T extends { readonly name: string }, K extends string>(
+  byGroup: ReadonlyMap<K, readonly T[]>,
+  groups: readonly K[],
+  query: string,
+): ReadonlyMap<K, readonly T[]> {
+  const q = query.trim().toLowerCase();
+  if (q === '') return byGroup;
+  const result = new Map<K, readonly T[]>();
+  for (const g of groups) {
+    const filtered = (byGroup.get(g) ?? []).filter((item) => item.name.toLowerCase().includes(q));
+    if (filtered.length > 0) result.set(g, filtered);
+  }
+  return result;
+}
+
 const MATERIALS_BY_FAMILY = groupBy(MATERIALS, (m) => m.family);
 const SECTIONS_BY_KIND = groupBy(SECTIONS, (s) => s.kind);
+const MATERIAL_FAMILIES = Array.from(MATERIALS_BY_FAMILY.keys()) as readonly MaterialFamily[];
+const SECTION_KINDS = Array.from(SECTIONS_BY_KIND.keys()) as readonly SectionKind[];
 
-function MaterialDetail({ material }: { readonly material: MaterialEntry }): JSX.Element {
+function MaterialDetail({ material, onClose }: { readonly material: MaterialEntry; readonly onClose: () => void }): JSX.Element {
   const g = material.e / (2 * (1 + material.nu));
   return (
     <>
@@ -73,6 +94,9 @@ function MaterialDetail({ material }: { readonly material: MaterialEntry }): JSX
             <p className="vem-theory__subtitle">{MATERIAL_FAMILY_GROUP[material.family]}</p>
           </div>
         </div>
+        <button type="button" className="vem-btn vem-btn--sm" onClick={onClose}>
+          Bezárás
+        </button>
       </header>
       <div className="vem-theory__body">
         <ResultRow label="Rugalmassági modulus E" formatted={num(material.e, 0, 'kN/cm²')} emphasis="large" />
@@ -139,7 +163,24 @@ function DimensionRows({ section }: { readonly section: SectionEntry }): JSX.Ele
   );
 }
 
-function SectionDetail({ section }: { readonly section: SectionEntry }): JSX.Element {
+/** A keresztmetszet-fajtánként eltérő zárt alakú A és I képlet — a Wel/Wpl/c
+ * képlet (amely mindig ugyanaz) mellett, hogy egy elemnél MINDEN releváns
+ * zárt alak szerepeljen, ne csak a modulusok. */
+function shapeFormulaTex(kind: SectionKind): string {
+  switch (kind) {
+    case 'rect':
+      return 'A = b\\cdot h \\qquad I = \\dfrac{b\\cdot h^3}{12}';
+    case 'circle':
+      return 'A = \\dfrac{\\pi d^2}{4} \\qquad I = \\dfrac{\\pi d^4}{64}';
+    case 'tube':
+      return 'A = \\dfrac{\\pi}{4}\\left(d^2-(d-2t)^2\\right) \\qquad I = \\dfrac{\\pi}{64}\\left(d^4-(d-2t)^4\\right)';
+    case 'I':
+    case 'U':
+      return 'A = 2\\,b\\,t_f + (h-2t_f)\\,t_w \\qquad I = \\dfrac{b\\,h^3}{12} - \\dfrac{(b-t_w)(h-2t_f)^3}{12}';
+  }
+}
+
+function SectionDetail({ section, onClose }: { readonly section: SectionEntry; readonly onClose: () => void }): JSX.Element {
   const shape = toShape(section);
   const props = geometricProperties(shape);
   const aCm2 = props.area * 1e4;
@@ -155,14 +196,20 @@ function SectionDetail({ section }: { readonly section: SectionEntry }): JSX.Ele
     <>
       <header className="vem-theory__header">
         <div className="vem-theory__header-title">
-          <SectionShapeDiagram section={section} width={64} height={92} />
           <div>
             <h2>{section.name}</h2>
             <p className="vem-theory__subtitle">{SECTION_KIND_GROUP[section.kind]}</p>
           </div>
         </div>
+        <button type="button" className="vem-btn vem-btn--sm" onClick={onClose}>
+          Bezárás
+        </button>
       </header>
       <div className="vem-theory__body">
+        <div className="vem-db__figure">
+          <SectionShapeDiagram section={section} width={220} height={250} />
+        </div>
+
         <div className="vem-db__columns">
           <div>
             <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
@@ -183,6 +230,7 @@ function SectionDetail({ section }: { readonly section: SectionEntry }): JSX.Ele
         </div>
 
         <div style={{ margin: 'var(--space-4) 0' }}>
+          <Formula tex={shapeFormulaTex(section.kind)} />
           <Formula tex="W_{el}=\dfrac{I}{y_{max}} \qquad W_{pl}=2S_0 \qquad c=\dfrac{W_{pl}}{W_{el}}" />
         </div>
 
@@ -230,69 +278,93 @@ function SectionDetail({ section }: { readonly section: SectionEntry }): JSX.Ele
   );
 }
 
-export function DatabaseView(): JSX.Element | null {
-  const open = useAppStore((s) => s.databaseOpen);
-  const setOpen = useAppStore((s) => s.setDatabaseOpen);
-  const [selection, setSelection] = useState<Selection>({ kind: 'material', id: MATERIALS[0]?.id ?? '' });
+export interface DatabaseViewProps {
+  readonly kind: 'material' | 'section';
+}
+
+/** Az anyag-adatbázis és a szelvény-adatbázis KÜLÖN menüpont, külön ablak
+ * (felhasználói visszajelzés) — de ugyanezt a komponenst példányosítja
+ * `kind`-tól függően, hogy a nav/kereső/fejléc-logika ne duplikálódjon. */
+export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
+  const open = useAppStore((s) => (kind === 'material' ? s.materialDbOpen : s.sectionDbOpen));
+  const setOpen = useAppStore((s) => (kind === 'material' ? s.setMaterialDbOpen : s.setSectionDbOpen));
+  const [query, setQuery] = useState('');
+  const [materialSelection, setMaterialSelection] = useState(MATERIALS[0]?.id ?? '');
+  const [sectionSelection, setSectionSelection] = useState(SECTIONS[0]?.id ?? '');
 
   if (!open) return null;
   const close = (): void => setOpen(false);
 
-  const materialFamilies = Array.from(MATERIALS_BY_FAMILY.keys()) as readonly MaterialFamily[];
-  const sectionKinds = Array.from(SECTIONS_BY_KIND.keys()) as readonly SectionKind[];
+  const isMaterial = kind === 'material';
+  const title = isMaterial ? 'Anyag adatbázis' : 'Szelvény adatbázis';
+  const placeholder = isMaterial ? 'Anyag keresése…' : 'Szelvény keresése…';
+
+  const filteredMaterials = filterGroups(MATERIALS_BY_FAMILY, MATERIAL_FAMILIES, query);
+  const filteredSections = filterGroups(SECTIONS_BY_KIND, SECTION_KINDS, query);
+  const noResults = isMaterial ? filteredMaterials.size === 0 : filteredSections.size === 0;
+
+  const selectedMaterial = MATERIALS.find((m) => m.id === materialSelection) ?? (MATERIALS[0] as MaterialEntry);
+  const selectedSection = SECTIONS.find((s) => s.id === sectionSelection) ?? (SECTIONS[0] as SectionEntry);
 
   return (
     <div className="vem-theory-overlay" onPointerDown={close}>
       <div className="vem-theory vem-db" onPointerDown={(e) => e.stopPropagation()}>
-        <nav className="vem-theory__nav" aria-label="Szelvény- és anyagadatbázis">
-          <h1>Adatbázis</h1>
-          <div className="vem-db__nav-group">Anyagok</div>
-          {materialFamilies.map((family) => (
-            <div key={family}>
-              <div className="vem-db__nav-subgroup">{MATERIAL_FAMILY_GROUP[family]}</div>
-              {(MATERIALS_BY_FAMILY.get(family) ?? []).map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className="vem-theory__nav-item"
-                  aria-current={selection.kind === 'material' && selection.id === m.id}
-                  onClick={() => setSelection({ kind: 'material', id: m.id })}
-                >
-                  {m.name}
-                </button>
-              ))}
-            </div>
-          ))}
-          <div className="vem-db__nav-group">Szelvények</div>
-          {sectionKinds.map((kind) => (
-            <div key={kind}>
-              <div className="vem-db__nav-subgroup">{SECTION_KIND_GROUP[kind]}</div>
-              {(SECTIONS_BY_KIND.get(kind) ?? []).map((sec) => (
-                <button
-                  key={sec.id}
-                  type="button"
-                  className="vem-theory__nav-item"
-                  aria-current={selection.kind === 'section' && selection.id === sec.id}
-                  onClick={() => setSelection({ kind: 'section', id: sec.id })}
-                >
-                  {sec.name}
-                </button>
-              ))}
-            </div>
-          ))}
+        <nav className="vem-theory__nav" aria-label={title}>
+          <h1>{title}</h1>
+          <input
+            type="search"
+            className="vem-db__nav-search"
+            placeholder={placeholder}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label={placeholder}
+          />
+          <div className="vem-db__nav-list">
+            {noResults ? <p className="vem-db__nav-empty">Nincs találat.</p> : null}
+            {isMaterial
+              ? MATERIAL_FAMILIES.filter((f) => (filteredMaterials.get(f) ?? []).length > 0).map((family) => (
+                  <div key={family}>
+                    <div className="vem-db__nav-subgroup">{MATERIAL_FAMILY_GROUP[family]}</div>
+                    {(filteredMaterials.get(family) ?? []).map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className="vem-theory__nav-item"
+                        aria-current={materialSelection === m.id}
+                        onClick={() => setMaterialSelection(m.id)}
+                      >
+                        {m.name}
+                      </button>
+                    ))}
+                  </div>
+                ))
+              : SECTION_KINDS.filter((k) => (filteredSections.get(k) ?? []).length > 0).map((kindGroup) => (
+                  <div key={kindGroup}>
+                    <div className="vem-db__nav-subgroup">{SECTION_KIND_GROUP[kindGroup]}</div>
+                    {(filteredSections.get(kindGroup) ?? []).map((sec) => (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        className="vem-theory__nav-item"
+                        aria-current={sectionSelection === sec.id}
+                        onClick={() => setSectionSelection(sec.id)}
+                      >
+                        {sec.name}
+                      </button>
+                    ))}
+                  </div>
+                ))}
+          </div>
           <p className="vem-theory__nav-note">
-            {MATERIALS.length} anyag · {SECTIONS.length} szelvény · <code>@femati/fem-db</code>
+            {isMaterial ? `${MATERIALS.length} anyag` : `${SECTIONS.length} szelvény`} · <code>@femati/fem-db</code>
           </p>
         </nav>
         <article className="vem-theory__content">
-          {selection.kind === 'material' ? (
-            <MaterialDetail material={MATERIALS.find((m) => m.id === selection.id) ?? (MATERIALS[0] as MaterialEntry)} />
+          {isMaterial ? (
+            <MaterialDetail material={selectedMaterial} onClose={close} />
           ) : (
-            <SectionDetail section={SECTIONS.find((s) => s.id === selection.id) ?? (SECTIONS[0] as SectionEntry)} />
+            <SectionDetail section={selectedSection} onClose={close} />
           )}
-          <button type="button" className="vem-btn vem-btn--sm" style={{ marginTop: 'var(--space-5)' }} onClick={close}>
-            Bezár
-          </button>
         </article>
       </div>
     </div>

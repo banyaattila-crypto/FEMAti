@@ -238,9 +238,6 @@ export function LeftPanel(): JSX.Element {
             <div className="vem-section-preview__figures">
               <div>A = {section.aCat !== undefined ? `${section.aCat.toFixed(2)} cm²` : '—'}</div>
               <div>I = {section.iCat !== undefined ? `${section.iCat} cm⁴` : '—'}</div>
-              <div>Mₑ = —</div>
-              <div>Mₚ = —</div>
-              <div style={{ color: 'var(--sem-plastic)', fontWeight: 600 }}>c = Mₚ/Mₑ = —</div>
             </div>
           </div>
           <div style={{ padding: '0 var(--space-5)' }}>

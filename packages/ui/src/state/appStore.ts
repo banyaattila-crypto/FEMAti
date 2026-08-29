@@ -71,8 +71,10 @@ export interface AppState {
   meshConvergenceOpen: boolean;
   /** A "Névjegy" (About) párbeszédablak nyitva van-e. */
   aboutOpen: boolean;
-  /** A szelvény-/anyagadatbázis böngésző nyitva van-e. */
-  databaseOpen: boolean;
+  /** A szelvény-adatbázis böngésző nyitva van-e (Szerkesztés → Szelvény adatbázis). */
+  sectionDbOpen: boolean;
+  /** Az anyag-adatbázis böngésző nyitva van-e (Szerkesztés → Anyag adatbázis). */
+  materialDbOpen: boolean;
   /** Csak <768px-nél releváns — melyik panel aktív. */
   mobileTab: MobileTab;
 
@@ -97,7 +99,8 @@ export interface AppState {
   setTheoryOpen: (v: boolean) => void;
   setMeshConvergenceOpen: (v: boolean) => void;
   setAboutOpen: (v: boolean) => void;
-  setDatabaseOpen: (v: boolean) => void;
+  setSectionDbOpen: (v: boolean) => void;
+  setMaterialDbOpen: (v: boolean) => void;
   setMobileTab: (v: MobileTab) => void;
 }
 
@@ -124,7 +127,8 @@ export const useAppStore = create<AppState>()((set) => ({
   theoryTopic: 'timoshenko',
   meshConvergenceOpen: false,
   aboutOpen: false,
-  databaseOpen: false,
+  sectionDbOpen: false,
+  materialDbOpen: false,
   mobileTab: 'canvas',
 
   setAlgorithm: (v) => set({ algorithm: v }),
@@ -148,6 +152,7 @@ export const useAppStore = create<AppState>()((set) => ({
   setTheoryOpen: (v) => set({ theoryOpen: v }),
   setMeshConvergenceOpen: (v) => set({ meshConvergenceOpen: v }),
   setAboutOpen: (v) => set({ aboutOpen: v }),
-  setDatabaseOpen: (v) => set({ databaseOpen: v }),
+  setSectionDbOpen: (v) => set({ sectionDbOpen: v }),
+  setMaterialDbOpen: (v) => set({ materialDbOpen: v }),
   setMobileTab: (v) => set({ mobileTab: v }),
 }));

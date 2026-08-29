@@ -1,12 +1,45 @@
 /**
- * Szelvény- és anyagadatbázis böngésző (2026-08-29) — a `.vem-theory*`
+ * Szelvény- és anyagadatbázis böngésző (2026-08-29, majd 2. kör: kereső,
+ * scrollozható navigáció, önálló Szelvény/Anyag ablak) — a `.vem-theory*`
  * overlay-architektúrára épül (`theory/theory.css`), csak a katalógus-
- * specifikus részleteket (nav-csoportcímkék, kételoszlopos méret/számított
- * blokk) egészíti ki.
+ * specifikus részleteket (nav-csoportcímkék, kereső, kételoszlopos
+ * méret/számított blokk, nagy keresztmetszet-illusztráció) egészíti ki.
  */
 
 .vem-theory.vem-db {
   width: min(980px, calc(100vw - 32px));
+}
+
+/* A navigáció (sok anyag/szelvény esetén hosszú lista) ÖNÁLLÓAN görgethető,
+   fix magassággal — ne az egész ablakkal/oldallal kelljen lefelé menni. */
+.vem-theory.vem-db .vem-theory__nav {
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.vem-db__nav-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--surface-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.vem-db__nav-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.vem-db__nav-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .vem-db__nav-group {
@@ -28,6 +61,21 @@
   padding: 0 10px;
   font-size: 10.5px;
   color: var(--text-muted);
+}
+
+.vem-db__nav-empty {
+  padding: var(--space-4) 6px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.vem-db__figure {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5) 0 var(--space-3);
+  background: var(--surface-panel);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-5);
 }
 
 .vem-db__columns {

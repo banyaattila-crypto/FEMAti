@@ -170,9 +170,12 @@ export function App(): JSX.Element {
       } else if (e.key === 'Escape' && s.aboutOpen) {
         e.preventDefault();
         s.setAboutOpen(false);
-      } else if (e.key === 'Escape' && s.databaseOpen) {
+      } else if (e.key === 'Escape' && s.sectionDbOpen) {
         e.preventDefault();
-        s.setDatabaseOpen(false);
+        s.setSectionDbOpen(false);
+      } else if (e.key === 'Escape' && s.materialDbOpen) {
+        e.preventDefault();
+        s.setMaterialDbOpen(false);
       }
     };
     document.addEventListener('keydown', onKey);
@@ -196,7 +199,8 @@ export function App(): JSX.Element {
         { label: 'Visszavonás', shortcut: 'Ctrl+Z', onSelect: undo, disabled: !canUndo },
         { label: 'Újra', shortcut: 'Ctrl+Y', onSelect: redo, disabled: !canRedo },
         { label: 'Kijelölt elem törlése', shortcut: 'Del', onSelect: removeSelected, disabled: selection === null, separatorAfter: true },
-        { label: 'Szelvény, anyag adatbázis', onSelect: () => s.setDatabaseOpen(true) },
+        { label: 'Szelvény adatbázis', onSelect: () => s.setSectionDbOpen(true) },
+        { label: 'Anyag adatbázis', onSelect: () => s.setMaterialDbOpen(true) },
       ],
     },
     {
@@ -321,7 +325,8 @@ export function App(): JSX.Element {
       <TheoryView />
       <MeshConvergenceView />
       <AboutDialog />
-      <DatabaseView />
+      <DatabaseView kind="section" />
+      <DatabaseView kind="material" />
     </div>
   );
 }
