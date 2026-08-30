@@ -69,26 +69,34 @@
   color: var(--text-faint);
 }
 
+/* A rajz a terület BAL oldalához igazítva, a méret-/számított adatok
+   MELLETTE (nem alatta) — felhasználói visszajelzés (2026-08-30): a rajz
+   fölötti, centrált elrendezés nagy üres teret hagyott a rajz két
+   oldalán; a szöveget felhúzva, a rajz mellé, jobban kitölti a helyet. */
+.vem-db__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+  margin-bottom: var(--space-5);
+}
+
 .vem-db__figure {
-  /* A rajz köré feszes, a tartalomhoz igazodó keret — NEM a teljes
-     (két oszlopnyi) szélesség, hogy a keskeny/magas szelvényeknél (I,
-     kör, cső) ne maradjon nagy üres sáv a rajz két oldalán
-     (felhasználói visszajelzés, 2026-08-29). */
-  width: fit-content;
-  margin: 0 auto var(--space-5);
-  padding: var(--space-5) var(--space-7);
+  flex: none;
+  padding: var(--space-5) var(--space-6);
   background: var(--surface-panel);
   border-radius: var(--radius-md);
 }
 
 .vem-db__columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-6);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
 @media (max-width: 640px) {
-  .vem-db__columns {
-    grid-template-columns: 1fr;
+  .vem-db__layout {
+    flex-direction: column;
   }
 }

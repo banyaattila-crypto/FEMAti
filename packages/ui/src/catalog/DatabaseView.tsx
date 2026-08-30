@@ -290,26 +290,28 @@ function SectionDetail({ section, onClose }: { readonly section: SectionEntry; r
         </button>
       </header>
       <div className="vem-theory__body">
-        <div className="vem-db__figure">
-          <SectionShapeDiagram section={section} width={220} height={250} />
-        </div>
-
-        <div className="vem-db__columns">
-          <div>
-            <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-              Méretek
-            </div>
-            <DimensionRows section={section} />
+        <div className="vem-db__layout">
+          <div className="vem-db__figure">
+            <SectionShapeDiagram section={section} width={200} height={227} />
           </div>
-          <div>
-            <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-              Számított jellemzők
+
+          <div className="vem-db__columns">
+            <div>
+              <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+                Méretek
+              </div>
+              <DimensionRows section={section} />
             </div>
-            <ResultRow label="Terület A" formatted={num(aCm2, 2, 'cm²')} emphasis="large" />
-            <ResultRow label="Másodrendű nyomaték I" formatted={num(iCm4, 0, 'cm⁴')} emphasis="large" />
-            <ResultRow label="Rugalmas modulus Wel = I/ymax" formatted={num(welCm3, 1, 'cm³')} />
-            <ResultRow label="Képlékeny modulus Wpl = 2S₀" formatted={num(wplCm3, 1, 'cm³')} />
-            <ResultRow label="Alaki tényező c = Wpl/Wel" formatted={num(props.shapeFactor, 3, '')} />
+            <div>
+              <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
+                Számított jellemzők
+              </div>
+              <ResultRow label="Terület A" formatted={num(aCm2, 2, 'cm²')} emphasis="large" />
+              <ResultRow label="Másodrendű nyomaték I" formatted={num(iCm4, 0, 'cm⁴')} emphasis="large" />
+              <ResultRow label="Rugalmas modulus Wel = I/ymax" formatted={num(welCm3, 1, 'cm³')} />
+              <ResultRow label="Képlékeny modulus Wpl = 2S₀" formatted={num(wplCm3, 1, 'cm³')} />
+              <ResultRow label="Alaki tényező c = Wpl/Wel" formatted={num(props.shapeFactor, 3, '')} />
+            </div>
           </div>
         </div>
 
