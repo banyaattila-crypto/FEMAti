@@ -234,3 +234,73 @@ describe('initialNonlinearState / updateGaussPointState — "layered" eset', () 
     expect(updated.tangentEi).toBeLessThan(gp0.tangentEi);
   });
 });
+
+describe('updateGaussPointState — beton (EC2 parabola-téglalap) réteg, F) fázis', () => {
+  // Vasalatlan (csak beton) téglalap keresztmetszet, C30/37-szerű, kerek
+  // paraméterekkel — a hajlítás alatt a húzott oldal REPEDT (σ=0), a teljes
+  // nyomatékot a nyomott oldal adja. Ez egy modell-szintű, "a repedt
+  // keresztmetszet feltételezése ténylegesen érvényesül" ellenőrzés — nem
+  // hajlítási teherbírás-számítás (ahhoz vasalás kellene).
+  const CONCRETE = makeMaterial('C30', 'C30/37-szerű', {
+    e: 3.284e7, // kN/m² (Ecm, C30/37-hez közeli kerekített érték)
+    fck: 3.0e4, // 30 MPa
+    epsC2: 0.002,
+    epsCu2: 0.0035,
+    n: 2,
+  });
+  const shape = rect(0.3, 0.5);
+  const rawLayers = generateLayers(shape, 40);
+  const section = makeLayeredSection(
+    'CRECT',
+    'Beton téglalap',
+    rawLayers.map((l) => ({ b: l.b, t: l.t, z: l.z })),
+  );
+  const mesh = uniformMesh(4, 1, { sectionId: 'CRECT', materialId: 'C30' });
+  const model = buildModel({
+    nodes: mesh.nodes,
+    elements: mesh.elements,
+    materials: [CONCRETE],
+    sections: [section],
+    boundaries: [fixed('N0')],
+    loads: [nodalForce('N2', -10, 'F1')],
+  });
+  const el = model.elements[0];
+  if (el === undefined) throw new Error('hiányzó elem');
+  const data = elementMaterialData(model, el);
+
+  it('a rétegek beton-paramétereket kapnak (a "concrete" ág aktiválódik)', () => {
+    if (data.kind !== 'layered') throw new Error('layered várt');
+    for (const layer of data.layers) {
+      expect(layer.concrete?.fck).toBeCloseTo(3.0e4, 6);
+    }
+  });
+
+  it('pozitív κ-nál (z>0 = húzott oldal, a projekt előjelkonvenciója szerint) a húzott rétegek feszültsége PONTOSAN 0 — a repedt keresztmetszet feltételezése ténylegesen érvényesül', () => {
+    if (data.kind !== 'layered') throw new Error('layered várt');
+    const states = initialNonlinearState([el.id], new Map([[el.id, data]]));
+    const st = states.get(el.id);
+    if (st === undefined) throw new Error('hiányzó állapot');
+    const gp0 = st.gaussPoints[0];
+    if (gp0 === undefined) throw new Error('hiányzó GP');
+    const updated = updateGaussPointState(data, gp0, 0.01);
+    if (updated.kind !== 'layered') throw new Error('layered várt');
+    for (let i = 0; i < data.layers.length; i++) {
+      const layer = data.layers[i];
+      const layerState = updated.layers[i];
+      if (layer === undefined || layerState === undefined) continue;
+      if (layer.z > 0) expect(layerState.sigma).toBe(0);
+    }
+  });
+
+  it('a görbület növelésével a nyomatéki válasz nagysága nő (nyomott oldal fokozódó igénybevétele), amíg zúzódás nem lép fel', () => {
+    if (data.kind !== 'layered') throw new Error('layered várt');
+    const states = initialNonlinearState([el.id], new Map([[el.id, data]]));
+    const st = states.get(el.id);
+    if (st === undefined) throw new Error('hiányzó állapot');
+    const gp0 = st.gaussPoints[0];
+    if (gp0 === undefined) throw new Error('hiányzó GP');
+    const small = updateGaussPointState(data, gp0, 0.005);
+    const larger = updateGaussPointState(data, gp0, 0.012);
+    expect(Math.abs(larger.m)).toBeGreaterThan(Math.abs(small.m));
+  });
+});

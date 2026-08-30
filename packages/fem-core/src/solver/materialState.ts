@@ -11,6 +11,7 @@
  * mindig közvetlenül `GAs·γ`-ból számol (ld. `nonlinearElement.ts`).
  */
 import { sectionStiffness } from '../element/constitutive.js';
+import { concreteStress, isConcreteYielded } from '../material/concreteEC2.js';
 import {
   INITIAL_LAYER_PLASTIC_STATE,
   updateLayerPlasticState,
@@ -23,6 +24,14 @@ import {
 } from '../material/resultantPlastic.js';
 import type { Element, Material, MaterialId, Model } from '../model/types.js';
 
+/** Egy réteg EC2 beton-paraméterei — csak akkor van, ha a réteg anyaga beton (F fázis). */
+export interface ConcreteLayerParams {
+  readonly fck: number;
+  readonly epsC2: number;
+  readonly epsCu2: number;
+  readonly n: number;
+}
+
 /** Egy réteg állandó (nem-változó) anyagadata a nemlineáris futáshoz. */
 export interface LayerMaterialData {
   readonly b: number;
@@ -33,6 +42,8 @@ export interface LayerMaterialData {
   readonly hPrime: number;
   /** A réteg valódi lemezvastagsága [m] — csak diagnosztikai/teszt célra tárolva. */
   readonly plateThickness?: number;
+  /** HA az anyag beton (van `fck`-ja) — az EC2 parabola-téglalap paraméterei. */
+  readonly concrete?: ConcreteLayerParams;
 }
 
 /**
@@ -105,6 +116,18 @@ export function elementMaterialData(model: Model, element: Element): ElementMate
   const layers: LayerMaterialData[] = section.layers.map((l) => {
     const layerMaterial = l.materialId !== undefined ? (lookup(l.materialId) ?? material) : material;
     const plateThickness = l.plateThickness as number | undefined;
+    const concrete: ConcreteLayerParams | undefined =
+      layerMaterial.fck !== undefined &&
+      layerMaterial.epsC2 !== undefined &&
+      layerMaterial.epsCu2 !== undefined &&
+      layerMaterial.n !== undefined
+        ? {
+            fck: layerMaterial.fck as number,
+            epsC2: layerMaterial.epsC2 as number,
+            epsCu2: layerMaterial.epsCu2 as number,
+            n: layerMaterial.n as number,
+          }
+        : undefined;
     return {
       b: l.b as number,
       t: l.t as number,
@@ -113,6 +136,7 @@ export function elementMaterialData(model: Model, element: Element): ElementMate
       sigmaY: resolveLayerSigmaY(layerMaterial, plateThickness),
       hPrime: layerMaterial.hPrime !== undefined ? (layerMaterial.hPrime as number) : 0,
       ...(plateThickness !== undefined ? { plateThickness } : {}),
+      ...(concrete !== undefined ? { concrete } : {}),
     };
   });
   return { kind: 'layered', gas: stiffness.gas, layers };
@@ -206,6 +230,19 @@ export function updateGaussPointState(data: ElementMaterialData, prev: GaussPoin
       const layer = data.layers[i];
       const layerPrevState = prev.layers[i];
       if (layer === undefined || layerPrevState === undefined) continue;
+
+      if (layer.concrete !== undefined) {
+        // F) fázis: EC2 parabola-téglalap — PATH-INDEPENDENT, a TELJES
+        // (nem inkrementális) alakváltozásból, nincs `LayerPlasticState`
+        // history-ra szükség (ld. `material/concreteEC2.ts` fejléce).
+        const totalEps = kappaNew * layer.z;
+        const cs = concreteStress(totalEps, layer.concrete.fck, layer.concrete.epsC2, layer.concrete.epsCu2, layer.concrete.n);
+        newLayerStates.push({ sigma: cs.sigma, epsPEff: 0, yielded: isConcreteYielded(totalEps, layer.concrete.epsC2) });
+        m += cs.sigma * layer.b * layer.z * layer.t;
+        tangentEi += cs.tangentE * layer.b * layer.z * layer.z * layer.t;
+        continue;
+      }
+
       const dEps = dKappa * layer.z;
       const r = updateLayerPlasticState(layerPrevState, layer.e, layer.sigmaY, layer.hPrime, dEps);
       newLayerStates.push(r.state);
