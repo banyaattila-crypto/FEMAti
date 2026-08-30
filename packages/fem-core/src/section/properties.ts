@@ -32,6 +32,14 @@ export interface GeometricProperties {
   readonly shapeFactor: number;
   /** A keresztmetszet teljes magassága [m] */
   readonly height: number;
+  /**
+   * A súlypont távolsága a FELSŐ szélső száltól [m] — CSAK aszimmetrikus
+   * alakoknál (t-profile, C) fázis) van kitöltve; szimmetrikus alakoknál
+   * `undefined` (ott `yTop === yBottom === yMax` lenne, redundáns).
+   */
+  readonly yTop?: number;
+  /** A súlypont távolsága az ALSÓ szélső száltól [m] — ld. `yTop`. */
+  readonly yBottom?: number;
 }
 
 /**
@@ -106,6 +114,56 @@ export function geometricProperties(shape: SectionShape): GeometricProperties {
       // különbsége, ugyanaz a levezetés, mint a `rect` esetben fentebb.
       const plasticModulus = (b * h * h - bi * hi * hi) / 4;
       return finish(area, inertia, h / 2, plasticModulus, h);
+    }
+
+    case 't-profile': {
+      // C) fázis (docs/ADR/00xx-t-szelveny.md) — ASZIMMETRIKUS a
+      // félmagasságra: öv FELÜL, gerinc alatta. `y` a TETŐTŐL mérve.
+      const h = shape.h as number;
+      const b = shape.b as number;
+      const tw = shape.tw as number;
+      const tf = shape.tf as number;
+      const hw = h - tf; // gerincmagasság
+
+      const af = b * tf;
+      const aw = tw * hw;
+      const area = af + aw;
+      const yF = tf / 2;
+      const yW = tf + hw / 2;
+      const yBar = (af * yF + aw * yW) / area; // súlypont a tetőtől
+      const yTop = yBar;
+      const yBottom = h - yBar;
+
+      // Steiner-tétel: saját inercia + Aᵢ·(sajátsúlypont-ȳ)²
+      const iFlangeOwn = (b * tf ** 3) / 12;
+      const iWebOwn = (tw * hw ** 3) / 12;
+      const inertia = iFlangeOwn + af * (yF - yBar) ** 2 + iWebOwn + aw * (yW - yBar) ** 2;
+
+      // Képlékeny semleges tengely (EGYENLŐ TERÜLETŰ, NEM a súlypont) —
+      // Wpl = ∫|y−y_pna| dA zárt alakban, esetszétválasztással aszerint,
+      // hogy y_pna az övben vagy a gerincben esik.
+      const yPna = af >= area / 2 ? area / 2 / b : tf + (area / 2 - af) / tw;
+      const plasticModulus =
+        yPna <= tf
+          ? b * (yPna ** 2 / 2 + (tf - yPna) ** 2 / 2) + (tw * ((h - yPna) ** 2 - (tf - yPna) ** 2)) / 2
+          : (b * (yPna ** 2 - (yPna - tf) ** 2)) / 2 + tw * ((yPna - tf) ** 2 / 2 + (h - yPna) ** 2 / 2);
+
+      // yMax a KORMÁNYZÓ (nagyobb, konzervatívabb) szál — a meglévő
+      // fogyasztók (linearSolver.ts me/mp) így módosítás nélkül a
+      // BIZTONSÁG felé kerekítő rugalmas modulust kapják (ld. terv).
+      const yMax = Math.max(yTop, yBottom);
+      const elasticModulus = inertia / yMax;
+      return {
+        area,
+        inertia,
+        yMax,
+        elasticModulus,
+        plasticModulus,
+        shapeFactor: plasticModulus / elasticModulus,
+        height: h,
+        yTop,
+        yBottom,
+      };
     }
   }
 }
@@ -183,6 +241,17 @@ export function recommendedShearFactor(shape: SectionShape, nu: number): number 
       const t = shape.t as number;
       const area = b * h - (b - 2 * t) * (h - 2 * t);
       return (h * (2 * t)) / area;
+    }
+
+    case 't-profile': {
+      // Ugyanaz a közelítés, mint az i-profile/rhs ágnál (NEM Cowper-formula)
+      // — a nyírást gyakorlatilag a gerinc veszi fel.
+      const h = shape.h as number;
+      const b = shape.b as number;
+      const tw = shape.tw as number;
+      const tf = shape.tf as number;
+      const area = b * tf + tw * (h - tf);
+      return (h * tw) / area;
     }
   }
 }

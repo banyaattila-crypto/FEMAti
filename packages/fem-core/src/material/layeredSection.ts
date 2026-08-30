@@ -34,8 +34,12 @@
  * opció (alapértelmezés: ki) már dokumentáltan és tudatosan elhanyagol.
  *
  * A `z` koordináta a keresztmetszet súlypontjától mérve, lefelé pozitív
- * (ld. CONVENTIONS.md §2) — minden itt kezelt alak szimmetrikus a
- * félmagasságra, ezért a súlypont mindig a geometriai félmagasságon van.
+ * (ld. CONVENTIONS.md §2) — a legtöbb itt kezelt alak szimmetrikus a
+ * félmagasságra (a súlypont a geometriai félmagasságon van), DE a
+ * `t-profile` (C) fázis) ASZIMMETRIKUS — a `centroidTopOffset()` ezt a
+ * KÜLÖNBSÉGET absztrahálja: minden más alaknál `height/2`-t ad vissza
+ * (változatlan viselkedés), t-profile-nál a ténylegesen számított súlypont-
+ * távolságot a tetőtől.
  */
 
 import type { SectionShape } from '../model/types.js';
@@ -61,7 +65,35 @@ function shapeHeight(shape: SectionShape): number {
       return shape.h as number;
     case 'rhs':
       return shape.h as number;
+    case 't-profile':
+      return shape.h as number;
   }
+}
+
+/**
+ * A súlypont távolsága a szelvény TETŐ (legfelső) szélétől [m] —
+ * `generateLayers()` ETTŐL indul lefelé (nem a fél magasságtól). Minden
+ * szimmetrikus alaknál `height/2` (a súlypont a félmagasságon van,
+ * VÁLTOZATLAN a C) fázis előtti viselkedéshez képest); `t-profile`-nál a
+ * ténylegesen számított, aszimmetrikus súlypont-távolság — ugyanaz a
+ * képlet, mint `section/properties.ts` `geometricProperties()` `t-profile`
+ * ágában (a két hely SZÁNDÉKOSAN külön számol, ld. a fájlok header-je: a
+ * kettő különböző célra kell — itt csak a rétegelés induló pontjához, ott
+ * a teljes GeometricProperties-hez —, de a képletnek EGYEZNIE kell, ezt a
+ * `section.test.ts`/`layeredSection.test.ts` keresztellenőrzi).
+ */
+function centroidTopOffset(shape: SectionShape): number {
+  if (shape.kind !== 't-profile') return shapeHeight(shape) / 2;
+  const h = shape.h as number;
+  const b = shape.b as number;
+  const tw = shape.tw as number;
+  const tf = shape.tf as number;
+  const hw = h - tf;
+  const af = b * tf;
+  const aw = tw * hw;
+  const yF = tf / 2;
+  const yW = tf + hw / 2;
+  return (af * yF + aw * yW) / (af + aw);
 }
 
 /** A szelvény kontúrszélessége `b(z)`-ben, a súlyponttól mért `z`-nél. */
@@ -107,6 +139,17 @@ function contourWidth(shape: SectionShape, z: number): number {
       if (Math.abs(z) > h / 2) return 0;
       return Math.abs(z) <= hi / 2 ? 2 * t : (shape.b as number);
     }
+
+    case 't-profile': {
+      // ASZIMMETRIKUS — a `z` (súlyponttól) → `y` (tetőtől mért) átváltás
+      // a `centroidTopOffset()`-tel; utána ugyanaz az öv/gerinc-zóna-
+      // eldöntés, mint `i-profile`-nál, csak az öv csak FELÜL van.
+      const h = shape.h as number;
+      const tf = shape.tf as number;
+      const y = z + centroidTopOffset(shape);
+      if (y < 0 || y > h) return 0;
+      return y <= tf ? (shape.b as number) : (shape.tw as number);
+    }
   }
 }
 
@@ -135,6 +178,14 @@ function plateThicknessAt(shape: SectionShape, z: number): number | undefined {
 
     case 'rhs':
       return Math.abs(z) > (shape.h as number) / 2 ? undefined : (shape.t as number);
+
+    case 't-profile': {
+      const h = shape.h as number;
+      const tf = shape.tf as number;
+      const y = z + centroidTopOffset(shape);
+      if (y < 0 || y > h) return undefined;
+      return y <= tf ? tf : (shape.tw as number);
+    }
   }
 }
 
@@ -152,11 +203,12 @@ export function generateLayers(shape: SectionShape, layerCount: number): readonl
   }
 
   const height = shapeHeight(shape);
+  const topOffset = centroidTopOffset(shape);
   const t = height / layerCount;
   const dz = t / SUBSAMPLES;
   const layers: RawLayer[] = [];
   for (let i = 0; i < layerCount; i++) {
-    const zTop = -height / 2 + i * t;
+    const zTop = -topOffset + i * t;
 
     let area = 0;
     for (let k = 0; k < SUBSAMPLES; k++) {

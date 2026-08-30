@@ -134,6 +134,14 @@ export const iProfile = (h: number, b: number, tw: number, tf: number): SectionS
 });
 /** Zárt téglalap/négyzet szelvény (RHS/SHS), egyenletes falvastagsággal. */
 export const rhs = (h: number, b: number, t: number): SectionShape => ({ kind: 'rhs', h: m(h), b: m(b), t: m(t) });
+/** T-szelvény — öv felül, gerinc alatta (aszimmetrikus a félmagasságra). */
+export const tProfile = (h: number, b: number, tw: number, tf: number): SectionShape => ({
+  kind: 't-profile',
+  h: m(h),
+  b: m(b),
+  tw: m(tw),
+  tf: m(tf),
+});
 
 export function makeLayeredSection(
   id: string,

@@ -38,6 +38,7 @@ import {
   runLoadStepper,
   selfWeight,
   solveLinear,
+  tProfile,
   tube,
   uniformMesh,
   type Model,
@@ -65,6 +66,14 @@ const shapeArb: fc.Arbitrary<SectionShape> = fc.oneof(
       tFrac: fc.double({ min: 0.02, max: 0.3, noNaN: true }),
     })
     .map((p) => rhs(p.h, p.b, (Math.min(p.h, p.b) / 2) * p.tFrac)),
+  fc
+    .record({
+      h: fc.double({ min: 0.1, max: 1, noNaN: true }),
+      b: fc.double({ min: 0.05, max: 0.5, noNaN: true }),
+      tw: fc.double({ min: 0.005, max: 0.02, noNaN: true }),
+      tfFrac: fc.double({ min: 0.05, max: 0.3, noNaN: true }),
+    })
+    .map((p) => tProfile(p.h, p.b, p.tw, p.h * p.tfFrac)),
 );
 
 /** Megtámasztási minta a hálón — MINDIG kinematikailag határozott (nem mechanizmus). */
@@ -95,6 +104,7 @@ function characteristicDepth(shape: SectionShape): number {
       return shape.d as number;
     case 'i-profile':
     case 'rhs':
+    case 't-profile':
       return shape.h as number;
   }
 }

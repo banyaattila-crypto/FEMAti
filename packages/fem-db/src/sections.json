@@ -665,5 +665,38 @@
     "t": 6,
     "source": "paraméteres alak — nincs gyártói katalógus, a zárt szelvény A/I egzakt zárt alakból számol",
     "verified": true
+  },
+  {
+    "id": "T100",
+    "name": "T 100×100×6/8",
+    "kind": "t",
+    "h": 100,
+    "b": 100,
+    "tw": 6,
+    "tf": 8,
+    "source": "paraméteres alak — nincs gyártói katalógus, a T-szelvény A/I/Wpl (aszimmetrikus súlypont, egyenlő területű semleges tengely) egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "T150",
+    "name": "T 150×150×7/10",
+    "kind": "t",
+    "h": 150,
+    "b": 150,
+    "tw": 7,
+    "tf": 10,
+    "source": "paraméteres alak — nincs gyártói katalógus, a T-szelvény A/I/Wpl (aszimmetrikus súlypont, egyenlő területű semleges tengely) egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "T200",
+    "name": "T 200×150×8/12",
+    "kind": "t",
+    "h": 200,
+    "b": 150,
+    "tw": 8,
+    "tf": 12,
+    "source": "paraméteres alak — nincs gyártói katalógus, a T-szelvény A/I/Wpl (aszimmetrikus súlypont, egyenlő területű semleges tengely) egzakt zárt alakból számol",
+    "verified": true
   }
 ]

@@ -90,6 +90,25 @@ function Leader({ from, to, label, anchor }: { readonly from: readonly [number, 
  * adatbázis böngésző (`catalog/SectionDatabaseView.tsx`) is nagyobb
  * méretben újrahasználhassa, ugyanazzal a rajzoló-logikával.
  */
+/**
+ * A súlypont (semleges tengely) távolsága a szelvény TETEJÉTŐL [mm] — csak
+ * T-szelvénynél ASZIMMETRIKUS (nem `h/2`); minden más alaknál `h/2`.
+ * Ugyanaz a képlet, mint `fem-core` `material/layeredSection.ts`
+ * `centroidTopOffset()`-je, csak mm egységben (a felület nem hívja a
+ * fem-core-t itt — a rajz csak a katalógus nyers [mm] mezőit ismeri).
+ */
+function centroidFromTopMm(section: SectionEntry): number {
+  if (section.kind !== 't') return section.h / 2;
+  const tw = section.tw ?? 6;
+  const tf = section.tf ?? 10;
+  const hw = section.h - tf;
+  const af = section.b * tf;
+  const aw = tw * hw;
+  const yF = tf / 2;
+  const yW = tf + hw / 2;
+  return (af * yF + aw * yW) / (af + aw);
+}
+
 export function SectionShapeDiagram({ section, width, height }: SectionShapeDiagramProps): JSX.Element {
   const gradientId = `section-metal-${useId()}`;
   const scale = Math.min((W - 2 * PAD) / section.b, (H - 2 * PAD) / section.h);
@@ -100,6 +119,7 @@ export function SectionShapeDiagram({ section, width, height }: SectionShapeDiag
   const right = cx + b / 2;
   const left = cx - b / 2;
   const bottom = top + h;
+  const neutralAxisY = top + centroidFromTopMm(section) * scale;
 
   const fill = `url(#${gradientId})`;
   const stroke = 'var(--accent-light)';
@@ -190,6 +210,22 @@ export function SectionShapeDiagram({ section, width, height }: SectionShapeDiag
           </>
         );
       }
+      case 't': {
+        // ASZIMMETRIKUS — öv csak FELÜL (nincs alsó öv, mint I-nél), a
+        // gerinc a maradék teljes magasságot tölti ki alatta.
+        const tw = (section.tw ?? 6) * scale;
+        const tf = (section.tf ?? 10) * scale;
+        return (
+          <>
+            <rect x={left} y={top} width={b} height={tf} fill={fill} stroke={stroke} strokeWidth={0.8} />
+            <rect x={cx - tw / 2} y={top + tf} width={tw} height={h - tf} fill={fill} stroke={stroke} strokeWidth={0.8} />
+            <VDim x={W + MARGIN_L + 8} y1={top} y2={bottom} label="h" />
+            <HDim y={H + 8} x1={left} x2={right} label="b" />
+            <Leader from={[left, top + tf / 2]} to={[MARGIN_L - 4, top + tf / 2]} label="tf" anchor="end" />
+            <Leader from={[cx - tw / 2, top + tf + (h - tf) / 2]} to={[MARGIN_L - 4, top + tf + (h - tf) / 2]} label="tw" anchor="end" />
+          </>
+        );
+      }
     }
   })();
 
@@ -207,8 +243,16 @@ export function SectionShapeDiagram({ section, width, height }: SectionShapeDiag
         </linearGradient>
       </defs>
       {shape}
-      {/* Semleges tengely */}
-      <line x1={MARGIN_L + 2} y1={H / 2} x2={MARGIN_L + W - 2} y2={H / 2} stroke="var(--sem-plastic)" strokeWidth={0.8} strokeDasharray="4 3" />
+      {/* Semleges tengely — a súlypontnál, T-szelvénynél NEM a fél magasságon (ld. `centroidFromTopMm`) */}
+      <line
+        x1={MARGIN_L + 2}
+        y1={neutralAxisY}
+        x2={MARGIN_L + W - 2}
+        y2={neutralAxisY}
+        stroke="var(--sem-plastic)"
+        strokeWidth={0.8}
+        strokeDasharray="4 3"
+      />
     </svg>
   );
 }

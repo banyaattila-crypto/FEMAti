@@ -87,7 +87,7 @@ export interface MaterialEntry {
   readonly n?: number;
 }
 
-export type SectionKind = 'I' | 'U' | 'circle' | 'tube' | 'rect' | 'rhs';
+export type SectionKind = 'I' | 'U' | 'circle' | 'tube' | 'rect' | 'rhs' | 't';
 
 /** Szelvényjellemzők (Diplomaterv 3.1.6.3.2, 42. oldal). Méretek [mm]. */
 export interface SectionEntry {

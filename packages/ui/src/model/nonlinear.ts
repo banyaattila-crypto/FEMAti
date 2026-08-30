@@ -35,6 +35,7 @@ import {
   circle as circleShape,
   tube as tubeShape,
   rhs as rhsShape,
+  tProfile as tProfileShape,
   iProfile,
   InvalidModelError,
   type AssembledSystem,
@@ -73,6 +74,8 @@ function toShape(section: SectionEntry): SectionShape {
       return rect(cm(section.b), cm(section.h));
     case 'rhs':
       return rhsShape(cm(section.h), cm(section.b), cm(section.t ?? 8));
+    case 't':
+      return tProfileShape(cm(section.h), cm(section.b), cm(section.tw ?? 6), cm(section.tf ?? 10));
   }
 }
 

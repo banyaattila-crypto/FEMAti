@@ -225,6 +225,7 @@ function dimensionRowsFor(section: SectionEntry): readonly { readonly label: str
       ];
     case 'I':
     case 'U':
+    case 't':
       return [
         { label: 'Magasság h', v: section.h },
         { label: 'Szélesség b', v: section.b },
@@ -261,6 +262,8 @@ function shapeFormulaTex(kind: SectionKind): string {
     case 'I':
     case 'U':
       return 'A = 2\\,b\\,t_f + (h-2t_f)\\,t_w \\qquad I = \\dfrac{b\\,h^3}{12} - \\dfrac{(b-t_w)(h-2t_f)^3}{12}';
+    case 't':
+      return 'A = b\\,t_f + t_w(h-t_f) \\qquad I = \\sum_i\\left(I_i + A_i(y_i-\\bar y)^2\\right)';
   }
 }
 
@@ -308,7 +311,19 @@ function SectionDetail({ section, onClose }: { readonly section: SectionEntry; r
               </div>
               <ResultRow label="Terület A" formatted={num(aCm2, 2, 'cm²')} emphasis="large" />
               <ResultRow label="Másodrendű nyomaték I" formatted={num(iCm4, 0, 'cm⁴')} emphasis="large" />
-              <ResultRow label="Rugalmas modulus Wel = I/ymax" formatted={num(welCm3, 1, 'cm³')} />
+              {props.yTop !== undefined ? (
+                <ResultRow label="Súlypont a felső száltól (yTop)" formatted={num(props.yTop * 1e3, 1, 'mm')} />
+              ) : null}
+              {props.yBottom !== undefined ? (
+                <ResultRow label="Súlypont az alsó száltól (yBottom)" formatted={num(props.yBottom * 1e3, 1, 'mm')} />
+              ) : null}
+              <ResultRow
+                label="Rugalmas modulus Wel = I/ymax"
+                formatted={num(welCm3, 1, 'cm³')}
+                {...(props.yTop !== undefined
+                  ? { title: 'Aszimmetrikus szelvény: ymax a KORMÁNYZÓ (nagyobb, konzervatívabb) szál — max(yTop, yBottom).' }
+                  : {})}
+              />
               <ResultRow label="Képlékeny modulus Wpl = 2S₀" formatted={num(wplCm3, 1, 'cm³')} />
               <ResultRow label="Alaki tényező c = Wpl/Wel" formatted={num(props.shapeFactor, 3, '')} />
             </div>

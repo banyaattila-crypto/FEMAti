@@ -124,6 +124,19 @@ export type SectionShape =
       readonly b: Meter;
       /** falvastagság (körben, minden oldalon egyenlő) */
       readonly t: Meter;
+    }
+  | {
+      /**
+       * T-szelvény — öv FELÜL, gerinc lelóg alóla. ASZIMMETRIKUS a
+       * félmagasságra (a súlypont NEM h/2-nél van) — C) fázis, ld. docs/ADR.
+       */
+      readonly kind: 't-profile';
+      readonly h: Meter;
+      readonly b: Meter;
+      /** gerincvastagság */
+      readonly tw: Meter;
+      /** övvastagság */
+      readonly tf: Meter;
     };
 
 /**

@@ -421,6 +421,15 @@ function checkShape(s: Extract<Section, { kind: 'parametric' }>, out: Diagnostic
         );
       }
       break;
+    case 't-profile':
+      positive(sh.h as number, 'magasság');
+      positive(sh.b as number, 'szélesség');
+      positive(sh.tw as number, 'gerincvastagság');
+      positive(sh.tf as number, 'övvastagság');
+      if ((sh.tf as number) >= (sh.h as number)) {
+        out.push(err('INVALID_DIMENSION', `A(z) "${s.name}" T-szelvény öve nem lehet a teljes magasságnál nagyobb/egyenlő.`, id));
+      }
+      break;
   }
 }
 

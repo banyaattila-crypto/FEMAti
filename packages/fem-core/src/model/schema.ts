@@ -102,6 +102,13 @@ const shapeSchema = z.discriminatedUnion('kind', [
     tf: positive,
   }),
   z.object({ kind: z.literal('rhs'), h: positive, b: positive, t: positive }),
+  z.object({
+    kind: z.literal('t-profile'),
+    h: positive,
+    b: positive,
+    tw: positive,
+    tf: positive,
+  }),
 ]);
 
 const layerSchema = z.object({
@@ -245,6 +252,14 @@ const toShape = (s: z.infer<typeof shapeSchema>): SectionShape => {
       };
     case 'rhs':
       return { kind: 'rhs', h: lengthFromCm(s.h), b: lengthFromCm(s.b), t: lengthFromCm(s.t) };
+    case 't-profile':
+      return {
+        kind: 't-profile',
+        h: lengthFromCm(s.h),
+        b: lengthFromCm(s.b),
+        tw: lengthFromCm(s.tw),
+        tf: lengthFromCm(s.tf),
+      };
   }
 };
 
@@ -430,6 +445,14 @@ const shapeToFile = (s: SectionShape): z.infer<typeof shapeSchema> => {
       };
     case 'rhs':
       return { kind: 'rhs', h: lengthToCm(s.h), b: lengthToCm(s.b), t: lengthToCm(s.t) };
+    case 't-profile':
+      return {
+        kind: 't-profile',
+        h: lengthToCm(s.h),
+        b: lengthToCm(s.b),
+        tw: lengthToCm(s.tw),
+        tf: lengthToCm(s.tf),
+      };
   }
 };
 

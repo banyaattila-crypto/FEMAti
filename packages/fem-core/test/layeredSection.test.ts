@@ -9,6 +9,7 @@ import {
   rect,
   sectionMoment,
   sectionStiffness,
+  tProfile,
   tube,
 } from '../src/index.js';
 import { DimensionError } from '../src/linalg/errors.js';
@@ -91,6 +92,33 @@ describe('generateLayers', () => {
     // másodrendű — az `includeLayerOwnInertia` opcióéval rokon — eltérés).
     expect(areaError).toBeLessThan(0.01);
     expect(inertiaError).toBeLessThan(0.06);
+  });
+
+  it('T-szelvénynél (ASZIMMETRIKUS — C) fázis) a rétegzés a teljes magasságot lefedi, a súlyponttól a tető/alj felé aszimmetrikusan — terület- és súlypont-megőrző', () => {
+    // b=100, tf=20, h=200, tw=10 mm (ugyanaz a referenciapélda, mint
+    // section.test.ts-ben) — ȳ (a tetőtől) ≠ h/2, ezért a legfelső réteg
+    // z-je NEM −h/2, hanem −ȳ.
+    const shape = tProfile(0.2, 0.1, 0.01, 0.02);
+    const closed = geometricProperties(shape);
+    const layers = generateLayers(shape, 40);
+
+    const area = layers.reduce((s, l) => s + l.b * l.t, 0);
+    expect(area).toBeCloseTo(closed.area, 6);
+
+    // A legfelső réteg teteje pontosan −ȳ-nél (a tető a súlyponttól mérve),
+    // a legalsó réteg alja pontosan +yBottom-nál.
+    const first = mustGet(layers[0]);
+    const last = mustGet(layers[layers.length - 1]);
+    const topEdge = first.z - first.t / 2;
+    const bottomEdge = last.z + last.t / 2;
+    expect(topEdge).toBeCloseTo(-(closed.yTop as number), 10);
+    expect(bottomEdge).toBeCloseTo(closed.yBottom as number, 10);
+
+    // A súlypont-definíció (Σ bₗ·zₗ·tₗ = 0, a súlyponti statikai nyomaték
+    // nulla) a rétegzésre is teljesül — ez FÜGGETLEN ellenőrzés az
+    // aszimmetrikus induló ponttól (nem csak "lefedi a magasságot").
+    const staticMoment = layers.reduce((s, l) => s + l.b * l.z * l.t, 0);
+    expect(Math.abs(staticMoment)).toBeLessThan(closed.area * closed.height * 1e-3);
   });
 });
 

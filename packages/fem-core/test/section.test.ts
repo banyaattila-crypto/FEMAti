@@ -10,6 +10,7 @@ import {
   recommendedShearFactor,
   rhs,
   sectionStiffness,
+  tProfile,
   tube,
   constitutiveMatrix,
 } from '../src/index.js';
@@ -52,6 +53,32 @@ describe('keresztmetszeti jellemzők — zárt képletek', () => {
     const hi = 0.18; // 0.2 - 2*0.01
     expect(p.area).toBeCloseTo(0.2 * 0.1 - hi * bi, 14);
     expect(p.inertia).toBeCloseTo((0.1 * 0.2 ** 3 - bi * hi ** 3) / 12, 16);
+  });
+
+  it('T-szelvény: A, súlypont (yTop/yBottom), I és Wpl kézzel számolt referenciaértékkel egyezik — FÜGGETLEN numerikus integrálással is ellenőrizve (200 000 pontos diszkretizáció, ld. C) fázis terve/commit)', () => {
+    // b=100, tf=20, h=200, tw=10 mm — a terv/ADR kézi levezetésének
+    // referenciapéldája: A=38 cm², ȳ=5.737 cm, I=1440.04 cm⁴, Wpl=181.9 cm³.
+    const p = geometricProperties(tProfile(0.2, 0.1, 0.01, 0.02));
+    expect(p.area * 1e4).toBeCloseTo(38, 6);
+    expect((p.yTop as number) * 100).toBeCloseTo(5.7368421, 5);
+    expect((p.yBottom as number) * 100).toBeCloseTo(14.2631579, 5);
+    expect((p.yTop as number) + (p.yBottom as number)).toBeCloseTo(0.2, 14); // yTop+yBottom = h mindig
+    expect(p.inertia * 1e8).toBeCloseTo(1440.0351, 2);
+    expect(p.plasticModulus * 1e6).toBeCloseTo(181.9, 4);
+  });
+
+  it('T-szelvény: yMax a KORMÁNYZÓ (nagyobb) szál — a linearSolver.ts me/mp ezért a biztonság felé kerekít', () => {
+    const p = geometricProperties(tProfile(0.2, 0.1, 0.01, 0.02));
+    expect(p.yMax).toBeCloseTo(Math.max(p.yTop as number, p.yBottom as number), 14);
+    expect(p.elasticModulus).toBeCloseTo(p.inertia / p.yMax, 14);
+  });
+
+  it('szimmetrikus alakoknál yTop/yBottom NINCS kitöltve (undefined) — csak a t-profile tölti ki', () => {
+    for (const s of [rect(0.2, 0.4), circle(0.3), tube(0.3, 0.02), iProfile(0.4, 0.18, 0.0086, 0.0135), rhs(0.2, 0.1, 0.008)]) {
+      const p = geometricProperties(s);
+      expect(p.yTop).toBeUndefined();
+      expect(p.yBottom).toBeUndefined();
+    }
   });
 
   it('IPE 300 névleges kontúrból: A = 51.88 cm², I = 7998 cm⁴', () => {
@@ -163,6 +190,7 @@ describe('alaki tényező c = Mp/Mₑ — Diplomaterv 4. táblázat (54. oldal)'
       tube(0.3, 0.02),
       iProfile(0.4, 0.18, 0.0086, 0.0135),
       rhs(0.2, 0.1, 0.008),
+      tProfile(0.2, 0.1, 0.01, 0.02),
     ];
     for (const s of shapes) {
       const c = geometricProperties(s).shapeFactor;
@@ -202,6 +230,12 @@ describe('nyírási alaktényező — Cowper (1966), Poisson-tényezőtől függ
     expect(recommendedShearFactor(s, 0.3)).toBeCloseTo((0.2 * (2 * 0.008)) / area, 12);
   });
 
+  it('T-szelvénynél a gerinc arányából — NEM Cowper-formula, ν-től független', () => {
+    const s = tProfile(0.2, 0.1, 0.01, 0.02);
+    const area = 0.1 * 0.02 + 0.01 * 0.18;
+    expect(recommendedShearFactor(s, 0.3)).toBeCloseTo((0.2 * 0.01) / area, 12);
+  });
+
   it('minden alakra és realisztikus ν-tartományra (0–0.5) 0 és 1 közé esik', () => {
     const shapes = [
       rect(0.2, 0.4),
@@ -209,6 +243,7 @@ describe('nyírási alaktényező — Cowper (1966), Poisson-tényezőtől függ
       tube(0.3, 0.02),
       iProfile(0.4, 0.18, 0.0086, 0.0135),
       rhs(0.2, 0.1, 0.008),
+      tProfile(0.2, 0.1, 0.01, 0.02),
     ];
     for (const s of shapes) {
       for (const nu of [0, 0.2, 0.3, 0.5]) {

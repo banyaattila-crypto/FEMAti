@@ -58,6 +58,11 @@ const SECTION_ICON: Record<SectionKind, JSX.Element> = {
       <rect x="4.5" y="6" width="7" height="4" rx="0.4" />
     </Icon>
   ),
+  t: (
+    <Icon>
+      <path d="M3.5 2.5h9M8 2.5v11" />
+    </Icon>
+  ),
 };
 
 export const MATERIAL_COLOR: Record<MaterialFamily, string> = {

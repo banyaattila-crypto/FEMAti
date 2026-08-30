@@ -22,6 +22,7 @@ import {
   springSupport,
   supportDisplacement,
   thermal,
+  tProfile,
   tube,
   uniformMesh,
   validateModel,
@@ -258,6 +259,17 @@ describe('keresztmetszet-geometria', () => {
 
   it('érvényes zárt szelvényt (RHS) elfogad', () => {
     const d = validateModel(withSection(makeSection('R1', 'RHS', rhs(0.2, 0.1, 0.008))));
+    expect(d.filter((x) => x.severity === 'error')).toEqual([]);
+  });
+
+  it('a T-szelvény öve nem lehet a teljes magasságnál nagyobb/egyenlő', () => {
+    expect(codes(withSection(makeSection('R1', 'Rossz T', tProfile(0.2, 0.1, 0.01, 0.25))))).toContain(
+      'INVALID_DIMENSION',
+    );
+  });
+
+  it('érvényes T-szelvényt elfogad', () => {
+    const d = validateModel(withSection(makeSection('R1', 'T', tProfile(0.2, 0.1, 0.01, 0.02))));
     expect(d.filter((x) => x.severity === 'error')).toEqual([]);
   });
 
