@@ -7,12 +7,17 @@
 import {
   buildModel,
   distributedForce,
+  distributedMoment,
   fixed,
+  foundation,
   makeMaterial,
   makeSection,
   nodalForce,
   nodalMoment,
   pinned,
+  springSupport,
+  supportDisplacement,
+  thermal as thermalLoad,
   rect,
   circle as circleShape,
   tube as tubeShape,
@@ -33,7 +38,7 @@ import {
   type SectionShape,
 } from '@femati/fem-core';
 import { findMaterial, findSection, type SectionEntry } from '../data/catalog.js';
-import type { EditableModel } from './editable.js';
+import { DEFAULT_SPRING_STIFFNESS, type EditableModel } from './editable.js';
 
 /** A katalógus-szelvény [mm] adatainak átalakítása fem-core `SectionShape`-re [m]. */
 export function toShape(section: SectionEntry): SectionShape {
@@ -109,8 +114,18 @@ export function compileModel(editable: EditableModel): Model {
   const nodeAt = (x: number): string => nodeIdAt(x, editable.span, editable.elementCount);
 
   const boundaries = editable.supports.map((s) =>
-    s.type === 'fixed' ? fixed(nodeAt(s.x)) : pinned(nodeAt(s.x)),
+    s.type === 'fixed'
+      ? fixed(nodeAt(s.x))
+      : s.type === 'spring'
+        ? springSupport(nodeAt(s.x), s.k ?? DEFAULT_SPRING_STIFFNESS)
+        : pinned(nodeAt(s.x)),
   );
+
+  // Előírt támaszmozgás (dz/dPhi) — a Boundary MELLETT egy külön Load, csak
+  // ha a támaszhoz ténylegesen meg van adva bármelyik komponens.
+  const supportDisplacements = editable.supports
+    .filter((s) => s.dz !== undefined || s.dPhi !== undefined)
+    .map((s) => supportDisplacement(nodeAt(s.x), s.dz, s.dPhi, `${s.id}-disp`));
 
   const loads = [
     ...editable.loads.map((l) =>
@@ -118,10 +133,18 @@ export function compileModel(editable: EditableModel): Model {
         ? nodalForce(nodeAt(l.x), l.p, l.id)
         : l.kind === 'moment'
           ? nodalMoment(nodeAt(l.x), l.m, l.id)
-          : distributedForce(l.x1, l.x2, l.q1, l.q2, l.id),
+          : l.kind === 'distributed'
+            ? distributedForce(l.x1, l.x2, l.q1, l.q2, l.id)
+            : distributedMoment(l.x1, l.x2, l.m1, l.m2, l.id),
     ),
+    ...supportDisplacements,
     ...(editable.selfWeight ? [selfWeightLoad(1, 'G-self')] : []),
+    ...(editable.thermalLoad.enabled
+      ? [thermalLoad(editable.thermalLoad.tTop, editable.thermalLoad.tBottom, editable.thermalLoad.tRef, 'T-global')]
+      : []),
   ];
+
+  const foundations = editable.foundations.map((f) => foundation(f.x1, f.x2, f.c));
 
   return buildModel({
     name: editable.presetId,
@@ -131,6 +154,7 @@ export function compileModel(editable: EditableModel): Model {
     sections: [section],
     boundaries,
     loads,
+    foundations,
   });
 }
 

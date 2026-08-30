@@ -14,13 +14,24 @@
  * mert azt a mag már P5 óta helyesen redukálja részleges lefedésre is.
  */
 
-export type SupportType = 'fixed' | 'pinned' | 'roller';
+/**
+ * Az EGYETLEN `SupportType` forrás (2026-08-30 előtt `data/catalog.ts` is
+ * függetlenül deklarálta — összevonva, `catalog.ts` mostantól innen
+ * re-exportál, hogy a két hely ne tudjon szétcsúszni).
+ */
+export type SupportType = 'fixed' | 'pinned' | 'roller' | 'spring';
 
 export interface EditableSupport {
   readonly id: string;
   /** Abszolút pozíció a tartó mentén [m]. Mindig egy hálócsomópontra illesztve. */
   readonly x: number;
   readonly type: SupportType;
+  /** Rugóállandó [kN/m] — CSAK `type === 'spring'` esetén értelmezett. */
+  readonly k?: number;
+  /** Előírt eltolódás [m] — bármely támasztípusnál megadható (talajsüllyedés stb.). `| undefined` explicit: a törléshez (`setSupportDisplacement`) exactOptionalPropertyTypes mellett kell. */
+  readonly dz?: number | undefined;
+  /** Előírt elfordulás [rad] — bármely támasztípusnál megadható. */
+  readonly dPhi?: number | undefined;
 }
 
 export interface EditablePointLoad {
@@ -50,7 +61,37 @@ export interface EditableDistributedLoad {
   readonly q2: number;
 }
 
-export type EditableLoad = EditablePointLoad | EditableMomentLoad | EditableDistributedLoad;
+/** Megoszló nyomatékteher m(x) [kNm/m] — a megoszló erő egyenes párja. */
+export interface EditableDistributedMomentLoad {
+  readonly id: string;
+  readonly kind: 'distributed-moment';
+  readonly x1: number;
+  readonly x2: number;
+  readonly m1: number;
+  readonly m2: number;
+}
+
+export type EditableLoad = EditablePointLoad | EditableMomentLoad | EditableDistributedLoad | EditableDistributedMomentLoad;
+
+/** Winkler-féle rugalmas ágyazat egy szakaszon — NEM `Load`, önálló entitáskategória. */
+export interface EditableFoundation {
+  readonly id: string;
+  readonly x1: number;
+  readonly x2: number;
+  /** Ágyazási tényező [kN/m²]. */
+  readonly c: number;
+}
+
+/** Globális hőteher — nem pozícionált, az egész tartóra hat (a fem-core `thermal()` alapértelmezése). */
+export interface ThermalLoadState {
+  readonly enabled: boolean;
+  /** Referencia- (feszültségmentes) hőmérséklet [°C] */
+  readonly tRef: number;
+  /** Felső szél hőmérséklete [°C] */
+  readonly tTop: number;
+  /** Alsó szél hőmérséklete [°C] */
+  readonly tBottom: number;
+}
 
 export type IntegrationScheme = 'selective' | 'full';
 
@@ -62,10 +103,20 @@ export interface EditableModel {
   readonly sectionId: string;
   readonly materialId: string;
   readonly selfWeight: boolean;
+  readonly thermalLoad: ThermalLoadState;
   readonly integration: IntegrationScheme;
   readonly supports: readonly EditableSupport[];
   readonly loads: readonly EditableLoad[];
+  readonly foundations: readonly EditableFoundation[];
 }
+
+export const DEFAULT_THERMAL_LOAD: ThermalLoadState = { enabled: false, tRef: 0, tTop: 0, tBottom: 0 };
+/** Alapértelmezett rugóállandó [kN/m] új rugós támasz elhelyezésekor. */
+export const DEFAULT_SPRING_STIFFNESS = 5000;
+/** Alapértelmezett ágyazási tényező [kN/m²] új Winkler-ágyazat elhelyezésekor. */
+export const DEFAULT_FOUNDATION_STIFFNESS = 2000;
+/** Alapértelmezett intenzitás [kNm/m] új megoszló nyomatékteher elhelyezésekor. */
+export const DEFAULT_DISTRIBUTED_MOMENT = 5;
 
 /** Trapéz megoszló teher vagy koncentrált nyomaték — a preset-katalógus `extraLoads` mezője (relatív pozíciókkal). */
 export type PresetExtraLoad =
@@ -108,7 +159,19 @@ export function presetToEditable(
       loads.push({ id: nextEntityId('Q'), kind: 'distributed', x1: extra.r1 * span, x2: extra.r2 * span, q1: extra.q1, q2: extra.q2 });
     }
   }
-  return { presetId, span, elementCount, sectionId, materialId, selfWeight, integration, supports, loads };
+  return {
+    presetId,
+    span,
+    elementCount,
+    sectionId,
+    materialId,
+    selfWeight,
+    thermalLoad: DEFAULT_THERMAL_LOAD,
+    integration,
+    supports,
+    loads,
+    foundations: [],
+  };
 }
 
 let counter = 0;

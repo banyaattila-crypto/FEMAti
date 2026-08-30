@@ -13,10 +13,21 @@ import { useModelStore, type Selection } from '../state/modelStore.js';
 import { useAppStore } from '../state/appStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
-import { snapToNode, type SupportType } from '../model/editable.js';
+import { DEFAULT_DISTRIBUTED_MOMENT, DEFAULT_FOUNDATION_STIFFNESS, DEFAULT_SPRING_STIFFNESS, snapToNode, type SupportType } from '../model/editable.js';
 import { combinedSteps, elementPlasticity, nodalDisplacements } from '../model/nonlinear.js';
-import { CanvasDefs, DistributedLoad, GaussPointMark, MomentLoad, NodeMark, PlasticZoneBar, PointLoad, SupportMark } from './marks.js';
-import { LoadToolsPanel, SupportToolsPanel, ToolPalette, type CanvasTool } from './ToolPalette.js';
+import {
+  CanvasDefs,
+  DistributedLoad,
+  DistributedMomentLoad,
+  Foundation,
+  GaussPointMark,
+  MomentLoad,
+  NodeMark,
+  PlasticZoneBar,
+  PointLoad,
+  SupportMark,
+} from './marks.js';
+import { ToolPalette } from './ToolPalette.js';
 import {
   AXIS_X0,
   AXIS_X1,
@@ -48,7 +59,10 @@ type DragState =
   | { readonly kind: 'pan'; readonly startClientX: number; readonly startClientY: number; readonly origin: Camera }
   | { readonly kind: 'move-support'; readonly id: string }
   | { readonly kind: 'move-load'; readonly id: string; readonly originX: number }
-  | { readonly kind: 'draw-distributed'; readonly x1: number; readonly x2: number };
+  | { readonly kind: 'move-foundation'; readonly id: string; readonly originX: number }
+  | { readonly kind: 'draw-distributed'; readonly x1: number; readonly x2: number }
+  | { readonly kind: 'draw-distributed-moment'; readonly x1: number; readonly x2: number }
+  | { readonly kind: 'draw-foundation'; readonly x1: number; readonly x2: number };
 
 export function ModelCanvas(): JSX.Element {
   const model = useModelStore((s) => s.model);
@@ -59,7 +73,10 @@ export function ModelCanvas(): JSX.Element {
   const addPointLoad = useModelStore((s) => s.addPointLoad);
   const addMomentLoad = useModelStore((s) => s.addMomentLoad);
   const addDistributedLoad = useModelStore((s) => s.addDistributedLoad);
+  const addDistributedMomentLoad = useModelStore((s) => s.addDistributedMomentLoad);
+  const addFoundation = useModelStore((s) => s.addFoundation);
   const moveLoad = useModelStore((s) => s.moveLoad);
+  const moveFoundation = useModelStore((s) => s.moveFoundation);
   const removeSelected = useModelStore((s) => s.removeSelected);
 
   const section = findSection(model.sectionId);
@@ -73,7 +90,8 @@ export function ModelCanvas(): JSX.Element {
   const openInspector = useAppStore((s) => s.openInspector);
   const currentNonlinearStep = nonlinearRun ? combinedSteps(nonlinearRun)[activeStep] : undefined;
 
-  const [tool, setTool] = useState<CanvasTool>('select');
+  const tool = useAppStore((s) => s.canvasTool);
+  const setTool = useAppStore((s) => s.setCanvasTool);
   const [camera, setCamera] = useState<Camera>(IDLE_CAMERA);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [previewX, setPreviewX] = useState<number | null>(null);
@@ -200,6 +218,11 @@ export function ModelCanvas(): JSX.Element {
         setTool('select');
         return;
       }
+      if (tool === 'add-spring') {
+        addSupport(xMeters, 'spring', DEFAULT_SPRING_STIFFNESS);
+        setTool('select');
+        return;
+      }
       if (tool === 'add-point-load') {
         addPointLoad(xMeters, DEFAULT_POINT_LOAD);
         setTool('select');
@@ -213,9 +236,19 @@ export function ModelCanvas(): JSX.Element {
       if (tool === 'add-distributed-load') {
         e.currentTarget.setPointerCapture(e.pointerId);
         setDrag({ kind: 'draw-distributed', x1: xMeters, x2: xMeters });
+        return;
+      }
+      if (tool === 'add-distributed-moment-load') {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        setDrag({ kind: 'draw-distributed-moment', x1: xMeters, x2: xMeters });
+        return;
+      }
+      if (tool === 'add-foundation') {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        setDrag({ kind: 'draw-foundation', x1: xMeters, x2: xMeters });
       }
     },
-    [tool, toContent, toMeters, clampMeters, camera, select, addSupport, addPointLoad, addMomentLoad],
+    [tool, toContent, toMeters, clampMeters, camera, select, addSupport, addPointLoad, addMomentLoad, setTool],
   );
 
   const onPointerMove = useCallback(
@@ -234,12 +267,16 @@ export function ModelCanvas(): JSX.Element {
       if (p === null) return;
       const xMeters = clampMeters(toMeters(p.x));
 
-      if (drag.kind === 'move-support' || drag.kind === 'move-load') {
+      if (drag.kind === 'move-support' || drag.kind === 'move-load' || drag.kind === 'move-foundation') {
         // Élő előnézet — a tényleges modellmódosítás csak elengedéskor történik
         // (DESIGN-TERV 7.2 #5: „húzás közben előnézet, elengedéskor számítás").
         setPreviewX(xMeters);
       } else if (drag.kind === 'draw-distributed') {
         setDrag({ kind: 'draw-distributed', x1: drag.x1, x2: xMeters });
+      } else if (drag.kind === 'draw-distributed-moment') {
+        setDrag({ kind: 'draw-distributed-moment', x1: drag.x1, x2: xMeters });
+      } else if (drag.kind === 'draw-foundation') {
+        setDrag({ kind: 'draw-foundation', x1: drag.x1, x2: xMeters });
       }
     },
     [drag, toContent, toMeters, clampMeters],
@@ -253,14 +290,22 @@ export function ModelCanvas(): JSX.Element {
         moveSupport(drag.id, previewX);
       } else if (drag.kind === 'move-load' && previewX !== null) {
         moveLoad(drag.id, previewX - drag.originX);
+      } else if (drag.kind === 'move-foundation' && previewX !== null) {
+        moveFoundation(drag.id, previewX - drag.originX);
       } else if (drag.kind === 'draw-distributed') {
         addDistributedLoad(drag.x1, drag.x2, DEFAULT_DISTRIBUTED_LOAD, DEFAULT_DISTRIBUTED_LOAD);
+        setTool('select');
+      } else if (drag.kind === 'draw-distributed-moment') {
+        addDistributedMomentLoad(drag.x1, drag.x2, DEFAULT_DISTRIBUTED_MOMENT, DEFAULT_DISTRIBUTED_MOMENT);
+        setTool('select');
+      } else if (drag.kind === 'draw-foundation') {
+        addFoundation(drag.x1, drag.x2, DEFAULT_FOUNDATION_STIFFNESS);
         setTool('select');
       }
       setDrag(null);
       setPreviewX(null);
     },
-    [drag, previewX, moveSupport, moveLoad, addDistributedLoad],
+    [drag, previewX, moveSupport, moveLoad, moveFoundation, addDistributedLoad, addDistributedMomentLoad, addFoundation, setTool],
   );
 
   const startSupportDrag = useCallback(
@@ -281,6 +326,17 @@ export function ModelCanvas(): JSX.Element {
       select({ kind: 'load', id });
       svgRef.current?.setPointerCapture(e.pointerId);
       setDrag({ kind: 'move-load', id, originX });
+    },
+    [tool, select],
+  );
+
+  const startFoundationDrag = useCallback(
+    (e: React.PointerEvent, id: string, originX: number): void => {
+      if (tool !== 'select') return;
+      e.stopPropagation();
+      select({ kind: 'foundation', id });
+      svgRef.current?.setPointerCapture(e.pointerId);
+      setDrag({ kind: 'move-foundation', id, originX });
     },
     [tool, select],
   );
@@ -382,8 +438,6 @@ export function ModelCanvas(): JSX.Element {
         <br />
         {result ? fmt.scaleFactor(t.deformationScale) : error ? 'hiba' : 'nincs eredmény'}
       </div>
-      <SupportToolsPanel tool={tool} onChange={setTool} />
-      <LoadToolsPanel tool={tool} onChange={setTool} />
       <svg
         ref={svgRef}
         viewBox={`0 0 ${VIEW_WIDTH} ${viewH}`}
@@ -523,6 +577,39 @@ export function ModelCanvas(): JSX.Element {
                 </g>
               );
             }
+            if (load.kind === 'distributed-moment') {
+              const dragging = drag?.kind === 'move-load' && drag.id === load.id && previewX !== null;
+              const shift = dragging ? previewX - load.x1 : 0;
+              const x1 = t.sx(load.x1 + shift);
+              const x2 = t.sx(load.x2 + shift);
+              const uniform = Math.abs(load.m1 - load.m2) < 1e-9;
+              const mLabel = uniform
+                ? `m = ${load.m1.toFixed(1)} kNm/m`
+                : `m = ${load.m1.toFixed(1)}→${load.m2.toFixed(1)} kNm/m`;
+              return (
+                <g
+                  key={load.id}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`megoszló nyomatékteher, ${mLabel}, ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`}
+                  aria-pressed={selected}
+                  onPointerDown={(e) => startLoadDrag(e, load.id, load.x1)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Delete' || e.key === 'Backspace') {
+                      e.preventDefault();
+                      select({ kind: 'load', id: load.id });
+                      removeSelected();
+                    }
+                  }}
+                  style={{ cursor: tool === 'select' ? 'move' : 'crosshair', outline: 'none' }}
+                >
+                  {selected ? (
+                    <rect x={x1 - 4} y={axisY - 46} width={x2 - x1 + 8} height={40} fill="var(--accent-a10, rgba(120,170,255,0.15))" />
+                  ) : null}
+                  <DistributedMomentLoad x1={x1} x2={x2} y={axisY} label={mLabel} />
+                </g>
+              );
+            }
             const dragging = drag?.kind === 'move-load' && drag.id === load.id && previewX !== null;
             const x = t.sx(dragging ? previewX : load.x);
             if (load.kind === 'moment') {
@@ -571,7 +658,39 @@ export function ModelCanvas(): JSX.Element {
             );
           })}
 
-          {/* Rajzolás közbeni előnézet (megoszló teher) */}
+          {/* 8. réteg — Winkler-féle rugalmas ágyazatok */}
+          {model.foundations.map((f) => {
+            const dragging = drag?.kind === 'move-foundation' && drag.id === f.id && previewX !== null;
+            const shift = dragging ? previewX - f.x1 : 0;
+            const x1 = t.sx(f.x1 + shift);
+            const x2 = t.sx(f.x2 + shift);
+            const selected = isSelected({ kind: 'foundation', id: f.id });
+            return (
+              <g
+                key={f.id}
+                tabIndex={0}
+                role="button"
+                aria-label={`Winkler-ágyazat, c = ${f.c.toFixed(0)} kN/m², ${f.x1.toFixed(2)}–${f.x2.toFixed(2)} m`}
+                aria-pressed={selected}
+                onPointerDown={(e) => startFoundationDrag(e, f.id, f.x1)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Delete' || e.key === 'Backspace') {
+                    e.preventDefault();
+                    select({ kind: 'foundation', id: f.id });
+                    removeSelected();
+                  }
+                }}
+                style={{ cursor: tool === 'select' ? 'move' : 'crosshair', outline: 'none' }}
+              >
+                {selected ? (
+                  <rect x={x1 - 4} y={axisY} width={x2 - x1 + 8} height={34} fill="var(--accent-a10, rgba(120,170,255,0.15))" />
+                ) : null}
+                <Foundation x1={x1} x2={x2} y={axisY} label={`c = ${f.c.toFixed(0)} kN/m²`} />
+              </g>
+            );
+          })}
+
+          {/* Rajzolás közbeni előnézet (megoszló teher / megoszló nyomaték / ágyazat) */}
           {drag?.kind === 'draw-distributed' ? (
             <DistributedLoad
               x1={t.sx(Math.min(drag.x1, drag.x2))}
@@ -580,6 +699,22 @@ export function ModelCanvas(): JSX.Element {
               q1={DEFAULT_DISTRIBUTED_LOAD}
               q2={DEFAULT_DISTRIBUTED_LOAD}
               label={`q = ${DEFAULT_DISTRIBUTED_LOAD.toFixed(1)} kN/m (előnézet)`}
+            />
+          ) : null}
+          {drag?.kind === 'draw-distributed-moment' ? (
+            <DistributedMomentLoad
+              x1={t.sx(Math.min(drag.x1, drag.x2))}
+              x2={t.sx(Math.max(drag.x1, drag.x2))}
+              y={axisY}
+              label={`m = ${DEFAULT_DISTRIBUTED_MOMENT.toFixed(1)} kNm/m (előnézet)`}
+            />
+          ) : null}
+          {drag?.kind === 'draw-foundation' ? (
+            <Foundation
+              x1={t.sx(Math.min(drag.x1, drag.x2))}
+              x2={t.sx(Math.max(drag.x1, drag.x2))}
+              y={axisY}
+              label={`c = ${DEFAULT_FOUNDATION_STIFFNESS.toFixed(0)} kN/m² (előnézet)`}
             />
           ) : null}
 

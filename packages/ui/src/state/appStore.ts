@@ -17,6 +17,7 @@
 
 import { create } from 'zustand';
 import type { SolverStatus } from '../components/Feedback.js';
+import type { CanvasTool } from '../canvas/ToolPalette.js';
 
 export type SolverAlgorithm = 'newton' | 'modified-newton';
 export type LoadHistoryMode = 'monotonic' | 'unloading';
@@ -77,6 +78,8 @@ export interface AppState {
   materialDbOpen: boolean;
   /** Csak <768px-nél releváns — melyik panel aktív. */
   mobileTab: MobileTab;
+  /** A vászon aktív eszköze (kijelölés / támasz- vagy teherelhelyezés) — a `ToolRibbon` (Toolbar-fül) ÉS a `ModelCanvas` interakciós logikája is ezt olvassa/írja, ezért közös állapot (2026-08-30, a lebegő panelek helyett Toolbar-fülbe költöző eszközsor miatt). */
+  canvasTool: CanvasTool;
 
   // ── Műveletek ─────────────────────────────────────────────────────────
   setAlgorithm: (v: SolverAlgorithm) => void;
@@ -102,6 +105,7 @@ export interface AppState {
   setSectionDbOpen: (v: boolean) => void;
   setMaterialDbOpen: (v: boolean) => void;
   setMobileTab: (v: MobileTab) => void;
+  setCanvasTool: (v: CanvasTool) => void;
 }
 
 export const useAppStore = create<AppState>()((set) => ({
@@ -130,6 +134,7 @@ export const useAppStore = create<AppState>()((set) => ({
   sectionDbOpen: false,
   materialDbOpen: false,
   mobileTab: 'canvas',
+  canvasTool: 'select',
 
   setAlgorithm: (v) => set({ algorithm: v }),
   setLoadHistory: (v) => set({ loadHistory: v }),
@@ -155,4 +160,5 @@ export const useAppStore = create<AppState>()((set) => ({
   setSectionDbOpen: (v) => set({ sectionDbOpen: v }),
   setMaterialDbOpen: (v) => set({ materialDbOpen: v }),
   setMobileTab: (v) => set({ mobileTab: v }),
+  setCanvasTool: (v) => set({ canvasTool: v }),
 }));

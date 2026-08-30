@@ -233,6 +233,63 @@
   margin-left: auto;
 }
 
+/* ── Terhek/Támaszok fül (Toolbar alatt) ────────────────────────────────────
+   2026-08-30, felhasználói kérés (Axis3D-mintájú fül + színes ikonsor) — a
+   `.vem-tab` pill-stílust veszi át a fülekhez; az ikongombok saját,
+   a korábbi (törölt) lebegő-gomb stílust folytató kinézetet kapnak.
+   Felváltja a korábbi `SupportToolsPanel`/`LoadToolsPanel` lebegő
+   paneleket. */
+.vem-ribbon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-6);
+  background: var(--surface-toolbar);
+  border-bottom: 1px solid var(--border-strong);
+  flex-wrap: wrap;
+}
+
+.vem-ribbon__tabs {
+  display: flex;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.vem-ribbon__tools {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.vem-ribbon__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease);
+}
+
+.vem-ribbon__btn:hover {
+  background: var(--surface-hover);
+}
+
+.vem-ribbon__btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.vem-ribbon__btn-label {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 /* ── Fő terület ─────────────────────────────────────────────────────────── */
 
 .vem-main {
@@ -333,60 +390,11 @@
   height: 100%;
 }
 
-/* ── Lebegő eszközpanelek (Támasz/Teher hozzáadása) a vászon fölött ────── */
-
-.vem-floating-panel {
-  position: absolute;
-  top: 44px;
-  z-index: 3;
-  display: flex;
-  flex-direction: row;
-  gap: 1px;
-  padding: 2px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-}
-
-.vem-floating-panel--supports {
-  left: var(--space-5);
-}
-
-.vem-floating-panel--loads {
-  right: var(--space-5);
-}
-
-.vem-floating-panel__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-}
-
-.vem-floating-panel__btn:hover {
-  background: var(--surface-hover);
-}
-
-.vem-floating-panel__btn[aria-pressed='true'] {
-  background: var(--accent-soft);
-  border-color: var(--accent-light);
-  color: var(--accent-hover);
-  font-weight: 600;
-}
-
 .vem-canvas__scale {
   position: absolute;
-  /* A `.vem-floating-panel`-lel (44px) azonos felső eltolás — mindkettő a
-     `.vem-canvas-host`-hoz (nem a vászon feletti Kijelölés-eszközsorhoz)
-     igazodik, ezért ugyanannyival kell lejjebb kezdődnie, mint a lebegő
-     Támasz/Teher-panelek, különben a gombsorral fedésbe kerül. */
+  /* A `.vem-canvas-host`-hoz (nem a vászon feletti Kijelölés-eszközsorhoz)
+     igazodik — a Támasz/Teher-elhelyező eszközök 2026-08-30 óta a Toolbar
+     alatti `.vem-ribbon` sorban vannak, nem lebegnek a vászon fölött. */
   left: var(--space-5);
   top: 44px;
   font-family: var(--font-mono);

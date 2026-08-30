@@ -6,8 +6,23 @@
 
 import type { SupportType } from '../data/catalog.js';
 
-const SUPPORT = 'var(--sem-support)';
-const LOAD = 'var(--sem-load)';
+/** Típusonkénti teher-/támaszszín (2026-08-30, felhasználói kérés) — a `design/tokens.css` `--sem-load-*`/`--sem-support-*` tokenjeire mutat. */
+export const SUPPORT_COLOR: Record<SupportType, string> = {
+  fixed: 'var(--sem-support-fixed)',
+  pinned: 'var(--sem-support-pinned)',
+  roller: 'var(--sem-support-roller)',
+  spring: 'var(--sem-support-spring)',
+};
+export const FOUNDATION_COLOR = 'var(--sem-support-foundation)';
+export type LoadColorKind = 'point' | 'moment' | 'distributed' | 'distributed-moment';
+export const LOAD_COLOR: Record<LoadColorKind, string> = {
+  point: 'var(--sem-load-point)',
+  moment: 'var(--sem-load-moment)',
+  distributed: 'var(--sem-load-distributed)',
+  'distributed-moment': 'var(--sem-load-distributed-moment)',
+};
+/** A `CanvasDefs`-ben definiált, tehertípusonkénti nyílhegy-marker azonosítója. */
+export const arrowMarkerId = (kind: LoadColorKind): string => `vem-arrow-${kind}`;
 
 export interface SupportMarkProps {
   readonly x: number;
@@ -16,13 +31,15 @@ export interface SupportMarkProps {
 }
 
 export function SupportMark({ x, y, type }: SupportMarkProps): JSX.Element {
+  const color = SUPPORT_COLOR[type];
+
   if (type === 'fixed') {
     // Befogás: függőleges fal + 45°-os sraffozás a tartón kívül.
     const w = 9;
     const h = 30;
     return (
       <g aria-hidden="true">
-        <line x1={x} y1={y - h} x2={x} y2={y + h} stroke={SUPPORT} strokeWidth={2.2} />
+        <line x1={x} y1={y - h} x2={x} y2={y + h} stroke={color} strokeWidth={2.2} />
         {Array.from({ length: 7 }, (_, i) => {
           const yy = y - h + (i * 2 * h) / 6;
           return (
@@ -32,11 +49,30 @@ export function SupportMark({ x, y, type }: SupportMarkProps): JSX.Element {
               y1={yy}
               x2={x - w}
               y2={yy + w}
-              stroke={SUPPORT}
+              stroke={color}
               strokeWidth={1.1}
             />
           );
         })}
+      </g>
+    );
+  }
+
+  if (type === 'spring') {
+    // Rugós támasz: cikkcakk (rugó-) vonal a csomópont alatt, két rögzítő szárral.
+    const h = 30;
+    const zigzags = 5;
+    const w = 6;
+    const points: string[] = [`${x},${y}`];
+    for (let i = 1; i <= zigzags; i++) {
+      const yy = y + (i * h) / (zigzags + 1);
+      points.push(`${x + (i % 2 === 1 ? w : -w)},${yy}`);
+    }
+    points.push(`${x},${y + h}`);
+    return (
+      <g aria-hidden="true">
+        <polyline points={points.join(' ')} fill="none" stroke={color} strokeWidth={1.6} strokeLinejoin="round" />
+        <line x1={x - 10} y1={y + h} x2={x + 10} y2={y + h} stroke={color} strokeWidth={1.6} />
       </g>
     );
   }
@@ -46,11 +82,11 @@ export function SupportMark({ x, y, type }: SupportMarkProps): JSX.Element {
   const tri = `${x},${y} ${x - s},${y + s * 1.5} ${x + s},${y + s * 1.5}`;
   return (
     <g aria-hidden="true">
-      <polygon points={tri} fill="none" stroke={SUPPORT} strokeWidth={1.6} />
+      <polygon points={tri} fill="none" stroke={color} strokeWidth={1.6} />
       {type === 'roller' ? (
         <>
-          <circle cx={x - s * 0.5} cy={y + s * 1.5 + 3.5} r={3.2} fill="none" stroke={SUPPORT} strokeWidth={1.2} />
-          <circle cx={x + s * 0.5} cy={y + s * 1.5 + 3.5} r={3.2} fill="none" stroke={SUPPORT} strokeWidth={1.2} />
+          <circle cx={x - s * 0.5} cy={y + s * 1.5 + 3.5} r={3.2} fill="none" stroke={color} strokeWidth={1.2} />
+          <circle cx={x + s * 0.5} cy={y + s * 1.5 + 3.5} r={3.2} fill="none" stroke={color} strokeWidth={1.2} />
         </>
       ) : (
         <line
@@ -58,7 +94,7 @@ export function SupportMark({ x, y, type }: SupportMarkProps): JSX.Element {
           y1={y + s * 1.5 + 2}
           x2={x + s * 1.3}
           y2={y + s * 1.5 + 2}
-          stroke={SUPPORT}
+          stroke={color}
           strokeWidth={1.6}
         />
       )}
@@ -76,6 +112,7 @@ export interface DistributedLoadProps {
   readonly q1?: number;
   readonly q2?: number;
   readonly label: string;
+  readonly color?: string;
 }
 
 /**
@@ -92,6 +129,7 @@ export function DistributedLoad({
   q1 = 1,
   q2 = 1,
   label,
+  color = LOAD_COLOR.distributed,
 }: DistributedLoadProps): JSX.Element {
   const width = x2 - x1;
   const n = Math.max(2, Math.min(24, Math.round(width / 44)));
@@ -102,7 +140,7 @@ export function DistributedLoad({
     <g>
       <path
         d={`M${x1},${topAt(0)} L${x2},${topAt(1)}`}
-        stroke={LOAD}
+        stroke={color}
         strokeWidth={1.4}
         fill="none"
       />
@@ -116,9 +154,9 @@ export function DistributedLoad({
             y1={topAt(t)}
             x2={xx}
             y2={y - 3}
-            stroke={LOAD}
+            stroke={color}
             strokeWidth={1.1}
-            markerEnd="url(#vem-arrow)"
+            markerEnd={`url(#${arrowMarkerId('distributed')})`}
             opacity={0.85}
           />
         );
@@ -141,10 +179,11 @@ export interface MomentLoadProps {
   readonly y: number;
   readonly label: string;
   readonly radius?: number;
+  readonly color?: string;
 }
 
 /** Koncentrált nyomatékteher: köríves nyíl a csomópont fölött. */
-export function MomentLoad({ x, y, label, radius = 15 }: MomentLoadProps): JSX.Element {
+export function MomentLoad({ x, y, label, radius = 15, color = LOAD_COLOR.moment }: MomentLoadProps): JSX.Element {
   const cy = y - radius - 4;
   // 300°-os köríves nyíl (nem teljes kör, hogy a nyílhegy egyértelmű legyen).
   const startAngle = -40;
@@ -158,10 +197,10 @@ export function MomentLoad({ x, y, label, radius = 15 }: MomentLoadProps): JSX.E
     <g>
       <path
         d={`M${sx.toFixed(2)},${sy.toFixed(2)} A${radius},${radius} 0 1 1 ${ex.toFixed(2)},${ey.toFixed(2)}`}
-        stroke={LOAD}
+        stroke={color}
         strokeWidth={2}
         fill="none"
-        markerEnd="url(#vem-arrow)"
+        markerEnd={`url(#${arrowMarkerId('moment')})`}
       />
       <text
         x={x}
@@ -181,9 +220,10 @@ export interface PointLoadProps {
   readonly y: number;
   readonly label: string;
   readonly height?: number;
+  readonly color?: string;
 }
 
-export function PointLoad({ x, y, label, height = 46 }: PointLoadProps): JSX.Element {
+export function PointLoad({ x, y, label, height = 46, color = LOAD_COLOR.point }: PointLoadProps): JSX.Element {
   return (
     <g>
       <line
@@ -191,9 +231,9 @@ export function PointLoad({ x, y, label, height = 46 }: PointLoadProps): JSX.Ele
         y1={y - height}
         x2={x}
         y2={y - 4}
-        stroke={LOAD}
+        stroke={color}
         strokeWidth={2}
-        markerEnd="url(#vem-arrow)"
+        markerEnd={`url(#${arrowMarkerId('point')})`}
       />
       <text
         x={x + 7}
@@ -201,6 +241,77 @@ export function PointLoad({ x, y, label, height = 46 }: PointLoadProps): JSX.Ele
         fill="var(--text-muted)"
         style={{ font: "500 15px var(--font-mono)" }}
       >
+        {label}
+      </text>
+    </g>
+  );
+}
+
+export interface DistributedMomentLoadProps {
+  readonly x1: number;
+  readonly x2: number;
+  readonly y: number;
+  readonly label: string;
+  readonly color?: string;
+}
+
+/** Megoszló nyomatékteher: kis köríves nyilak sorozata a szakasz mentén — a `MomentLoad` megoszló párja. */
+export function DistributedMomentLoad({ x1, x2, y, label, color = LOAD_COLOR['distributed-moment'] }: DistributedMomentLoadProps): JSX.Element {
+  const width = x2 - x1;
+  const n = Math.max(2, Math.min(10, Math.round(width / 60)));
+  const radius = 9;
+  const cy = y - radius - 14;
+  const startAngle = -40;
+  const endAngle = 260;
+  const toRad = (deg: number): number => (deg * Math.PI) / 180;
+  return (
+    <g>
+      <line x1={x1} y1={cy} x2={x2} y2={cy} stroke={color} strokeWidth={1} opacity={0.6} />
+      {Array.from({ length: n + 1 }, (_, i) => {
+        const t = i / n;
+        const xx = x1 + t * width;
+        const sx = xx + radius * Math.cos(toRad(startAngle));
+        const sy = cy + radius * Math.sin(toRad(startAngle));
+        const ex = xx + radius * Math.cos(toRad(endAngle));
+        const ey = cy + radius * Math.sin(toRad(endAngle));
+        return (
+          <path
+            key={i}
+            d={`M${sx.toFixed(2)},${sy.toFixed(2)} A${radius},${radius} 0 1 1 ${ex.toFixed(2)},${ey.toFixed(2)}`}
+            stroke={color}
+            strokeWidth={1.4}
+            fill="none"
+            markerEnd={`url(#${arrowMarkerId('distributed-moment')})`}
+            opacity={0.85}
+          />
+        );
+      })}
+      <text x={(x1 + x2) / 2} y={cy - radius - 6} textAnchor="middle" fill="var(--text-muted)" style={{ font: "500 15px var(--font-mono)" }}>
+        {label}
+      </text>
+    </g>
+  );
+}
+
+export interface FoundationProps {
+  readonly x1: number;
+  readonly x2: number;
+  readonly y: number;
+  readonly label: string;
+}
+
+/** Winkler-féle rugalmas ágyazat: talaj-sraffozás a gerinc alatt. */
+export function Foundation({ x1, x2, y, label }: FoundationProps): JSX.Element {
+  const depth = 14;
+  const n = Math.max(3, Math.min(30, Math.round((x2 - x1) / 12)));
+  return (
+    <g aria-hidden="true">
+      <line x1={x1} y1={y + 2} x2={x2} y2={y + 2} stroke={FOUNDATION_COLOR} strokeWidth={1.6} />
+      {Array.from({ length: n + 1 }, (_, i) => {
+        const xx = x1 + (i * (x2 - x1)) / n;
+        return <line key={i} x1={xx} y1={y + 2} x2={xx - 5} y2={y + 2 + depth} stroke={FOUNDATION_COLOR} strokeWidth={1} />;
+      })}
+      <text x={(x1 + x2) / 2} y={y + 2 + depth + 14} textAnchor="middle" fill="var(--text-muted)" style={{ font: "500 13px var(--font-mono)" }}>
         {label}
       </text>
     </g>
@@ -231,17 +342,20 @@ export function NodeMark({ x, y, interior = false }: NodeMarkProps): JSX.Element
 export function CanvasDefs(): JSX.Element {
   return (
     <defs>
-      <marker
-        id="vem-arrow"
-        viewBox="0 0 10 10"
-        refX="9"
-        refY="5"
-        markerWidth="5"
-        markerHeight="5"
-        orient="auto"
-      >
-        <path d="M0,1 L9,5 L0,9 z" fill={LOAD} />
-      </marker>
+      {(Object.keys(LOAD_COLOR) as LoadColorKind[]).map((kind) => (
+        <marker
+          key={kind}
+          id={arrowMarkerId(kind)}
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="5"
+          markerWidth="5"
+          markerHeight="5"
+          orient="auto"
+        >
+          <path d="M0,1 L9,5 L0,9 z" fill={LOAD_COLOR[kind]} />
+        </marker>
+      ))}
 
       {/* Színvakság-biztos mintázatok a képlékeny zónák jelöléséhez (DESIGN-TERV 2.2). */}
       <pattern id="vem-hatch-partial" width={6} height={6} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">

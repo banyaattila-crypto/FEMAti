@@ -255,7 +255,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
     supportRows: model.supports.map((s) => [
       s.id,
       s.x.toFixed(2),
-      s.type === 'fixed' ? 'befogás' : s.type === 'pinned' ? 'csuklós' : 'görgős',
+      s.type === 'fixed' ? 'befogás' : s.type === 'pinned' ? 'csuklós' : s.type === 'roller' ? 'görgős' : 'rugós',
     ]),
     loadRows: model.loads.map((l) => [
       l.id,
@@ -263,9 +263,13 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
         ? `P = ${l.p.toFixed(1)} kN, x = ${l.x.toFixed(2)} m`
         : l.kind === 'moment'
           ? `M = ${l.m.toFixed(1)} kNm, x = ${l.x.toFixed(2)} m`
-          : l.q1 === l.q2
-            ? `q = ${l.q1.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
-            : `q = ${l.q1.toFixed(1)}→${l.q2.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`,
+          : l.kind === 'distributed'
+            ? l.q1 === l.q2
+              ? `q = ${l.q1.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
+              : `q = ${l.q1.toFixed(1)}→${l.q2.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
+            : l.m1 === l.m2
+              ? `m = ${l.m1.toFixed(1)} kNm/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
+              : `m = ${l.m1.toFixed(1)}→${l.m2.toFixed(1)} kNm/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`,
     ]),
 
     layerRows: layers.map((l, i) => [

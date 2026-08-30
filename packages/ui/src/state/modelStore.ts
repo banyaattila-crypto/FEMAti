@@ -10,14 +10,19 @@ import {
   nextEntityId,
   presetToEditable,
   snapToNode,
+  type EditableFoundation,
   type EditableLoad,
   type EditableModel,
   type EditableSupport,
   type IntegrationScheme,
   type SupportType,
+  type ThermalLoadState,
 } from '../model/editable.js';
 
-export type Selection = { readonly kind: 'support'; readonly id: string } | { readonly kind: 'load'; readonly id: string };
+export type Selection =
+  | { readonly kind: 'support'; readonly id: string }
+  | { readonly kind: 'load'; readonly id: string }
+  | { readonly kind: 'foundation'; readonly id: string };
 
 const HISTORY_LIMIT = 50;
 
@@ -33,18 +38,26 @@ export interface ModelState {
   readonly setSectionId: (id: string) => void;
   readonly setMaterialId: (id: string) => void;
   readonly setSelfWeight: (v: boolean) => void;
+  readonly setThermalLoad: (v: ThermalLoadState) => void;
   readonly setIntegration: (v: IntegrationScheme) => void;
 
   readonly select: (selection: Selection | null) => void;
-  readonly addSupport: (x: number, type: SupportType) => void;
+  readonly addSupport: (x: number, type: SupportType, k?: number) => void;
   readonly moveSupport: (id: string, x: number) => void;
   readonly setSupportType: (id: string, type: SupportType) => void;
+  readonly setSpringStiffness: (id: string, k: number) => void;
+  readonly setSupportDisplacement: (id: string, dz: number | undefined, dPhi: number | undefined) => void;
   readonly addPointLoad: (x: number, p: number) => void;
   readonly addMomentLoad: (x: number, m: number) => void;
   readonly addDistributedLoad: (x1: number, x2: number, q1: number, q2: number) => void;
+  readonly addDistributedMomentLoad: (x1: number, x2: number, m1: number, m2: number) => void;
   readonly moveLoad: (id: string, deltaX: number) => void;
   readonly setLoadMagnitude: (id: string, value: number) => void;
   readonly setDistributedLoadMagnitudes: (id: string, q1: number, q2: number) => void;
+  readonly setDistributedMomentMagnitudes: (id: string, m1: number, m2: number) => void;
+  readonly addFoundation: (x1: number, x2: number, c: number) => void;
+  readonly moveFoundation: (id: string, deltaX: number) => void;
+  readonly setFoundationStiffness: (id: string, c: number) => void;
   readonly removeSelected: () => void;
 
   readonly undo: () => void;
@@ -114,6 +127,7 @@ export const useModelStore = create<ModelState>()((set, get) => {
             ? { ...l, x: snapToNode(l.x * scale, v, d.elementCount) }
             : { ...l, x1: Math.max(0, l.x1 * scale), x2: Math.min(v, l.x2 * scale) },
         );
+        d.foundations = d.foundations.map((f) => ({ ...f, x1: Math.max(0, f.x1 * scale), x2: Math.min(v, f.x2 * scale) }));
       }),
 
     setElementCount: (v) =>
@@ -128,15 +142,16 @@ export const useModelStore = create<ModelState>()((set, get) => {
     setSectionId: (id) => edit((d) => void (d.sectionId = id)),
     setMaterialId: (id) => edit((d) => void (d.materialId = id)),
     setSelfWeight: (v) => edit((d) => void (d.selfWeight = v)),
+    setThermalLoad: (v) => edit((d) => void (d.thermalLoad = v)),
     setIntegration: (v) => edit((d) => void (d.integration = v)),
 
     select: (selection) => set({ selection }),
 
-    addSupport: (x, type) =>
+    addSupport: (x, type, k) =>
       edit((d) => {
         const snapped = snapToNode(x, d.span, d.elementCount);
         const id = nextEntityId('S');
-        d.supports.push({ id, x: snapped, type } as EditableSupport);
+        d.supports.push({ id, x: snapped, type, ...(k !== undefined ? { k } : {}) } as EditableSupport);
       }),
 
     moveSupport: (id, x) =>
@@ -151,6 +166,21 @@ export const useModelStore = create<ModelState>()((set, get) => {
         const s = d.supports.find((sup) => sup.id === id);
         if (s === undefined) return;
         s.type = type;
+      }),
+
+    setSpringStiffness: (id, k) =>
+      edit((d) => {
+        const s = d.supports.find((sup) => sup.id === id);
+        if (s === undefined) return;
+        s.k = k;
+      }),
+
+    setSupportDisplacement: (id, dz, dPhi) =>
+      edit((d) => {
+        const s = d.supports.find((sup) => sup.id === id);
+        if (s === undefined) return;
+        s.dz = dz;
+        s.dPhi = dPhi;
       }),
 
     addPointLoad: (x, p) =>
@@ -174,6 +204,15 @@ export const useModelStore = create<ModelState>()((set, get) => {
         d.loads.push({ id, kind: 'distributed', x1: lo, x2: hi, q1, q2 } as EditableLoad);
       }),
 
+    addDistributedMomentLoad: (x1, x2, m1, m2) =>
+      edit((d) => {
+        const id = nextEntityId('MQ');
+        const lo = Math.max(0, Math.min(x1, x2));
+        const hi = Math.min(d.span, Math.max(x1, x2));
+        if (hi - lo < 1e-6) return;
+        d.loads.push({ id, kind: 'distributed-moment', x1: lo, x2: hi, m1, m2 } as EditableLoad);
+      }),
+
     moveLoad: (id, deltaX) =>
       edit((d) => {
         const l = d.loads.find((x) => x.id === id);
@@ -194,9 +233,12 @@ export const useModelStore = create<ModelState>()((set, get) => {
         if (l === undefined) return;
         if (l.kind === 'point') l.p = value;
         else if (l.kind === 'moment') l.m = value;
-        else {
+        else if (l.kind === 'distributed') {
           l.q1 = value;
           l.q2 = value;
+        } else {
+          l.m1 = value;
+          l.m2 = value;
         }
       }),
 
@@ -208,12 +250,47 @@ export const useModelStore = create<ModelState>()((set, get) => {
         l.q2 = q2;
       }),
 
+    setDistributedMomentMagnitudes: (id, m1, m2) =>
+      edit((d) => {
+        const l = d.loads.find((x) => x.id === id);
+        if (l === undefined || l.kind !== 'distributed-moment') return;
+        l.m1 = m1;
+        l.m2 = m2;
+      }),
+
+    addFoundation: (x1, x2, c) =>
+      edit((d) => {
+        const id = nextEntityId('W');
+        const lo = Math.max(0, Math.min(x1, x2));
+        const hi = Math.min(d.span, Math.max(x1, x2));
+        if (hi - lo < 1e-6) return;
+        d.foundations.push({ id, x1: lo, x2: hi, c } as EditableFoundation);
+      }),
+
+    moveFoundation: (id, deltaX) =>
+      edit((d) => {
+        const f = d.foundations.find((x) => x.id === id);
+        if (f === undefined) return;
+        const width = f.x2 - f.x1;
+        const lo = Math.min(Math.max(f.x1 + deltaX, 0), d.span - width);
+        f.x1 = lo;
+        f.x2 = lo + width;
+      }),
+
+    setFoundationStiffness: (id, c) =>
+      edit((d) => {
+        const f = d.foundations.find((x) => x.id === id);
+        if (f === undefined) return;
+        f.c = c;
+      }),
+
     removeSelected: () => {
       const sel = get().selection;
       if (sel === null) return;
       edit((d) => {
         if (sel.kind === 'support') d.supports = d.supports.filter((s) => s.id !== sel.id);
-        else d.loads = d.loads.filter((l) => l.id !== sel.id);
+        else if (sel.kind === 'load') d.loads = d.loads.filter((l) => l.id !== sel.id);
+        else d.foundations = d.foundations.filter((f) => f.id !== sel.id);
       });
       set({ selection: null });
     },

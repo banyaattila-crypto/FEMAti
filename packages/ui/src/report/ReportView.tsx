@@ -172,15 +172,27 @@ export function ReportView(): JSX.Element | null {
               {model.loads.map((l) => (
                 <tr key={l.id}>
                   <td>{l.id}</td>
-                  <td>{l.kind === 'point' ? 'koncentrált erő' : l.kind === 'moment' ? 'koncentrált nyomaték' : 'megoszló teher'}</td>
+                  <td>
+                    {l.kind === 'point'
+                      ? 'koncentrált erő'
+                      : l.kind === 'moment'
+                        ? 'koncentrált nyomaték'
+                        : l.kind === 'distributed'
+                          ? 'megoszló teher'
+                          : 'megoszló nyomatékteher'}
+                  </td>
                   <td>
                     {l.kind === 'point'
                       ? `P = ${l.p.toFixed(1)} kN, x = ${l.x.toFixed(2)} m`
                       : l.kind === 'moment'
                         ? `M = ${l.m.toFixed(1)} kNm, x = ${l.x.toFixed(2)} m`
-                        : l.q1 === l.q2
-                          ? `q = ${l.q1.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
-                          : `q = ${l.q1.toFixed(1)}→${l.q2.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`}
+                        : l.kind === 'distributed'
+                          ? l.q1 === l.q2
+                            ? `q = ${l.q1.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
+                            : `q = ${l.q1.toFixed(1)}→${l.q2.toFixed(1)} kN/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
+                          : l.m1 === l.m2
+                            ? `m = ${l.m1.toFixed(1)} kNm/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`
+                            : `m = ${l.m1.toFixed(1)}→${l.m2.toFixed(1)} kNm/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`}
                   </td>
                 </tr>
               ))}

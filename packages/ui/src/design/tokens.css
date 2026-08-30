@@ -74,6 +74,22 @@
   --sem-plastic-edge: #a3241d;
   --sem-load: #5c9ee0;
   --sem-support: #7c8894;
+  /* Típusonkénti teher-/támaszszínek (2026-08-30, felhasználói kérés: "a
+     terheknél/támaszoknál is színesben" — típusonként megkülönböztető szín,
+     nem csak egy közös "teher"/"támasz" tónus). A fenti `--sem-load`/
+     `--sem-support` generikus tokenek MEGMARADNAK — ott használandók, ahol
+     a kategória számít, nem az altípus (pl. `LeftPanel` összegző sorok
+     ikonja előtt, ha az altípus külön úgyis jelölve van). */
+  --sem-load-point: #5c9ee0;
+  --sem-load-moment: #b98ae0;
+  --sem-load-distributed: #5cd6c2;
+  --sem-load-distributed-moment: #8a5cc9;
+  --sem-load-thermal: #e0784f;
+  --sem-support-fixed: #7c8894;
+  --sem-support-pinned: #6fae8a;
+  --sem-support-roller: #a3b0bd;
+  --sem-support-spring: #e0c15c;
+  --sem-support-foundation: #a8815c;
   --sem-deformed: #4fd6b4;
   --sem-undeformed: #2a323a;
   --sem-analytic: #ff5f56;

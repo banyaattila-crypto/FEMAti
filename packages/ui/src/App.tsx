@@ -6,6 +6,7 @@ import { LeftPanel } from './panels/LeftPanel.js';
 import { RightPanel } from './panels/RightPanel.js';
 import { MenuBar, type Menu } from './shell/MenuBar.js';
 import { Toolbar } from './shell/Toolbar.js';
+import { ToolRibbon } from './shell/ToolRibbon.js';
 import { Timeline } from './shell/Timeline.js';
 import { CrossSectionInspector } from './panels/CrossSectionInspector.js';
 import { ReportView } from './report/ReportView.js';
@@ -264,6 +265,7 @@ export function App(): JSX.Element {
       </header>
 
       <Toolbar onRun={run} onOpenReport={openReport} />
+      <ToolRibbon />
 
       <nav className="vem-mobile-tabs" role="tablist" aria-label="Nézet (mobil)">
         {MOBILE_TABS.map((t) => (

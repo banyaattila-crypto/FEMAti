@@ -41,7 +41,9 @@ export const MATERIAL_FAMILY_GROUP: Record<MaterialFamily, string> = {
   timber: 'Fa',
 };
 
-export type SupportType = 'fixed' | 'pinned' | 'roller';
+/** Az egyetlen `SupportType` forrás `model/editable.ts`-ben van (2026-08-30 előtt itt is önállóan deklarálva volt, ami szétcsúszás-veszélyt jelentett) — itt csak re-export. */
+import type { SupportType } from '../model/editable.js';
+export type { SupportType };
 
 export interface PresetSupport {
   /** Relatív hely a tartó hosszán: 0 … 1 */

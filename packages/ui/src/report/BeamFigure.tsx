@@ -9,7 +9,7 @@
  * diagramok (`DiagramChart`), hogy a nyomtatott oldalon minden ábra közös
  * léptékű legyen.
  */
-import { CanvasDefs, DistributedLoad, MomentLoad, NodeMark, PointLoad, SupportMark } from '../canvas/marks.js';
+import { CanvasDefs, DistributedLoad, DistributedMomentLoad, Foundation, MomentLoad, NodeMark, PointLoad, SupportMark } from '../canvas/marks.js';
 import { AXIS_X0, AXIS_X1, VIEW_WIDTH } from '../canvas/useModelTransform.js';
 import type { EditableModel } from '../model/editable.js';
 import * as fmt from '../format/numbers.js';
@@ -51,7 +51,7 @@ export function BeamFigure({ model }: BeamFigureProps): JSX.Element {
           <PointLoad key={l.id} x={sx(l.x)} y={AXIS_Y} label={`P = ${l.p.toFixed(1)} kN`} />
         ) : l.kind === 'moment' ? (
           <MomentLoad key={l.id} x={sx(l.x)} y={AXIS_Y} label={`M = ${l.m.toFixed(1)} kNm`} />
-        ) : (
+        ) : l.kind === 'distributed' ? (
           <DistributedLoad
             key={l.id}
             x1={sx(l.x1)}
@@ -61,8 +61,20 @@ export function BeamFigure({ model }: BeamFigureProps): JSX.Element {
             q2={l.q2}
             label={l.q1 === l.q2 ? `q = ${l.q1.toFixed(1)} kN/m` : `q = ${l.q1.toFixed(1)}→${l.q2.toFixed(1)} kN/m`}
           />
+        ) : (
+          <DistributedMomentLoad
+            key={l.id}
+            x1={sx(l.x1)}
+            x2={sx(l.x2)}
+            y={AXIS_Y}
+            label={l.m1 === l.m2 ? `m = ${l.m1.toFixed(1)} kNm/m` : `m = ${l.m1.toFixed(1)}→${l.m2.toFixed(1)} kNm/m`}
+          />
         ),
       )}
+
+      {model.foundations.map((f) => (
+        <Foundation key={f.id} x1={sx(f.x1)} x2={sx(f.x2)} y={AXIS_Y} label={`c = ${f.c.toFixed(0)} kN/m²`} />
+      ))}
 
       <g>
         <line x1={AXIS_X0} y1={AXIS_Y + 56} x2={AXIS_X1} y2={AXIS_Y + 56} stroke="var(--text-faint)" strokeWidth={0.8} />
