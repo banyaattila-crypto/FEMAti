@@ -31,6 +31,29 @@ export interface LayerMaterialData {
   readonly e: number;
   readonly sigmaY: number;
   readonly hPrime: number;
+  /** A réteg valódi lemezvastagsága [m] — csak diagnosztikai/teszt célra tárolva. */
+  readonly plateThickness?: number;
+}
+
+/**
+ * A réteg tényleges folyáshatára — HA az anyagnak van vastagságosztálya
+ * (`fy1`/`fy2`/`thicknessThreshold`) ÉS a rétegnek van valódi lemezvastagsága
+ * (`plateThickness`), a küszöb szerint LÉPCSŐSEN választ (EN 10025-2 — nem
+ * folytonos, nem interpolált); egyébként az anyag egységes `sigmaY`-jára esik
+ * vissza (visszafelé kompatibilis minden vastagságosztály nélküli anyaggal/
+ * szelvénnyel) — E) fázis, ld. docs/ADR.
+ */
+function resolveLayerSigmaY(material: Material, plateThickness: number | undefined): number {
+  const uniform = material.sigmaY !== undefined ? (material.sigmaY as number) : ELASTIC_SIGMA_Y;
+  if (
+    material.fy1 === undefined ||
+    material.fy2 === undefined ||
+    material.thicknessThreshold === undefined ||
+    plateThickness === undefined
+  ) {
+    return uniform;
+  }
+  return plateThickness > (material.thicknessThreshold as number) ? (material.fy2 as number) : (material.fy1 as number);
 }
 
 /**
@@ -81,13 +104,15 @@ export function elementMaterialData(model: Model, element: Element): ElementMate
 
   const layers: LayerMaterialData[] = section.layers.map((l) => {
     const layerMaterial = l.materialId !== undefined ? (lookup(l.materialId) ?? material) : material;
+    const plateThickness = l.plateThickness as number | undefined;
     return {
       b: l.b as number,
       t: l.t as number,
       z: l.z as number,
       e: layerMaterial.e as number,
-      sigmaY: layerMaterial.sigmaY !== undefined ? (layerMaterial.sigmaY as number) : ELASTIC_SIGMA_Y,
+      sigmaY: resolveLayerSigmaY(layerMaterial, plateThickness),
       hPrime: layerMaterial.hPrime !== undefined ? (layerMaterial.hPrime as number) : 0,
+      ...(plateThickness !== undefined ? { plateThickness } : {}),
     };
   });
   return { kind: 'layered', gas: stiffness.gas, layers };

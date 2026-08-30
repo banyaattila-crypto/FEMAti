@@ -63,13 +63,27 @@ export interface MaterialProps {
   readonly sigmaY?: number;
   /** Lineáris keményedési paraméter H' [kN/m²] */
   readonly hPrime?: number;
+  /** Vastagságfüggő folyáshatár, vékonyabb osztály [kN/m²] — E) fázis */
+  readonly fy1?: number;
+  /** Vastagságfüggő folyáshatár, vastagabb osztály [kN/m²] — E) fázis */
+  readonly fy2?: number;
+  /** A vastagságosztályok határa [m] — E) fázis */
+  readonly thicknessThreshold?: number;
+  /** EC2 jellemző nyomószilárdság fck [kN/m²] — F) fázis */
+  readonly fck?: number;
+  /** EC2 folyási határnyúlás εc2 [–] — F) fázis */
+  readonly epsC2?: number;
+  /** EC2 szakadási (zúzódási) határnyúlás εcu2 [–] — F) fázis */
+  readonly epsCu2?: number;
+  /** EC2 parabola-téglalap kitevő n [–] — F) fázis */
+  readonly n?: number;
 }
 
 export function makeMaterial(id: string, name: string, p: MaterialProps): Material {
   const nu = p.nu ?? 0.3;
   const g = p.g ?? p.e / (2 * (1 + nu));
   const gamma = p.gamma ?? (p.density !== undefined ? (specificWeightFromDensity(p.density) as number) : 0);
-  const base = {
+  let material: Material = {
     id: materialId(id),
     name,
     e: kNpm2(p.e),
@@ -78,12 +92,16 @@ export function makeMaterial(id: string, name: string, p: MaterialProps): Materi
     alpha: perDegC(p.alpha ?? 0),
     gamma: kNpm3(gamma),
   };
-  if (p.sigmaY !== undefined && p.hPrime !== undefined) {
-    return { ...base, sigmaY: kNpm2(p.sigmaY), hPrime: kNpm2(p.hPrime) };
-  }
-  if (p.sigmaY !== undefined) return { ...base, sigmaY: kNpm2(p.sigmaY) };
-  if (p.hPrime !== undefined) return { ...base, hPrime: kNpm2(p.hPrime) };
-  return base;
+  if (p.sigmaY !== undefined) material = { ...material, sigmaY: kNpm2(p.sigmaY) };
+  if (p.hPrime !== undefined) material = { ...material, hPrime: kNpm2(p.hPrime) };
+  if (p.fy1 !== undefined) material = { ...material, fy1: kNpm2(p.fy1) };
+  if (p.fy2 !== undefined) material = { ...material, fy2: kNpm2(p.fy2) };
+  if (p.thicknessThreshold !== undefined) material = { ...material, thicknessThreshold: m(p.thicknessThreshold) };
+  if (p.fck !== undefined) material = { ...material, fck: kNpm2(p.fck) };
+  if (p.epsC2 !== undefined) material = { ...material, epsC2: dimensionless(p.epsC2) };
+  if (p.epsCu2 !== undefined) material = { ...material, epsCu2: dimensionless(p.epsCu2) };
+  if (p.n !== undefined) material = { ...material, n: dimensionless(p.n) };
+  return material;
 }
 
 /** Sűrűségből fajsúly [kN/m³] — kényelmi újraexport a builder-felhasználóknak. */
@@ -120,15 +138,17 @@ export const rhs = (h: number, b: number, t: number): SectionShape => ({ kind: '
 export function makeLayeredSection(
   id: string,
   name: string,
-  layers: readonly { b: number; t: number; z: number; materialId?: string }[],
+  layers: readonly { b: number; t: number; z: number; materialId?: string; plateThickness?: number }[],
   shearFactor = RECT_SHEAR_FACTOR,
   includeLayerOwnInertia = false,
 ): LayeredSection {
-  const ls: Layer[] = layers.map((l) =>
-    l.materialId !== undefined
-      ? { b: m(l.b), t: m(l.t), z: m(l.z), materialId: materialId(l.materialId) }
-      : { b: m(l.b), t: m(l.t), z: m(l.z) },
-  );
+  const ls: Layer[] = layers.map((l) => ({
+    b: m(l.b),
+    t: m(l.t),
+    z: m(l.z),
+    ...(l.materialId !== undefined ? { materialId: materialId(l.materialId) } : {}),
+    ...(l.plateThickness !== undefined ? { plateThickness: m(l.plateThickness) } : {}),
+  }));
   return {
     id: sectionId(id),
     name,

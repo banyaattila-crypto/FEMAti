@@ -8,6 +8,8 @@ import {
 import {
   buildModel,
   fixed,
+  generateLayers,
+  iProfile,
   makeLayeredSection,
   makeMaterial,
   makeSection,
@@ -76,6 +78,73 @@ describe('elementMaterialData', () => {
     if (data.kind !== 'layered') return;
     expect(data.layers).toHaveLength(3);
     expect(data.layers[1]?.t).toBeCloseTo(0.2, 12);
+  });
+
+  it('vastagságosztályos anyagnál (fy1/fy2/thicknessThreshold) a rétegek a saját plateThickness-ük szerint kapnak folyáshatárt', () => {
+    // E) fázis: a réteg SAJÁT szeletvastagsága (t=0.1/0.2/0.1) itt SZÁNDÉKOSAN
+    // különbözik a plateThickness-től (0.03/0.05) — pontosan ez a lényeg,
+    // hogy a kettő független (ld. docs/ADR).
+    const classedSteel = makeMaterial('S2', 'Osztályos acél', {
+      e: 2.1e8,
+      sigmaY: 2.0e5, // egységes érték — CSAK akkor érvényesülne, ha nincs fy1/fy2
+      fy1: 2.35e5,
+      fy2: 2.15e5,
+      thicknessThreshold: 0.04,
+    });
+    const layered = makeLayeredSection('L3', 'Vastagságosztályos', [
+      { b: 0.2, t: 0.1, z: -0.1, plateThickness: 0.03 }, // vékony (≤40mm) → fy1
+      { b: 0.2, t: 0.1, z: 0.1, plateThickness: 0.05 }, // vastag (>40mm) → fy2
+    ]);
+    const mesh = uniformMesh(4, 1, { sectionId: 'L3', materialId: 'S2' });
+    const model = buildModel({
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [classedSteel],
+      sections: [layered],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N2', -10, 'F1')],
+    });
+    const el = model.elements[0];
+    if (el === undefined) throw new Error('hiányzó elem');
+    const data = elementMaterialData(model, el);
+    if (data.kind !== 'layered') throw new Error('layered várt');
+    expect(data.layers[0]?.sigmaY).toBeCloseTo(2.35e5, 6);
+    expect(data.layers[1]?.sigmaY).toBeCloseTo(2.15e5, 6);
+  });
+
+  it('vastagságosztály nélküli anyagnál (fy1/fy2 hiányzik) az egységes sigmaY érvényes minden rétegre, plateThickness-től függetlenül', () => {
+    const layered = makeLayeredSection('L4', 'Egységes', [
+      { b: 0.2, t: 0.1, z: -0.1, plateThickness: 0.03 },
+      { b: 0.2, t: 0.1, z: 0.1, plateThickness: 0.05 },
+    ]);
+    const mesh = uniformMesh(4, 1, { sectionId: 'L4', materialId: 'S1' });
+    const model = buildModel({
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [STEEL],
+      sections: [layered],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N2', -10, 'F1')],
+    });
+    const el = model.elements[0];
+    if (el === undefined) throw new Error('hiányzó elem');
+    const data = elementMaterialData(model, el);
+    if (data.kind !== 'layered') throw new Error('layered várt');
+    expect(data.layers[0]?.sigmaY).toBeCloseTo(STEEL.sigmaY as number, 6);
+    expect(data.layers[1]?.sigmaY).toBeCloseTo(STEEL.sigmaY as number, 6);
+  });
+
+  it('valódi I-szelvényből generált rétegzésnél az öv-rétegek tf-et, a gerinc-rétegek tw-t kapnak plateThickness gyanánt', () => {
+    // Mesterségesen szélsőséges (nem valós katalógus-) I-alak: tf=0.05 (a
+    // küszöb FÖLÉ), tw=0.02 (a küszöb ALÁ) esik — hogy a két osztály
+    // egyértelműen szétváljon.
+    const shape = iProfile(0.3, 0.15, 0.02, 0.05);
+    const rawLayers = generateLayers(shape, 16);
+    const flangeLayer = rawLayers.find((l) => Math.abs(l.z) > 0.12); // hw/2 = (0.3-0.1)/2=0.1, öv ezen kívül
+    const webLayer = rawLayers.find((l) => Math.abs(l.z) < 0.08);
+    if (flangeLayer === undefined || webLayer === undefined) throw new Error('hiányzó réteg');
+    expect(flangeLayer.plateThickness).toBeCloseTo(0.05, 12);
+    expect(webLayer.plateThickness).toBeCloseTo(0.02, 12);
   });
 });
 

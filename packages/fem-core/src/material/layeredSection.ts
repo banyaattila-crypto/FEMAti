@@ -45,6 +45,8 @@ export interface RawLayer {
   readonly b: number;
   readonly t: number;
   readonly z: number;
+  /** A réteg VALÓDI lemezvastagsága (öv/fal) — ld. `model/types.ts` `Layer.plateThickness`. */
+  readonly plateThickness?: number;
 }
 
 function shapeHeight(shape: SectionShape): number {
@@ -108,6 +110,34 @@ function contourWidth(shape: SectionShape, z: number): number {
   }
 }
 
+/**
+ * A réteg VALÓDI hengerelt lemezvastagsága a súlyponttól mért `z`-nél (E)
+ * fázis, EN 10025-2 vastagságosztályhoz) — ugyanaz az öv/gerinc-zóna-
+ * eldöntés, mint `contourWidth()`-ben, csak a kontúrszélesség helyett a
+ * lemezvastagságot adja vissza. `undefined`, ha az alaknál nem
+ * értelmezhető egyetlen "lemezvastagság" (rect/circle/tube — homogén
+ * tömör/körgyűrű kontúr, nincs öv/gerinc-jellegű felosztás).
+ */
+function plateThicknessAt(shape: SectionShape, z: number): number | undefined {
+  switch (shape.kind) {
+    case 'rect':
+    case 'circle':
+    case 'tube':
+      return undefined;
+
+    case 'i-profile': {
+      const h = shape.h as number;
+      const tf = shape.tf as number;
+      const hw = h - 2 * tf;
+      if (Math.abs(z) > h / 2) return undefined;
+      return Math.abs(z) <= hw / 2 ? (shape.tw as number) : tf;
+    }
+
+    case 'rhs':
+      return Math.abs(z) > (shape.h as number) / 2 ? undefined : (shape.t as number);
+  }
+}
+
 /** Almintavételek száma csíkonként a terület-/nyomaték-megőrző szélesség-átlagoláshoz. */
 const SUBSAMPLES = 200;
 
@@ -136,7 +166,8 @@ export function generateLayers(shape: SectionShape, layerCount: number): readonl
 
     const z = zTop + t / 2;
     const b = area / t;
-    layers.push({ b, t, z });
+    const plateThickness = plateThicknessAt(shape, z);
+    layers.push(plateThickness === undefined ? { b, t, z } : { b, t, z, plateThickness });
   }
   return layers;
 }

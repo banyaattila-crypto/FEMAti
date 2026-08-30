@@ -100,13 +100,22 @@ export function compileLayeredModel(editable: EditableModel): Model {
     density: mat.density,
     ...(mat.sigmaY > 0 ? { sigmaY: mat.sigmaY * 1e4 } : {}),
     ...(mat.hPrime > 0 ? { hPrime: mat.hPrime * 1e4 } : {}),
+    // E) fázis: vastagságfüggő acél-folyáshatár (referencia-adatból bekötve).
+    ...(mat.fy1 !== undefined ? { fy1: mat.fy1 * 1e4 } : {}),
+    ...(mat.fy2 !== undefined ? { fy2: mat.fy2 * 1e4 } : {}),
+    ...(mat.thicknessThreshold !== undefined ? { thicknessThreshold: mat.thicknessThreshold / 1000 } : {}),
+    // F) fázis: EC2 beton nemlineáris σ-ε modell.
+    ...(mat.fck !== undefined ? { fck: mat.fck * 1e4 } : {}),
+    ...(mat.epsC2 !== undefined ? { epsC2: mat.epsC2 } : {}),
+    ...(mat.epsCu2 !== undefined ? { epsCu2: mat.epsCu2 } : {}),
+    ...(mat.n !== undefined ? { n: mat.n } : {}),
   });
 
   const rawLayers = generateLayers(shape, LAYER_COUNT);
   const section = makeLayeredSection(
     sec.id,
     sec.name,
-    rawLayers.map((l) => ({ b: l.b, t: l.t, z: l.z })),
+    rawLayers.map((l) => ({ b: l.b, t: l.t, z: l.z, ...(l.plateThickness !== undefined ? { plateThickness: l.plateThickness } : {}) })),
     recommendedShearFactor(shape, material.nu as number),
   );
 

@@ -80,6 +80,25 @@ export interface Material {
    * H' = 0 → tökéletesen képlékeny anyag.
    */
   readonly hPrime?: KiloNewtonPerSquareMeter;
+
+  // ── Vastagságfüggő acélosztály (EN 10025-2) — E) fázis, ld. docs/ADR ────
+  /** Folyáshatár a vékonyabb vastagságosztályban (`Layer.plateThickness ≤ thicknessThreshold`) [kN/m²] */
+  readonly fy1?: KiloNewtonPerSquareMeter;
+  /** Folyáshatár a vastagabb vastagságosztályban (`Layer.plateThickness > thicknessThreshold`) [kN/m²] */
+  readonly fy2?: KiloNewtonPerSquareMeter;
+  /** A vastagságosztályok határa [m] */
+  readonly thicknessThreshold?: Meter;
+
+  // ── EC2 beton feszültség-alakváltozás modell (EN 1992-1-1 3.1.7) ────────
+  // F) fázis, ld. `material/concreteEC2.ts` és docs/ADR.
+  /** Jellemző nyomószilárdság fck [kN/m²] */
+  readonly fck?: KiloNewtonPerSquareMeter;
+  /** Folyási határnyúlás a parabola-téglalap modellhez εc2 [–] */
+  readonly epsC2?: Dimensionless;
+  /** Szakadási (zúzódási) határnyúlás a parabola-téglalap modellhez εcu2 [–] */
+  readonly epsCu2?: Dimensionless;
+  /** A parabola-téglalap modell kitevője n [–] */
+  readonly n?: Dimensionless;
 }
 
 // ─── Keresztmetszet ───────────────────────────────────────────────────────────
@@ -115,12 +134,19 @@ export type SectionShape =
 export interface Layer {
   /** rétegszélesség b_l [m] */
   readonly b: Meter;
-  /** rétegvastagság t_l [m] */
+  /** rétegvastagság t_l [m] — a réteg SAJÁT szeletvastagsága (magasság/rétegszám), NEM a lemezvastagság */
   readonly t: Meter;
   /** a réteg középpontjának z koordinátája [m] */
   readonly z: Meter;
   /** eltérő anyagú réteg (kompozit); ha hiányzik, az elem anyaga érvényes */
   readonly materialId?: MaterialId;
+  /**
+   * A réteg által képviselt VALÓDI hengerelt lemezvastagság [m] — övnél tf,
+   * zárt szelvény (rhs) falánál t; nincs értelmezve rect/circle/tube-nál
+   * (E) fázis, EN 10025-2 vastagságosztályhoz). FÜGGETLEN a fenti `t`-től
+   * (ami a rétegszám finomításától függ) — ld. `material/layeredSection.ts`.
+   */
+  readonly plateThickness?: Meter;
 }
 
 export interface ParametricSection {

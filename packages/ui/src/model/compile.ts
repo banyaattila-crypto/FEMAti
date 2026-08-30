@@ -71,6 +71,15 @@ function buildCatalogParts(materialId: string, sectionId: string): { material: M
     // exactOptionalPropertyTypes: csak akkor kerül be a kulcs, ha van értéke.
     ...(mat.sigmaY > 0 ? { sigmaY: mat.sigmaY * 1e4 } : {}),
     ...(mat.hPrime > 0 ? { hPrime: mat.hPrime * 1e4 } : {}),
+    // E) fázis: vastagságfüggő acél-folyáshatár (referencia-adatból bekötve).
+    ...(mat.fy1 !== undefined ? { fy1: mat.fy1 * 1e4 } : {}),
+    ...(mat.fy2 !== undefined ? { fy2: mat.fy2 * 1e4 } : {}),
+    ...(mat.thicknessThreshold !== undefined ? { thicknessThreshold: mat.thicknessThreshold / 1000 } : {}),
+    // F) fázis: EC2 beton nemlineáris σ-ε modell.
+    ...(mat.fck !== undefined ? { fck: mat.fck * 1e4 } : {}),
+    ...(mat.epsC2 !== undefined ? { epsC2: mat.epsC2 } : {}),
+    ...(mat.epsCu2 !== undefined ? { epsCu2: mat.epsCu2 } : {}),
+    ...(mat.n !== undefined ? { n: mat.n } : {}),
   });
   const shape = toShape(sec);
   const section = makeSection(sec.id, sec.name, shape, recommendedShearFactor(shape, material.nu as number));
