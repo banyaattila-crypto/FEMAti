@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from './editable.js';
-import { ModelFileError, parseEditableModelFile, serializeEditableModel } from './fileIO.js';
+import { DEFAULT_SOLVER_SETTINGS, ModelFileError, parseEditableModelFile, serializeEditableModel, type SolverSettingsFile } from './fileIO.js';
 
 function fullModel() {
   resetEntityIds();
@@ -17,12 +17,24 @@ function fullModel() {
   };
 }
 
+const fullSolverSettings: SolverSettingsFile = {
+  algorithm: 'modified-newton',
+  loadHistory: 'unloading',
+  loadStep: 0.05,
+  tolerance: 0.25,
+  peakLambda: 1.5,
+  showGaussPoints: true,
+  momentTensionSide: false,
+  activeDiagram: 'T',
+};
+
 describe('serializeEditableModel / parseEditableModelFile', () => {
-  it('kör-út: minden mező (rugós/dz/dPhi támasz, megoszló nyomaték, ágyazat, hőteher) sértetlenül visszaáll', () => {
+  it('kör-út: minden mező (modell + megoldó-beállítások) sértetlenül visszaáll', () => {
     const model = fullModel();
-    const json = serializeEditableModel(model);
+    const json = serializeEditableModel(model, fullSolverSettings);
     const restored = parseEditableModelFile(json);
-    expect(restored).toEqual(model);
+    expect(restored.model).toEqual(model);
+    expect(restored.solverSettings).toEqual(fullSolverSettings);
   });
 
   it('érvénytelen JSON esetén ModelFileError-t dob', () => {
@@ -35,16 +47,31 @@ describe('serializeEditableModel / parseEditableModelFile', () => {
 
   it('ismeretlen tehertípusnál ModelFileError-t dob', () => {
     const model = fullModel();
-    const file = JSON.parse(serializeEditableModel(model)) as { model: { loads: unknown[] } };
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: { loads: unknown[] } };
     file.model.loads = [{ id: 'X', kind: 'unknown-kind', x: 1 }];
     expect(() => parseEditableModelFile(JSON.stringify(file))).toThrow(ModelFileError);
   });
 
   it('hiányzó foundations mezőnél üres tömbre esik vissza (visszamenőleges kompatibilitás)', () => {
     const model = fullModel();
-    const file = JSON.parse(serializeEditableModel(model)) as { model: Record<string, unknown> };
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: Record<string, unknown> };
     delete file.model.foundations;
     const restored = parseEditableModelFile(JSON.stringify(file));
-    expect(restored.foundations).toEqual([]);
+    expect(restored.model.foundations).toEqual([]);
+  });
+
+  it('1. verziójú (solverSettings nélküli) régi mentés beolvasásakor az alapértelmezésekre esik vissza, nem hibázik', () => {
+    const model = fullModel();
+    const legacyFile = { femaiEditorFormat: 1, model };
+    const restored = parseEditableModelFile(JSON.stringify(legacyFile));
+    expect(restored.model).toEqual(model);
+    expect(restored.solverSettings).toEqual(DEFAULT_SOLVER_SETTINGS);
+  });
+
+  it('érvénytelen algorithm értéknél ModelFileError-t dob', () => {
+    const model = fullModel();
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { solverSettings: Record<string, unknown> };
+    file.solverSettings.algorithm = 'gauss-seidel';
+    expect(() => parseEditableModelFile(JSON.stringify(file))).toThrow(ModelFileError);
   });
 });

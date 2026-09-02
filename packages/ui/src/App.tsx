@@ -21,7 +21,7 @@ import { useAppStore, type DiagramTab, type MobileTab } from './state/appStore.j
 import { useModelStore } from './state/modelStore.js';
 import { useNonlinearStore } from './state/nonlinearStore.js';
 import { combinedSteps, runNonlinearEditableModel } from './model/nonlinear.js';
-import { ModelFileError, parseEditableModelFile, serializeEditableModel } from './model/fileIO.js';
+import { ModelFileError, parseEditableModelFile, serializeEditableModel, type SolverSettingsFile } from './model/fileIO.js';
 import { DiagramPanel } from './charts/DiagramPanel.js';
 
 const DIAGRAM_TABS: readonly { id: DiagramTab; label: string }[] = [
@@ -113,9 +113,23 @@ export function App(): JSX.Element {
     s.setReportOpen(true);
   }, [s]);
 
-  /** Fájl → Mentés — a szerkeszthető modell letöltése `.femati.json`-ként (a böngésző natív letöltés-mechanizmusával, NEM a fem-core lefordított-háló sémájával, ld. `model/fileIO.ts` fejlécét). */
+  /**
+   * File → Mentés — a modell ÉS a megoldó-beállítások letöltése `.femati.json`-ként
+   * (a böngésző natív letöltés-mechanizmusával, NEM a fem-core lefordított-háló
+   * sémájával, ld. `model/fileIO.ts` fejlécét arról is, mi MARAD ki tudatosan).
+   */
   const saveModel = useCallback((): void => {
-    const json = serializeEditableModel(model);
+    const solverSettings: SolverSettingsFile = {
+      algorithm: s.algorithm,
+      loadHistory: s.loadHistory,
+      loadStep: s.loadStep,
+      tolerance: s.tolerance,
+      peakLambda: s.peakLambda,
+      showGaussPoints: s.showGaussPoints,
+      momentTensionSide: s.momentTensionSide,
+      activeDiagram: s.activeDiagram,
+    };
+    const json = serializeEditableModel(model, solverSettings);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -123,9 +137,9 @@ export function App(): JSX.Element {
     a.download = `${model.presetId}.femati.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [model]);
+  }, [model, s]);
 
-  /** Fájl → Betöltés — a rejtett fájlválasztó megnyitása. */
+  /** File → Betöltés — a rejtett fájlválasztó megnyitása. */
   const openLoadDialog = useCallback((): void => {
     fileInputRef.current?.click();
   }, []);
@@ -139,8 +153,16 @@ export function App(): JSX.Element {
       reader.onload = () => {
         try {
           const text = typeof reader.result === 'string' ? reader.result : '';
-          const parsed = parseEditableModelFile(text);
-          loadModel(parsed);
+          const { model: parsedModel, solverSettings } = parseEditableModelFile(text);
+          loadModel(parsedModel);
+          s.setAlgorithm(solverSettings.algorithm);
+          s.setLoadHistory(solverSettings.loadHistory);
+          s.setLoadStep(solverSettings.loadStep);
+          s.setTolerance(solverSettings.tolerance);
+          s.setPeakLambda(solverSettings.peakLambda);
+          s.setShowGaussPoints(solverSettings.showGaussPoints);
+          s.setMomentTensionSide(solverSettings.momentTensionSide);
+          s.setActiveDiagram(solverSettings.activeDiagram);
           s.setStatus('editing', `betöltve: ${file.name}`);
         } catch (error) {
           const message = error instanceof ModelFileError ? error.message : error instanceof Error ? error.message : String(error);

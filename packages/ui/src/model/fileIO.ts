@@ -1,6 +1,6 @@
 /**
- * A szerkeszthető modell mentése/betöltése helyi `.femati.json` fájlba
- * (Fájl → Mentés / Betöltés).
+ * A munkaállapot mentése/betöltése helyi `.femati.json` fájlba (File → Mentés
+ * / Betöltés).
  *
  * FONTOS: ez NEM ugyanaz a séma, mint a `fem-core` `model/schema.ts`
  * `.femati.json`-ja — az a LEFORDÍTOTT, teljes hálós `Model`-t írja le
@@ -8,8 +8,29 @@
  * szerkeszthető állapotát (fesztáv, elemszám, relatív pozíciójú
  * támaszok/terhek stb.) — szándékosan, mert egy lefordított hálóból nem
  * lehetne egyértelműen visszaállítani, hogy melyik csomópont melyik
- * "támasznak" felel meg. Ez a fájl tehát a MUNKAÁLLAPOT mentése (amit a
- * felhasználó ténylegesen szerkeszt), nem a végeselemes háló exportja.
+ * "támasznak" felel meg.
+ *
+ * A `solverSettings` (2. verziótól, felhasználói kérésre "MINDEN legyen
+ * benne") a `state/appStore.ts` megoldó-beállításait (algoritmus,
+ * teherlépcső, tolerancia, λ_cél, tehertörténet) és a nézeti kapcsolókat
+ * (Gauss-pontok, M ábra oldala, aktív diagram-fül) menti — ezek a modelltől
+ * FÜGGETLEN store-ban élnek, ezért külön mezőként.
+ *
+ * TUDATOSAN NEM tartalmazza:
+ * - a nemlineáris (rugalmas-képlékeny) FUTTATÁS eredményét
+ *   (`state/nonlinearStore.ts` — mátrixok, Float64Array-ek, Map-ek: nem
+ *   praktikusan JSON-szerializálható, és nem is szükséges, mert a
+ *   mentett modell + megoldó-beállítások alapján a SZÁMÍTÁS (F5) gomb
+ *   DETERMINISZTIKUSAN, egy kattintással pontosan ugyanazt az eredményt
+ *   újra-előállítja betöltés után);
+ * - a Levezetés (`DerivationView`) és a Hálófüggetlenségi vizsgálat
+ *   (`MeshConvergenceView`) tartalmát — mindkettő a modellből ÉLŐBEN,
+ *   megnyitáskor újraszámolódik, nincs külön elmentendő állapotuk;
+ * - efemer UI-állapotot (melyik párbeszédablak van nyitva, melyik mobil-fül
+ *   aktív, a vászon aktuális eszköze) — ezek munkamenet-específikus
+ *   ablak-állapotok, nem a modell/beállítások tartalma, visszaállításuk
+ *   betöltéskor félrevezető lenne (pl. egy nyitva maradt párbeszédablak
+ *   azonnal felugorna).
  */
 import {
   DEFAULT_THERMAL_LOAD,
@@ -20,17 +41,46 @@ import {
   type IntegrationScheme,
   type SupportType,
 } from './editable.js';
+import type { DiagramTab, LoadHistoryMode, SolverAlgorithm } from '../state/appStore.js';
 
-export const EDITOR_FILE_FORMAT_VERSION = 1 as const;
+export const EDITOR_FILE_FORMAT_VERSION = 2 as const;
+
+export interface SolverSettingsFile {
+  readonly algorithm: SolverAlgorithm;
+  readonly loadHistory: LoadHistoryMode;
+  readonly loadStep: number;
+  readonly tolerance: number;
+  readonly peakLambda: number;
+  readonly showGaussPoints: boolean;
+  readonly momentTensionSide: boolean;
+  readonly activeDiagram: DiagramTab;
+}
+
+export const DEFAULT_SOLVER_SETTINGS: SolverSettingsFile = {
+  algorithm: 'newton',
+  loadHistory: 'monotonic',
+  loadStep: 0.1,
+  tolerance: 0.5,
+  peakLambda: 1.2,
+  showGaussPoints: false,
+  momentTensionSide: true,
+  activeDiagram: 'M',
+};
 
 export interface EditableModelFile {
   readonly femaiEditorFormat: typeof EDITOR_FILE_FORMAT_VERSION;
   readonly model: EditableModel;
+  readonly solverSettings: SolverSettingsFile;
 }
 
-/** A modell JSON szöveggé alakítása mentéshez. */
-export function serializeEditableModel(model: EditableModel): string {
-  const file: EditableModelFile = { femaiEditorFormat: EDITOR_FILE_FORMAT_VERSION, model };
+export interface ParsedModelFile {
+  readonly model: EditableModel;
+  readonly solverSettings: SolverSettingsFile;
+}
+
+/** A munkaállapot (modell + megoldó-beállítások) JSON szöveggé alakítása mentéshez. */
+export function serializeEditableModel(model: EditableModel, solverSettings: SolverSettingsFile): string {
+  const file: EditableModelFile = { femaiEditorFormat: EDITOR_FILE_FORMAT_VERSION, model, solverSettings };
   return JSON.stringify(file, null, 2);
 }
 
@@ -129,11 +179,37 @@ function parseFoundation(v: unknown, index: number): EditableFoundation {
   return { id: str(o, 'id', where), x1: num(o, 'x1', where), x2: num(o, 'x2', where), c: num(o, 'c', where) };
 }
 
+const ALGORITHMS: readonly SolverAlgorithm[] = ['newton', 'modified-newton'];
+const LOAD_HISTORIES: readonly LoadHistoryMode[] = ['monotonic', 'unloading'];
+const DIAGRAM_TABS: readonly DiagramTab[] = ['M', 'T', 'w', 'phi', 'load-displacement', 'convergence', 'stress3d', 'modal'];
+
+/** A `solverSettings` mező beolvasása — hiányzó fájlnál (1. verziójú, `solverSettings` nélküli mentés) az alapértelmezésekre esik vissza, nem hibázik. */
+function parseSolverSettings(v: unknown): SolverSettingsFile {
+  if (v === undefined) return DEFAULT_SOLVER_SETTINGS;
+  const o = record(v, 'solverSettings');
+  const algorithm = str(o, 'algorithm', 'solverSettings');
+  assert(ALGORITHMS.includes(algorithm as SolverAlgorithm), `solverSettings: érvénytelen "algorithm" érték "${algorithm}".`);
+  const loadHistory = str(o, 'loadHistory', 'solverSettings');
+  assert(LOAD_HISTORIES.includes(loadHistory as LoadHistoryMode), `solverSettings: érvénytelen "loadHistory" érték "${loadHistory}".`);
+  const activeDiagram = str(o, 'activeDiagram', 'solverSettings');
+  assert(DIAGRAM_TABS.includes(activeDiagram as DiagramTab), `solverSettings: érvénytelen "activeDiagram" érték "${activeDiagram}".`);
+  return {
+    algorithm: algorithm as SolverAlgorithm,
+    loadHistory: loadHistory as LoadHistoryMode,
+    loadStep: num(o, 'loadStep', 'solverSettings'),
+    tolerance: num(o, 'tolerance', 'solverSettings'),
+    peakLambda: num(o, 'peakLambda', 'solverSettings'),
+    showGaussPoints: bool(o, 'showGaussPoints', 'solverSettings'),
+    momentTensionSide: bool(o, 'momentTensionSide', 'solverSettings'),
+    activeDiagram: activeDiagram as DiagramTab,
+  };
+}
+
 /**
- * `.femati.json` szöveg beolvasása szerkeszthető modellé.
+ * `.femati.json` szöveg beolvasása munkaállapottá (modell + megoldó-beállítások).
  * @throws ModelFileError érvénytelen/sérült fájl esetén, felhasználónak szánt magyar üzenettel.
  */
-export function parseEditableModelFile(text: string): EditableModel {
+export function parseEditableModelFile(text: string): ParsedModelFile {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -142,8 +218,8 @@ export function parseEditableModelFile(text: string): EditableModel {
   }
   const file = record(raw, 'fájl');
   assert(
-    file.femaiEditorFormat === EDITOR_FILE_FORMAT_VERSION,
-    `Ismeretlen vagy nem támogatott .femati.json formátum-verzió (várt: ${EDITOR_FILE_FORMAT_VERSION}). ` +
+    file.femaiEditorFormat === 1 || file.femaiEditorFormat === EDITOR_FILE_FORMAT_VERSION,
+    `Ismeretlen vagy nem támogatott .femati.json formátum-verzió (várt: ${EDITOR_FILE_FORMAT_VERSION}, kapott: ${String(file.femaiEditorFormat)}). ` +
       'Ez a fájl vagy nem a FEMAti szerkesztőből származik, vagy egy újabb verzióból.',
   );
   const model = record(file.model, 'model');
@@ -161,16 +237,19 @@ export function parseEditableModelFile(text: string): EditableModel {
         })();
 
   return {
-    presetId: str(model, 'presetId', 'model'),
-    span: num(model, 'span', 'model'),
-    elementCount: num(model, 'elementCount', 'model'),
-    sectionId: str(model, 'sectionId', 'model'),
-    materialId: str(model, 'materialId', 'model'),
-    selfWeight: bool(model, 'selfWeight', 'model'),
-    thermalLoad,
-    integration: integration as IntegrationScheme,
-    supports: array(model.supports, 'model.supports').map(parseSupport),
-    loads: array(model.loads, 'model.loads').map(parseLoad),
-    foundations: model.foundations === undefined ? [] : array(model.foundations, 'model.foundations').map(parseFoundation),
+    model: {
+      presetId: str(model, 'presetId', 'model'),
+      span: num(model, 'span', 'model'),
+      elementCount: num(model, 'elementCount', 'model'),
+      sectionId: str(model, 'sectionId', 'model'),
+      materialId: str(model, 'materialId', 'model'),
+      selfWeight: bool(model, 'selfWeight', 'model'),
+      thermalLoad,
+      integration: integration as IntegrationScheme,
+      supports: array(model.supports, 'model.supports').map(parseSupport),
+      loads: array(model.loads, 'model.loads').map(parseLoad),
+      foundations: model.foundations === undefined ? [] : array(model.foundations, 'model.foundations').map(parseFoundation),
+    },
+    solverSettings: parseSolverSettings(file.solverSettings),
   };
 }
