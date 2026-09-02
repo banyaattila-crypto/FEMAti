@@ -393,6 +393,33 @@
   border-color: var(--border-strong);
 }
 
+/* Kártya-család akcentus (2026-09-02, `Card` `accent` prop) — a Támaszok/
+   Ágyazások/Terhek/Keresztmetszet/Megoldó kártyák egy-egy jelentéshordozó
+   tónust kapnak (`--fam-*`, `tokens.css`), hogy a kategória a kártya
+   SZINTJÉN is felismerhető legyen, ne csak az apró listasor-ikonokon.
+   Halvány, felülről elhalványuló derengés — NEM színes szegély (a
+   craft-floor tiltja az 1px-nél vastagabb színes border-t kártyákon). */
+.vem-card--accent {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card-accent) 16%, var(--surface-card)) 0%, var(--surface-card) 65%);
+}
+
+.vem-card--accent > .vem-section-label {
+  color: var(--card-accent);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.vem-card--accent > .vem-section-label::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--card-accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--card-accent) 70%, transparent);
+  flex: none;
+}
+
 /* A kártyán belüli fejléc NEM sticky/teljes szélességű elválasztó többé
    (az a korábbi, panel-szintű minta volt) — helyette a kártya saját,
    halvány alsó vonala zárja le. A tipográfia is oldottabb: a korábbi
@@ -456,8 +483,14 @@
   align-items: center;
   gap: var(--space-2);
   padding: 3px var(--space-4);
-  border-radius: var(--radius-sm);
-  background: var(--surface-chrome-raised);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  /* 2026-09-02: eddig minden státusz ugyanazt a semleges szürke dobozt
+     kapta, csak a szöveg + egy 6px pötty volt színes — most a HÁTTÉR és a
+     keret is a státusz tónusát veszi fel (`color-mix`), így a jelzés a
+     dokk-sáv legmesszebbről is felismerhető, nem csak közelről olvasható. */
+  background: color-mix(in srgb, currentColor 16%, var(--surface-chrome-raised));
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
   font-size: 11px;
   color: var(--text-on-chrome);
   white-space: nowrap;

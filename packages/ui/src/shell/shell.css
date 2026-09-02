@@ -21,7 +21,12 @@
   gap: var(--space-7);
   height: var(--h-chrome);
   padding: 0 var(--space-5);
-  background: var(--surface-chrome);
+  /* 2026-09-02: a korábbi sima --surface-chrome helyett egy nagyon halvány,
+     a márka türkizébe hajló gradiens — a legfelső sáv, amit a felhasználó
+     minden képernyőn lát, eddig ugyanaz a semleges szürke volt, mint
+     bármelyik másik chrome-felület. */
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, var(--surface-chrome)) 0%, var(--surface-chrome) 55%);
+  border-bottom: 1px solid var(--border-chrome);
   color: var(--text-on-chrome);
   flex: none;
 }
@@ -279,9 +284,18 @@
   background: var(--surface-hover);
 }
 
+/* 2026-09-02: a kijelölt eszköz a SAJÁT (típusonkénti) színét kapja a
+   generikus türkiz helyett — az ikon már eddig is típusszínű volt, csak a
+   "bekapcsolt" háttér/keret nem követte, ezért kijelölve minden eszköz
+   ugyanúgy nézett ki. */
 .vem-ribbon__btn[aria-pressed='true'] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  background: color-mix(in srgb, var(--tool-accent, var(--accent)) 16%, transparent);
+  border-color: var(--tool-accent, var(--accent));
+}
+
+.vem-ribbon__btn[aria-pressed='true'] .vem-ribbon__btn-label {
+  color: var(--tool-accent, var(--accent));
+  font-weight: 600;
 }
 
 .vem-ribbon__btn-label {
@@ -310,24 +324,25 @@
   flex: none;
 }
 
-.vem-panel--left,
-.vem-panel--right {
-  /* Finom, füstös bordó háttérátmenet, felhasználói kérésre — mindkét
-     oldalpanelen (bal: Modellfa/Támaszok/Terhek/Keresztmetszet/Megoldó;
-     jobb: Eredmények) egységesen. */
-  background: linear-gradient(180deg, var(--surface-panel-warm-top) 0%, var(--surface-panel-warm-bottom) 100%);
-}
-
 .vem-panel--left {
   width: var(--w-panel-left);
   min-width: var(--w-panel-min);
   border-right: 1px solid var(--border-strong);
+  /* Finom, hűvös (petróleumkék) háttérátmenet — a "bemenet" oldal
+     (Modellfa/Támaszok/Terhek/Keresztmetszet/Megoldó). 2026-09-02: eddig
+     ugyanazt a bordó átmenetet kapta, mint a jobb panel — most a két oldal
+     megkülönböztetve, hogy a felület két "hemiszférája" (bemenet/kimenet)
+     tapinthatóan elváljon. */
+  background: linear-gradient(180deg, var(--surface-panel-cool-top) 0%, var(--surface-panel-cool-bottom) 100%);
 }
 
 .vem-panel--right {
   width: var(--w-panel-right);
   min-width: var(--w-panel-min);
   border-left: 1px solid var(--border-strong);
+  /* Füstös bordó háttérátmenet, felhasználói kérésre — a "kimenet" oldal
+     (Eredmények). */
+  background: linear-gradient(180deg, var(--surface-panel-warm-top) 0%, var(--surface-panel-warm-bottom) 100%);
 }
 
 .vem-panel__body--padded {
@@ -443,10 +458,16 @@
   background: var(--surface-hover);
 }
 
+/* 2026-09-02: minden fül a saját (`--tab-accent`, App.tsx-ből inline
+   style-lal átadott) tónusát kapja aktív állapotban, a korábbi egységes
+   türkiz helyett — így a fülsáv előre jelzi, milyen jellegű tartalom van
+   a fül mögött. `--accent-light`/`--accent-soft` marad a fallback azokra
+   a füzetekre, amiknek (egyelőre) nincs saját tónusa. */
 .vem-tab[aria-selected='true'] {
-  background: var(--accent-soft);
-  color: var(--accent-light);
+  background: color-mix(in srgb, var(--tab-accent, var(--accent-light)) 22%, transparent);
+  color: var(--tab-accent, var(--accent-light));
   font-weight: 600;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tab-accent, var(--accent-light)) 45%, transparent) inset;
 }
 
 .vem-diagram-bar__body {

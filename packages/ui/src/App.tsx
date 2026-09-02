@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type CSSProperties } from 'react';
 import { Legend, StatusPill } from './components/Feedback.js';
 import { Logo } from './components/Logo.js';
 import { ModelCanvas } from './canvas/ModelCanvas.js';
@@ -25,16 +25,17 @@ import { combinedSteps, runNonlinearEditableModel } from './model/nonlinear.js';
 import { ModelFileError, parseEditableModelFile, serializeEditableModel, type SolverSettingsFile } from './model/fileIO.js';
 import { DiagramPanel } from './charts/DiagramPanel.js';
 
-const DIAGRAM_TABS: readonly { id: DiagramTab; label: string }[] = [
-  { id: 'M', label: 'M' },
-  { id: 'T', label: 'T' },
-  { id: 'w', label: 'w' },
-  { id: 'phi', label: 'φ' },
-  { id: 'stress3d', label: '3D feszültség' },
-  { id: 'load-displacement', label: 'teher–elmozdulás' },
-  { id: 'convergence', label: 'konvergencia' },
-  { id: 'modal', label: 'modális' },
-  { id: 'dynamic', label: 'dinamika' },
+/** `accent` — a `--tab-*` tokenek neve (`tokens.css`), fülenként eltérő, de koherens tónus. */
+const DIAGRAM_TABS: readonly { id: DiagramTab; label: string; accent: string }[] = [
+  { id: 'M', label: 'M', accent: '--tab-m' },
+  { id: 'T', label: 'T', accent: '--tab-t' },
+  { id: 'w', label: 'w', accent: '--tab-w' },
+  { id: 'phi', label: 'φ', accent: '--tab-phi' },
+  { id: 'stress3d', label: '3D feszültség', accent: '--tab-stress3d' },
+  { id: 'load-displacement', label: 'teher–elmozdulás', accent: '--tab-load-displacement' },
+  { id: 'convergence', label: 'konvergencia', accent: '--tab-convergence' },
+  { id: 'modal', label: 'modális', accent: '--tab-modal' },
+  { id: 'dynamic', label: 'dinamika', accent: '--tab-dynamic' },
 ];
 
 /** <768px-nél a fejezet-fülek — DESIGN-TERV 3.3 "egy oszlop, fülekkel". */
@@ -397,6 +398,7 @@ export function App(): JSX.Element {
                   className="vem-tab"
                   aria-selected={s.activeDiagram === t.id}
                   onClick={() => s.setActiveDiagram(t.id)}
+                  style={{ '--tab-accent': `var(${t.accent})` } as CSSProperties & Record<string, string>}
                 >
                   {t.label}
                 </button>

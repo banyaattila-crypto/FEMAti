@@ -438,10 +438,11 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
                       <button
                         key={m.id}
                         type="button"
-                        className="vem-theory__nav-item"
+                        className="vem-theory__nav-item vem-theory__nav-item--swatch"
                         aria-current={materialSelection === m.id}
                         onClick={() => setMaterialSelection(m.id)}
                       >
+                        <MaterialSwatch family={m.family} />
                         {m.name}
                       </button>
                     ))}

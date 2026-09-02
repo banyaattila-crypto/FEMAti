@@ -9,7 +9,7 @@
  * `ModelCanvas` interakciós logikája olvas, ezért az ikonok kattintása
  * pontosan ugyanazt az elhelyezési módot indítja, mint korábban.
  */
-import { useState, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { FOUNDATION_COLOR, LOAD_COLOR, SUPPORT_COLOR } from '../canvas/marks.js';
 import type { CanvasTool } from '../canvas/ToolPalette.js';
 import { useAppStore } from '../state/appStore.js';
@@ -21,6 +21,8 @@ interface ToolDef {
   readonly label: string;
   readonly title: string;
   readonly icon: JSX.Element;
+  /** A gomb "kijelölve" (aria-pressed) állapotának színe — ugyanaz, mint magáé az ikoné. */
+  readonly accentColor: string;
 }
 
 function Icon({ color, children }: { readonly color: string; readonly children: ReactNode }): JSX.Element {
@@ -36,6 +38,7 @@ const LOAD_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-point-load',
     label: 'Pontteher',
     title: 'Koncentrált erő elhelyezése kattintással',
+    accentColor: LOAD_COLOR.point,
     icon: (
       <Icon color={LOAD_COLOR.point}>
         <line x1="10" y1="2" x2="10" y2="14" />
@@ -47,6 +50,7 @@ const LOAD_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-moment-load',
     label: 'Nyomatékteher',
     title: 'Koncentrált nyomaték elhelyezése kattintással',
+    accentColor: LOAD_COLOR.moment,
     icon: (
       <Icon color={LOAD_COLOR.moment}>
         <path d="M16 7 A7 7 0 1 1 9 1" />
@@ -58,6 +62,7 @@ const LOAD_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-distributed-load',
     label: 'Megoszló teher',
     title: 'Megoszló teher rajzolása húzással (trapéz alakra a kijelölt teher panelén szerkeszthető)',
+    accentColor: LOAD_COLOR.distributed,
     icon: (
       <Icon color={LOAD_COLOR.distributed}>
         <line x1="2" y1="3" x2="18" y2="3" />
@@ -74,6 +79,7 @@ const LOAD_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-distributed-moment-load',
     label: 'Megoszló nyomaték',
     title: 'Megoszló nyomatékteher rajzolása húzással',
+    accentColor: LOAD_COLOR['distributed-moment'],
     icon: (
       <Icon color={LOAD_COLOR['distributed-moment']}>
         {[3, 10, 17].map((x) => (
@@ -89,6 +95,7 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-pinned',
     label: 'Csuklós',
     title: 'Csuklós támasz elhelyezése kattintással',
+    accentColor: SUPPORT_COLOR.pinned,
     icon: (
       <Icon color={SUPPORT_COLOR.pinned}>
         <path d="M10 2 L17 15 L3 15 Z" />
@@ -100,6 +107,7 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-roller',
     label: 'Görgős',
     title: 'Görgős támasz elhelyezése kattintással',
+    accentColor: SUPPORT_COLOR.roller,
     icon: (
       <Icon color={SUPPORT_COLOR.roller}>
         <path d="M10 2 L17 15 L3 15 Z" />
@@ -112,6 +120,7 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-fixed',
     label: 'Befogás',
     title: 'Befogás elhelyezése kattintással',
+    accentColor: SUPPORT_COLOR.fixed,
     icon: (
       <Icon color={SUPPORT_COLOR.fixed}>
         <line x1="6" y1="1" x2="6" y2="19" strokeWidth="2.2" />
@@ -125,6 +134,7 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-spring',
     label: 'Rugós',
     title: 'Rugós támasz elhelyezése kattintással',
+    accentColor: SUPPORT_COLOR.spring,
     icon: (
       <Icon color={SUPPORT_COLOR.spring}>
         <polyline points="10,1 13.5,4 6.5,7 13.5,10 6.5,13 13.5,16 10,19" />
@@ -135,6 +145,7 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
     tool: 'add-foundation',
     label: 'Ágyazás',
     title: 'Winkler-féle rugalmas ágyazat rajzolása húzással',
+    accentColor: FOUNDATION_COLOR,
     icon: (
       <Icon color={FOUNDATION_COLOR}>
         <line x1="2" y1="6" x2="18" y2="6" strokeWidth="1.8" />
@@ -147,8 +158,9 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
 ];
 
 function RibbonButton({ def, active, onClick }: { readonly def: ToolDef; readonly active: boolean; readonly onClick: () => void }): JSX.Element {
+  const style = { '--tool-accent': def.accentColor } as CSSProperties & Record<string, string>;
   return (
-    <button type="button" className="vem-ribbon__btn" aria-pressed={active} onClick={onClick} title={def.title}>
+    <button type="button" className="vem-ribbon__btn" aria-pressed={active} onClick={onClick} title={def.title} style={style}>
       {def.icon}
       <span className="vem-ribbon__btn-label">{def.label}</span>
     </button>

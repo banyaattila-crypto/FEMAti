@@ -65,6 +65,16 @@
   font-weight: 600;
 }
 
+/* Anyag-katalógus sorok (2026-09-02): a `MaterialSwatch` (valódi anyagszín/
+   fénykép) mostantól minden sorban megjelenik, nem csak a kiválasztott
+   anyag nagy nézetében — eddig a lista sima szöveg volt, csak a fejléc
+   fölötti nagy kép hordozott színt. */
+.vem-theory__nav-item--swatch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .vem-theory__nav-note {
   margin-top: 18px;
   padding: 0 6px;

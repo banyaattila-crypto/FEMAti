@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 export type SolverStatus =
   | 'idle'
@@ -102,9 +102,13 @@ export function SectionLabel({ children }: SectionLabelProps): JSX.Element {
   return <div className="vem-section-label">{children}</div>;
 }
 
+export type CardAccent = 'support' | 'foundation' | 'load' | 'section' | 'solver' | 'results';
+
 export interface CardProps {
   readonly title: ReactNode;
   readonly children: ReactNode;
+  /** Jelentéshordozó családi szín (`--fam-*`, `tokens.css`) — kihagyva a kártya semleges marad. */
+  readonly accent?: CardAccent;
 }
 
 /**
@@ -113,9 +117,12 @@ export interface CardProps {
  * minden logikai csoport (Modellfa, Eredmények stb.) saját kártyát kap,
  * hogy vizuálisan is elkülönüljön.
  */
-export function Card({ title, children }: CardProps): JSX.Element {
+export function Card({ title, children, accent }: CardProps): JSX.Element {
+  const style = accent
+    ? ({ '--card-accent': `var(--fam-${accent})` } as CSSProperties & Record<string, string>)
+    : undefined;
   return (
-    <section className="vem-card">
+    <section className={accent ? 'vem-card vem-card--accent' : 'vem-card'} style={style}>
       <SectionLabel>{title}</SectionLabel>
       <div className="vem-card__body">{children}</div>
     </section>

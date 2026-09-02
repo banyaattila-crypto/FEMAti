@@ -451,6 +451,11 @@ export function ModelCanvas(): JSX.Element {
         onPointerUp={onPointerUp}
       >
         <CanvasDefs />
+        {/* 0. réteg — háttérrács + derengés (screen-space, NEM követi a
+            pan/zoom-ot — a klasszikus rajzasztal-rács a nézet fix
+            tulajdonsága, nem a modellé). */}
+        <rect x={0} y={0} width={VIEW_WIDTH} height={viewH} fill="url(#vem-grid-major)" />
+        <rect x={0} y={0} width={VIEW_WIDTH} height={viewH} fill="url(#vem-canvas-vignette)" />
         <g transform={`translate(${camera.tx},${camera.ty}) scale(${camera.scale})`}>
           {/* 2. réteg — eredeti tengely */}
           <line
@@ -535,7 +540,7 @@ export function ModelCanvas(): JSX.Element {
                 }}
                 style={{ cursor: tool === 'select' ? 'ew-resize' : 'crosshair', outline: 'none' }}
               >
-                {selected ? <circle cx={x} cy={axisY} r={22} fill="var(--accent-a10, rgba(120,170,255,0.15))" /> : null}
+                {selected ? <circle cx={x} cy={axisY} r={22} fill="var(--accent-a10)" /> : null}
                 <SupportMark x={x} y={axisY} type={sup.type} />
               </g>
             );
@@ -571,7 +576,7 @@ export function ModelCanvas(): JSX.Element {
                   style={{ cursor: tool === 'select' ? 'move' : 'crosshair', outline: 'none' }}
                 >
                   {selected ? (
-                    <rect x={x1 - 4} y={axisY - 34} width={x2 - x1 + 8} height={38} fill="var(--accent-a10, rgba(120,170,255,0.15))" />
+                    <rect x={x1 - 4} y={axisY - 34} width={x2 - x1 + 8} height={38} fill="var(--accent-a10)" />
                   ) : null}
                   <DistributedLoad x1={x1} x2={x2} y={axisY} q1={load.q1} q2={load.q2} label={qLabel} />
                 </g>
@@ -604,7 +609,7 @@ export function ModelCanvas(): JSX.Element {
                   style={{ cursor: tool === 'select' ? 'move' : 'crosshair', outline: 'none' }}
                 >
                   {selected ? (
-                    <rect x={x1 - 4} y={axisY - 46} width={x2 - x1 + 8} height={40} fill="var(--accent-a10, rgba(120,170,255,0.15))" />
+                    <rect x={x1 - 4} y={axisY - 46} width={x2 - x1 + 8} height={40} fill="var(--accent-a10)" />
                   ) : null}
                   <DistributedMomentLoad x1={x1} x2={x2} y={axisY} label={mLabel} />
                 </g>
@@ -630,7 +635,7 @@ export function ModelCanvas(): JSX.Element {
                   }}
                   style={{ cursor: tool === 'select' ? 'ew-resize' : 'crosshair', outline: 'none' }}
                 >
-                  {selected ? <circle cx={x} cy={axisY - 22} r={18} fill="var(--accent-a10, rgba(120,170,255,0.15))" /> : null}
+                  {selected ? <circle cx={x} cy={axisY - 22} r={18} fill="var(--accent-a10)" /> : null}
                   <MomentLoad x={x} y={axisY} label={`M = ${load.m.toFixed(1)} kNm`} />
                 </g>
               );
@@ -652,7 +657,7 @@ export function ModelCanvas(): JSX.Element {
                 }}
                 style={{ cursor: tool === 'select' ? 'ew-resize' : 'crosshair', outline: 'none' }}
               >
-                {selected ? <circle cx={x} cy={axisY - 24} r={16} fill="var(--accent-a10, rgba(120,170,255,0.15))" /> : null}
+                {selected ? <circle cx={x} cy={axisY - 24} r={16} fill="var(--accent-a10)" /> : null}
                 <PointLoad x={x} y={axisY} label={`P = ${load.p.toFixed(1)} kN`} />
               </g>
             );
@@ -683,7 +688,7 @@ export function ModelCanvas(): JSX.Element {
                 style={{ cursor: tool === 'select' ? 'move' : 'crosshair', outline: 'none' }}
               >
                 {selected ? (
-                  <rect x={x1 - 4} y={axisY} width={x2 - x1 + 8} height={34} fill="var(--accent-a10, rgba(120,170,255,0.15))" />
+                  <rect x={x1 - 4} y={axisY} width={x2 - x1 + 8} height={34} fill="var(--accent-a10)" />
                 ) : null}
                 <Foundation x1={x1} x2={x2} y={axisY} label={`c = ${f.c.toFixed(0)} kN/m²`} />
               </g>

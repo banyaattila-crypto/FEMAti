@@ -40,7 +40,7 @@ export function RightPanel(): JSX.Element {
   return (
     <aside className="vem-panel vem-panel--right" aria-label="Eredmények">
       <div className="vem-panel__stack">
-        <Card title="Eredmények">
+        <Card title="Eredmények" accent="results">
           {/* A négy fő eredmény (a szerkezet válaszának lényege) nagyobb
               súllyal jelenik meg, mint a részletadatok alatta — a korábbi
               minta minden sort azonos vizuális súllyal mutatott. */}
@@ -58,7 +58,7 @@ export function RightPanel(): JSX.Element {
           />
         </Card>
 
-        <Card title="Reakciók · egyensúly">
+        <Card title="Reakciók · egyensúly" accent="results">
           {result
             ? result.reactions.map((r) => (
                 <ResultRow key={r.nodeId} label={`R (x = ${r.x.toFixed(2)} m)`} formatted={fmt.force(r.fz)} />
@@ -76,7 +76,7 @@ export function RightPanel(): JSX.Element {
           />
         </Card>
 
-        <Card title="Határteher-ellenőrzés">
+        <Card title="Határteher-ellenőrzés" accent="results">
           <ResultRow
             label="rugalmas teherbírás Mₑ"
             formatted={fmt.moment(result?.props.me ?? null)}

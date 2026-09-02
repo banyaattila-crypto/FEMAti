@@ -24,7 +24,7 @@ function SupportsList({ supports }: { readonly supports: readonly EditableSuppor
   const select = useModelStore((s) => s.select);
 
   return (
-    <Card title="Támaszok">
+    <Card title="Támaszok" accent="support">
       <div className="vem-item-list">
         {supports.length === 0 ? (
           <div className="vem-item-empty">Nincs támasz.</div>
@@ -57,7 +57,7 @@ function FoundationsList({ foundations }: { readonly foundations: readonly Edita
   if (foundations.length === 0) return null;
 
   return (
-    <Card title="Ágyazások">
+    <Card title="Ágyazások" accent="foundation">
       <div className="vem-item-list">
         {foundations.map((f) => (
           <button
@@ -95,7 +95,7 @@ function LoadsList({ loads }: { readonly loads: readonly EditableLoad[] }): JSX.
   };
 
   return (
-    <Card title="Terhek">
+    <Card title="Terhek" accent="load">
       <div className="vem-item-list">
         {loads.length === 0 ? (
           <div className="vem-item-empty">Nincs teher.</div>
@@ -147,7 +147,7 @@ function SelectionSheet(): JSX.Element | null {
     const dzEnabled = support.dz !== undefined;
     const dPhiEnabled = support.dPhi !== undefined;
     return (
-      <Card title="Kijelölt támasz">
+      <Card title="Kijelölt támasz" accent="support">
         <div className="vem-panel__body--padded">
           <Slider
             label="x [m]"
@@ -234,7 +234,7 @@ function SelectionSheet(): JSX.Element | null {
     const foundation = model.foundations.find((f) => f.id === selection.id);
     if (foundation === undefined) return null;
     return (
-      <Card title="Kijelölt ágyazat">
+      <Card title="Kijelölt ágyazat" accent="foundation">
         <div className="vem-panel__body--padded">
           <Slider
             label="x₁ (kezdet) [m]"
@@ -277,7 +277,7 @@ function SelectionSheet(): JSX.Element | null {
   const load = model.loads.find((l) => l.id === selection.id);
   if (load === undefined) return null;
   return (
-    <Card title="Kijelölt teher">
+    <Card title="Kijelölt teher" accent="load">
       <div className="vem-panel__body--padded">
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
           {load.kind === 'point' ? 'pontteher' : load.kind === 'moment' ? 'nyomatékteher' : load.kind === 'distributed' ? 'megoszló teher' : 'megoszló nyomatékteher'}
@@ -469,7 +469,7 @@ export function LeftPanel(): JSX.Element {
 
         <SelectionSheet />
 
-        <Card title="Keresztmetszet">
+        <Card title="Keresztmetszet" accent="section">
           <div className="vem-section-preview">
             <SectionShapeDiagram section={section} />
             <div className="vem-section-preview__figures">
@@ -489,7 +489,7 @@ export function LeftPanel(): JSX.Element {
           </div>
         </Card>
 
-        <Card title="Megoldó">
+        <Card title="Megoldó" accent="solver">
           <div className="vem-panel__body--padded">
             <SegmentedControl
               ariaLabel="Megoldó algoritmus"
