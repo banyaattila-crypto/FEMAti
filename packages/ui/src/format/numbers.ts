@@ -69,6 +69,14 @@ export const angularFrequency = make(2, 'rad/s');
  */
 export const modeShape = make(4, '');
 
+// ─── Dinamikai válasz (tranziens, Newmark-β) ──────────────────────────────────
+
+/** Idő [s], 3 tizedes. */
+export const time = make(3, 's');
+
+/** Gyorsulás [m/s²], 3 tizedes. */
+export const acceleration = make(3, 'm/s²');
+
 // ─── Merevségek és keresztmetszeti jellemzők ─────────────────────────────────
 
 /** Hajlítómerevség EI [kNm²], egész. */

@@ -18,6 +18,7 @@ import { LoadDisplacementChart, LD_CHART_HEIGHT } from './LoadDisplacementChart.
 import { ConvergencePanel, CONVERGENCE_HEIGHT } from './ConvergencePanel.js';
 import { Beam3DStress, STRESS3D_HEIGHT } from './Beam3DStress.js';
 import { ModalPanel } from './ModalPanel.js';
+import { DynamicPanel } from './DynamicPanel.js';
 import { interpolateAt } from './interpolate.js';
 import { exportSvgElement } from './exportSvg.js';
 import * as fmt from '../format/numbers.js';
@@ -42,6 +43,10 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
 
   if (activeDiagram === 'modal') {
     return <ModalPanel outcome={modalOutcome} activeMode={activeMode} onActiveModeChange={setActiveMode} span={model.span} />;
+  }
+
+  if (activeDiagram === 'dynamic') {
+    return <DynamicPanel />;
   }
 
   if (activeDiagram === 'load-displacement' || activeDiagram === 'convergence') {

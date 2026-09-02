@@ -20,6 +20,7 @@ import { findPreset } from './data/catalog.js';
 import { useAppStore, type DiagramTab, type MobileTab } from './state/appStore.js';
 import { useModelStore } from './state/modelStore.js';
 import { useNonlinearStore } from './state/nonlinearStore.js';
+import { useDynamicStore } from './state/dynamicStore.js';
 import { combinedSteps, runNonlinearEditableModel } from './model/nonlinear.js';
 import { ModelFileError, parseEditableModelFile, serializeEditableModel, type SolverSettingsFile } from './model/fileIO.js';
 import { DiagramPanel } from './charts/DiagramPanel.js';
@@ -33,6 +34,7 @@ const DIAGRAM_TABS: readonly { id: DiagramTab; label: string }[] = [
   { id: 'load-displacement', label: 'teher–elmozdulás' },
   { id: 'convergence', label: 'konvergencia' },
   { id: 'modal', label: 'modális' },
+  { id: 'dynamic', label: 'dinamika' },
 ];
 
 /** <768px-nél a fejezet-fülek — DESIGN-TERV 3.3 "egy oszlop, fülekkel". */
@@ -175,16 +177,21 @@ export function App(): JSX.Element {
     [loadModel, s],
   );
 
-  // A modell BÁRMELY módosítása azonnal érvényteleníti a nemlineáris
-  // eredményt (appStore.ts fejléce: "az elavult eredmény nem maradhat
-  // érvényesként a képernyőn").
+  // A modell BÁRMELY módosítása azonnal érvényteleníti a nemlineáris ÉS a
+  // dinamikai eredményt is (appStore.ts fejléce: "az elavult eredmény nem
+  // maradhat érvényesként a képernyőn") — a két store EGYMÁSTÓL FÜGGETLENÜL
+  // törlődik, mert az egyik lehet üres, míg a másikban van eredmény.
   useEffect(
     () =>
       useModelStore.subscribe((state, prev) => {
         if (state.model === prev.model) return;
-        if (useNonlinearStore.getState().run === null) return;
-        useNonlinearStore.getState().clear();
-        useAppStore.getState().setStatus('editing', 'a modell módosult — futtasd újra (F5)');
+        if (useNonlinearStore.getState().run !== null) {
+          useNonlinearStore.getState().clear();
+          useAppStore.getState().setStatus('editing', 'a modell módosult — futtasd újra (F5)');
+        }
+        if (useDynamicStore.getState().run !== null) {
+          useDynamicStore.getState().clear();
+        }
       }),
     [],
   );
