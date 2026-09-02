@@ -163,25 +163,33 @@ function MaterialDetail({ material, onClose }: { readonly material: MaterialEntr
         </button>
       </header>
       <div className="vem-theory__body">
-        <div className="vem-db__figure">
-          <MaterialSwatch family={material.family} size={120} />
+        <div className="vem-db__layout">
+          <div className="vem-db__figure">
+            <MaterialSwatch family={material.family} size={160} shape="square" />
+          </div>
+
+          <div className="vem-db__columns">
+            <div>
+              <ResultRow label="Rugalmassági modulus E" formatted={num(material.e, 0, 'kN/cm²')} emphasis="large" />
+              <ResultRow label="Poisson-tényező ν" formatted={num(material.nu, 2, '')} />
+              <ResultRow label="Nyírási modulus G = E/2(1+ν)" formatted={num(g, 0, 'kN/cm²')} />
+              <Formula tex="G = \dfrac{E}{2(1+\nu)}" />
+              {material.sigmaY > 0 ? (
+                <ResultRow label="Folyáshatár σY" formatted={num(material.sigmaY, 1, 'kN/cm²')} emphasis="large" />
+              ) : (
+                <NoteBox tone="info">Nincs megadott folyáshatár — az anyag csak rugalmas vizsgálatra alkalmas ebben a katalógusban.</NoteBox>
+              )}
+              {material.hPrime > 0 ? (
+                <ResultRow label="Lineáris keményedés H′" formatted={num(material.hPrime, 0, 'kN/cm²')} />
+              ) : null}
+              <ResultRow label="Hőtágulási együttható α" formatted={num(material.alpha * 1e6, 2, '×10⁻⁶ /°C')} />
+              <ResultRow label="Sűrűség ρ" formatted={num(material.density, 0, 'kg/m³')} />
+              {material.fy1 !== undefined ? <SteelThicknessClass material={material} /> : null}
+              {material.fck !== undefined ? <ConcreteEC2Params material={material} /> : null}
+            </div>
+          </div>
         </div>
-        <ResultRow label="Rugalmassági modulus E" formatted={num(material.e, 0, 'kN/cm²')} emphasis="large" />
-        <ResultRow label="Poisson-tényező ν" formatted={num(material.nu, 2, '')} />
-        <ResultRow label="Nyírási modulus G = E/2(1+ν)" formatted={num(g, 0, 'kN/cm²')} />
-        <Formula tex="G = \dfrac{E}{2(1+\nu)}" />
-        {material.sigmaY > 0 ? (
-          <ResultRow label="Folyáshatár σY" formatted={num(material.sigmaY, 1, 'kN/cm²')} emphasis="large" />
-        ) : (
-          <NoteBox tone="info">Nincs megadott folyáshatár — az anyag csak rugalmas vizsgálatra alkalmas ebben a katalógusban.</NoteBox>
-        )}
-        {material.hPrime > 0 ? (
-          <ResultRow label="Lineáris keményedés H′" formatted={num(material.hPrime, 0, 'kN/cm²')} />
-        ) : null}
-        <ResultRow label="Hőtágulási együttható α" formatted={num(material.alpha * 1e6, 2, '×10⁻⁶ /°C')} />
-        <ResultRow label="Sűrűség ρ" formatted={num(material.density, 0, 'kg/m³')} />
-        {material.fy1 !== undefined ? <SteelThicknessClass material={material} /> : null}
-        {material.fck !== undefined ? <ConcreteEC2Params material={material} /> : null}
+
         <div style={{ marginTop: 'var(--space-4)' }}>
           <NoteBox tone={material.verified ? 'info' : 'warn'}>
             Forrás: {material.source}

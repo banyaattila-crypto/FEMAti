@@ -36,6 +36,8 @@ export const SECTION_KIND_GROUP: Record<SectionKind, string> = {
 
 export const MATERIAL_FAMILY_GROUP: Record<MaterialFamily, string> = {
   steel: 'Szerkezeti acél',
+  stainless: 'Rozsdamentes acél',
+  castiron: 'Öntöttvas',
   aluminum: 'Alumínium',
   concrete: 'Beton',
   timber: 'Fa',

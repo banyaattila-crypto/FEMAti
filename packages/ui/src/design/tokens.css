@@ -105,9 +105,18 @@
      hex-érték közel esik egy `--sem-*` tónushoz (ez véletlen egybeesés,
      nem indok az összevonásra, ld. `--sem-deformed`/`--accent` esete). */
   --catalog-steel: #9aa8b8;
+  --catalog-stainless: #c0cbd1;
+  /* 2026-09-02: sötétebbre hangolva a felhasználó által küldött referenciafotó
+     (durva, rücskös, sötét öntött felület) alapján — a korábbi érték
+     túl világos volt egy matt öntvényhez. */
+  --catalog-castiron: #3d4249;
   --catalog-aluminum: #d3dbe0;
-  --catalog-concrete: #a89f92;
-  --catalog-timber: #c1875a;
+  /* 2026-09-02: semlegesebb (kevésbé barnás) szürkére hangolva a felhasználó
+     referenciafotója (pöttyös, likacsos beton) alapján. */
+  --catalog-concrete: #a3a29c;
+  /* 2026-09-02: gazdagabb, melegebb barnára hangolva a felhasználó
+     referenciafotója (dió-jellegű, sötétebb erezetű fa) alapján. */
+  --catalog-timber: #b8794a;
 
   /* ── Tipográfia ─────────────────────────────────────────────────────── */
   --font-ui: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;

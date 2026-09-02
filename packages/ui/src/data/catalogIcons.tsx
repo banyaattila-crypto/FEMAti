@@ -10,8 +10,12 @@
  * (`currentColor`, `stroke`, `fill="none"`) — ugyanaz a letisztult,
  * finom vonalvezetésű stílus, mint a `canvas/marks.tsx` jelöléseinél.
  * ANYAG: a felhasználó kifejezett kérésére VALÓDI anyagszínű, kitöltött
- * kör-swatch (`--catalog-*` tokenek, `docs/UI-CONVENTIONS.md` 1. pont) —
- * nem szöveg-szín, hanem egy tényleges kitöltött SVG-kör.
+ * kör-/négyzet-swatch (`--catalog-*` tokenek, `docs/UI-CONVENTIONS.md` 1.
+ * pont) — nem szöveg-szín, hanem egy tényleges kitöltött SVG-alak. A beton/
+ * fa/öntöttvas családnál (2026-09-02, felhasználói kérés: "ezekkel a kész
+ * mintákkal töltsd fel") VALÓDI FÉNYKÉP (a felhasználó saját referenciái,
+ * `assets/materials/`) fedi a proceduális mintát — a fényes fémeknél
+ * (acél/rozsdamentes/alumínium) nincs fénykép, azok maradnak procedurálisak.
  */
 import { useId, type ReactNode } from 'react';
 import {
@@ -26,6 +30,9 @@ import {
 } from './catalog.js';
 import type { ComboboxOption } from '../components/Combobox.js';
 import { LOAD_COLOR, SUPPORT_COLOR, arrowMarkerId } from '../canvas/marks.js';
+import concreteRef from '../assets/materials/concrete-ref.jpg';
+import timberRef from '../assets/materials/timber-ref.jpg';
+import castironRef from '../assets/materials/castiron-ref.jpg';
 
 function Icon({ children }: { readonly children: ReactNode }): JSX.Element {
   return (
@@ -77,23 +84,41 @@ const SECTION_ICON: Record<SectionKind, JSX.Element> = {
 
 export const MATERIAL_COLOR: Record<MaterialFamily, string> = {
   steel: 'var(--catalog-steel)',
+  stainless: 'var(--catalog-stainless)',
+  castiron: 'var(--catalog-castiron)',
   aluminum: 'var(--catalog-aluminum)',
   concrete: 'var(--catalog-concrete)',
   timber: 'var(--catalog-timber)',
 };
 
+/** A fényes ("hengerelt/polírozott") fémcsaládok — közös gradiens-recept + fényív, ld. `MaterialFill`/`MetalSheen`. Ezekhez NINCS fénykép (a felhasználó csak beton/fa/öntöttvas referenciát adott), ezért maradnak procedurálisak. */
+const SHINY_METAL_FAMILIES: readonly MaterialFamily[] = ['steel', 'stainless', 'aluminum'];
+
 /**
- * Anyagcsaládonként ELTÉRŐ, "élethű" kitöltés — nem csak egy szín, hanem az
- * anyag TAPINTÁSÁT idéző mintázat (2026-08-29, felhasználói visszajelzés:
- * a korábbi sima színes kör nem volt eléggé "élethű"). A fém családok
- * (acél/alumínium) ugyanazt a "mély fém" színátmenet-receptet kapják, mint
- * a szelvényrajz (`SectionShapeDiagram.tsx`) — közös vizuális nyelv —, a
- * beton finom szemcsés (aggregátum-) mintázatot, a fa pedig évgyűrű-íveket.
+ * VALÓDI fényképek a beton/fa/öntöttvas családhoz — a felhasználó saját
+ * referenciafotói (2026-09-02, `assets/materials/`), amik LECSERÉLIK az
+ * addigi procedurális SVG-mintát ("ezekkel a kész mintákkal töltsd fel és
+ * cseréld le a régieket"). A fényes fémeknél nincs fénykép, azok a
+ * `MaterialFill`/`MetalSheen` procedurális "mély fém" receptjét kapják.
+ */
+const MATERIAL_PHOTO: Partial<Record<MaterialFamily, string>> = {
+  concrete: concreteRef,
+  timber: timberRef,
+  castiron: castironRef,
+};
+
+/**
+ * A `defsId` alap kitöltése — a fényes fémeknél a tényleges, látható "mély
+ * fém" gradiens; a fényképes családoknál (beton/fa/öntöttvas) csak egy
+ * EGYSZERŰ, egyszínű "paint hold" háttér — a fénykép (`MATERIAL_PHOTO`)
+ * úgyis teljesen (átlátszóság nélkül) lefedi, ez csak addig látszik, amíg a
+ * böngésző dekódolja a képet.
  */
 function MaterialFill({ family, defsId }: { readonly family: MaterialFamily; readonly defsId: string }): JSX.Element {
   const base = MATERIAL_COLOR[family];
   switch (family) {
     case 'steel':
+    case 'stainless':
     case 'aluminum':
       return (
         <linearGradient id={defsId} x1="0" y1="0" x2="1" y2="1">
@@ -102,55 +127,60 @@ function MaterialFill({ family, defsId }: { readonly family: MaterialFamily; rea
           <stop offset="1" stopColor={`color-mix(in srgb, ${base} 55%, black)`} />
         </linearGradient>
       );
+    case 'castiron':
     case 'concrete':
-      return (
-        <pattern id={defsId} width="5" height="5" patternUnits="userSpaceOnUse">
-          <rect width="5" height="5" fill={base} />
-          <circle cx="1.2" cy="1.4" r="0.55" fill={`color-mix(in srgb, ${base} 55%, black)`} />
-          <circle cx="3.6" cy="2.6" r="0.45" fill={`color-mix(in srgb, ${base} 40%, black)`} />
-          <circle cx="2.4" cy="4.2" r="0.5" fill={`color-mix(in srgb, ${base} 60%, white)`} />
-        </pattern>
-      );
     case 'timber':
       return (
-        <linearGradient id={defsId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={`color-mix(in srgb, ${base} 70%, white)`} />
-          <stop offset="1" stopColor={`color-mix(in srgb, ${base} 80%, black)`} />
+        <linearGradient id={defsId} x1="0" y1="0" x2="0" y2="0">
+          <stop offset="0" stopColor={base} />
         </linearGradient>
       );
   }
 }
 
-/** A fa családnál a kitöltés fölé rajzolt évgyűrű-ívek (a `defsId` gradiensen felül). */
-function TimberGrain({ base }: { readonly base: string }): JSX.Element | null {
-  const stroke = `color-mix(in srgb, ${base} 45%, black)`;
-  return (
-    <g stroke={stroke} strokeWidth="0.5" fill="none" opacity="0.55">
-      <path d="M2 6 Q8 4.2 14 6" />
-      <path d="M2 9 Q8 7.5 14 9" />
-      <path d="M2 12 Q8 10.8 14 12" />
-    </g>
-  );
+/** Fényív a fényes fémeken (acél/rozsdamentes/alumínium) — egy átlós, halványuló fehér csík, ami a hengerelt/polírozott felület fényvisszaverődését idézi. A rozsdamentes (polírozottabb) erősebb fényt kap, mint a szénacél/alumínium. */
+function MetalSheen({ family }: { readonly family: MaterialFamily }): JSX.Element {
+  const opacity = family === 'stainless' ? 0.32 : 0.16;
+  return <path d="M-2 12 L5 -2 L8 -2 L1 12 Z" fill="white" opacity={opacity} />;
 }
 
-export function MaterialSwatch({ family, size = 16 }: { readonly family: MaterialFamily; readonly size?: number }): JSX.Element {
+export interface MaterialSwatchProps {
+  readonly family: MaterialFamily;
+  readonly size?: number;
+  /** `'circle'` (alapértelmezés — kis combobox-ikon) vagy `'square'` (nagy, adatbázis-nézeti minta). */
+  readonly shape?: 'circle' | 'square';
+}
+
+export function MaterialSwatch({ family, size = 16, shape = 'circle' }: MaterialSwatchProps): JSX.Element {
   const defsId = `material-fill-${useId()}`;
   const clipId = `material-clip-${useId()}`;
-  const base = MATERIAL_COLOR[family];
+  const isSquare = shape === 'square';
+  const photo = MATERIAL_PHOTO[family];
+  // A kitöltött alap (kör/négyzet) mérete — a fénykép ugyanezt a
+  // téglalapot/kört tölti ki `preserveAspectRatio="xMidYMid slice"`-szal
+  // (a fotó közepéből kivágva, torzítás nélkül, akármilyen az eredeti
+  // képarány).
+  const inset = isSquare ? 0.5 : 2;
+  const extent = 16 - inset * 2;
+
   return (
     <svg viewBox="0 0 16 16" width={size} height={size}>
       <defs>
         <MaterialFill family={family} defsId={defsId} />
         <clipPath id={clipId}>
-          <circle cx="8" cy="8" r="6" />
+          {isSquare ? <rect x="0.5" y="0.5" width="15" height="15" rx="2.2" /> : <circle cx="8" cy="8" r="6" />}
         </clipPath>
       </defs>
-      <circle cx="8" cy="8" r="6" fill={`url(#${defsId})`} stroke="var(--border-strong)" strokeWidth="0.75" />
-      {family === 'timber' ? (
-        <g clipPath={`url(#${clipId})`}>
-          <TimberGrain base={base} />
-        </g>
-      ) : null}
+      {isSquare ? (
+        <rect x="0.5" y="0.5" width="15" height="15" rx="2.2" fill={`url(#${defsId})`} stroke="var(--border-strong)" strokeWidth="0.6" />
+      ) : (
+        <circle cx="8" cy="8" r="6" fill={`url(#${defsId})`} stroke="var(--border-strong)" strokeWidth="0.75" />
+      )}
+      {photo !== undefined ? (
+        <image href={photo} x={inset} y={inset} width={extent} height={extent} preserveAspectRatio="xMidYMid slice" clipPath={`url(#${clipId})`} />
+      ) : (
+        <g clipPath={`url(#${clipId})`}>{SHINY_METAL_FAMILIES.includes(family) ? <MetalSheen family={family} /> : null}</g>
+      )}
     </svg>
   );
 }

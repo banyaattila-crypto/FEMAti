@@ -9,8 +9,16 @@
  * ELLENŐRIZNI KELL!" (42. oldal, szó szerint).
  */
 
-/** Anyagcsalád — a Szelvény/Anyag combobox csoportosításához és ikonjához (UI). */
-export type MaterialFamily = 'steel' | 'aluminum' | 'concrete' | 'timber';
+/**
+ * Anyagcsalád — a Szelvény/Anyag combobox csoportosításához és ikonjához
+ * (UI). A `stainless`/`castiron` a `steel`-ből lett kiválasztva (2026-09-02,
+ * felhasználói kérés: élethű, típusonkénti anyagkép) — korábban mindkettő a
+ * `steel` családba volt sorolva, ami a katalógusban dokumentált, tudatosan
+ * vállalt hiányosság volt (ld. a GJS400 bejegyzés korábbi megjegyzését), mert
+ * rugalmassági modulusuk/folyási viselkedésük érdemben eltér a hengerelt
+ * szerkezeti acélétól.
+ */
+export type MaterialFamily = 'steel' | 'stainless' | 'castiron' | 'aluminum' | 'concrete' | 'timber';
 
 /** Anyagjellemzők (Diplomaterv "Táblázat 2.", 41. oldal). Egységek: E, σY [kN/cm²] · α [1/°C] · ρ [kg/m³]. */
 export interface MaterialEntry {
