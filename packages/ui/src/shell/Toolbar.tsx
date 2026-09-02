@@ -1,8 +1,8 @@
 import { Button, SegmentedControl } from '../components/Button.js';
 import { Combobox } from '../components/Combobox.js';
-import { Select, Slider } from '../components/Field.js';
-import { PRESETS, findPreset } from '../data/catalog.js';
-import { materialComboOptions, sectionComboOptions } from '../data/catalogIcons.js';
+import { Slider } from '../components/Field.js';
+import { findPreset } from '../data/catalog.js';
+import { materialComboOptions, presetComboOptions, sectionComboOptions } from '../data/catalogIcons.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import * as fmt from '../format/numbers.js';
@@ -56,12 +56,7 @@ export function Toolbar({ onRun, onOpenReport }: ToolbarProps): JSX.Element {
   return (
     <div className="vem-toolbar">
       <Cell caption="Szerkezet" hint={`ref. ${preset.ref}`} minWidth={236}>
-        <Select
-          ariaLabel="Statikai váz"
-          value={model.presetId}
-          onChange={loadPreset}
-          options={PRESETS.map((p) => ({ value: p.id, label: p.name }))}
-        />
+        <Combobox ariaLabel="Statikai váz" value={model.presetId} onChange={loadPreset} options={presetComboOptions()} />
       </Cell>
 
       <Cell caption="Geometria" minWidth={206}>

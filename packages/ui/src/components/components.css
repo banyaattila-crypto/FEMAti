@@ -243,7 +243,10 @@
   display: flex;
   align-items: center;
   flex: none;
-  width: 16px;
+  /* Nem fix 16×16 — a legtöbb ikon (szelvény-alak, anyag-swatch) az, de a
+     "Szerkezet" séma-ikon (`PresetIcon`) szélesebb (32×16), mert a támaszok
+     RELATÍV pozícióját is mutatja; a doboz a tartalom saját méretét veszi fel. */
+  min-width: 16px;
   height: 16px;
 }
 
@@ -310,7 +313,8 @@
   display: flex;
   align-items: center;
   flex: none;
-  width: 16px;
+  /* Ld. `.vem-combobox__trigger-icon` megjegyzését — a séma-ikon szélesebb. */
+  min-width: 16px;
   height: 16px;
 }
 
