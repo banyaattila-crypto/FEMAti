@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Legend, StatusPill } from './components/Feedback.js';
 import { Logo } from './components/Logo.js';
 import { ModelCanvas } from './canvas/ModelCanvas.js';
@@ -21,6 +21,7 @@ import { useAppStore, type DiagramTab, type MobileTab } from './state/appStore.j
 import { useModelStore } from './state/modelStore.js';
 import { useNonlinearStore } from './state/nonlinearStore.js';
 import { combinedSteps, runNonlinearEditableModel } from './model/nonlinear.js';
+import { ModelFileError, parseEditableModelFile, serializeEditableModel } from './model/fileIO.js';
 import { DiagramPanel } from './charts/DiagramPanel.js';
 
 const DIAGRAM_TABS: readonly { id: DiagramTab; label: string }[] = [
@@ -66,7 +67,9 @@ export function App(): JSX.Element {
   const canRedo = useModelStore((st) => st.canRedo);
   const removeSelected = useModelStore((st) => st.removeSelected);
   const selection = useModelStore((st) => st.selection);
+  const loadModel = useModelStore((st) => st.loadModel);
   const preset = findPreset(model.presetId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const nonlinear = useNonlinearStore();
 
@@ -109,6 +112,46 @@ export function App(): JSX.Element {
   const openReport = useCallback((): void => {
     s.setReportOpen(true);
   }, [s]);
+
+  /** Fájl → Mentés — a szerkeszthető modell letöltése `.femati.json`-ként (a böngésző natív letöltés-mechanizmusával, NEM a fem-core lefordított-háló sémájával, ld. `model/fileIO.ts` fejlécét). */
+  const saveModel = useCallback((): void => {
+    const json = serializeEditableModel(model);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${model.presetId}.femati.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [model]);
+
+  /** Fájl → Betöltés — a rejtett fájlválasztó megnyitása. */
+  const openLoadDialog = useCallback((): void => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const onLoadFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      const file = e.target.files?.[0];
+      e.target.value = ''; // ugyanazt a fájlt újra kiválasztva is fusson a change
+      if (file === undefined) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const text = typeof reader.result === 'string' ? reader.result : '';
+          const parsed = parseEditableModelFile(text);
+          loadModel(parsed);
+          s.setStatus('editing', `betöltve: ${file.name}`);
+        } catch (error) {
+          const message = error instanceof ModelFileError ? error.message : error instanceof Error ? error.message : String(error);
+          s.setStatus('error', `Modell betöltése sikertelen — ${message}`);
+        }
+      };
+      reader.onerror = () => s.setStatus('error', 'A fájl beolvasása sikertelen.');
+      reader.readAsText(file);
+    },
+    [loadModel, s],
+  );
 
   // A modell BÁRMELY módosítása azonnal érvényteleníti a nemlineáris
   // eredményt (appStore.ts fejléce: "az elavult eredmény nem maradhat
@@ -185,13 +228,13 @@ export function App(): JSX.Element {
 
   const menus: readonly Menu[] = [
     {
-      label: 'Fájl',
+      label: 'File',
       items: [
-        { label: 'Levezetés megnyitása', onSelect: openDerivation, separatorAfter: true },
         { label: 'Jegyzőkönyv megnyitása', onSelect: openReport, separatorAfter: true },
+        { label: 'Mentés (.femati.json)', onSelect: saveModel },
+        { label: 'Betöltés (.femati.json)', onSelect: openLoadDialog, separatorAfter: true },
         { label: 'Export: Word (.docx)', disabled: true },
         { label: 'Export: PDF', disabled: true },
-        { label: 'Modell letöltése (.femati.json)', disabled: true },
       ],
     },
     {
@@ -207,8 +250,6 @@ export function App(): JSX.Element {
     {
       label: 'Nézet',
       items: [
-        { label: 'Bal panel', shortcut: 'Ctrl+1', disabled: true },
-        { label: 'Jobb panel', shortcut: 'Ctrl+3', disabled: true },
         {
           label: s.showGaussPoints ? 'Gauss-pontok elrejtése' : 'Gauss-pontok megjelenítése',
           onSelect: () => s.setShowGaussPoints(!s.showGaussPoints),
@@ -252,6 +293,15 @@ export function App(): JSX.Element {
 
   return (
     <div className="vem-app">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,application/json"
+        onChange={onLoadFileChange}
+        style={{ display: 'none' }}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
       <header className="vem-chrome">
         <div className="vem-chrome__brand">
           <Logo variant="mark" theme="dark" size={20} />

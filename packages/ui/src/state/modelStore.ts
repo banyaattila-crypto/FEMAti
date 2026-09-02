@@ -33,6 +33,8 @@ export interface ModelState {
   readonly canRedo: boolean;
 
   readonly loadPreset: (id: string) => void;
+  /** Teljes modell betöltése (Fájl → Betöltés, `.femati.json`) — a `loadPreset` mintájára, de a kész `EditableModel`-t veszi át. */
+  readonly loadModel: (model: EditableModel) => void;
   readonly setSpan: (v: number) => void;
   readonly setElementCount: (v: number) => void;
   readonly setSectionId: (id: string) => void;
@@ -114,6 +116,13 @@ export const useModelStore = create<ModelState>()((set, get) => {
       past = [...past.slice(-HISTORY_LIMIT + 1), current];
       future = [];
       set({ model: next, selection: null, canUndo: true, canRedo: false });
+    },
+
+    loadModel: (model) => {
+      const current = get().model;
+      past = [...past.slice(-HISTORY_LIMIT + 1), current];
+      future = [];
+      set({ model, selection: null, canUndo: true, canRedo: false });
     },
 
     setSpan: (v) =>
