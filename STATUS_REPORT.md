@@ -1,7 +1,7 @@
 # FEMAti — Állapotjelentés
 
 **Utolsó frissítés:** 2026-09-02
-**Repó:** [banyaattila-crypto/fem97](https://github.com/banyaattila-crypto/fem97) (privát), `main` ág
+**Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
 **Utolsó commit:** `feed6e4` — PDF export bekötése + EC2/EN1993 kihasználtsági-ellenőrzés
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
@@ -314,8 +314,10 @@ mesterterv szerinti munka lezárult. Az itt felsorolt tételek közvetlen
 felhasználói kérésekre készültek, a projekt éles használatba vétele során.
 
 1. **Élő demo Vercelen** — a `packages/ui` build a
-   `https://banyaattila-crypto-fem97.vercel.app` címen érhető el (Vercel
-   projekt: `femati`, a `banyaattila-crypto/fem97` GitHub-repóhoz kötve,
+   `https://banyaattila-crypto-fem97.vercel.app` címen érhető el (a
+   vercel.app aldomain a régi projektnévből maradt, változatlanul él;
+   Vercel projekt: `femati`, a `banyaattila-crypto/FEMAti` GitHub-repóhoz
+   kötve — a repó időközben átnevezve `fem97`-ről,
    gyökérmappa `packages/ui`, automatikus deploy minden `main`-push-ra).
 2. **CSS-token hiba javítása** (`6977d3e`): a `historical.css`/`theory.css`
    egy soha nem létezett `--surface-base` design-tokent használt (a projekt
