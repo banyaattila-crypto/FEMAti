@@ -54,11 +54,17 @@ export interface ModelState {
   readonly addDistributedLoad: (x1: number, x2: number, q1: number, q2: number) => void;
   readonly addDistributedMomentLoad: (x1: number, x2: number, m1: number, m2: number) => void;
   readonly moveLoad: (id: string, deltaX: number) => void;
+  /** Pont-/nyomatékteher ABSZOLÚT pozíciójának pontos beállítása (pl. begépelt érték) — a hálócsomópontra illesztve, mint a `moveSupport`. */
+  readonly setLoadPosition: (id: string, x: number) => void;
+  /** Megoszló teher/nyomaték szakaszhatárainak (x1/x2) pontos, FÜGGETLEN beállítása — nincs hálóra illesztve (ld. `editable.ts` fejléce: a megoszló teher szabadon állítható). */
+  readonly setLoadRange: (id: string, x1: number, x2: number) => void;
   readonly setLoadMagnitude: (id: string, value: number) => void;
   readonly setDistributedLoadMagnitudes: (id: string, q1: number, q2: number) => void;
   readonly setDistributedMomentMagnitudes: (id: string, m1: number, m2: number) => void;
   readonly addFoundation: (x1: number, x2: number, c: number) => void;
   readonly moveFoundation: (id: string, deltaX: number) => void;
+  /** Ágyazat szakaszhatárainak pontos, független beállítása — ld. `setLoadRange`. */
+  readonly setFoundationRange: (id: string, x1: number, x2: number) => void;
   readonly setFoundationStiffness: (id: string, c: number) => void;
   readonly removeSelected: () => void;
 
@@ -236,6 +242,24 @@ export const useModelStore = create<ModelState>()((set, get) => {
         }
       }),
 
+    setLoadPosition: (id, x) =>
+      edit((d) => {
+        const l = d.loads.find((ld) => ld.id === id);
+        if (l === undefined || (l.kind !== 'point' && l.kind !== 'moment')) return;
+        l.x = snapToNode(x, d.span, d.elementCount);
+      }),
+
+    setLoadRange: (id, x1, x2) =>
+      edit((d) => {
+        const l = d.loads.find((ld) => ld.id === id);
+        if (l === undefined || (l.kind !== 'distributed' && l.kind !== 'distributed-moment')) return;
+        const lo = Math.max(0, Math.min(x1, x2));
+        const hi = Math.min(d.span, Math.max(x1, x2));
+        if (hi - lo < 1e-6) return;
+        l.x1 = lo;
+        l.x2 = hi;
+      }),
+
     setLoadMagnitude: (id, value) =>
       edit((d) => {
         const l = d.loads.find((x) => x.id === id);
@@ -284,6 +308,17 @@ export const useModelStore = create<ModelState>()((set, get) => {
         const lo = Math.min(Math.max(f.x1 + deltaX, 0), d.span - width);
         f.x1 = lo;
         f.x2 = lo + width;
+      }),
+
+    setFoundationRange: (id, x1, x2) =>
+      edit((d) => {
+        const f = d.foundations.find((fd) => fd.id === id);
+        if (f === undefined) return;
+        const lo = Math.max(0, Math.min(x1, x2));
+        const hi = Math.min(d.span, Math.max(x1, x2));
+        if (hi - lo < 1e-6) return;
+        f.x1 = lo;
+        f.x2 = hi;
       }),
 
     setFoundationStiffness: (id, c) =>

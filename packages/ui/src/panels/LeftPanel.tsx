@@ -129,9 +129,13 @@ function SelectionSheet(): JSX.Element | null {
   const setSupportType = useModelStore((s) => s.setSupportType);
   const setSpringStiffness = useModelStore((s) => s.setSpringStiffness);
   const setSupportDisplacement = useModelStore((s) => s.setSupportDisplacement);
+  const moveSupport = useModelStore((s) => s.moveSupport);
+  const setLoadPosition = useModelStore((s) => s.setLoadPosition);
+  const setLoadRange = useModelStore((s) => s.setLoadRange);
   const setLoadMagnitude = useModelStore((s) => s.setLoadMagnitude);
   const setDistributedLoadMagnitudes = useModelStore((s) => s.setDistributedLoadMagnitudes);
   const setDistributedMomentMagnitudes = useModelStore((s) => s.setDistributedMomentMagnitudes);
+  const setFoundationRange = useModelStore((s) => s.setFoundationRange);
   const setFoundationStiffness = useModelStore((s) => s.setFoundationStiffness);
   const removeSelected = useModelStore((s) => s.removeSelected);
 
@@ -145,9 +149,16 @@ function SelectionSheet(): JSX.Element | null {
     return (
       <Card title="Kijelölt támasz">
         <div className="vem-panel__body--padded">
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-            x = {support.x.toFixed(2)} m
-          </div>
+          <Slider
+            label="x [m]"
+            min={0}
+            max={model.span}
+            step={0.01}
+            value={support.x}
+            onChange={(v) => moveSupport(support.id, v)}
+            display={`${support.x.toFixed(2)} m`}
+            editable
+          />
           <SegmentedControl
             ariaLabel="Támasz típusa"
             value={support.type}
@@ -225,9 +236,26 @@ function SelectionSheet(): JSX.Element | null {
     return (
       <Card title="Kijelölt ágyazat">
         <div className="vem-panel__body--padded">
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-            {foundation.x1.toFixed(2)}–{foundation.x2.toFixed(2)} m
-          </div>
+          <Slider
+            label="x₁ (kezdet) [m]"
+            min={0}
+            max={model.span}
+            step={0.01}
+            value={foundation.x1}
+            onChange={(v) => setFoundationRange(foundation.id, v, foundation.x2)}
+            display={`${foundation.x1.toFixed(2)} m`}
+            editable
+          />
+          <Slider
+            label="x₂ (vég) [m]"
+            min={0}
+            max={model.span}
+            step={0.01}
+            value={foundation.x2}
+            onChange={(v) => setFoundationRange(foundation.id, foundation.x1, v)}
+            display={`${foundation.x2.toFixed(2)} m`}
+            editable
+          />
           <Slider
             label="c [kN/m²]"
             min={100}
@@ -252,38 +280,76 @@ function SelectionSheet(): JSX.Element | null {
     <Card title="Kijelölt teher">
       <div className="vem-panel__body--padded">
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-          {load.kind === 'point'
-            ? `pontteher, x = ${load.x.toFixed(2)} m`
-            : load.kind === 'moment'
-              ? `nyomatékteher, x = ${load.x.toFixed(2)} m`
-              : load.kind === 'distributed'
-                ? `megoszló teher, ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`
-                : `megoszló nyomatékteher, ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`}
+          {load.kind === 'point' ? 'pontteher' : load.kind === 'moment' ? 'nyomatékteher' : load.kind === 'distributed' ? 'megoszló teher' : 'megoszló nyomatékteher'}
         </div>
         {load.kind === 'point' ? (
-          <Slider
-            label="P [kN]"
-            min={1}
-            max={200}
-            step={0.01}
-            value={load.p}
-            onChange={(v) => setLoadMagnitude(load.id, v)}
-            display={`${load.p.toFixed(0)} kN`}
-            editable
-          />
+          <>
+            <Slider
+              label="x [m]"
+              min={0}
+              max={model.span}
+              step={0.01}
+              value={load.x}
+              onChange={(v) => setLoadPosition(load.id, v)}
+              display={`${load.x.toFixed(2)} m`}
+              editable
+            />
+            <Slider
+              label="P [kN]"
+              min={1}
+              max={200}
+              step={0.01}
+              value={load.p}
+              onChange={(v) => setLoadMagnitude(load.id, v)}
+              display={`${load.p.toFixed(0)} kN`}
+              editable
+            />
+          </>
         ) : load.kind === 'moment' ? (
-          <Slider
-            label="M [kNm]"
-            min={1}
-            max={200}
-            step={0.01}
-            value={load.m}
-            onChange={(v) => setLoadMagnitude(load.id, v)}
-            display={`${load.m.toFixed(0)} kNm`}
-            editable
-          />
+          <>
+            <Slider
+              label="x [m]"
+              min={0}
+              max={model.span}
+              step={0.01}
+              value={load.x}
+              onChange={(v) => setLoadPosition(load.id, v)}
+              display={`${load.x.toFixed(2)} m`}
+              editable
+            />
+            <Slider
+              label="M [kNm]"
+              min={1}
+              max={200}
+              step={0.01}
+              value={load.m}
+              onChange={(v) => setLoadMagnitude(load.id, v)}
+              display={`${load.m.toFixed(0)} kNm`}
+              editable
+            />
+          </>
         ) : load.kind === 'distributed' ? (
           <>
+            <Slider
+              label="x₁ (kezdet) [m]"
+              min={0}
+              max={model.span}
+              step={0.01}
+              value={load.x1}
+              onChange={(v) => setLoadRange(load.id, v, load.x2)}
+              display={`${load.x1.toFixed(2)} m`}
+              editable
+            />
+            <Slider
+              label="x₂ (vég) [m]"
+              min={0}
+              max={model.span}
+              step={0.01}
+              value={load.x2}
+              onChange={(v) => setLoadRange(load.id, load.x1, v)}
+              display={`${load.x2.toFixed(2)} m`}
+              editable
+            />
             <Slider
               label="q₁ (kezdet) [kN/m]"
               min={1}
@@ -307,6 +373,26 @@ function SelectionSheet(): JSX.Element | null {
           </>
         ) : (
           <>
+            <Slider
+              label="x₁ (kezdet) [m]"
+              min={0}
+              max={model.span}
+              step={0.01}
+              value={load.x1}
+              onChange={(v) => setLoadRange(load.id, v, load.x2)}
+              display={`${load.x1.toFixed(2)} m`}
+              editable
+            />
+            <Slider
+              label="x₂ (vég) [m]"
+              min={0}
+              max={model.span}
+              step={0.01}
+              value={load.x2}
+              onChange={(v) => setLoadRange(load.id, load.x1, v)}
+              display={`${load.x2.toFixed(2)} m`}
+              editable
+            />
             <Slider
               label="m₁ (kezdet) [kNm/m]"
               min={0.1}
