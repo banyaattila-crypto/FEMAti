@@ -18,6 +18,7 @@
  *  8. Lábléc minden oldalon (ld. `report.css` — nyomtatáskor `position:fixed`).
  */
 import './report.css';
+import { crackingMomentUtilization, deflectionUtilization, shearMomentInteraction } from '@femati/fem-core';
 import { findMaterial, findPreset, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
@@ -30,6 +31,7 @@ import { combinedSteps } from '../model/nonlinear.js';
 import { buildHingeReport } from './reportData.js';
 import { BeamFigure, BEAM_FIGURE_HEIGHT } from './BeamFigure.js';
 import * as fmt from '../format/numbers.js';
+import { utilizationVerdict } from '../format/utilization.js';
 
 const noop = (): void => {};
 
@@ -83,6 +85,18 @@ export function ReportView(): JSX.Element | null {
         { key: 'phi', title: 'φ — elfordulás', ys: result.nodes.map((n) => n.phi), format: fmt.rotation, flip: false },
       ] as const)
     : [];
+
+  const interaction =
+    result && result.props.mp !== null && result.props.vpl !== null
+      ? shearMomentInteraction(result.extremes.m.value, result.extremes.t.value, result.props.mp, result.props.vpl)
+      : null;
+  const mvVerdict = utilizationVerdict(interaction?.utilization ?? null);
+  const deflectionUtil = result ? deflectionUtilization(result.extremes.w.value, model.span) : null;
+  const deflectionVerdict = utilizationVerdict(deflectionUtil);
+  // fctm a katalógusban kN/cm² (ld. compile.ts `mat.e * 1e4` mintája) — kN/m²-re váltva, hogy Kₑ-vel (m³) szorozva kNm-et adjon.
+  const mcr = result && material.fctm !== undefined ? material.fctm * 1e4 * result.props.elasticModulus : null;
+  const crackingUtil = result && mcr !== null ? crackingMomentUtilization(result.extremes.m.value, mcr) : null;
+  const crackingVerdict = utilizationVerdict(crackingUtil);
 
   const hinges = nonlinearRun ? buildHingeReport(nonlinearRun) : [];
   const lastStepIndex = nonlinearRun ? combinedSteps(nonlinearRun).length - 1 : 0;
@@ -340,6 +354,59 @@ export function ReportView(): JSX.Element | null {
                   </tbody>
                 </table>
               </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Szabványossági ellenőrzés</th>
+                    <th>Kihasználtság</th>
+                    <th>Verdikt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {interaction !== null ? (
+                    <tr>
+                      <th>M-V kihasználtság (EN 1993-1-1 6.2.8, γM0 = 1.00)</th>
+                      <td className={mvVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
+                        {fmt.percent(interaction.utilization * 100).value}%
+                      </td>
+                      <td className={mvVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
+                        {mvVerdict.label}
+                      </td>
+                    </tr>
+                  ) : null}
+                  <tr>
+                    <th>Lehajlás-ellenőrzés (SLS, L/250)</th>
+                    <td className={deflectionVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
+                      {deflectionUtil !== null && Number.isFinite(deflectionUtil)
+                        ? `${fmt.percent(deflectionUtil * 100).value}%`
+                        : fmt.MISSING}
+                    </td>
+                    <td className={deflectionVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
+                      {deflectionVerdict.label}
+                    </td>
+                  </tr>
+                  {mcr !== null ? (
+                    <tr>
+                      <th>Repedési nyomaték Mcr kihasználtsága (EC2, tájékoztató)</th>
+                      <td className={crackingVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
+                        {crackingUtil !== null && Number.isFinite(crackingUtil)
+                          ? `${fmt.percent(crackingUtil * 100).value}%`
+                          : fmt.MISSING}
+                      </td>
+                      <td className={crackingVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
+                        {crackingVerdict.label}
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+              {mcr !== null ? (
+                <div className="vem-report__note">
+                  A repedési nyomaték ellenőrzés TÁJÉKOZTATÓ, SLS-jellegű jelzés — NEM vasbeton ULS teherbírás-ellenőrzés
+                  (nincs vasalás-modellezés a motorban, ld. ADR-0019, ADR-0021).
+                </div>
+              ) : null}
 
               {diagramFields.map((f) => (
                 <div key={f.key} className="vem-report__chart" style={{ height: CHART_HEIGHT }}>

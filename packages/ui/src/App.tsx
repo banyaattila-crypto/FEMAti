@@ -116,6 +116,19 @@ export function App(): JSX.Element {
   }, [s]);
 
   /**
+   * File → Export: PDF — a Jegyzőkönyv megnyitása, majd a böngésző natív
+   * nyomtatómotorjának indítása (ADR-0005: nincs külön PDF-könyvtár, a
+   * `report.css` `@media print` szabályai adják a PDF-et). A dupla
+   * `requestAnimationFrame` a React állapotváltás DOM-commitját várja be,
+   * mert itt — a `ReportView` saját "Nyomtatás" gombjától eltérően — a
+   * jegyzőkönyv a hívás pillanatában még zárva van.
+   */
+  const exportReportPdf = useCallback((): void => {
+    s.setReportOpen(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  }, [s]);
+
+  /**
    * File → Mentés — a modell ÉS a megoldó-beállítások letöltése `.femati.json`-ként
    * (a böngésző natív letöltés-mechanizmusával, NEM a fem-core lefordított-háló
    * sémájával, ld. `model/fileIO.ts` fejlécét arról is, mi MARAD ki tudatosan).
@@ -263,7 +276,7 @@ export function App(): JSX.Element {
         { label: 'Mentés (.femati.json)', onSelect: saveModel },
         { label: 'Betöltés (.femati.json)', onSelect: openLoadDialog, separatorAfter: true },
         { label: 'Export: Word (.docx)', disabled: true },
-        { label: 'Export: PDF', disabled: true },
+        { label: 'Export: PDF', onSelect: exportReportPdf },
       ],
     },
     {
