@@ -70,4 +70,16 @@ describe('shearMomentInteraction — EN 1993-1-1 6.2.8 stílusú ellenőrzés', 
     const r = shearMomentInteraction(10, 5, mpl, 0);
     expect(r.utilization).toBe(Number.POSITIVE_INFINITY);
   });
+
+  it('V > Vpl esetén (fizikailag rendellenes, de egy lineáris eredményből NUMERIKUSAN előfordulhat, mert V-t semmi nem korlátozza Vpl-re) ρ > 1 → mvRd NEGATÍV lesz, de a kihasználtság ekkor is végtelen marad, NEM egy megtévesztő negatív szám', () => {
+    // ρ = (2·1.2 − 1)² = 1.4² = 1.96 > 1  →  Mv,Rd = (1 − 1.96)·Mpl,Rd < 0.
+    // Regressziós próba: a `mvRd > 0` őrfeltétel nélkül `|M|/mvRd` egy
+    // negatív, "belefér a keretbe"-nek TŰNŐ kihasználtságot adna vissza egy
+    // súlyosan túlterhelt keresztmetszetnél — ez félrevezetőbb lenne, mint
+    // egy explicit hibaüzenet.
+    const r = shearMomentInteraction(50, 1.2 * vpl, mpl, vpl);
+    expect(r.rho).toBeGreaterThan(1);
+    expect(r.mvRd).toBeLessThan(0);
+    expect(r.utilization).toBe(Number.POSITIVE_INFINITY);
+  });
 });
