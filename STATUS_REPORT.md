@@ -1,8 +1,8 @@
 # FEMAti — Állapotjelentés
 
-**Utolsó frissítés:** 2026-08-22
+**Utolsó frissítés:** 2026-09-02
 **Repó:** [banyaattila-crypto/fem97](https://github.com/banyaattila-crypto/fem97) (privát), `main` ág
-**Utolsó commit:** `8a1d130` — P16 fázis
+**Utolsó commit:** `feed6e4` — PDF export bekötése + EC2/EN1993 kihasználtsági-ellenőrzés
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -80,11 +80,13 @@ pnpm check   → typecheck + lint + test, mindhárom csomagra, TISZTA
 
 | Csomag | Teszt-fájl | Teszt | fem-core lefedettség |
 |---|---|---|---|
-| `fem-core` | 23 | 392 | **97.16%** (sorlefedettség; küszöb: ≥90%) |
+| `fem-core` | 34 (31 fut, 3 `PROFILE=1` mögé zárt profilozó teszt mindig skip) | 498 (+3 skip) | küszöb: ≥90% (a P16 óta nem mérve újra ezen a frissítésen) |
 | `fem-validation` | 2 | 30 | — (validációs esetek, nem klasszikus unit teszt) |
-| `fem-db` | 2 | 21 | — (adatkonzisztencia: Ecm-képlet visszaellenőrzés, katalógus-geometria ±6%-os egyezés a fem-core zárt alakjával, forrás/verified-mező kötelező jelenléte) |
-| `ui` | 9 | 47 | — (nincs formális küszöb, de a nemlineáris logika, a jegyzőkönyv és a levezetés adat-előállítása, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
-| **Összesen** | **36** | **490** | |
+| `fem-db` | 2 | 25 | — (adatkonzisztencia: Ecm-képlet visszaellenőrzés, katalógus-geometria ±6%-os egyezés a fem-core zárt alakjával, forrás/verified-mező kötelező jelenléte) |
+| `ui` | 13 | 69 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
+| **Összesen** | **51** | **622** (+3 skip) | |
+
+(2026-09-02-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 43–51. pont commitjai óta is.)
 
 **P16 fuzz-teszt** (`fem-core/test/fuzz.test.ts`, a fenti számban benne): 10 000
 véletlen ÉRVÉNYES lineáris modell (span, elemszám, keresztmetszet-alak,
@@ -241,6 +243,12 @@ Mindhárom explicit `NonlinearModelError`-t dob, sosem hallgatja el
 | 0013 | Teher-vezérelt lépcsőzés a megoldó, ívhossz-vezérlés tudatosan elmaradt | P18 |
 | 0014 | Fiber-réteg szélesség: középponti mintavétel helyett terület-megőrző almintavételezés (VALÓDI hiba, felhasználó jelentette) | P18 után |
 | 0015 | Izometrikus 3D-feszültség-vizualizáció: sematikus geometria, valódi σ (nem kontinuum-FEA helyettesítő) | P18 után |
+| 0016 | Dinamikai bővítés: modális analízis (sajátfrekvencia) — tömegmátrix, sajátérték-megoldó | P18 után |
+| 0017 | Csillapítás és tranziens válasz (Rayleigh + Newmark-β) a `fem-core` szintjén | P18 után |
+| 0018 | Képlékeny M-V (hajlítás-nyírás) interakció — utólagos EN 1993-1-1 6.2.8 stílusú ellenőrzés | P18 után |
+| 0019 | EC2 beton nemlineáris σ-ε modell a rétegelt magban (EN 1992-1-1 3.1.7 parabola-téglalap) | P18 után |
+| 0020 | T-szelvény: aszimmetrikus keresztmetszet-támogatás | P18 után |
+| 0021 | Lehajlás- és repedésinyomaték-ellenőrzés + PDF export bekötése | P18 után |
 
 ---
 
@@ -1427,6 +1435,211 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     kódot nem érintenek — `git diff` manuálisan átnézve, minden érintett
     sor pontosan a tervezett, célzott cserét tartalmazza, semmilyen más
     tartalom nem sérült.
+
+43. **[RETROSPEKTÍV] Dinamikai bővítés — modális analízis + csillapítás/
+    tranziens válasz a `fem-core` szintjén** (`ca91ded`, 2026-08-28,
+    **ADR-0016 + ADR-0017**): a diplomaterv-hűség keretének 2026-08-28-i
+    tudatos elhagyása (ld. memória: `project-femati-scope-pivot`) utáni
+    ELSŐ dinamikai bővítés — utólag naplózva, mert a napló akkor nem
+    frissült. *Modális analízis* (ADR-0016): ÚJ `element/constitutive.ts`
+    `sectionMass()` (a meglévő `gamma` anyagjellemzőből, nincs új
+    `Material`-mező), `timoshenko3.ts` `elementMass()` (konzisztens
+    tömegmátrix, TELJES Gauss-integrálással — a tömeg nem szenved shear
+    lockingtól, ellentétben a merevséggel), ÚJ `linalg/eigen.ts`
+    (`cholesky()`, ciklikus Jacobi-forgatás, `generalizedSymmetricEigen()`
+    a `K·φ=ω²·M·φ` feladatra), ÚJ `solver/modal.ts` (`solveModal()`).
+    **Egy valódi hiba fejlesztés közben:** az első Jacobi-forgatás a p/q
+    diagonális elemeket két, egymásnak ellentmondó ciklusban írta felül —
+    az `eigen.test.ts` "A·v=λ·v" tesztje azonnal elkapta (0,34 relatív
+    hiba gépi pontosság helyett), javítva. Validálva zárt alakú
+    Euler–Bernoulli-referenciával (karcsú kéttámaszú gerenda, 1,7e-4
+    relatív eltérés, h-konvergenciával igazolva) — a Reddy (1999, Sādhanā)
+    független, lektorált irodalom is megerősíti a választott (redukált
+    integrációjú) elem modális pontosságát. UI: új "modális" diagram-fül
+    (`ModalPanel.tsx`, `useModalResult` hook — csak akkor fut a drága
+    sajátérték-számítás, ha a fül aktív), plusz a tömegmátrix-levezetés
+    LaTeX/`.docx` megjelenítése a Levezetés nézet "4A" szakaszaként.
+    *Csillapítás + tranziens válasz* (ADR-0017, `fem-core` szinten): ÚJ
+    `solver/damping.ts` (Rayleigh-csillapítás, `C=α·M+β·K`) és
+    `solver/transient.ts` (Newmark-β időintegrálás, alapértelmezésben
+    átlagos gyorsulás — feltétel nélkül stabil). Validálva NÉGY zárt
+    alakú referenciával (nem csak belső konzisztenciával): célzott
+    ζ-visszaadás, csillapítatlan/csillapított szabadrezgés (Chopra zárt
+    alakja, 9,08e-4 ill. 5,99e-4 csúcshiba), energiamegmaradás
+    csillapítás/gerjesztés nélkül (1,47e-12 relatív drift, gépi
+    pontosság). **Ekkor még NINCS UI-integráció** a tranziens
+    válaszhoz — ez a 49. pontban (ld. `fb4a9a0`, 2026-09-02) készült el,
+    napokkal később. `pnpm check` (mind a 4 csomag) az egész bővítés
+    után tiszta.
+
+44. **[RETROSPEKTÍV] Képlékeny M-V (hajlítás-nyírás) interakció**
+    (`32e2e0f`, 2026-08-29, **ADR-0018**): a diplomaterv (3.52 egyenlet,
+    63. oldal) és a projekt mindkét képlékenységi útja (resultant ÉS
+    rétegelt) eddig a nyírást MINDIG rugalmasnak tekintette
+    (`T=GAs·γ`), függetlenül a hajlítási folyástól — ez tudatos
+    egyszerűsítés volt, nem hiba, de "profi App"-hoz hiányzó ellenőrzés.
+    Három lehetséges út közül (A: EN 1993-1-1 6.2.8 stílusú utólagos
+    redukált-Mpl ellenőrzés; B: ellipszis-alakú interakciós felület; C:
+    teljes von Mises keresztmetszeti integrálás) a felhasználóval
+    egyeztetve az **A) utat** választottuk: UTÓLAGOS, a radial-return/
+    tangens merevséget NEM módosító kapacitás-ellenőrzés — ez radikálisan
+    csökkenti a kockázatot, mert a már egyszer hibásnak bizonyult (ADR-
+    0007), validált plasztikus maghoz nem kellett hozzányúlni. Megvalósítás:
+    ÚJ `material/shearMomentInteraction.ts` — `plasticShearCapacity()`
+    (`Vpl=A_eff·σY/√3`, ahol `A_eff` a modell MEGLÉVŐ `κs·A` mennyisége,
+    NEM a szabvány szerinti `Av` — dokumentált modellezési döntés), és
+    `shearMomentInteraction()` (a 6.2.8(2) formula: `ρ=(2|V|/Vpl−1)²` ha
+    `|V|>0,5·Vpl`, `Mv,Rd=(1−ρ)·Mpl,Rd`). `solver/linearSolver.ts`
+    `SectionProps` új `vpl` mezővel (`me`/`mp` mintájára, `null` ha nincs
+    `σY`). 9 új teszt (`shearMomentInteraction.test.ts`) a szabvány saját
+    határeseteire (V=0, V=0,5·Vpl küszöb, V=Vpl teljes redukció,
+    V=0,75·Vpl közbenső eset). UI: még aznap (`panels/RightPanel.tsx`,
+    "Határteher-ellenőrzés" szakasz) új Vpl és "M-V kihasználtság" sor,
+    ok/error jelzéssel — ez az az ellenőrzés, amit az 51. pont (`feed6e4`)
+    később a Jegyzőkönyvbe is bekötött. A B)/C) út (valódi csatolt
+    plaszticitás) TUDATOSAN nyitva marad, külön ADR-t igényelne.
+    `pnpm check` tiszta.
+
+45. **[RETROSPEKTÍV] EC2 beton nemlineáris σ-ε modell a rétegelt magban**
+    (`083da7e`, 2026-08-30, **ADR-0019**): a `fem-db` anyagkatalógus egy
+    nappal korábban (`ae3a8b6`, G+D fázis) megkapta a teljes EC2 3.1.7
+    paraméterkészletet (`fck`, `epsC2`, `epsCu2`, `n` stb.), de addig
+    TISZTÁN referencia-adat volt, a megoldó nem használta. Ez a commit a
+    tényleges bekötés: a beton a kezdettől fogva nemlineáris (parabola),
+    nincs éles folyási határ — ez FIZIKAILAG NEM írható le a meglévő
+    inkrementális, radial-return bilineáris (REFORB) törvénnyel, ezért
+    ÚJ, PÁRHUZAMOS ág készült (`material/concreteEC2.ts`
+    `concreteStress()`), nem a meglévő radial-return módosítva.
+    Modellezési döntések (mind dokumentálva): **nulla húzószilárdság**
+    (repedt keresztmetszet, a projekt előjelkonvenciója szerint `ε≥0` →
+    húzás → `σ=0`); zúzódás (`|ε|>εcu2`) esetén `σ=0`; **path-independent**
+    kiértékelés (a teljes `κ·z` alakváltozásból, nincs `LayerPlasticState`-
+    history a beton ágon) — ISMERT, DOKUMENTÁLT KORLÁT, hogy emiatt a
+    meglévő "tehermentesítés" kapcsoló FIZIKAILAG PONTATLAN betonra
+    (monoton terhelésnél, a FEMAti fő üzemmódjában, pontos); `fck`-alapú,
+    NEM `fcd` (a FEMAti szerkezeti választ szimulál, nem ULS tervezési
+    kapacitást ellenőriz). 8 új teszt (`concreteEC2.test.ts`, zárt alak:
+    csúcsponti `σ=-fck`, fennsík, zúzódás utáni nulla, érintő modulus
+    numerikus deriválttal <1e-4 relatív eltérésben egyezik) + 3 új teszt
+    (`materialState.test.ts`, modell-szintű: húzott rétegek σ=0 minden
+    rétegen VÉGIGELLENŐRIZVE). `pnpm check` + coverage tiszta.
+
+46. **[RETROSPEKTÍV] T-szelvény (aszimmetrikus keresztmetszet) támogatás**
+    (`bc877ac` + `a21cf1a`, 2026-08-30, **ADR-0020**, C fázis): a rétegelt
+    keresztmetszeti mag eddig minden alakot a félmagasságra
+    SZIMMETRIKUSNAK tételezett fel — a T-szelvény ezt megtöri (a súlypont
+    nincs `h/2`-nél). Tervezési döntés az elején: a **szögvas (L) TUDATOSAN
+    KIZÁRVA** a hatókörből — ez nem munkamennyiség kérdése, hanem ELVI
+    korlát: a FEMAti egytengelyű síkbeli modellje nem tudná hazugság
+    nélkül kezelni az L-szelvény elforgatott főtengelyeit (csatolt
+    kéttengelyű hajlítás + csavarás lenne), ami sértené a projekt
+    "radikális átláthatóság" elvét. A T-szelvénynek VAN függőleges
+    szimmetriatengelye, ezért tisztán illeszkedik az 1D modellbe. Zárt
+    alakú súlypont/inercia-levezetés (Steiner-tétel) és a képlékeny
+    modulus (egyenlő területű tengely körül) egy kézi referenciapéldán
+    (b=100, tf=20, h=200, tw=10 mm) 200 000 pontos FÜGGETLEN numerikus
+    integrálással minden tizedesjegyig egyezik. Kockázatcsökkentő döntés:
+    `yMax=max(yTop,yBottom)` — a meglévő `GeometricProperties` interfész
+    változatlan marad, EGYETLEN meglévő fogyasztó kódot sem kellett
+    módosítani. Bekötve a teljes maglánc mentén (parametrikus ÉS rétegelt
+    út), 3 új katalógus-bejegyzés (T100/T150/T200), UI-rajz a valós
+    súlyponttal (nem automatikusan félmagasságon). **Utólagos javítás
+    (`a21cf1a`, ugyanaznap):** a P16 fuzz-teszt egy valós, nem-degenerált
+    T-szelvény esetet talált (h≈0,1 m, 12 elem, 13 m fesztáv), ahol az
+    aszimmetrikus keresztmetszet rosszabbul kondicionált merevségi
+    mátrixot adott, és egy ~1 ULP-nyi bemeneti kerekítési zaj ~7×-esére
+    nagyítva a relatív reziduumot 1,02e-9-re vitte — a korábbi, szigorú
+    1e-9 egyensúly-tűrés nem hagyott elég tartalékot. Valódi szoftverhiba
+    ennél sok nagyságrenddel nagyobb reziduumot adna, ezért a küszöb
+    1e-9→1e-8-ra emelve (`diagnostics/selfCheck.ts`) — MÉG MINDIG szigorúan
+    a numerikus zaj tartománya. `pnpm check` + a T-profile arbitrary
+    generátor a 10 000/500 iterációs fuzz-teszthez zöld.
+
+47. **Megoldó-beállítások is bekerülnek a Mentés/Betöltésbe** (`95e18f3`,
+    v2 `.femati.json`): a felhasználó explicit kérése ("MINDEN legyen
+    benne") alapján a mentett fájl a szerkeszthető modell mellett mostantól
+    a `state/appStore` megoldó-beállításait is tárolja (algoritmus,
+    teherlépcső, tolerancia, `λ_cél`, teherhistória) és a nézeti
+    kapcsolókat (Gauss-pontok mutatása, M-ábra oldala, aktív diagram-fül).
+    Formátum-verzió 1→2, VISSZAMENŐLEGESEN kompatibilis módon — a régi
+    (`solverSettings` nélküli) mentések is betölthetők, alapértékekre esve
+    vissza. Tudatosan KIMARADT (`model/fileIO.ts` fejlécében dokumentálva):
+    a nemlineáris futtatás eredménye (nem praktikusan szerializálható, F5-tel
+    reprodukálható), a Levezetés/Hálófüggetlenségi vizsgálat (élő
+    újraszámítás, nincs önálló állapot), és az efemer ablak-állapotok
+    (nyitott dialógusok, aktív vászon-eszköz).
+
+48. **Pontos x-pozíció megadása támaszoknál/terheknél/ágyazatoknál**
+    (`26cc289`): a kijelölt elem adatlapján (bal panel) az `x` (ill.
+    `x1`/`x2`) mostantól szerkeszthető számmező, ugyanúgy mint a P/M/q/k
+    értékek — egérrel korábban nehéz volt pontos méterre (pl. 13,44 m)
+    letenni egy támaszt. Támaszoknál és pont-/nyomatékteherré a beírt érték
+    a LEGKÖZELEBBI hálócsomópontra kerekedik (`setLoadPosition` új
+    store-művelet, a meglévő `moveSupport`-hoz hasonlóan snappel — a motor
+    koncentrált terhet csak csomóponton tud kezelni); megoszló teher/
+    nyomaték és ágyazat végpontjai (`setLoadRange`/`setFoundationRange`)
+    szabadon, kerekítés nélkül állíthatók, mert ez már eddig is így
+    működött a motorban.
+
+49. **Új "Dinamika" fül — tranziens válasz (Newmark-béta)** (`fb4a9a0`,
+    ADR-0016/ADR-0017 folytatása): a `fem-core`-ban már kész, tesztelt
+    Newmark-béta tranziens megoldót (`solver/transient.ts`) mostantól a UI
+    is eléri. A gerjesztéshez NEM kellett új teher-szerkesztő felület: a
+    modell meglévő statikus terhét (`buildLoadVector` — ugyanaz, amit a
+    nemlineáris teherlépcsőző használ a `λ`-skálázásra) egy időfüggvénnyel
+    szorozzuk fel (lépcső/rámpa/harmonikus/impulzus), kezelhető Rayleigh-
+    csillapítással (`α`/`β`). Új fájlok: `model/dynamicRun.ts` (paraméteres,
+    NEM rétegelt — tisztán rugalmas elemzés), `state/dynamicStore.ts`
+    (a `nonlinearStore.ts` mintájára, külön tár, mert nagy, változatlan
+    payload), `charts/TransientChart.tsx` (idő-válasz görbe, w/a váltással),
+    `charts/DynamicPanel.tsx` (önálló beállítás-űrlap, saját "Futtatás"
+    gombbal — NEM a Toolbar SZÁMÍTÁS/F5-je indítja, mert sok, csak ide
+    tartozó paramétere van). 4 új teszt (`model/dynamicRun.test.ts`),
+    köztük egy fizikai szanity-ellenőrzés (csillapítatlan lépcsőterhelésnél
+    a csúcs-lehajlás ~2×-e a statikus értéknek, a klasszikus elmélet
+    szerint) és egy csillapítás-hatás ellenőrzés. **v1-korlátok**
+    (dokumentálva a fejlécekben, tudatosan nyitva hagyva): a
+    referencia-csomópont automatikus (legnagyobb |w|), nincs
+    módus-frekvencia-alapú csillapítási arány (`ζ`) mező, a beállítások
+    NEM kerülnek a `.femati.json` mentésbe (ld. 43. pont — a dinamika-
+    beállítások explicit kimaradtak onnan).
+
+50. **Anyag adatbázis átszabás — elrendezés, több anyag, élethű
+    (fényképes) minták** (`aae83a9`): (1) *Elrendezés:* a `MaterialDetail`
+    mostantól a `SectionDetail`-nél már bevált `.vem-db__layout` mintát
+    használja — a kép bal oldalt, négyzetes, nagyobb (160px, korábban
+    120px kör egy széles, üres dobozban), a szöveg közvetlenül mellette
+    kezdődik. (2) *Több anyag* (22→27): új alumínium ötvözetek (EN
+    AW-5754, -6061, -7075), új fa osztályok (C16, GL28h); a rozsdamentes
+    acél (X5CrNi18-10) és az öntöttvas (EN-GJS-400) — eddig a "steel"
+    családba begyömöszölve, saját megjegyzéssel dokumentált
+    hiányosságként — önálló `MaterialFamily`-t kapott (`stainless`,
+    `castiron`), a korábbi hiányosság-megjegyzés törölve. (3) *Élethű
+    anyagkép:* a felhasználó saját referenciafotói alapján
+    (`assets/materials/`) a beton/fa/öntöttvas család VALÓDI fényképet
+    kapott (SVG `<image>`, körbevágva, mind a nagy négyzetes, mind a kis
+    16px combobox-ikonon) — lecserélve a korábbi procedurális SVG-mintát;
+    a fényes fémek (acél/rozsdamentes/alumínium) továbbra is procedurális
+    "mély fém" gradienst kapnak, mert azokhoz nem volt referenciafotó.
+    Tesztek frissítve az új családokra/anyagokra (`materials.test.ts`,
+    22→27 rekordra).
+
+51. **PDF export bekötése + EC2/EN1993 kihasználtsági-ellenőrzés**
+    (`feed6e4`, **ADR-0021**, legfrissebb): versenytárs-elemzés (SkyCiv,
+    Dlubal RSTAB/RFEM) alapján a legnagyobb hiányosság a design/
+    code-checking hiánya volt — a program kiszámította az igénybevételeket
+    (M, T, w, φ), de nem adott %-os, pass/fail jellegű kihasználtsági-
+    visszajelzést. Két, egymástól független bővítés: (1) *PDF export:* a
+    File → Export → PDF mostantól a Jegyzőkönyvet nyitja meg és indítja a
+    böngésző natív nyomtatását (ADR-0005 architektúra követve, nincs új
+    függőség — ugyanaz a minta, mint a P15 jegyzőkönyv/P15/A levezetés
+    "Nyomtatás" gombja). (2) *Kihasználtsági ellenőrzések* a meglévő M/T/w
+    eredmények mellett (`RightPanel` + Jegyzőkönyv): az EN1993 M-V
+    interakció (ADR-0018) mostantól explicit "megfelel/túllépi a határt"
+    verdiktet is mutat; új lehajlás-ellenőrzés (SLS, `L/250`, minden
+    anyagra, `material/serviceabilityCheck.ts`, 11 új teszt); új repedési
+    nyomaték-jelzés betonra (EC2, TÁJÉKOZTATÓ jellegű — a motorban nincs
+    vasalás-modellezés, ezt a UI is explicit jelzi).
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
