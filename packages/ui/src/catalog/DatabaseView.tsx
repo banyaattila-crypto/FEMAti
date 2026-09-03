@@ -32,6 +32,8 @@ import {
   MATERIAL_FAMILY_GROUP,
   SECTION_KIND_GROUP,
   UNVERIFIED_WARNING,
+  dimensionRowsFor,
+  shearModulus,
   type MaterialEntry,
   type MaterialFamily,
   type SectionEntry,
@@ -147,7 +149,7 @@ function ConcreteEC2Params({ material }: { readonly material: MaterialEntry }): 
 }
 
 function MaterialDetail({ material, onClose }: { readonly material: MaterialEntry; readonly onClose: () => void }): JSX.Element {
-  const g = material.e / (2 * (1 + material.nu));
+  const g = shearModulus(material);
   return (
     <>
       <header className="vem-theory__header">
@@ -209,38 +211,6 @@ function MaterialDetail({ material, onClose }: { readonly material: MaterialEntr
 function deviationPct(computed: number, catalog: number | undefined): number | null {
   if (catalog === undefined || catalog === 0) return null;
   return ((computed - catalog) / catalog) * 100;
-}
-
-function dimensionRowsFor(section: SectionEntry): readonly { readonly label: string; readonly v: number | undefined }[] {
-  switch (section.kind) {
-    case 'circle':
-      return [{ label: 'Átmérő d', v: section.d ?? section.h }];
-    case 'tube':
-      return [
-        { label: 'Átmérő d', v: section.d ?? section.h },
-        { label: 'Falvastagság t', v: section.t },
-      ];
-    case 'rect':
-      return [
-        { label: 'Magasság h', v: section.h },
-        { label: 'Szélesség b', v: section.b },
-      ];
-    case 'rhs':
-      return [
-        { label: 'Magasság h', v: section.h },
-        { label: 'Szélesség b', v: section.b },
-        { label: 'Falvastagság t', v: section.t },
-      ];
-    case 'I':
-    case 'U':
-    case 't':
-      return [
-        { label: 'Magasság h', v: section.h },
-        { label: 'Szélesség b', v: section.b },
-        { label: 'Gerincvastagság tw', v: section.tw },
-        { label: 'Övvastagság tf', v: section.tf },
-      ];
-  }
 }
 
 function DimensionRows({ section }: { readonly section: SectionEntry }): JSX.Element {
@@ -416,7 +386,7 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
   const selectedSection = SECTIONS.find((s) => s.id === sectionSelection) ?? (SECTIONS[0] as SectionEntry);
 
   return (
-    <div className="vem-theory-overlay" onPointerDown={close}>
+    <div className="vem-overlay vem-theory-overlay" onPointerDown={close}>
       <div className="vem-theory vem-db" onPointerDown={(e) => e.stopPropagation()}>
         <nav className="vem-theory__nav" aria-label={title}>
           <h1>{title}</h1>

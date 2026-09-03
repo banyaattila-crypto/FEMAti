@@ -7,7 +7,8 @@
  * az egeret mind a négy ábrán megjelenik a metszet értéke" teljesüljön.
  */
 import { useRef, useState } from 'react';
-import { shearMomentInteraction } from '@femati/fem-core';
+import { geometricProperties, shearMomentInteraction } from '@femati/fem-core';
+import { toShape } from '../model/compile.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useAppStore } from '../state/appStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
@@ -159,13 +160,15 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
 
   if (activeDiagram === 'stress3d') {
     const section = findSection(model.sectionId);
+    const secProps = geometricProperties(toShape(section));
     return (
       <div style={{ width: '100%', height: STRESS3D_HEIGHT }}>
         <Beam3DStress
           xs={result.nodes.map((n) => n.x)}
           ms={result.nodes.map((n) => n.m)}
           inertia={result.props.inertia}
-          sectionHeightMm={section.h}
+          yTopMm={(secProps.yTop ?? secProps.yMax) * 1000}
+          yBottomMm={(secProps.yBottom ?? secProps.yMax) * 1000}
         />
       </div>
     );

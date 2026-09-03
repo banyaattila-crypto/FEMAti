@@ -353,7 +353,7 @@ futás eredményét mutatja (modell, dátum, verzió).
 - Modelltér: `x` [m] jobbra, `z` [m] **lefelé** pozitív (a diplomaterv 3-1. ábrája).
 - Képernyőtér: SVG `viewBox="0 0 1200 420"`, a tartó a `[76, 1124]` x-sávban, a tengelye `y = 240`-nél.
 - A transzformáció **egyetlen helyen** él (`useModelTransform`): `sx = 76 + (x/L)·1048`.
-- **A deformáció léptéke független és mindig ki van írva** („deformáció ×4317"). Automatikus lépték: a legnagyobb elmozdulás a rajzon 60 px legyen; kézzel felülírható.
+- **A deformáció léptéke független.** Automatikus lépték: a legnagyobb elmozdulás a rajzon 60 px legyen; kézzel felülírható. (A léptéket kiíró felirat — „deformáció ×4317" — 2026-09-03-ig élt a vásznon; felhasználói kérésre eltávolítva, a numerikus eredmények változatlanul a valós, nem nagyított értéket adják.)
 
 ### 5.2 Rétegsorrend (alulról felfelé)
 

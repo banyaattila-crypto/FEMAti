@@ -130,10 +130,3 @@ export function deviationTone(deviationPercent: number, tolerancePercent: number
   if (d <= 3 * tolerancePercent) return 'warn';
   return 'error';
 }
-
-/**
- * Deformációs lépték kiírása. A DESIGN-TERV 5.1 megköveteli, hogy a
- * nagyítás mértéke mindig látszódjon.
- */
-export const scaleFactor = (v: number): string =>
-  !Number.isFinite(v) ? MISSING : `×${Math.round(v).toLocaleString('hu-HU')}`;

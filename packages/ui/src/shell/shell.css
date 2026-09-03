@@ -431,7 +431,8 @@
 
 /* Koordináta-tengely jelző (2026-09-04) — külön, fix pixelméretű SVG,
    a `.vem-canvas-host` (position: relative) jobb felső sarkába horgonyozva
-   — ugyanaz a minta, mint a `.vem-canvas__scale`-nél. Azért NEM a fő vászon
+   — hasonló horgonyzási minta, mint a korábbi (2026-09-03-ig élt) deformáció-
+   lépték felirat esetében. Azért NEM a fő vászon
    belső viewBox-ában él, mert az fentebb dokumentáltan skálázódhat/
    letterboxolhat; ez itt mindig pontosan a látható sarokban marad.
    VALÓDI hiba javítva: a `.vem-canvas-host svg { width:100%; height:100% }`
@@ -446,20 +447,6 @@
   right: 10px;
   width: 40px;
   height: 40px;
-  pointer-events: none;
-}
-
-.vem-canvas__scale {
-  position: absolute;
-  /* A `.vem-canvas-host`-hoz (nem a vászon feletti Kijelölés-eszközsorhoz)
-     igazodik — a Támasz/Teher-elhelyező eszközök 2026-08-30 óta a Toolbar
-     alatti `.vem-ribbon` sorban vannak, nem lebegnek a vászon fölött. */
-  left: var(--space-5);
-  top: 44px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.5;
   pointer-events: none;
 }
 
@@ -661,6 +648,19 @@
   line-height: 1.5;
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+/* A szelvény/anyag neve — nem mérőszám, ezért a mono figurák közül a
+   normál (nem monospace) betűtípus és a félkövér emeli ki (2026-09-03,
+   felhasználói kérés: a Keresztmetszet-kártyán szerepeljen a szelvény és
+   az anyag neve is, ne csak a méretadatok). */
+.vem-section-preview__name {
+  font-family: var(--font-sans, inherit);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+  white-space: normal;
 }
 
 /* ── Idővonal ───────────────────────────────────────────────────────────── */

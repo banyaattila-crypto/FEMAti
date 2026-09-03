@@ -252,3 +252,46 @@ export const findSection = (id: string): SectionEntry =>
 
 export const findPreset = (id: string): PresetEntry =>
   PRESETS.find((p) => p.id === id) ?? firstOr(PRESETS, FALLBACK_PRESET);
+
+/**
+ * Szelvényfajtánként eltérő méretsor [mm] — közös a bal panel élő
+ * előnézete (`panels/LeftPanel.tsx`) és a szelvény-adatbázis böngésző
+ * (`catalog/DatabaseView.tsx`) között, hogy a méretjelzés ne csússzon
+ * szét a két felület között.
+ */
+export function dimensionRowsFor(
+  section: SectionEntry,
+): readonly { readonly label: string; readonly symbol: string; readonly v: number | undefined }[] {
+  switch (section.kind) {
+    case 'circle':
+      return [{ label: 'Átmérő d', symbol: 'd', v: section.d ?? section.h }];
+    case 'tube':
+      return [
+        { label: 'Átmérő d', symbol: 'd', v: section.d ?? section.h },
+        { label: 'Falvastagság t', symbol: 't', v: section.t },
+      ];
+    case 'rect':
+      return [
+        { label: 'Magasság h', symbol: 'h', v: section.h },
+        { label: 'Szélesség b', symbol: 'b', v: section.b },
+      ];
+    case 'rhs':
+      return [
+        { label: 'Magasság h', symbol: 'h', v: section.h },
+        { label: 'Szélesség b', symbol: 'b', v: section.b },
+        { label: 'Falvastagság t', symbol: 't', v: section.t },
+      ];
+    case 'I':
+    case 'U':
+    case 't':
+      return [
+        { label: 'Magasság h', symbol: 'h', v: section.h },
+        { label: 'Szélesség b', symbol: 'b', v: section.b },
+        { label: 'Gerincvastagság tw', symbol: 'tw', v: section.tw },
+        { label: 'Övvastagság tf', symbol: 'tf', v: section.tf },
+      ];
+  }
+}
+
+/** Nyírási modulus G = E / (2·(1+ν)) [kN/cm²] — az anyagkatalógus nem tárolja külön, mindig ebből számol. */
+export const shearModulus = (material: MaterialEntry): number => material.e / (2 * (1 + material.nu));

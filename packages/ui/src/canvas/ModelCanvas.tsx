@@ -444,11 +444,6 @@ export function ModelCanvas(): JSX.Element {
           Reakciók
         </button>
       </div>
-      <div className="vem-canvas__scale">
-        deformáció
-        <br />
-        {result ? fmt.scaleFactor(t.deformationScale) : error ? 'hiba' : 'nincs eredmény'}
-      </div>
       {/* Koordináta-tengely jelző (2026-09-04, felhasználói kérés) — KÜLÖN,
           fix pixelméretű SVG, a `.vem-canvas-host` jobb felső sarkába
           horgonyozva (`.vem-axis-indicator`, `shell.css`) — TUDATOSAN nem a

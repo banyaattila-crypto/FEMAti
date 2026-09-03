@@ -98,9 +98,3 @@ describe('eltérés minősítése (DESIGN-TERV 6.2)', () => {
     expect(fmt.deviationTone(-4, 2)).toBe('warn');
   });
 });
-
-describe('deformációs lépték', () => {
-  it('a nagyítás mértéke kiírható alakban áll elő', () => {
-    expect(fmt.scaleFactor(4317)).toMatch(/^×4/);
-  });
-});
