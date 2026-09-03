@@ -195,9 +195,13 @@ export function sectionComboOptions(): readonly ComboboxOption[] {
   }));
 }
 
-/** Az "Anyag" combobox opciói, anyagcsalád szerint csoportosítva, anyagszínű swatch-csal. */
-export function materialComboOptions(): readonly ComboboxOption[] {
-  return MATERIALS.map((m) => ({
+/**
+ * Az "Anyag" combobox opciói, anyagcsalád szerint csoportosítva, anyagszínű
+ * swatch-csal. `family` megadásával csak az adott családra szűkíthető (pl.
+ * a kompozit keresztmetszet betonlemez-anyaga, `panels/LeftPanel.tsx`).
+ */
+export function materialComboOptions(family?: MaterialFamily): readonly ComboboxOption[] {
+  return MATERIALS.filter((m) => family === undefined || m.family === family).map((m) => ({
     value: m.id,
     label: m.name,
     group: MATERIAL_FAMILY_GROUP[m.family],

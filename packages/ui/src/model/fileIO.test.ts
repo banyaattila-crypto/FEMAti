@@ -72,6 +72,14 @@ describe('serializeEditableModel / parseEditableModelFile', () => {
     expect(restored.model.foundations).toEqual([]);
   });
 
+  it('hiányzó composite mezőnél a kikapcsolt alapértelmezésre esik vissza (2026-09-04 előtti mentések, visszamenőleges kompatibilitás)', () => {
+    const model = fullModel();
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: Record<string, unknown> };
+    delete file.model.composite;
+    const restored = parseEditableModelFile(JSON.stringify(file));
+    expect(restored.model.composite).toEqual({ enabled: false, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' });
+  });
+
   it('1. verziójú (solverSettings nélküli) régi mentés beolvasásakor az alapértelmezésekre esik vissza, nem hibázik', () => {
     const model = fullModel();
     const legacyFile = { femaiEditorFormat: 1, model };

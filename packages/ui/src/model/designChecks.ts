@@ -42,8 +42,16 @@ export interface DesignUtilizations {
  * combinations.ts` `scaleModelForUls`/`scaleModelForSls` + `solveEditableModel`).
  */
 export function computeUtilizations(model: EditableModel, ulsResult: LinearResult, slsResult: LinearResult): DesignUtilizations {
+  // 2026-09-04: kompozit acél-beton keresztmetszeten sem az M-V plasztikus
+  // interakció (egyanyagú Wpl/σy-t tételez fel), sem a vasbeton ULS-blokk
+  // (homogén beton nyomott zónát tételez fel) nem értelmezhető — az MVP
+  // csak a rugalmas viselkedésre vonatkozik, ld. `model/compile.ts`
+  // `buildCompositeSection()` fejléce. A lehajlás-ellenőrzés anyagfüggetlen,
+  // a helyesen számított kompozit EI-vel TOVÁBBRA IS érvényes.
+  const isComposite = model.composite.enabled;
+
   const interaction =
-    ulsResult.props.mp !== null && ulsResult.props.vpl !== null
+    !isComposite && ulsResult.props.mp !== null && ulsResult.props.vpl !== null
       ? shearMomentInteraction(ulsResult.extremes.m.value, ulsResult.extremes.t.value, ulsResult.props.mp, ulsResult.props.vpl)
       : null;
   const mv = interaction?.utilization ?? null;
@@ -53,7 +61,7 @@ export function computeUtilizations(model: EditableModel, ulsResult: LinearResul
   const materialEntry = findMaterial(model.materialId);
   const sectionEntry = findSection(model.sectionId);
   const rcCapacity =
-    model.rebar.enabled && sectionEntry.kind === 'rect' && materialEntry.fck !== undefined
+    !isComposite && model.rebar.enabled && sectionEntry.kind === 'rect' && materialEntry.fck !== undefined
       ? rcMomentCapacity(
           { b: sectionEntry.b / 1000, h: sectionEntry.h / 1000 },
           materialEntry.fck * 1e4,

@@ -308,6 +308,14 @@ export interface NonlinearOutcome {
 
 /** A rétegelt modell megoldása a nemlineáris teherlépcsőzővel, hibatűrő módon. */
 export function runNonlinearEditableModel(editable: EditableModel, options: NonlinearOptions): NonlinearOutcome {
+  // 2026-09-04: a kompozit acél-beton keresztmetszet MVP-je szándékosan csak
+  // a rugalmas (lineáris) megoldásra vonatkozik — ld. `model/compile.ts`
+  // `buildCompositeSection()` fejléce. A nemlineáris (képlékeny) viselkedés
+  // kompozit szelvényen (hol a képlékeny semleges tengely, milyen a nyírt
+  // kapcsolat foka) egy önálló, később megfontolandó lépés.
+  if (editable.composite.enabled) {
+    return { run: null, error: 'Kompozit keresztmetszetre a nemlineáris (rugalmas-képlékeny) elemzés még nem támogatott.' };
+  }
   let model: Model;
   try {
     model = compileLayeredModel(editable);

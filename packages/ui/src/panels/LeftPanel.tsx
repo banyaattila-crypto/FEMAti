@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { geometricProperties } from '@femati/fem-core';
 import { SegmentedControl } from '../components/Button.js';
 import { Checkbox, Slider } from '../components/Field.js';
+import { Combobox } from '../components/Combobox.js';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { SectionShapeDiagram } from '../components/SectionShapeDiagram.js';
 import { findMaterial, findPreset, findSection, dimensionRowsFor, shearModulus, UNVERIFIED_WARNING } from '../data/catalog.js';
-import { toShape } from '../model/compile.js';
+import { materialComboOptions } from '../data/catalogIcons.js';
+import { compositeSectionStiffness, toShape } from '../model/compile.js';
 import { findSmallestSuitableSection, type OptimizeResult } from '../model/optimize.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
@@ -448,10 +450,12 @@ export function LeftPanel(): JSX.Element {
   const setSelfWeight = useModelStore((state) => state.setSelfWeight);
   const setThermalLoad = useModelStore((state) => state.setThermalLoad);
   const setRebar = useModelStore((state) => state.setRebar);
+  const setComposite = useModelStore((state) => state.setComposite);
   const setSectionId = useModelStore((state) => state.setSectionId);
   const section = findSection(model.sectionId);
   const material = findMaterial(model.materialId);
   const sectionProps = geometricProperties(toShape(section));
+  const compositeStiffness = model.composite.enabled ? compositeSectionStiffness(model) : null;
 
   /** A "legkisebb megfelelő szelvény" keresés eredménye — lokális, effemer UI-állapot (nem globális store: nem kell perzisztálni/undo-zni, egyszeri gombnyomás-eredmény). */
   const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
@@ -528,7 +532,10 @@ export function LeftPanel(): JSX.Element {
               <Checkbox
                 label="vasalás (ULS teherbírás-ellenőrzéshez)"
                 checked={model.rebar.enabled}
-                onChange={(v) => setRebar({ ...model.rebar, enabled: v })}
+                onChange={(v) => {
+                  setRebar({ ...model.rebar, enabled: v });
+                  if (v && model.composite.enabled) setComposite({ ...model.composite, enabled: false });
+                }}
               />
               {model.rebar.enabled ? (
                 <>
@@ -570,6 +577,59 @@ export function LeftPanel(): JSX.Element {
               ) : null}
             </div>
           ) : null}
+
+          <div style={{ padding: '0 var(--space-5) var(--space-2)' }}>
+            <Checkbox
+              label="kompozit keresztmetszet (acél + betonlemez)"
+              checked={model.composite.enabled}
+              onChange={(v) => {
+                setComposite({ ...model.composite, enabled: v });
+                if (v && model.rebar.enabled) setRebar({ ...model.rebar, enabled: false });
+              }}
+            />
+            {model.composite.enabled ? (
+              <>
+                <Slider
+                  label="lemez szélesség b [mm]"
+                  min={100}
+                  max={3000}
+                  step={10}
+                  value={model.composite.slabWidth * 1000}
+                  onChange={(v) => setComposite({ ...model.composite, slabWidth: v / 1000 })}
+                  display={`${(model.composite.slabWidth * 1000).toFixed(0)} mm`}
+                  editable
+                />
+                <Slider
+                  label="lemez vastagság t [mm]"
+                  min={40}
+                  max={400}
+                  step={5}
+                  value={model.composite.slabThickness * 1000}
+                  onChange={(v) => setComposite({ ...model.composite, slabThickness: v / 1000 })}
+                  display={`${(model.composite.slabThickness * 1000).toFixed(0)} mm`}
+                  editable
+                />
+                <div style={{ marginBottom: 'var(--space-2)' }}>
+                  <Combobox
+                    ariaLabel="Betonlemez anyaga"
+                    value={model.composite.slabMaterialId}
+                    onChange={(id) => setComposite({ ...model.composite, slabMaterialId: id })}
+                    options={materialComboOptions('concrete')}
+                  />
+                </div>
+                {compositeStiffness ? (
+                  <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>
+                    Kompozit EI = {(compositeStiffness.ei * 1e-3).toFixed(0)} MNm² (acél alapszelvény önmagában:{' '}
+                    {(material.e * 1e4 * sectionProps.inertia * 1e-3).toFixed(0)} MNm²)
+                  </div>
+                ) : null}
+                <NoteBox tone="warn">
+                  Csak rugalmas (SLS) viselkedésre érvényes — teljes nyírt kapcsolat feltételezve. ULS-
+                  teherbírás-ellenőrzés és nemlineáris (F5) elemzés kompozit szelvényre még nem elérhető.
+                </NoteBox>
+              </>
+            ) : null}
+          </div>
 
           {/* Automatikus szelvény-optimalizálás (2026-09-04) — a jobb panel
               M-V/lehajlás/vasbeton-ULS ellenőrzéseit futtatja végig a

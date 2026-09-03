@@ -142,4 +142,16 @@ describe('runNonlinearEditableModel', () => {
     const first = nodal[0];
     expect(first?.w).toBe(0);
   });
+
+  it('kompozit keresztmetszeten egyértelmű hibaüzenetet ad, nem próbál (rossz) eredményt számolni', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = {
+      ...presetToEditable(preset, 'simple', 6, 8, 'RECT', 'S235', false, 'selective'),
+      composite: { enabled: true, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' },
+    };
+    const outcome = runNonlinearEditableModel(editable, OPTIONS);
+    expect(outcome.run).toBeNull();
+    expect(outcome.error).toContain('nem támogatott');
+  });
 });

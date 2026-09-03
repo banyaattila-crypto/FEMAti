@@ -10,6 +10,7 @@ import {
   nextEntityId,
   presetToEditable,
   snapToNode,
+  type CompositeState,
   type EditableFoundation,
   type EditableLoad,
   type EditableModel,
@@ -44,6 +45,7 @@ export interface ModelState {
   readonly setSelfWeight: (v: boolean) => void;
   readonly setThermalLoad: (v: ThermalLoadState) => void;
   readonly setRebar: (v: RebarState) => void;
+  readonly setComposite: (v: CompositeState) => void;
   readonly setIntegration: (v: IntegrationScheme) => void;
 
   readonly select: (selection: Selection | null) => void;
@@ -164,6 +166,7 @@ export const useModelStore = create<ModelState>()((set, get) => {
     setSelfWeight: (v) => edit((d) => void (d.selfWeight = v)),
     setThermalLoad: (v) => edit((d) => void (d.thermalLoad = v)),
     setRebar: (v) => edit((d) => void (d.rebar = v)),
+    setComposite: (v) => edit((d) => void (d.composite = v)),
     setIntegration: (v) => edit((d) => void (d.integration = v)),
 
     select: (selection) => set({ selection }),

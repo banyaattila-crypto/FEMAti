@@ -33,6 +33,7 @@
  *   azonnal felugorna).
  */
 import {
+  DEFAULT_COMPOSITE,
   DEFAULT_REBAR,
   DEFAULT_THERMAL_LOAD,
   type EditableFoundation,
@@ -293,6 +294,22 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
           };
         })();
 
+  // 2026-09-04: ÚJ mező (kompozit acél-beton keresztmetszet) — ugyanaz a
+  // visszamenőleges kompatibilitási minta, mint a `rebar`-nál.
+  const compositeRaw = model.composite;
+  const composite =
+    compositeRaw === undefined
+      ? DEFAULT_COMPOSITE
+      : (() => {
+          const c = record(compositeRaw, 'model.composite');
+          return {
+            enabled: bool(c, 'enabled', 'model.composite'),
+            slabWidth: num(c, 'slabWidth', 'model.composite'),
+            slabThickness: num(c, 'slabThickness', 'model.composite'),
+            slabMaterialId: str(c, 'slabMaterialId', 'model.composite'),
+          };
+        })();
+
   return {
     model: {
       presetId: str(model, 'presetId', 'model'),
@@ -303,6 +320,7 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
       selfWeight: bool(model, 'selfWeight', 'model'),
       thermalLoad,
       rebar,
+      composite,
       integration: integration as IntegrationScheme,
       supports: array(model.supports, 'model.supports').map(parseSupport),
       loads: array(model.loads, 'model.loads').map(parseLoad),

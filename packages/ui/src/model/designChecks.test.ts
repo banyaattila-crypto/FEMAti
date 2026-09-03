@@ -57,4 +57,21 @@ describe('computeUtilizations', () => {
 
     expect(Math.abs(ulsResult.extremes.m.value)).toBeCloseTo(Math.abs(characteristicResult.extremes.m.value) * ULS_GAMMA_Q, 6);
   });
+
+  it('kompozit keresztmetszeten az mv/rc "nem alkalmazható" (null), de a lehajlás-ellenőrzés továbbra is fut', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = {
+      ...presetToEditable(preset, 'simple', 6, 8, 'RECT', 'S235', false, 'selective'),
+      composite: { enabled: true, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' },
+    };
+
+    const { uls, sls } = solveCombos(editable);
+    const utils = computeUtilizations(editable, uls, sls);
+
+    expect(utils.mv).toBeNull();
+    expect(utils.rc).toBeNull();
+    expect(utils.deflection).not.toBeNull();
+    expect(utils.governing).toBe(utils.deflection);
+  });
 });

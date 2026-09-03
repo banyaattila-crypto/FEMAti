@@ -10,6 +10,8 @@ import {
   distributedMoment,
   fixed,
   foundation,
+  generateLayers,
+  makeLayeredSection,
   makeMaterial,
   makeSection,
   nodalForce,
@@ -26,6 +28,7 @@ import {
   iProfile,
   selfWeight as selfWeightLoad,
   recommendedShearFactor,
+  sectionStiffness,
   solveLinear,
   solveModal,
   uniformMesh,
@@ -36,6 +39,7 @@ import {
   type ModalResult,
   type Section,
   type SectionShape,
+  type SectionStiffness,
 } from '@femati/fem-core';
 import { findMaterial, findSection, type SectionEntry } from '../data/catalog.js';
 import { DEFAULT_SPRING_STIFFNESS, type EditableModel } from './editable.js';
@@ -67,11 +71,9 @@ export function toShape(section: SectionEntry): SectionShape {
   }
 }
 
-/** A fem-core anyag/szelvény előállítása a katalógusból (mm / kN·cm² → SI). */
-function buildCatalogParts(materialId: string, sectionId: string): { material: Material; section: Section } {
-  const mat = findMaterial(materialId);
-  const sec = findSection(sectionId);
-  const material = makeMaterial(mat.id, mat.name, {
+/** A fem-core anyag előállítása egy katalógus-anyagbejegyzésből (mm / kN·cm² → SI). */
+function buildCatalogMaterial(mat: ReturnType<typeof findMaterial>): Material {
+  return makeMaterial(mat.id, mat.name, {
     e: mat.e * 1e4, // kN/cm² → kN/m²
     nu: mat.nu,
     alpha: mat.alpha,
@@ -89,9 +91,86 @@ function buildCatalogParts(materialId: string, sectionId: string): { material: M
     ...(mat.epsCu2 !== undefined ? { epsCu2: mat.epsCu2 } : {}),
     ...(mat.n !== undefined ? { n: mat.n } : {}),
   });
+}
+
+/** A fem-core anyag/szelvény előállítása a katalógusból (mm / kN·cm² → SI). */
+function buildCatalogParts(materialId: string, sectionId: string): { material: Material; section: Section } {
+  const mat = findMaterial(materialId);
+  const sec = findSection(sectionId);
+  const material = buildCatalogMaterial(mat);
   const shape = toShape(sec);
   const section = makeSection(sec.id, sec.name, shape, recommendedShearFactor(shape, material.nu as number));
   return { material, section };
+}
+
+// Rétegszám a kompozit acél alapszelvényhez — ugyanaz, mint `model/nonlinear.ts`
+// `LAYER_COUNT`-ja (32, a réteg-középponti mintavétel másodrendű hatása
+// ennél a finomságnál <1%-ra csökken, ld. ott a magyarázatot).
+const COMPOSITE_STEEL_LAYER_COUNT = 32;
+// A betonlemez homogén téglalap — 8 réteg bőven elég egy állandó
+// szélességű/vastagságú kontúrhoz (nincs törésponti geometria, ami finomabb
+// mintavételt igényelne, ld. `material/layeredSection.ts` fejléce).
+const COMPOSITE_SLAB_LAYER_COUNT = 8;
+
+/**
+ * Kompozit (acél alapszelvény + betonlemez) rétegelt keresztmetszet
+ * összeállítása — 2026-09-04. A `sectionStiffness()` (fem-core) rétegelt
+ * ágának EI-képlete (`Σ Eₗ·Aₗ·zₗ²`) csak akkor helyes, ha `z=0` a
+ * TRANSZFORMÁLT (E-vel súlyozott) semleges tengely — ezért itt explicit
+ * kiszámoljuk azt (`zBar`), és minden réteget ehhez centrálunk, mielőtt a
+ * mag megkapná őket. A betonlemez az alapszelvény TETEJÉRE kerül, teljes
+ * (rugalmas) nyírt kapcsolattal — nincs csúszás-modell.
+ */
+function buildCompositeSection(editable: EditableModel): { section: Section; materials: readonly Material[] } {
+  const steelMat = findMaterial(editable.materialId);
+  const steelEntry = findSection(editable.sectionId);
+  const steel = buildCatalogMaterial(steelMat);
+  const steelShape = toShape(steelEntry);
+
+  const slabMat = findMaterial(editable.composite.slabMaterialId);
+  const concrete = buildCatalogMaterial(slabMat);
+  const slabShape = rect(editable.composite.slabWidth, editable.composite.slabThickness);
+
+  const steelE = steel.e as number;
+  const concreteE = concrete.e as number;
+
+  const steelLayers = generateLayers(steelShape, COMPOSITE_STEEL_LAYER_COUNT).map((l) => ({
+    ...l,
+    materialId: steel.id as unknown as string,
+  }));
+  const steelTopZ = Math.min(...steelLayers.map((l) => l.z - l.t / 2));
+
+  // A lemez saját (középpont-relatív) alsó éle (+t/2) kerül a `steelTopZ`-re.
+  const slabShift = steelTopZ - editable.composite.slabThickness / 2;
+  const slabLayers = generateLayers(slabShape, COMPOSITE_SLAB_LAYER_COUNT).map((l) => ({
+    ...l,
+    z: l.z + slabShift,
+    materialId: concrete.id as unknown as string,
+  }));
+
+  const sumEA =
+    steelLayers.reduce((s, l) => s + steelE * l.b * l.t, 0) + slabLayers.reduce((s, l) => s + concreteE * l.b * l.t, 0);
+  const sumEAz =
+    steelLayers.reduce((s, l) => s + steelE * l.b * l.t * l.z, 0) +
+    slabLayers.reduce((s, l) => s + concreteE * l.b * l.t * l.z, 0);
+  const zBar = sumEAz / sumEA;
+  const centeredLayers = [...steelLayers, ...slabLayers].map((l) => ({ ...l, z: l.z - zBar }));
+
+  const section = makeLayeredSection(
+    steelEntry.id,
+    `${steelEntry.name} + ${slabMat.name} (kompozit)`,
+    centeredLayers,
+    recommendedShearFactor(steelShape, steel.nu as number),
+  );
+  return { section, materials: [steel, concrete] };
+}
+
+/** A kompozit szelvény tényleges (transzformált) merevségi jellemzői — a bal panel kiírásához. */
+export function compositeSectionStiffness(editable: EditableModel): SectionStiffness {
+  const { section, materials } = buildCompositeSection(editable);
+  const byId = new Map(materials.map((m) => [m.id as unknown as string, m]));
+  const lookup = (id: string): Material | undefined => byId.get(id);
+  return sectionStiffness(section, materials[0] as Material, lookup as never);
 }
 
 /** A legközelebbi hálócsomópont fem-core `NodeId`-ja (stringként). */
@@ -103,11 +182,20 @@ function nodeIdAt(x: number, span: number, elementCount: number): string {
 
 /** Az `EditableModel` lefordítása egy futtatható `fem-core` `Model`-lé. */
 export function compileModel(editable: EditableModel): Model {
-  const { material, section } = buildCatalogParts(editable.materialId, editable.sectionId);
+  const { section, materials }: { section: Section; materials: readonly Material[] } = editable.composite.enabled
+    ? buildCompositeSection(editable)
+    : (() => {
+        const parts = buildCatalogParts(editable.materialId, editable.sectionId);
+        return { section: parts.section, materials: [parts.material] };
+      })();
+  // A háló-elemek "külső" anyaghivatkozása az alap (kompozitnál: acél)
+  // anyagra mutat — a rétegek SAJÁT `materialId`-je (`buildCompositeSection`)
+  // felülírja ezt a `sectionStiffness()`-ben, ld. `element/constitutive.ts`.
+  const baseMaterial = materials[0] as Material;
 
   const mesh = uniformMesh(editable.span, editable.elementCount, {
     sectionId: section.id as unknown as string,
-    materialId: material.id as unknown as string,
+    materialId: baseMaterial.id as unknown as string,
     integration: editable.integration,
   });
 
@@ -150,7 +238,7 @@ export function compileModel(editable: EditableModel): Model {
     name: editable.presetId,
     nodes: mesh.nodes,
     elements: mesh.elements,
-    materials: [material],
+    materials,
     sections: [section],
     boundaries,
     loads,

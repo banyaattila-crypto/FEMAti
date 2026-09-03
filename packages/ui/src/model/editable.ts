@@ -127,6 +127,26 @@ export interface RebarState {
   readonly cover: number;
 }
 
+/**
+ * Kompozit acél-beton keresztmetszet (2026-09-04) — a keresztmetszet
+ * ALAPSZELVÉNYE (`EditableModel.sectionId`/`materialId`, acélnak feltételezve)
+ * fölé illesztett betonlemez, teljes (rugalmas) nyírt kapcsolattal. CSAK a
+ * lineáris (rugalmas) M/T/w/φ-megoldásra és az SLS lehajlás-ellenőrzésre hat
+ * (`model/compile.ts`) — a nemlineáris futtatás (`model/nonlinear.ts`) és a
+ * teherbírási ellenőrzések (`model/designChecks.ts`) kompozit szelvényen
+ * NINCSENEK támogatva ebben a körben (ld. a terv "hatókör-döntés" szakaszát).
+ * KÖLCSÖNÖSEN KIZÁRJA a `RebarState`-et (`panels/LeftPanel.tsx`) — két
+ * különböző funkció, ebben a körben nem kombinálhatók.
+ */
+export interface CompositeState {
+  readonly enabled: boolean;
+  /** Betonlemez szélessége [m] — az alapszelvény fölött. */
+  readonly slabWidth: number;
+  /** Betonlemez vastagsága [m]. */
+  readonly slabThickness: number;
+  readonly slabMaterialId: string;
+}
+
 export interface EditableModel {
   readonly presetId: string;
   /** Fesztáv [m] */
@@ -139,6 +159,7 @@ export interface EditableModel {
   readonly selfWeightFactor?: number;
   readonly thermalLoad: ThermalLoadState;
   readonly rebar: RebarState;
+  readonly composite: CompositeState;
   readonly integration: IntegrationScheme;
   readonly supports: readonly EditableSupport[];
   readonly loads: readonly EditableLoad[];
@@ -147,6 +168,7 @@ export interface EditableModel {
 
 export const DEFAULT_THERMAL_LOAD: ThermalLoadState = { enabled: false, tRef: 0, tTop: 0, tBottom: 0 };
 export const DEFAULT_REBAR: RebarState = { enabled: false, asBottom: 0, asTop: 0, cover: 0.03 };
+export const DEFAULT_COMPOSITE: CompositeState = { enabled: false, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' };
 /** Alapértelmezett rugóállandó [kN/m] új rugós támasz elhelyezésekor. */
 export const DEFAULT_SPRING_STIFFNESS = 5000;
 /** Alapértelmezett ágyazási tényező [kN/m²] új Winkler-ágyazat elhelyezésekor. */
@@ -212,6 +234,7 @@ export function presetToEditable(
     selfWeight,
     thermalLoad: DEFAULT_THERMAL_LOAD,
     rebar: DEFAULT_REBAR,
+    composite: DEFAULT_COMPOSITE,
     integration,
     supports,
     loads,
