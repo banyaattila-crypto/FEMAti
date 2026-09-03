@@ -1,8 +1,8 @@
 # FEMAti — Állapotjelentés
 
-**Utolsó frissítés:** 2026-09-02
+**Utolsó frissítés:** 2026-09-04
 **Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
-**Utolsó commit:** `feed6e4` — PDF export bekötése + EC2/EN1993 kihasználtsági-ellenőrzés
+**Utolsó commit:** `851c2d1` — reakcióerő-nyilak a vásznon (Rz-indexelés, ki/be kapcsolható) + canvas rács/tengely javítása
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -80,11 +80,13 @@ pnpm check   → typecheck + lint + test, mindhárom csomagra, TISZTA
 
 | Csomag | Teszt-fájl | Teszt | fem-core lefedettség |
 |---|---|---|---|
-| `fem-core` | 34 (31 fut, 3 `PROFILE=1` mögé zárt profilozó teszt mindig skip) | 498 (+3 skip) | küszöb: ≥90% (a P16 óta nem mérve újra ezen a frissítésen) |
+| `fem-core` | 34 (31 fut, 3 `PROFILE=1` mögé zárt profilozó teszt mindig skip) | 501 (+3 skip) | küszöb: ≥90% (a P16 óta nem mérve újra ezen a frissítésen) |
 | `fem-validation` | 2 | 30 | — (validációs esetek, nem klasszikus unit teszt) |
 | `fem-db` | 2 | 25 | — (adatkonzisztencia: Ecm-képlet visszaellenőrzés, katalógus-geometria ±6%-os egyezés a fem-core zárt alakjával, forrás/verified-mező kötelező jelenléte) |
-| `ui` | 13 | 69 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
-| **Összesen** | **51** | **622** (+3 skip) | |
+| `ui` | 14 | 78 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
+| **Összesen** | **52** | **634** (+3 skip) | |
+
+(2026-09-04-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — az 52–56. pont commitjai óta is.)
 
 (2026-09-02-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 43–51. pont commitjai óta is.)
 
@@ -1627,7 +1629,7 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     22→27 rekordra).
 
 51. **PDF export bekötése + EC2/EN1993 kihasználtsági-ellenőrzés**
-    (`feed6e4`, **ADR-0021**, legfrissebb): versenytárs-elemzés (SkyCiv,
+    (`feed6e4`, **ADR-0021**): versenytárs-elemzés (SkyCiv,
     Dlubal RSTAB/RFEM) alapján a legnagyobb hiányosság a design/
     code-checking hiánya volt — a program kiszámította az igénybevételeket
     (M, T, w, φ), de nem adott %-os, pass/fail jellegű kihasználtsági-
@@ -1642,6 +1644,119 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     anyagra, `material/serviceabilityCheck.ts`, 11 új teszt); új repedési
     nyomaték-jelzés betonra (EC2, TÁJÉKOZTATÓ jellegű — a motorban nincs
     vasalás-modellezés, ezt a UI is explicit jelzi).
+
+52. **Célzott mechanikai átvizsgálás — a legújabb (P18 utáni) bővítések
+    független ellenőrzése** (2026-09-03, `caae31a`): a felhasználó
+    megkérdezte, érdemes-e egy teljes szintaktikai/szemantikai ÉS egy
+    mechanikai átvizsgálást csinálni. A javaslat (a teljes 25 000 soros
+    kód újraolvasása helyett a legkevésbé validált, LEGÚJABB rétegre
+    fókuszálni) elfogadásra került. Öt modult ellenőriztem, mindegyiket a
+    kódtól FÜGGETLEN módszerrel: (1) *dinamika* (tömegmátrix, Cholesky+
+    Jacobi sajátérték-megoldó, Rayleigh-csillapítás, Newmark-β) — formula-
+    egyeztetés Bathe/Chopra tankönyvi alakjával, egyezés; (2) *EC2 beton*
+    — saját láncszabály-levezetés + numerikus differenciahányados az
+    érintő-modulusra, egyezés; (3) *M-V interakció* — egy gyanús
+    szélsőérték (V>Vpl) node-ban futtatott numerikus próbával ellenőrizve:
+    a `mvRd>0` őrfeltétel miatt HAMIS RIASZTÁS volt, a kód már helyesen
+    kezelte, de a viselkedés addig nem volt teszttel lefedve — pótolva
+    (`shearMomentInteraction.test.ts`, "V > Vpl" eset); (4) *T-szelvény
+    geometria* — 2 milliós felbontású, a kódtól TELJESEN független
+    numerikus integrálással (nem csak az ADR-0020 saját hivatkozási
+    értékeivel), mind az 5 érték (A, ȳ, I, y_pna, Wpl) egyezik; (5)
+    *lehajlás-/repedésinyomaték-ellenőrzés* (tegnapi, ADR-0021) — a teljes
+    mértékegység-lánc kézzel visszavezetve a `materials.json` valódi
+    `fctm` értékéig. Eredmény: nem talált valódi hibát, csak a fenti egy
+    hamis riasztást zárta le regressziós teszttel. `pnpm check` zöld.
+
+53. **Gauss-pont σ-profil újratervezése + új "kihasználtság" diagram-fül**
+    (2026-09-03/04, `f3636fd`): a felhasználó szerint a Keresztmetszet-
+    inspektor rétegenkénti feszültségábrája "túl egyszerűen" nézett ki —
+    a korábbi lapos, 3 diszkrét színű oszlopdiagram helyett mostantól
+    folytonos hőtérkép-kitöltés (`jetColor`, ugyanaz a skála, mint a 3D-
+    feszültségképen és az M/T/w/φ diagramokon), valódi σ-/z-tengely
+    (számértékekkel) és az állapotot (rugalmas/részben képlékeny/
+    képlékeny) jelző színes körvonal + jelmagyarázat. **VALÓDI hiba
+    javítva:** a σ-tengely eddig hallgatólagosan szimmetrikus
+    keresztmetszetet tételezett fel (`zTop = -totalHeight/2`) — az
+    aszimmetrikus T-szelvénynél (ADR-0020) ez elcsúsztatta volna a
+    diagramot; most a tényleges legfelső/legalsó réteg SZÉLÉBŐL számol,
+    mindkét esetre helyesen. Az M–κ görbe halvány rácsot és tengely-
+    végponti értékeket kapott. Új "kihasználtság" diagram-fül: az M-V
+    interakciós ellenőrzés (ADR-0018) eddig csak egyetlen globális
+    %-számként jelent meg a jobb panelen — most folytonos görbeként, a
+    gerenda MINDEN pontjára kiszámolva, ugyanazzal a diagram-motorral,
+    mint M/T/w/φ (hover-metszet, SVG export, hibasáv). **Második VALÓDI
+    hiba javítva:** a `.femati.json` mentés/betöltés érvényességi listája
+    (`fileIO.ts` `DIAGRAM_TABS`) sosem lett frissítve a P18-utáni
+    "dinamika" fülhöz (`fb4a9a0`) — dinamika (vagy az új kihasználtság)
+    fül aktív állapotában mentve a visszatöltés hibát dobott volna;
+    javítva, regressziós teszttel lefedve.
+
+54. **Vasbeton (vasalt keresztmetszet) ULS teherbírás-ellenőrzés**
+    (2026-09-04, `259e819`): a felhasználóval közösen azonosított
+    legnagyobb tényleges hiányosság — az EC2 betonmodell (ADR-0019) eddig
+    csak sima betont kezelt, valódi Aₛ-alapú ULS-ellenőrzés nélkül. Új
+    vasalás-bemenet a Keresztmetszet kártyán (csak téglalap keresztmetszet
+    + beton anyag esetén: alsó/felső Aₛ, fedés). Új "Vasbeton ULS" readout
+    a jobb panelen (`model/rcCapacity.ts`): zárt alakú, egyszerűsített
+    téglalap feszültségblokk (EC2 3.1.7(3), η=1,0/λ=0,8), B500B betonacél,
+    jellemző (γ=1,0) érték — TUDATOSAN független a rétegelt EC2 parabola-
+    téglalap fiber-modelltől (ugyanaz a szétválasztás, mint Mₑ/Mₚ-nél),
+    ezért mindig ÉLŐ, nem igényel SZÁMÍTÁS-t. Kézzel leellenőrizve
+    (300×500mm, C25/30, 12 cm² alsó vasalás → MRd=252 kNm, node-ban
+    függetlenül újraszámolva egyezik). A vasalás emellett VALÓDI rétegként
+    is bekerül a rétegelt nemlineáris modellbe (`model/nonlinear.ts`),
+    ezért a 53. pontban újratervezett σ-profil hőtérképen AUTOMATIKUSAN
+    megjelenik, külön munka nélkül. **VALÓDI hiba felmerült és lezárva,
+    mielőtt bárki belefutott volna:** a vasalás-réteg szükségszerűen
+    egybeesik egy beton fiber-réteggel (a rúd a betonon belül van) — ez a
+    meglévő hézag-/átfedés-ellenőrzést (`model/validate.ts` `checkLayers`)
+    hamis `LAYER_OVERLAP` hibával futtathatatlanná tette volna a modellt.
+    Új `Layer.reinforcement` jelző (fem-core), ami kizárja az ilyen
+    rétegeket az átfedés-vizsgálatból — pozitív ÉS negatív kontroll
+    teszttel lefedve (utóbbi igazolja, hogy a jelzés nélkül a hiba tényleg
+    jelentkezne). Dokumentált egyszerűsítések: csak téglalap keresztmetszet,
+    fix B500B osztály, alulvasalt/folyó vasalás feltételezés, a globális
+    M-max/M-min szélsőértékre vonatkozik.
+
+55. **Jobb panel betűméret csökkentése (két kör) + koordináta-tengely a
+    vásznon** (2026-09-04, `4e598b0`): a felhasználó jelezte, hogy a jobb
+    panel "large"/"hero" hangsúlyú sorai (a Határteher-ellenőrzés kártyán
+    a vasbeton-ULS bővítéssel 4-5 "large" sor is egymás alatt) a keskeny
+    (272px) panelben összefolyó, olvashatatlan hatást adtak. Két körben
+    csökkentve (`--type-value-lg-size` 15→13,5→13px, `--type-value-xl-size`
+    17→15→14px) — a "large" mostantól az ALAP mérettel egyezik (csak a
+    600-as súly különbözteti meg). Új koordináta-tengely jelző a
+    modell-vászon jobb felső sarkában (kis x/z nyíl, fix méret) — a z nyíl
+    LEFELÉ mutat, mert a modell előjelkonvenciója szerint z lefelé
+    pozitív, ami a leggyakoribb félreértés forrása.
+
+56. **Reakcióerő-nyilak a vásznon (Rz-indexelés, ki/be kapcsolható) +
+    canvas rács/tengely javítása** (2026-09-04, `851c2d1`): a felhasználó
+    kérésére piros reakció-nyilak a támaszok tengelyében, a
+    támasz-szimbólumok ALATT (nem takarnak semmit), `Rz1`/`Rz2`/…
+    sorszámozással (alsó indexben, `<tspan>`-nal, mert a "z"-nek nincs
+    Unicode-alsóindexe) — UGYANAZZAL a sorszámozással, mint a jobb panel
+    "Reakciók · egyensúly" kártyájának sorai (mindkét hely a
+    `result.reactions` tömb saját sorrendjét használja indexnek). Ki/be
+    kapcsolható a vászon eszköztárában (új "Reakciók" gomb, piros
+    állapotjelzéssel, `aria-pressed`) ÉS a "Nézet" menüben; a kapcsoló a
+    `.femati.json`-ba is mentődik (visszamenőleg kompatibilis
+    alapértékkel). Több iterációban finomítva élő felhasználói
+    visszajelzés alapján (irány, pozíció a támasz alá, index-formázás,
+    előjel megjelenítése). **Két VALÓDI hiba is előkerült és javítva:**
+    (1) a nyíl iránya kezdetben fordítva volt — a NEGATÍV előjelű reakció
+    mutat felfelé (mert z lefelé pozitív), nem a pozitív; (2) az 55.
+    pontban bevezetett koordináta-tengely jelző óriásira, középre nyúlt —
+    a `.vem-canvas-host svg { width:100%; height:100% }` szabály nagyobb
+    CSS-specificitású volt, mint a jelző saját osztálya, felülírva a fix
+    40×40px méretet. Ugyanebben a körben egy korábban jelzett, de akkor
+    csak feltételezett okú elrendezési hiba is lezárva: a háttérrács nem
+    töltötte ki a teljes rajzfelületet (a belső, `ResizeObserver`-rel
+    dinamikusan skálázott SVG-viewBox `xMidYMid meet` belső letterboxingot
+    adhatott) — a rács/derengés mostantól tiszta CSS-háttér a vászon
+    SVG-elem SAJÁT CSS-dobozán, függetlenül a belső skálázási
+    furcsaságoktól.
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
