@@ -144,6 +144,7 @@ export function App(): JSX.Element {
       peakLambda: s.peakLambda,
       showGaussPoints: s.showGaussPoints,
       momentTensionSide: s.momentTensionSide,
+      showReactions: s.showReactions,
       activeDiagram: s.activeDiagram,
     };
     const json = serializeEditableModel(model, solverSettings);
@@ -179,6 +180,7 @@ export function App(): JSX.Element {
           s.setPeakLambda(solverSettings.peakLambda);
           s.setShowGaussPoints(solverSettings.showGaussPoints);
           s.setMomentTensionSide(solverSettings.momentTensionSide);
+          s.setShowReactions(solverSettings.showReactions);
           s.setActiveDiagram(solverSettings.activeDiagram);
           s.setStatus('editing', `betöltve: ${file.name}`);
         } catch (error) {
@@ -301,6 +303,10 @@ export function App(): JSX.Element {
         {
           label: s.momentTensionSide ? 'M ábra: normál oldal' : 'M ábra: húzott oldal',
           onSelect: () => s.setMomentTensionSide(!s.momentTensionSide),
+        },
+        {
+          label: s.showReactions ? 'Reakciók elrejtése' : 'Reakciók megjelenítése',
+          onSelect: () => s.setShowReactions(!s.showReactions),
         },
       ],
     },

@@ -72,6 +72,15 @@
   font-size: 11.5px;
 }
 
+/* Ki/be kapcsolható eszköztár-gomb bekapcsolt állapota (2026-09-04, a
+   vászon "Reakciók" kapcsolójához) — a `--sem-error` (piros) tónus, mert
+   ugyanaz a szín, mint magáé a reakció-nyilaké a vásznon, így a gomb
+   állapota vizuálisan is a jelentéséhez kötődik. */
+.vem-btn[aria-pressed='true'] {
+  color: var(--sem-error);
+  border-color: var(--sem-error);
+}
+
 .vem-spinner {
   width: 11px;
   height: 11px;

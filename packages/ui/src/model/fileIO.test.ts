@@ -25,6 +25,7 @@ const fullSolverSettings: SolverSettingsFile = {
   peakLambda: 1.5,
   showGaussPoints: true,
   momentTensionSide: false,
+  showReactions: false,
   activeDiagram: 'T',
 };
 
@@ -77,6 +78,14 @@ describe('serializeEditableModel / parseEditableModelFile', () => {
     const restored = parseEditableModelFile(JSON.stringify(legacyFile));
     expect(restored.model).toEqual(model);
     expect(restored.solverSettings).toEqual(DEFAULT_SOLVER_SETTINGS);
+  });
+
+  it('showReactions nélküli (a mai bővítés előtti) v2 mentésnél `true`-ra esik vissza, nem hibázik', () => {
+    const model = fullModel();
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { solverSettings: Record<string, unknown> };
+    delete file.solverSettings.showReactions;
+    const restored = parseEditableModelFile(JSON.stringify(file));
+    expect(restored.solverSettings.showReactions).toBe(true);
   });
 
   it('érvénytelen algorithm értéknél ModelFileError-t dob', () => {

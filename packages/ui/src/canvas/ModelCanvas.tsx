@@ -86,6 +86,8 @@ export function ModelCanvas(): JSX.Element {
   const nonlinearRun = useNonlinearStore((s) => s.run);
   const activeStep = useAppStore((s) => s.activeStep);
   const showGaussPoints = useAppStore((s) => s.showGaussPoints);
+  const showReactions = useAppStore((s) => s.showReactions);
+  const setShowReactions = useAppStore((s) => s.setShowReactions);
   const inspector = useAppStore((s) => s.inspector);
   const openInspector = useAppStore((s) => s.openInspector);
   const currentNonlinearStep = nonlinearRun ? combinedSteps(nonlinearRun)[activeStep] : undefined;
@@ -432,39 +434,33 @@ export function ModelCanvas(): JSX.Element {
         >
           Törlés
         </button>
+        <button
+          type="button"
+          className="vem-btn vem-btn--sm"
+          aria-pressed={showReactions}
+          onClick={() => setShowReactions(!showReactions)}
+          title="Reakcióerők ki/be kapcsolása a vásznon"
+        >
+          Reakciók
+        </button>
       </div>
       <div className="vem-canvas__scale">
         deformáció
         <br />
         {result ? fmt.scaleFactor(t.deformationScale) : error ? 'hiba' : 'nincs eredmény'}
       </div>
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${VIEW_WIDTH} ${viewH}`}
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label={ariaLabel}
-        style={{ cursor: tool === 'select' ? (drag?.kind === 'pan' ? 'grabbing' : 'grab') : 'crosshair', flex: 1, minHeight: 0 }}
-        onWheel={onWheel}
-        onPointerDown={onBackgroundPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-      >
-        <CanvasDefs />
-        {/* 0. réteg — háttérrács + derengés (screen-space, NEM követi a
-            pan/zoom-ot — a klasszikus rajzasztal-rács a nézet fix
-            tulajdonsága, nem a modellé). */}
-        <rect x={0} y={0} width={VIEW_WIDTH} height={viewH} fill="url(#vem-grid-major)" />
-        <rect x={0} y={0} width={VIEW_WIDTH} height={viewH} fill="url(#vem-canvas-vignette)" />
-        {/* Koordináta-tengely jelző (2026-09-04, felhasználói kérés) — a
-            rajz jobb felső sarkában, screen-space (NEM követi a pan/zoom-ot,
-            mindig ugyanott, ugyanakkora — egy klasszikus CAD-viewport
-            "iránytű"). A z NYÍL LEFELÉ mutat, mert a modell előjelkonvenciója
-            szerint z lefelé pozitív (docs/CONVENTIONS.md §2,
-            `material/concreteEC2.ts` fejléce) — ez a leggyakoribb forrása a
-            "miért lefelé nő a lehajlás" félreértésnek, ezt hivatott
-            egyértelművé tenni. */}
-        <g transform={`translate(${VIEW_WIDTH - 54}, 34)`} aria-hidden="true">
+      {/* Koordináta-tengely jelző (2026-09-04, felhasználói kérés) — KÜLÖN,
+          fix pixelméretű SVG, a `.vem-canvas-host` jobb felső sarkába
+          horgonyozva (`.vem-axis-indicator`, `shell.css`) — TUDATOSAN nem a
+          lenti fő vászon belső, dinamikusan skálázott viewBox-ában él, mert
+          az (ResizeObserver + `xMidYMid meet`) belső letterboxingot adhat
+          (ld. a `.vem-model-canvas` CSS-komment). A z NYÍL LEFELÉ mutat,
+          mert a modell előjelkonvenciója szerint z lefelé pozitív
+          (docs/CONVENTIONS.md §2, `material/concreteEC2.ts` fejléce) — ez a
+          leggyakoribb forrása a "miért lefelé nő a lehajlás" félreértésnek,
+          ezt hivatott egyértelművé tenni. */}
+      <svg className="vem-axis-indicator" width={40} height={40} viewBox="0 0 40 40" aria-hidden="true">
+        <g transform="translate(6,6)">
           <line x1={0} y1={0} x2={22} y2={0} stroke="var(--text-faint)" strokeWidth={1.3} />
           <path d="M22,0 L16,-3 L16,3 Z" fill="var(--text-faint)" />
           <text x={27} y={3.5} fontSize={10.5} fontFamily="var(--font-mono)" fill="var(--text-faint)">
@@ -477,6 +473,21 @@ export function ModelCanvas(): JSX.Element {
           </text>
           <circle cx={0} cy={0} r={1.4} fill="var(--text-faint)" />
         </g>
+      </svg>
+      <svg
+        ref={svgRef}
+        className="vem-model-canvas"
+        viewBox={`0 0 ${VIEW_WIDTH} ${viewH}`}
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label={ariaLabel}
+        style={{ cursor: tool === 'select' ? (drag?.kind === 'pan' ? 'grabbing' : 'grab') : 'crosshair', flex: 1, minHeight: 0 }}
+        onWheel={onWheel}
+        onPointerDown={onBackgroundPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <CanvasDefs />
         <g transform={`translate(${camera.tx},${camera.ty}) scale(${camera.scale})`}>
           {/* 2. réteg — eredeti tengely */}
           <line
@@ -566,6 +577,44 @@ export function ModelCanvas(): JSX.Element {
               </g>
             );
           })}
+
+          {/* 6.5 réteg — reakcióerők (2026-09-04, felhasználói kérés), piros
+              nyíllal, PONTOSAN a támasz tengelyében, ki/be kapcsolható
+              ("Nézet" menü). Az fz előjele NEM "pozitív = felfelé" — a
+              modell z-tengelye lefelé pozitív (ld. `material/concreteEC2.ts`
+              fejléce, `docs/CONVENTIONS.md` §2), a reakcióerő UGYANEZT a
+              z-konvenciót követi, ezért NEGATÍV fz mutat felfelé (a −z
+              irányba), pozitív lefelé.
+              A nyíl a TÁMASZ-SZIMBÓLUM ALÁ kerül (nem fölé/rá), hogy semmit
+              ne takarjon — a legnagyobb támaszjel (befogás/rugó) függőleges
+              kiterjedése ±30px a tengelytől, ezért a nyíl 38px-nél kezdődik.
+              A felirat sorszámozott (Rz1, Rz2, …, a `result.reactions`
+              tömb sorrendjében), a tényleges (nem előjeles) nagysággal —
+              az irányt már a nyíl hordozza. */}
+          {showReactions && result
+            ? result.reactions.map((r, i) => {
+                const rx = t.sx(r.x);
+                const up = r.fz < 0;
+                const nearY = axisY + 38;
+                const farY = axisY + 62;
+                const tailY = up ? farY : nearY;
+                const headY = up ? nearY : farY;
+                const headSign = up ? 1 : -1;
+                return (
+                  <g key={r.nodeId} aria-hidden="true">
+                    <line x1={rx} y1={tailY} x2={rx} y2={headY} stroke="var(--sem-error)" strokeWidth={1.6} />
+                    <path
+                      d={`M${rx},${headY} L${rx - 3.2},${headY + 6 * headSign} L${rx + 3.2},${headY + 6 * headSign} Z`}
+                      fill="var(--sem-error)"
+                    />
+                    <text x={rx + 6} y={farY + 6} fontSize={13} fontWeight={600} fontFamily="var(--font-mono)" fill="var(--sem-error)">
+                      R<tspan fontSize={9.5} dy={3}>{`z${i + 1}`}</tspan>
+                      <tspan dy={-3}>{` = ${fmt.force(r.fz).value} kN`}</tspan>
+                    </text>
+                  </g>
+                );
+              })
+            : null}
 
           {/* 7. réteg — terhek */}
           {model.loads.map((load) => {

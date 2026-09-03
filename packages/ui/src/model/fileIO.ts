@@ -54,6 +54,8 @@ export interface SolverSettingsFile {
   readonly peakLambda: number;
   readonly showGaussPoints: boolean;
   readonly momentTensionSide: boolean;
+  /** Reakcióerők piros nyíllal a vásznon (2026-09-04) — a régebbi (e mező nélküli) mentéseknél `true`-ra esik vissza, ld. `parseSolverSettings`. */
+  readonly showReactions: boolean;
   readonly activeDiagram: DiagramTab;
 }
 
@@ -65,6 +67,7 @@ export const DEFAULT_SOLVER_SETTINGS: SolverSettingsFile = {
   peakLambda: 1.2,
   showGaussPoints: false,
   momentTensionSide: true,
+  showReactions: true,
   activeDiagram: 'M',
 };
 
@@ -217,6 +220,12 @@ function parseSolverSettings(v: unknown): SolverSettingsFile {
     peakLambda: num(o, 'peakLambda', 'solverSettings'),
     showGaussPoints: bool(o, 'showGaussPoints', 'solverSettings'),
     momentTensionSide: bool(o, 'momentTensionSide', 'solverSettings'),
+    // ÚJ mező (2026-09-04) — a MÁR meglévő v2 mentések (a mai nap korábbi
+    // részéből, `dynamic`/`utilization` fülekkel) még nem ismerik; a
+    // tanulság a ma reggeli DIAGRAM_TABS-hibából: ÚJ mezőt egy MÁR élő
+    // formátum-verzión belül csak tolerálva, hiányzásnál alapértékre esve
+    // szabad hozzáadni, nem szigorú `bool()`-lal (ami hibát dobna).
+    showReactions: o.showReactions === undefined ? true : bool(o, 'showReactions', 'solverSettings'),
     activeDiagram: activeDiagram as DiagramTab,
   };
 }

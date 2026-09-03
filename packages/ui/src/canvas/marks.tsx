@@ -342,29 +342,12 @@ export function NodeMark({ x, y, interior = false }: NodeMarkProps): JSX.Element
 export function CanvasDefs(): JSX.Element {
   return (
     <defs>
-      {/* "Kék papír" rácsminta a vászon hátterén (2026-09-02, felhasználói
-          kérés: "a canvas is legyen színesebb") — a korábbi teljesen sima,
-          egyszínű háttér helyett egy finom, mérnöki-rajzasztal jellegű
-          rács, a márka türkizébe hangolva. A finom rács 20px-enként, az
-          erősebb fővonalak 100px-enként (5 finom cellánként) — ez a
-          klasszikus "blueprint" arány. Screen-space (nem a modell-
-          koordinátákkal skálázódik), mert a vászon zoom/pan-tartománya
-          (0.5×–6×) mellett egy modell-térbe kötött rács vagy túl sűrű, vagy
-          túl ritka lenne a szélsőértékeknél. */}
-      <pattern id="vem-grid-minor" width={20} height={20} patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--accent)" strokeOpacity={0.05} strokeWidth={1} />
-      </pattern>
-      <pattern id="vem-grid-major" width={100} height={100} patternUnits="userSpaceOnUse">
-        <rect width={100} height={100} fill="url(#vem-grid-minor)" />
-        <path d="M 100 0 L 0 0 0 100" fill="none" stroke="var(--accent)" strokeOpacity={0.12} strokeWidth={1} />
-      </pattern>
-      {/* Nagyon halvány, közép felé melegedő türkiz derengés a rács fölött —
-          a cél, hogy a vászon KÖZEPE (ahol a modell van) vizuálisan a
-          fókuszpont legyen, a sarkok pedig egy árnyalattal semlegesebbek. */}
-      <radialGradient id="vem-canvas-vignette" cx="50%" cy="42%" r="75%">
-        <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.05" />
-        <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
-      </radialGradient>
+      {/* A "kék papír" rácsminta + derengés (2026-09-02) 2026-09-04-én
+          kikerült innen: SVG <rect>-ként a belső, dinamikusan skálázott
+          viewBox-on nem töltötte ki megbízhatóan a teljes látható területet
+          (letterboxing-gyanú, ld. `shell/shell.css` `.vem-model-canvas`
+          komment) — mostantól tiszta CSS-háttér a vászon SVG-elem saját
+          dobozán, `ModelCanvas.tsx`. */}
 
       {(Object.keys(LOAD_COLOR) as LoadColorKind[]).map((kind) => (
         <marker

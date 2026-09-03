@@ -57,6 +57,8 @@ export interface AppState {
   showGaussPoints: boolean;
   /** M diagram a húzott oldalra rajzolva (DESIGN-TERV 5.4, kapcsolható konvenció). */
   momentTensionSide: boolean;
+  /** Reakcióerők piros nyíllal a vásznon a támaszoknál (2026-09-04, felhasználói kérés), ki/be kapcsolható. */
+  showReactions: boolean;
   /** A keresztmetszet-inspektor (P13 #4) nyitott panelje; `null` = zárva. */
   inspector: InspectorSelection | null;
   /** A számítási jegyzőkönyv (P15) nyitva van-e. */
@@ -92,6 +94,7 @@ export interface AppState {
   setActiveMode: (v: number) => void;
   setShowGaussPoints: (v: boolean) => void;
   setMomentTensionSide: (v: boolean) => void;
+  setShowReactions: (v: boolean) => void;
   setStatus: (status: SolverStatus, detail?: string) => void;
   openInspector: (selection: InspectorSelection) => void;
   closeInspector: () => void;
@@ -123,6 +126,7 @@ export const useAppStore = create<AppState>()((set) => ({
   activeMode: 0,
   showGaussPoints: false,
   momentTensionSide: true,
+  showReactions: true,
   inspector: null,
   reportOpen: false,
   derivationOpen: false,
@@ -147,6 +151,7 @@ export const useAppStore = create<AppState>()((set) => ({
   setActiveMode: (v) => set({ activeMode: v }),
   setShowGaussPoints: (v) => set({ showGaussPoints: v }),
   setMomentTensionSide: (v) => set({ momentTensionSide: v }),
+  setShowReactions: (v) => set({ showReactions: v }),
   setStatus: (status, detail = '') => set({ status, statusDetail: detail }),
   openInspector: (selection) => set({ inspector: selection }),
   closeInspector: () => set({ inspector: null }),

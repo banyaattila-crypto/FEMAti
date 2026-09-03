@@ -79,11 +79,15 @@ export function RightPanel(): JSX.Element {
         </Card>
 
         <Card title="Reakciók · egyensúly" accent="results">
+          {/* Az "Rz{n}" sorszámozás UGYANAZ a `result.reactions` tömb-sorrend,
+              mint amit a vászon reakció-nyilai (`canvas/ModelCanvas.tsx`)
+              használnak — ugyanaz a támasz mindkét helyen ugyanazt az
+              indexet kapja. */}
           {result
-            ? result.reactions.map((r) => (
-                <ResultRow key={r.nodeId} label={`R (x = ${r.x.toFixed(2)} m)`} formatted={fmt.force(r.fz)} />
+            ? result.reactions.map((r, i) => (
+                <ResultRow key={r.nodeId} label={`Rz${i + 1} (x = ${r.x.toFixed(2)} m)`} formatted={fmt.force(r.fz)} />
               ))
-            : model.supports.map((s) => <ResultRow key={s.id} label={`R (x = ${s.x.toFixed(2)} m)`} formatted={fmt.force(null)} />)}
+            : model.supports.map((s, i) => <ResultRow key={s.id} label={`Rz${i + 1} (x = ${s.x.toFixed(2)} m)`} formatted={fmt.force(null)} />)}
           <ResultRow
             label="ΣFz ellenőrzés"
             formatted={fmt.force(result?.equilibrium.sumFz ?? null)}

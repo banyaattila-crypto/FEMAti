@@ -405,6 +405,50 @@
   height: 100%;
 }
 
+/* 2026-09-04 javítás: a rács/derengés korábban SVG <rect>-ként élt a fő
+   vászon belső, dinamikusan skálázott viewBox-án (ResizeObserver + `xMidYMid
+   meet`) — a felhasználó jelezte, hogy nem tölti ki a teljes rajzfelületet
+   (üres sáv a szélein), ami arra utal, hogy a viewBox belső aránya nem
+   mindig egyezik pontosan a doboz tényleges arányával, és a "meet" ilyenkor
+   belső letterboxingot ad. A megbízható javítás: a rács/derengés mostantól
+   TISZTA CSS-háttér a vászon SVG-elem SAJÁT CSS-dobozán (nem a belső
+   viewBox-koordinátarendszerén) — ez garantáltan a teljes látható területet
+   fedi, függetlenül bármilyen belső skálázási furcsaságtól. */
+.vem-model-canvas {
+  background-image:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--accent) 12%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(0deg, color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--accent) 5%, transparent) 0%, transparent 75%);
+  background-size:
+    100px 100px,
+    100px 100px,
+    20px 20px,
+    20px 20px,
+    100% 100%;
+}
+
+/* Koordináta-tengely jelző (2026-09-04) — külön, fix pixelméretű SVG,
+   a `.vem-canvas-host` (position: relative) jobb felső sarkába horgonyozva
+   — ugyanaz a minta, mint a `.vem-canvas__scale`-nél. Azért NEM a fő vászon
+   belső viewBox-ában él, mert az fentebb dokumentáltan skálázódhat/
+   letterboxolhat; ez itt mindig pontosan a látható sarokban marad.
+   VALÓDI hiba javítva: a `.vem-canvas-host svg { width:100%; height:100% }`
+   szabály (fentebb) NAGYOBB specificitású (osztály+típus), mint egy sima
+   `.vem-axis-indicator` egy-osztályos szabály — a jelző emiatt óriásira, a
+   teljes vászon méretére nyúlt, középre skálázva. A `.vem-canvas-host
+   svg.vem-axis-indicator` szelektor (két osztály+típus) EGYÉRTELMŰEN
+   nagyobb specificitású, forrás-sorrendtől függetlenül felülírja. */
+.vem-canvas-host svg.vem-axis-indicator {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+}
+
 .vem-canvas__scale {
   position: absolute;
   /* A `.vem-canvas-host`-hoz (nem a vászon feletti Kijelölés-eszközsorhoz)
