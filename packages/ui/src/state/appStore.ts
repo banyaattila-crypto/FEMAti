@@ -38,7 +38,7 @@ function hasSeenWelcome(): boolean {
 
 export type SolverAlgorithm = 'newton' | 'modified-newton';
 export type LoadHistoryMode = 'monotonic' | 'unloading';
-export type DiagramTab = 'M' | 'T' | 'w' | 'phi' | 'utilization' | 'load-displacement' | 'convergence' | 'stress3d' | 'modal' | 'dynamic';
+export type DiagramTab = 'M' | 'T' | 'w' | 'phi' | 'utilization' | 'envelope' | 'load-displacement' | 'convergence' | 'stress3d' | 'modal' | 'dynamic';
 export type TheoryTopic = 'thesis96' | 'timoshenko' | 'integration' | 'reforb' | 'fullPdf' | 'about';
 /** <768px-nél melyik panel látszik (DESIGN-TERV 3.3: "egy oszlop, fülekkel"). */
 export type MobileTab = 'model' | 'canvas' | 'results';

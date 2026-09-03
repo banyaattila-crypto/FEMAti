@@ -80,6 +80,14 @@ describe('serializeEditableModel / parseEditableModelFile', () => {
     expect(restored.model.composite).toEqual({ enabled: false, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' });
   });
 
+  it('hiányzó movingLoad mezőnél a kikapcsolt alapértelmezésre esik vissza (2026-09-04 előtti mentések, visszamenőleges kompatibilitás)', () => {
+    const model = fullModel();
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: Record<string, unknown> };
+    delete file.model.movingLoad;
+    const restored = parseEditableModelFile(JSON.stringify(file));
+    expect(restored.model.movingLoad).toEqual({ enabled: false, magnitude: 10 });
+  });
+
   it('hiányzó axialForce mezőnél 0-ra (kikapcsolt P-Δ) esik vissza (2026-09-04 előtti mentések, visszamenőleges kompatibilitás)', () => {
     const model = fullModel();
     const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: Record<string, unknown> };

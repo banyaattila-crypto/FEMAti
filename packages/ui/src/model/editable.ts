@@ -147,6 +147,22 @@ export interface CompositeState {
   readonly slabMaterialId: string;
 }
 
+/**
+ * Mozgó pontteher — burkolóábra (2026-09-04). A `magnitude` teher
+ * VÉGIGSÉTÁL a tartó minden hálócsomópontján (a koncentrált teher ma is
+ * csomópontra illeszkedik, ld. a fájl fejléce), a MEGLÉVŐ terhekre
+ * SZUPERPONÁLVA — a burkolóábra (`model/envelope.ts`) minden
+ * keresztmetszetre a lehetséges legnagyobb/legkisebb M/T-t adja. CSAK a
+ * jellemző (nem faktorozott) teherre, a fő M/T diagramokkal PÁRHUZAMOS,
+ * ÚJ diagram-fülként (`state/appStore.ts` `DiagramTab` `'envelope'`) —
+ * nem érinti az ULS/SLS tervezési ellenőrzéseket.
+ */
+export interface MovingLoadState {
+  readonly enabled: boolean;
+  /** A mozgó pontteher nagysága [kN], lefelé pozitív (ua. konvenció, mint `EditablePointLoad.p`). */
+  readonly magnitude: number;
+}
+
 export interface EditableModel {
   readonly presetId: string;
   /** Fesztáv [m] */
@@ -172,6 +188,7 @@ export interface EditableModel {
   readonly thermalLoad: ThermalLoadState;
   readonly rebar: RebarState;
   readonly composite: CompositeState;
+  readonly movingLoad: MovingLoadState;
   readonly integration: IntegrationScheme;
   readonly supports: readonly EditableSupport[];
   readonly loads: readonly EditableLoad[];
@@ -181,6 +198,7 @@ export interface EditableModel {
 export const DEFAULT_THERMAL_LOAD: ThermalLoadState = { enabled: false, tRef: 0, tTop: 0, tBottom: 0 };
 export const DEFAULT_REBAR: RebarState = { enabled: false, asBottom: 0, asTop: 0, cover: 0.03 };
 export const DEFAULT_COMPOSITE: CompositeState = { enabled: false, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' };
+export const DEFAULT_MOVING_LOAD: MovingLoadState = { enabled: false, magnitude: 10 };
 /** Alapértelmezett rugóállandó [kN/m] új rugós támasz elhelyezésekor. */
 export const DEFAULT_SPRING_STIFFNESS = 5000;
 /** Alapértelmezett ágyazási tényező [kN/m²] új Winkler-ágyazat elhelyezésekor. */
@@ -248,6 +266,7 @@ export function presetToEditable(
     thermalLoad: DEFAULT_THERMAL_LOAD,
     rebar: DEFAULT_REBAR,
     composite: DEFAULT_COMPOSITE,
+    movingLoad: DEFAULT_MOVING_LOAD,
     integration,
     supports,
     loads,

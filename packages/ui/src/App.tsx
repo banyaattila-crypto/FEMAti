@@ -33,6 +33,7 @@ const DIAGRAM_TABS: readonly { id: DiagramTab; label: string; accent: string }[]
   { id: 'w', label: 'w', accent: '--tab-w' },
   { id: 'phi', label: 'φ', accent: '--tab-phi' },
   { id: 'utilization', label: 'kihasználtság', accent: '--tab-utilization' },
+  { id: 'envelope', label: 'burkolóábra', accent: '--tab-envelope' },
   { id: 'stress3d', label: '3D feszültség', accent: '--tab-stress3d' },
   { id: 'load-displacement', label: 'teher–elmozdulás', accent: '--tab-load-displacement' },
   { id: 'convergence', label: 'konvergencia', accent: '--tab-convergence' },

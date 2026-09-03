@@ -450,6 +450,7 @@ export function LeftPanel(): JSX.Element {
   const setSelfWeight = useModelStore((state) => state.setSelfWeight);
   const setThermalLoad = useModelStore((state) => state.setThermalLoad);
   const setAxialForce = useModelStore((state) => state.setAxialForce);
+  const setMovingLoad = useModelStore((state) => state.setMovingLoad);
   const setRebar = useModelStore((state) => state.setRebar);
   const setComposite = useModelStore((state) => state.setComposite);
   const setSectionId = useModelStore((state) => state.setSectionId);
@@ -781,6 +782,31 @@ export function LeftPanel(): JSX.Element {
                 diagramokra és az SLS lehajlásra hat. Kihajlási/kritikus teher ellenőrzés és nemlineáris
                 (F5) elemzés N≠0 mellett még nem elérhető.
               </NoteBox>
+            ) : null}
+            <Checkbox
+              label="mozgó teher (burkolóábra)"
+              checked={model.movingLoad.enabled}
+              onChange={(v) => setMovingLoad({ ...model.movingLoad, enabled: v })}
+            />
+            {model.movingLoad.enabled ? (
+              <>
+                <Slider
+                  label="mozgó pontteher P [kN]"
+                  min={1}
+                  max={200}
+                  step={1}
+                  value={model.movingLoad.magnitude}
+                  onChange={(v) => setMovingLoad({ ...model.movingLoad, magnitude: v })}
+                  display={`${model.movingLoad.magnitude.toFixed(0)} kN`}
+                  editable
+                />
+                <NoteBox tone="info">
+                  A "burkolóábra" diagram-fülön látható a lehetséges legnagyobb/legkisebb M/T minden
+                  keresztmetszetre, ahogy ez a teher végigsétál a tartón (a meglévő állandó terhekkel
+                  együtt). Jellemző (nem faktorozott) teherre — több egyidejű tengelyteher
+                  (tengelycsoport) nincs ebben a körben.
+                </NoteBox>
+              </>
             ) : null}
             <Checkbox label="Gauss-pontok megjelenítése" checked={s.showGaussPoints} onChange={s.setShowGaussPoints} />
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>

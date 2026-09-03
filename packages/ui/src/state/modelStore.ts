@@ -17,6 +17,7 @@ import {
   type EditableSupport,
   type IntegrationScheme,
   type LoadCategory,
+  type MovingLoadState,
   type RebarState,
   type SupportType,
   type ThermalLoadState,
@@ -47,6 +48,7 @@ export interface ModelState {
   readonly setThermalLoad: (v: ThermalLoadState) => void;
   readonly setRebar: (v: RebarState) => void;
   readonly setComposite: (v: CompositeState) => void;
+  readonly setMovingLoad: (v: MovingLoadState) => void;
   readonly setIntegration: (v: IntegrationScheme) => void;
 
   readonly select: (selection: Selection | null) => void;
@@ -169,6 +171,7 @@ export const useModelStore = create<ModelState>()((set, get) => {
     setThermalLoad: (v) => edit((d) => void (d.thermalLoad = v)),
     setRebar: (v) => edit((d) => void (d.rebar = v)),
     setComposite: (v) => edit((d) => void (d.composite = v)),
+    setMovingLoad: (v) => edit((d) => void (d.movingLoad = v)),
     setIntegration: (v) => edit((d) => void (d.integration = v)),
 
     select: (selection) => set({ selection }),

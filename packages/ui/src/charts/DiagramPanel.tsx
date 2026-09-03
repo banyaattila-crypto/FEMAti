@@ -14,11 +14,13 @@ import { useAppStore } from '../state/appStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
 import { useModalResult } from '../solve/useModalResult.js';
+import { useEnvelopeResult } from '../solve/useEnvelopeResult.js';
 import { findSection } from '../data/catalog.js';
 import { DiagramChart, CHART_HEIGHT, type ChartElementSpan } from './DiagramChart.js';
 import { LoadDisplacementChart, LD_CHART_HEIGHT } from './LoadDisplacementChart.js';
 import { ConvergencePanel, CONVERGENCE_HEIGHT } from './ConvergencePanel.js';
 import { Beam3DStress, STRESS3D_HEIGHT } from './Beam3DStress.js';
+import { EnvelopeChart, ENVELOPE_CHART_HEIGHT } from './EnvelopeChart.js';
 import { ModalPanel } from './ModalPanel.js';
 import { DynamicPanel } from './DynamicPanel.js';
 import { interpolateAt } from './interpolate.js';
@@ -35,6 +37,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
   const model = useModelStore((s) => s.model);
   const { result, error } = useLiveResult(model);
   const modalOutcome = useModalResult(model, activeDiagram === 'modal');
+  const envelope = useEnvelopeResult(model, activeDiagram === 'envelope');
   const nonlinearRun = useNonlinearStore((s) => s.run);
   const nonlinearError = useNonlinearStore((s) => s.error);
   const activeStep = useAppStore((s) => s.activeStep);
@@ -73,6 +76,28 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
         ) : (
           <ConvergencePanel run={nonlinearRun} activeStep={activeStep} />
         )}
+      </div>
+    );
+  }
+
+  if (activeDiagram === 'envelope') {
+    if (!model.movingLoad.enabled) {
+      return (
+        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
+          Kapcsold be a mozgó terhet a bal panelen ("mozgó teher — burkolóábra") ehhez a fülhöz.
+        </div>
+      );
+    }
+    if (envelope === null) {
+      return (
+        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
+          A burkolóábra nem számítható — a modell jelenlegi állapotában nem futtatható.
+        </div>
+      );
+    }
+    return (
+      <div style={{ width: '100%', height: ENVELOPE_CHART_HEIGHT }}>
+        <EnvelopeChart result={envelope} span={model.span} />
       </div>
     );
   }

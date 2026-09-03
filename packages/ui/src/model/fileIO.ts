@@ -34,6 +34,7 @@
  */
 import {
   DEFAULT_COMPOSITE,
+  DEFAULT_MOVING_LOAD,
   DEFAULT_REBAR,
   DEFAULT_THERMAL_LOAD,
   type EditableFoundation,
@@ -210,6 +211,7 @@ const DIAGRAM_TABS: readonly DiagramTab[] = [
   'w',
   'phi',
   'utilization',
+  'envelope',
   'load-displacement',
   'convergence',
   'stress3d',
@@ -310,6 +312,20 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
           };
         })();
 
+  // 2026-09-04: ÚJ mező (mozgó teher — burkolóábra) — ugyanaz a
+  // visszamenőleges kompatibilitási minta, mint a `rebar`/`composite`-nál.
+  const movingLoadRaw = model.movingLoad;
+  const movingLoad =
+    movingLoadRaw === undefined
+      ? DEFAULT_MOVING_LOAD
+      : (() => {
+          const ml = record(movingLoadRaw, 'model.movingLoad');
+          return {
+            enabled: bool(ml, 'enabled', 'model.movingLoad'),
+            magnitude: num(ml, 'magnitude', 'model.movingLoad'),
+          };
+        })();
+
   return {
     model: {
       presetId: str(model, 'presetId', 'model'),
@@ -325,6 +341,7 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
       thermalLoad,
       rebar,
       composite,
+      movingLoad,
       integration: integration as IntegrationScheme,
       supports: array(model.supports, 'model.supports').map(parseSupport),
       loads: array(model.loads, 'model.loads').map(parseLoad),
