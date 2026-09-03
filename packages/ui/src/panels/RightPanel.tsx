@@ -1,11 +1,11 @@
-import { crackingMomentUtilization, deflectionUtilization, shearMomentInteraction } from '@femati/fem-core';
+import { crackingMomentUtilization } from '@femati/fem-core';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { ResultRow } from '../components/Value.js';
-import { findMaterial, findSection } from '../data/catalog.js';
+import { findMaterial } from '../data/catalog.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
-import { rcMomentCapacity } from '../model/rcCapacity.js';
+import { computeUtilizations } from '../model/designChecks.js';
 import * as fmt from '../format/numbers.js';
 import { utilizationVerdict } from '../format/utilization.js';
 
@@ -23,39 +23,43 @@ export function RightPanel(): JSX.Element {
   const nonlinearRun = useNonlinearStore((s) => s.run);
   const lastLoadingStep = nonlinearRun?.loadingSteps.at(-1);
 
-  const interaction =
-    result && result.props.mp !== null && result.props.vpl !== null
-      ? shearMomentInteraction(result.extremes.m.value, result.extremes.t.value, result.props.mp, result.props.vpl)
-      : null;
-  const mvVerdict = utilizationVerdict(interaction?.utilization ?? null);
-
-  const deflectionUtil = result ? deflectionUtilization(result.extremes.w.value, model.span) : null;
-  const deflectionVerdict = utilizationVerdict(deflectionUtil);
+  // M-V interakció, lehajlás-ellenőrzés, vasbeton ULS — megosztott logika
+  // (`model/designChecks.ts`), amit a szelvény-optimalizálás (`model/
+  // optimize.ts`) is ugyanígy hív minden jelölt szelvényre, hogy a kettő ne
+  // csúszhasson szét egymástól.
+  const utils = result ? computeUtilizations(model, result) : null;
+  const mvVerdict = utilizationVerdict(utils?.mv ?? null);
+  const deflectionVerdict = utilizationVerdict(utils?.deflection ?? null);
+  const rcVerdict = utilizationVerdict(utils?.rc ?? null);
 
   const materialEntry = findMaterial(model.materialId);
   // fctm a katalógusban kN/cm² (ld. compile.ts `mat.e * 1e4` mintája) — kN/m²-re váltva, hogy Kₑ-vel (m³) szorozva kNm-et adjon.
+  // TÁJÉKOZTATÓ jellegű (nem ULS/SLS-kapu), ezért NEM része a `computeUtilizations` "governing" kihasználtságának.
   const mcr = result && materialEntry.fctm !== undefined ? materialEntry.fctm * 1e4 * result.props.elasticModulus : null;
   const crackingUtil = result && mcr !== null ? crackingMomentUtilization(result.extremes.m.value, mcr) : null;
   const crackingVerdict = utilizationVerdict(crackingUtil);
 
-  // Vasbeton ULS (2026-09-03) — a zárt alakú téglalap feszültségblokk
-  // (ld. `model/rcCapacity.ts`) a globális M-max/M-min ELŐJELÉTŐL függően
-  // választja ki, melyik vasalás van HÚZOTT oldalon (pozitív M: alsó,
-  // negatív M: felső) — ugyanaz a "globális szélsőértékből, konzervatív
-  // becslés" elv, mint az M-V ellenőrzésnél (ADR-0018/ADR-0021).
-  const sectionEntry = findSection(model.sectionId);
-  const rcCapacity =
-    result && model.rebar.enabled && sectionEntry.kind === 'rect' && materialEntry.fck !== undefined
-      ? rcMomentCapacity(
-          { b: sectionEntry.b / 1000, h: sectionEntry.h / 1000 },
-          materialEntry.fck * 1e4,
-          result.extremes.m.value >= 0 ? model.rebar.asBottom : model.rebar.asTop,
-          result.extremes.m.value >= 0 ? model.rebar.asTop : model.rebar.asBottom,
-          model.rebar.cover,
-        )
-      : null;
-  const rcUtil = result && rcCapacity ? Math.abs(result.extremes.m.value) / rcCapacity.mu : null;
-  const rcVerdict = utilizationVerdict(rcUtil);
+  // ΣFz/ΣMy ellenőrzés bontása "honnan jött ki a ~0" tooltipphez — a
+  // `checkEquilibrium` (fem-core `linearSolver.ts`) csomópontonként összegez
+  // (terhek + reakciók DOF-szinten), ami mérnökileg nem olvasható; itt a
+  // FIZIKAILAG értelmes két csoportra bontjuk vissza: Σreakciók (amit a
+  // fenti Rz-sorok már úgyis kiírnak) és Σterhek = a maradék. Ez EGZAKT, nem
+  // közelítés — a lineáris összegzés felcserélhetősége miatt Σterhek
+  // pontosan az összes külső teher eredőjével egyezik (a konzisztens
+  // csomóponti terhelés-vektor definíció szerint megőrzi az eredő erőt/
+  // nyomatékot).
+  const reactionsFz = result ? result.reactions.reduce((s, r) => s + r.fz, 0) : null;
+  const reactionsMy = result ? result.reactions.reduce((s, r) => s + r.my + r.fz * r.x, 0) : null;
+  const loadsFz = result && reactionsFz !== null ? result.equilibrium.sumFz - reactionsFz : null;
+  const loadsMy = result && reactionsMy !== null ? result.equilibrium.sumMy - reactionsMy : null;
+  const sumFzTitle =
+    result && reactionsFz !== null && loadsFz !== null
+      ? `ΣFz = Σreakciók + Σterhek = ${fmt.force(reactionsFz).value} + ${fmt.force(loadsFz).value} = ${fmt.force(result.equilibrium.sumFz).value} kN (elvileg 0)`
+      : undefined;
+  const sumMyTitle =
+    result && reactionsMy !== null && loadsMy !== null
+      ? `ΣMy (az x=0 origóra) = Σreakciók nyomatéka + Σterhek nyomatéka = ${fmt.moment(reactionsMy).value} + ${fmt.moment(loadsMy).value} = ${fmt.moment(result.equilibrium.sumMy).value} kNm (elvileg 0)`
+      : undefined;
 
   return (
     <aside className="vem-panel vem-panel--right" aria-label="Eredmények">
@@ -92,11 +96,13 @@ export function RightPanel(): JSX.Element {
             label="ΣFz ellenőrzés"
             formatted={fmt.force(result?.equilibrium.sumFz ?? null)}
             tone={result ? (result.equilibrium.satisfied ? 'ok' : 'error') : 'neutral'}
+            title={sumFzTitle ?? ''}
           />
           <ResultRow
             label="ΣMy ellenőrzés"
             formatted={fmt.moment(result?.equilibrium.sumMy ?? null)}
             tone={result ? (result.equilibrium.satisfied ? 'ok' : 'error') : 'neutral'}
+            title={sumMyTitle ?? ''}
           />
         </Card>
 
@@ -119,7 +125,7 @@ export function RightPanel(): JSX.Element {
           />
           <ResultRow
             label="M-V kihasználtság (EN 1993-1-1)"
-            formatted={fmt.percent(interaction !== null ? interaction.utilization * 100 : null)}
+            formatted={fmt.percent(utils?.mv !== null && utils?.mv !== undefined ? utils.mv * 100 : null)}
             tone={mvVerdict.tone}
             emphasis="large"
             title="EN 1993-1-1 6.2.8 stílusú, UTÓLAGOS ellenőrzés a globális M-max és T-max értékekből, γM0 = 1.00 (ajánlott érték) — ha nem azonos keresztmetszeti helyen lépnek fel, ez egy KONZERVATÍV (biztonság felé téves) becslés, nem pontos helyi érték (ADR-0018, ADR-0021)"
@@ -131,7 +137,7 @@ export function RightPanel(): JSX.Element {
           />
           <ResultRow
             label="lehajlás-ellenőrzés (SLS, L/250)"
-            formatted={fmt.percent(deflectionUtil !== null && Number.isFinite(deflectionUtil) ? deflectionUtil * 100 : null)}
+            formatted={fmt.percent(utils?.deflection !== null && utils?.deflection !== undefined && Number.isFinite(utils.deflection) ? utils.deflection * 100 : null)}
             tone={deflectionVerdict.tone}
             emphasis="large"
             title="w max / L a megengedett L/250 arányhoz viszonyítva — anyagfüggetlen, a felhasználó saját ökölszabálya szerinti SLS-ellenőrzés"
@@ -158,16 +164,16 @@ export function RightPanel(): JSX.Element {
               />
             </>
           ) : null}
-          {rcCapacity !== null ? (
+          {utils?.rcMu !== null && utils?.rcMu !== undefined ? (
             <>
               <ResultRow
                 label="vasbeton ULS teherbírás MRd"
-                formatted={fmt.moment(rcCapacity.mu)}
+                formatted={fmt.moment(utils.rcMu)}
                 title="Egyszerűsített téglalap feszültségblokk (EC2 3.1.7(3)), jellemző (γ=1.0) érték, B500B betonacél — a húzott oldal a globális M előjelétől függ"
               />
               <ResultRow
                 label="Vasbeton ULS kihasználtság"
-                formatted={fmt.percent(rcUtil !== null && Number.isFinite(rcUtil) ? rcUtil * 100 : null)}
+                formatted={fmt.percent(utils.rc !== null && Number.isFinite(utils.rc) ? utils.rc * 100 : null)}
                 tone={rcVerdict.tone}
                 emphasis="large"
                 title="|M-max| / MRd — a globális M-max/M-min szélsőértékre, NEM feltétlenül a legkritikusabb keresztmetszetre (konzervatív becslés, mint a többi ULS-ellenőrzésnél)"

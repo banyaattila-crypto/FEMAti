@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { geometricProperties } from '@femati/fem-core';
 import { SegmentedControl } from '../components/Button.js';
 import { Checkbox, Slider } from '../components/Field.js';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { SectionShapeDiagram } from '../components/SectionShapeDiagram.js';
-import { findMaterial, findPreset, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
+import { findMaterial, findPreset, findSection, dimensionRowsFor, shearModulus, UNVERIFIED_WARNING } from '../data/catalog.js';
 import { toShape } from '../model/compile.js';
+import { findSmallestSuitableSection, type OptimizeResult } from '../model/optimize.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import { DEFAULT_SPRING_STIFFNESS, type EditableFoundation, type EditableLoad, type EditableSupport, type SupportType } from '../model/editable.js';
@@ -429,9 +431,13 @@ export function LeftPanel(): JSX.Element {
   const setSelfWeight = useModelStore((state) => state.setSelfWeight);
   const setThermalLoad = useModelStore((state) => state.setThermalLoad);
   const setRebar = useModelStore((state) => state.setRebar);
+  const setSectionId = useModelStore((state) => state.setSectionId);
   const section = findSection(model.sectionId);
   const material = findMaterial(model.materialId);
   const sectionProps = geometricProperties(toShape(section));
+
+  /** A "legkisebb megfelelő szelvény" keresés eredménye — lokális, effemer UI-állapot (nem globális store: nem kell perzisztálni/undo-zni, egyszeri gombnyomás-eredmény). */
+  const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
 
   const tree: readonly { label: string; value: string }[] = [
     { label: 'Geometria', value: `${fmt.length(model.span).value} m` },
@@ -474,9 +480,21 @@ export function LeftPanel(): JSX.Element {
           <div className="vem-section-preview">
             <SectionShapeDiagram section={section} />
             <div className="vem-section-preview__figures">
+              <div className="vem-section-preview__name">{section.name}</div>
+              {dimensionRowsFor(section).map((r) => (
+                <div key={r.label}>
+                  {r.symbol} = {r.v !== undefined ? r.v.toFixed(1) : '—'} mm
+                </div>
+              ))}
               <div>A = {(sectionProps.area * 1e4).toFixed(2)} cm²</div>
               <div>I = {(sectionProps.inertia * 1e8).toFixed(0)} cm⁴</div>
+              <div>c = {sectionProps.shapeFactor.toFixed(2)}</div>
             </div>
+          </div>
+          <div className="vem-section-preview__figures" style={{ padding: '0 var(--space-5) var(--space-3)' }}>
+            <div className="vem-section-preview__name">{material.name}</div>
+            <div>E = {material.e.toFixed(0)} kN/cm²</div>
+            <div>G = {shearModulus(material).toFixed(0)} kN/cm²</div>
           </div>
           <div style={{ padding: '0 var(--space-5)' }}>
             <NoteBox tone={material.verified && section.verified ? 'info' : 'warn'}>
@@ -535,6 +553,56 @@ export function LeftPanel(): JSX.Element {
               ) : null}
             </div>
           ) : null}
+
+          {/* Automatikus szelvény-optimalizálás (2026-09-04) — a jobb panel
+              M-V/lehajlás/vasbeton-ULS ellenőrzéseit futtatja végig a
+              katalógus AZONOS `kind`-ú (I, U, kör, cső, téglalap, RHS, T)
+              szelvényein (`model/optimize.ts`), és a legkisebb (legkisebb
+              területű) megfelelőt javasolja. Anyagot/fesztávot/terheket nem
+              változtat, és egyetlen terhelési esetre optimalizál (nincs még
+              teherkombináció-kezelés a programban). */}
+          <div style={{ padding: '0 var(--space-5) var(--space-4)' }}>
+            <button
+              type="button"
+              className="vem-btn vem-btn--sm"
+              onClick={() => setOptimizeResult(findSmallestSuitableSection(model))}
+            >
+              Legkisebb megfelelő szelvény keresése
+            </button>
+            {optimizeResult ? (
+              <div style={{ marginTop: 'var(--space-3)' }}>
+                {optimizeResult.best ? (
+                  <>
+                    <NoteBox tone="info">
+                      Javaslat: {optimizeResult.best.name} (A = {(optimizeResult.best.area * 1e4).toFixed(2)} cm², kihasználtság{' '}
+                      {optimizeResult.best.governing !== null ? `${(optimizeResult.best.governing * 100).toFixed(0)}%` : '—'})
+                    </NoteBox>
+                    <button
+                      type="button"
+                      className="vem-btn vem-btn--sm"
+                      style={{ marginTop: 'var(--space-2)' }}
+                      onClick={() => {
+                        if (optimizeResult.best) setSectionId(optimizeResult.best.sectionId);
+                        setOptimizeResult(null);
+                      }}
+                    >
+                      Alkalmaz
+                    </button>
+                  </>
+                ) : (
+                  <NoteBox tone="warn">
+                    Nincs megfelelő szelvény ebben a családban ({optimizeResult.kindLabel}, {optimizeResult.candidates.length} jelölt
+                    megvizsgálva).
+                  </NoteBox>
+                )}
+                {model.rebar.enabled ? (
+                  <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-2)' }}>
+                    A vasalás mennyisége minden jelöltnél változatlan maradt — Alkalmazás után érdemes ellenőrizni/finomítani.
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </Card>
 
         <Card title="Megoldó" accent="solver">
