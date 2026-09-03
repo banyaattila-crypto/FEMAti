@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Formatted, Tone } from '../format/numbers.js';
+import { InfoTooltip } from './InfoTooltip.js';
 
 export interface ValueDisplayProps {
   readonly formatted: Formatted;
@@ -51,8 +52,11 @@ export function ResultRow({
   title,
 }: ResultRowProps): JSX.Element {
   return (
-    <div className="vem-result-row" title={title}>
-      <span className="vem-result-row__label">{label}</span>
+    <div className="vem-result-row">
+      <span className="vem-result-row__label-group">
+        <span className="vem-result-row__label">{label}</span>
+        {title ? <InfoTooltip text={title} /> : null}
+      </span>
       <span className="vem-result-row__value">
         <ValueDisplay formatted={formatted} tone={tone} emphasis={emphasis} />
       </span>

@@ -19,6 +19,23 @@ import { create } from 'zustand';
 import type { SolverStatus } from '../components/Feedback.js';
 import type { CanvasTool } from '../canvas/ToolPalette.js';
 
+const WELCOME_SEEN_KEY = 'femati:welcome-seen';
+
+/**
+ * Igaz, ha a felhasználó már látta a "Kezdő lépések" üdvözlő kártyát —
+ * `localStorage`-ban jelölve (2026-09-04, első ilyen felhasználás az
+ * appban). Hiba esetén (pl. privát böngészés, letiltott storage) `true`-t
+ * ad vissza, hogy inkább NE zavarjuk a felhasználót egy hibás állapotban
+ * mindig felugró kártyával.
+ */
+function hasSeenWelcome(): boolean {
+  try {
+    return localStorage.getItem(WELCOME_SEEN_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+
 export type SolverAlgorithm = 'newton' | 'modified-newton';
 export type LoadHistoryMode = 'monotonic' | 'unloading';
 export type DiagramTab = 'M' | 'T' | 'w' | 'phi' | 'utilization' | 'load-displacement' | 'convergence' | 'stress3d' | 'modal' | 'dynamic';
@@ -74,6 +91,8 @@ export interface AppState {
   meshConvergenceOpen: boolean;
   /** A "Névjegy" (About) párbeszédablak nyitva van-e. */
   aboutOpen: boolean;
+  /** A "Kezdő lépések" üdvözlő kártya nyitva van-e (első látogatáskor automatikusan, utána Súgó menüből). */
+  welcomeOpen: boolean;
   /** A szelvény-adatbázis böngésző nyitva van-e (Szerkesztés → Szelvény adatbázis). */
   sectionDbOpen: boolean;
   /** Az anyag-adatbázis böngésző nyitva van-e (Szerkesztés → Anyag adatbázis). */
@@ -105,6 +124,7 @@ export interface AppState {
   setTheoryOpen: (v: boolean) => void;
   setMeshConvergenceOpen: (v: boolean) => void;
   setAboutOpen: (v: boolean) => void;
+  setWelcomeOpen: (v: boolean) => void;
   setSectionDbOpen: (v: boolean) => void;
   setMaterialDbOpen: (v: boolean) => void;
   setMobileTab: (v: MobileTab) => void;
@@ -135,6 +155,7 @@ export const useAppStore = create<AppState>()((set) => ({
   theoryTopic: 'timoshenko',
   meshConvergenceOpen: false,
   aboutOpen: false,
+  welcomeOpen: !hasSeenWelcome(),
   sectionDbOpen: false,
   materialDbOpen: false,
   mobileTab: 'canvas',
@@ -162,6 +183,16 @@ export const useAppStore = create<AppState>()((set) => ({
   setTheoryOpen: (v) => set({ theoryOpen: v }),
   setMeshConvergenceOpen: (v) => set({ meshConvergenceOpen: v }),
   setAboutOpen: (v) => set({ aboutOpen: v }),
+  setWelcomeOpen: (v) => {
+    if (!v) {
+      try {
+        localStorage.setItem(WELCOME_SEEN_KEY, '1');
+      } catch {
+        // localStorage nem elérhető (pl. privát böngészés) — nincs teendő, a session-en belül a state így is zárva marad.
+      }
+    }
+    set({ welcomeOpen: v });
+  },
   setSectionDbOpen: (v) => set({ sectionDbOpen: v }),
   setMaterialDbOpen: (v) => set({ materialDbOpen: v }),
   setMobileTab: (v) => set({ mobileTab: v }),

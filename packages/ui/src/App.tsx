@@ -15,6 +15,7 @@ import { HistoricalView } from './historical/HistoricalView.js';
 import { TheoryView } from './theory/TheoryView.js';
 import { MeshConvergenceView } from './meshconvergence/MeshConvergenceView.js';
 import { AboutDialog } from './shell/AboutDialog.js';
+import { WelcomeDialog } from './shell/WelcomeDialog.js';
 import { DatabaseView } from './catalog/DatabaseView.js';
 import { findPreset } from './data/catalog.js';
 import { useAppStore, type DiagramTab, type MobileTab } from './state/appStore.js';
@@ -239,6 +240,9 @@ export function App(): JSX.Element {
       } else if (!typing && (e.key === 'Delete' || e.key === 'Backspace') && selection !== null) {
         e.preventDefault();
         removeSelected();
+      } else if (e.key === 'Escape' && s.welcomeOpen) {
+        e.preventDefault();
+        s.setWelcomeOpen(false);
       } else if (e.key === 'Escape' && s.inspector !== null) {
         e.preventDefault();
         s.closeInspector();
@@ -336,6 +340,7 @@ export function App(): JSX.Element {
     {
       label: 'Súgó',
       items: [
+        { label: 'Kezdő lépések', onSelect: () => s.setWelcomeOpen(true) },
         { label: 'Névjegy', onSelect: () => s.setAboutOpen(true) },
       ],
     },
@@ -428,6 +433,7 @@ export function App(): JSX.Element {
       <TheoryView />
       <MeshConvergenceView />
       <AboutDialog />
+      <WelcomeDialog />
       <DatabaseView kind="section" />
       <DatabaseView kind="material" />
     </div>
