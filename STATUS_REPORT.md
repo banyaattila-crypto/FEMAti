@@ -1758,6 +1758,93 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     SVG-elem SAJÁT CSS-dobozán, függetlenül a belső skálázási
     furcsaságoktól.
 
+57. **Deformáció-felirat eltávolítása + Keresztmetszet-kártya adatbővítés +
+    3D feszültségábra átdolgozása** (2026-09-04, `19c26a0`): három,
+    egymástól független felhasználói kérés. (1) A vászon "deformáció ×51"
+    nagyítási-tényező felirata eltávolítva (a DESIGN-TERV 5.1 dokumentált
+    követelménye is frissítve) — a `fmt.scaleFactor()` és a hozzá tartozó
+    teszt, valamint a már használaton kívüli `.vem-canvas__scale`
+    CSS-szabály is törölve. (2) A bal panel "Keresztmetszet" kártyája
+    mostantól kiírja a szelvény nevét, a tényleges méret-szimbólumokat
+    (h/b/tw/tf, mm), az alaki tényezőt (c = Kp/Kₑ, már korábban is
+    számítva volt, csak nem volt kiírva) és az anyag nevét + E/G
+    modulusait — a `dimensionRowsFor()`/`shearModulus()` segédfüggvények
+    közös helyre (`data/catalog.ts`) kerültek, mert a szelvény-adatbázis
+    böngésző (`DatabaseView.tsx`) korábban saját, duplikált másolatot
+    tartott ugyanebből a logikából. (3) A 3D feszültségábra
+    (`Beam3DStress.tsx`) korábban előjel nélküli |σ|-t festett mindkét
+    látható lapra, ezért a húzott/nyomott oldal nem volt
+    megkülönböztethető — mostantól a felső lap a felső, az alsó lap az
+    alsó szélső szál SAJÁT előjeles σ-ját mutatja (σ = M·z/I, z lefelé
+    pozitív), és minden azonos előjelű szakasz közepén egy +/− glifa
+    jelzi a húzást/nyomást.
+
+58. **UI tipográfia csökkentése (3. kör) + ponytail-audit alapján közös
+    `.vem-overlay` CSS és `createRunStore` factory** (2026-09-04,
+    `84ae144`): a felhasználó ismételt jelzésére ("még mindig nagyok a
+    kiemelt számok/betűk") a bal panel csúszka-értékei/számmezői
+    (13px→11,5px), a kártya-fejlécek (13px→12px) és a jobb panel
+    érték-tokenjei (`--type-value-size`/`-lg-size`/`-xl-size`,
+    `--type-unit-size`) mind kisebbek — ez már a HARMADIK csökkentési kör
+    ezeken a tokeneken (eredetileg 15/17px-ről indultak), dokumentálva a
+    `tokens.css`-ben. Emellett a felhasználó kérésére lefuttatott
+    `ponytail-audit` (over-engineering audit) két találata be is
+    vezetve: hat külön fájlban (elmélet/hálókonvergencia/történelmi mód/
+    levezetés/jegyzőkönyv + a szelvény-adatbázis böngésző) szó szerint
+    megismételt overlay-háttér CSS → egyetlen közös `.vem-overlay`
+    osztály (`design/base.css`); a `nonlinearStore.ts` és `dynamicStore.ts`
+    bájtra azonos zustand store-alak volt (csak a típusparaméter tért
+    el) → egy új generikus `createRunStore<T>()` factory, kétszer
+    példányosítva. Egy harmadik találatot (kézzel írt `groupBy()` →
+    `Object.groupBy()`) NEM alkalmaztunk — a `tsconfig` `lib:["ES2022"]`
+    mellett ez törné a buildet (`Object.groupBy` ES2024).
+
+59. **Kattintható info-tooltip komponens + "Kezdő lépések" üdvözlő kártya**
+    (2026-09-04, `ff4d681`): a `ResultRow` (`components/Value.tsx`)
+    korábban natív HTML `title` attribútumot használt a magyarázó
+    szövegekhez — ez felfedezhetetlen volt (nincs vizuális jele, hogy egy
+    sornak van magyarázata) és érintőképernyőn nem is működik. Új
+    `components/InfoTooltip.tsx`: kattintható, kör alakú "i" jelölő,
+    kattintásra egy halvány-sárga, kereteres buborékban jelenik meg a
+    szöveg (új `--callout-bg`/`-border`/`-text` tokenek, tudatosan NEM a
+    meglévő `--brand-gold-*`-ból, mert az más jelentést hordoz). A
+    buborék `position: fixed`-del, JS-ből számolt koordinátákkal jelenik
+    meg (nem a szülőhöz képest `absolute`) — így nem vágódik le a
+    görgethető panelek (`overflow: auto`) szélénél, és képernyő-ütközés
+    esetén automatikusan átfordul. Új "Kezdő lépések" üdvözlő kártya
+    (`shell/WelcomeDialog.tsx`): első látogatáskor automatikusan
+    megjelenik (`localStorage`-ban jelölve, hibatűrően), utána Súgó
+    menüből bármikor újra előhívható — rövid, statikus tájékoztatás (nem
+    interaktív "spotlight" túra) arról, mit hol talál a felhasználó a
+    felületen.
+
+60. **Automatikus szelvény-optimalizálás ("legkisebb megfelelő szelvény")
+    + jobb panel ΣFz/ΣMy bontás tooltip** (2026-09-04, `74ea3dd`):
+    versenytárs-elemzés (SkyCiv "Beam Design and Optimization") alapján
+    azonosított hiány — a felhasználónak kézzel kellett végigpróbálgatnia
+    a katalógus szelvényeit, amíg egy megfelelőt talált. Új
+    `model/optimize.ts` `findSmallestSuitableSection()`: a jelenleg
+    kiválasztottal AZONOS `kind`-ú (I, U, kör, cső, téglalap, RHS, T)
+    katalógus-szelvényeken végigfuttatja a már létező M-V interakció/
+    lehajlás-ellenőrzés (SLS)/vasbeton ULS ellenőrzéseket, terület
+    szerint növekvő sorrendben, és az első megfelelőt javasolja — a bal
+    panel "Keresztmetszet" kártyájába új gomb + javaslat/"Alkalmaz" UI. A
+    kihasználtság-számítás (korábban a `RightPanel.tsx`-ben inline volt)
+    közös `model/designChecks.ts` `computeUtilizations()`-be emelve, hogy
+    a jobb panel és az optimalizáló ne csúszhasson szét egymástól.
+    Dokumentált korlátok: csak a szelvényt változtatja (anyag/fesztáv/
+    terhek fixek), egyetlen terhelési esetre optimalizál (még nincs
+    teherkombináció-kezelés), vasbetonnál a vasalás mennyisége minden
+    jelöltnél fix marad. Ugyanebben a körben: a jobb panel ΣFz/ΣMy
+    egyensúly-ellenőrzés sorai mostantól az új info-tooltippel mutatják a
+    bontást (Σreakciók + Σterhek = ΣFz/My) — a `checkEquilibrium`
+    csomópontonkénti (DOF-szintű) összegzése mérnökileg nem olvasható, ez
+    a fizikailag értelmes két csoportra bontja vissza, EGZAKT módon (nem
+    közelítés). Új tesztek (`designChecks.test.ts`, `optimize.test.ts`):
+    egy alulméretezett IPE100-ról ténylegesen nagyobb, ≤100%-os
+    kihasználtságú IPE-t javasol. `pnpm check` (mind a 4 csomag, 637
+    teszt) zöld.
+
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
 kicsi, egymásra épülő felhasználói kérés sorozata volt.
