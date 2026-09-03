@@ -3,13 +3,11 @@
  * képletekkel. Ugyanaz az overlay-architektúra, mint a `historical/historical.css`-ben.
  */
 
+/* A közös háttér-tulajdonságok (position/inset/z-index/background/overflow/
+   padding) a `design/base.css` `.vem-overlay`-jéből jönnek — a JSX ezt a két
+   osztályt együtt adja (`vem-overlay vem-theory-overlay`). Itt csak a
+   nézetspecifikus flex-középre-igazítás marad. */
 .vem-theory-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  background: rgba(20, 20, 20, 0.55);
-  overflow: auto;
-  padding: 28px 0 60px;
   display: flex;
   justify-content: center;
 }

@@ -11,14 +11,10 @@
  * panelek) NE kerüljön a nyomtatott/PDF kimenetbe.
  */
 
-.vem-report-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  background: rgba(20, 20, 20, 0.55);
-  overflow: auto;
-  padding: 28px 0 60px;
-}
+/* A háttér-tulajdonságok `design/base.css` `.vem-overlay`-jéből jönnek — a
+   JSX a két osztályt együtt adja (`vem-overlay vem-report-overlay`). A
+   `.vem-report-overlay` névre itt csak a lenti print-felülírás miatt van
+   szükség (ld. lejjebb `@media print`), önálló alap-szabálya már nincs. */
 
 .vem-report-toolbar {
   position: sticky;

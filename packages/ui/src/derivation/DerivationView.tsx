@@ -156,7 +156,7 @@ export function DerivationView(): JSX.Element | null {
   };
 
   return (
-    <div className="vem-derivation-overlay" onPointerDown={() => setDerivationOpen(false)}>
+    <div className="vem-overlay vem-derivation-overlay" onPointerDown={() => setDerivationOpen(false)}>
       <div className="vem-derivation-toolbar">
         <div className="vem-derivation-toolbar__inner" onPointerDown={(e) => e.stopPropagation()}>
           <label>

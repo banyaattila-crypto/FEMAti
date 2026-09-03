@@ -103,7 +103,7 @@ export function ReportView(): JSX.Element | null {
   const catalogUnverified = !material.verified || !section.verified;
 
   return (
-    <div className="vem-report-overlay" onPointerDown={() => setReportOpen(false)}>
+    <div className="vem-overlay vem-report-overlay" onPointerDown={() => setReportOpen(false)}>
       <div className="vem-report-toolbar">
         <div className="vem-report-toolbar__inner" onPointerDown={(e) => e.stopPropagation()}>
           <button type="button" className="vem-btn vem-btn--sm" onClick={() => setReportOpen(false)}>

@@ -78,6 +78,27 @@ input[type='range'] {
 
 /* ── Megosztott segédosztályok ──────────────────────────────────────────── */
 
+/**
+ * Teljes képernyős overlay-háttér — a `theory`, `meshconvergence`,
+ * `historical`, `derivation`, `report` nézetek MIND ugyanezt a hátteret
+ * használták, öt fájlban szó szerint megismételve (2026-09-04,
+ * ponytail-audit). A hívó oldalon a saját (`vem-theory-overlay` stb.)
+ * osztály MELLÉ kerül, nem helyette — az továbbra is hordozza a nézetenként
+ * eltérő extra szabályokat (pl. flex-középre-igazítás) és a print-specifikus
+ * felülírásokat. A `CrossSectionInspector` overlay-je (más z-index/
+ * átlátszóság, `components.css` `.vem-inspector-overlay`) TUDATOSAN nem
+ * ebből örököl — az egy zavaró elem fölötti, magasabb rétegű felugró, nem
+ * ebbe a "teljes nézet" családba tartozik.
+ */
+.vem-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(20, 20, 20, 0.55);
+  overflow: auto;
+  padding: 28px 0 60px;
+}
+
 /** Panelfejléc: UPPERCASE, ritkított, sticky (DESIGN-TERV 3.2). */
 .vem-section-label {
   position: sticky;

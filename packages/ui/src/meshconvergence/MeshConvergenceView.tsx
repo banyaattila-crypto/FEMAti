@@ -71,7 +71,7 @@ export function MeshConvergenceView(): JSX.Element | null {
   const lastValid = [...points].reverse().find((p) => p.error === null);
 
   return (
-    <div className="vem-meshconv-overlay" onPointerDown={close}>
+    <div className="vem-overlay vem-meshconv-overlay" onPointerDown={close}>
       <div className="vem-meshconv" onPointerDown={(e) => e.stopPropagation()}>
         <header className="vem-meshconv__header">
           <div>

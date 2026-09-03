@@ -156,11 +156,17 @@
   margin: var(--space-1) 0 0;
 }
 
+/* 2026-09-04 (felhasználói kérés: "a bal panelen a kiemelt számok/betűk
+   még mindig nagyok, legyenek kisebbek és csinosabbak") — a csúszka-érték
+   SAJÁT, a megosztott `--type-value-lg/xl-size` tokenektől FÜGGETLEN
+   méretet kap (nem a tokent csökkentjük — azt a jobb panel "large"/"hero"
+   sorai is használják, azok már két körben finomhangolva lettek). */
 .vem-slider__value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: var(--type-value-lg-size);
+  font-size: 11.5px;
   font-weight: 600;
+  letter-spacing: 0.01em;
   line-height: 1;
   padding-bottom: var(--space-1);
   text-align: right;
@@ -168,7 +174,7 @@
 }
 
 .vem-slider__number {
-  width: 72px;
+  width: 64px;
   height: var(--h-control);
   padding: 0 var(--space-3);
   border: 1px solid var(--border-medium);
@@ -177,7 +183,7 @@
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: var(--type-value-size);
+  font-size: 11.5px;
   font-weight: 600;
   text-align: right;
   flex: none;
@@ -435,13 +441,16 @@
    UPPERCASE, ritkított "jelentés-címke" stílus önmagában is erősen
    "mérnöki dokumentum" hatású volt — normál szövegre váltva, kicsit
    nagyobb méretben és félkövéren, cím-szerűbb (2026-08-29 újratervezés). */
+/* 2026-09-04 (felhasználói kérés: kisebb, csinosabb kártya-fejléc) — 13px
+   helyett 12px, halvány pozitív tracking a finomabb, kevésbé "kiabálós"
+   hatásért (a súly 600 marad, különben a cím elveszne a testszöveg között). */
 .vem-card > .vem-section-label {
   position: static;
   background: transparent;
   border-bottom: 1px solid var(--border-card);
   text-transform: none;
-  letter-spacing: 0;
-  font-size: 13px;
+  letter-spacing: 0.01em;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -472,8 +481,19 @@
   padding-bottom: var(--space-3);
 }
 
+/* Címke + (opcionális) infó-ikon közös sávja — a `min-width: 0` kell ahhoz,
+   hogy a benne lévő `.vem-result-row__label` ellipsis-viselkedése flex-
+   gyerekként is működjön, az ikon (`flex: none`) pedig emiatt sosem vágódik
+   le, még hosszú címkénél sem (2026-09-04). */
+.vem-result-row__label-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
 .vem-result-row__label {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -483,6 +503,72 @@
 .vem-result-row__value {
   flex: none;
   text-align: right;
+}
+
+/* ── Infó-tooltip ("ⓘ" kattintható jelölő + sárga magyarázó-buborék) ────── */
+
+.vem-info-tooltip {
+  display: inline-flex;
+  flex: none;
+}
+
+.vem-info-tooltip__icon {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1px solid var(--border-medium);
+  background: var(--surface-raised);
+  color: var(--text-faint);
+  font-family: var(--font-serif);
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  flex: none;
+  transition:
+    color var(--motion-panel) var(--ease),
+    border-color var(--motion-panel) var(--ease);
+}
+
+.vem-info-tooltip__icon:hover,
+.vem-info-tooltip__icon[aria-expanded='true'] {
+  color: var(--callout-border);
+  border-color: var(--callout-border);
+}
+
+/* Szándékosan VILÁGOS (halvány-sárga), a sötét munkaasztal-témától
+   függetlenül — mint egy natív böngésző-tooltip, ezért van saját, nem a
+   `--text-*` tokenekből vett szövegszíne is (`--callout-text`, sötét, hogy
+   a világos háttéren olvasható maradjon).
+
+   `position: fixed` + a `top`/`left`/`bottom` a `InfoTooltip.tsx`-ből,
+   inline style-ként jön — TUDATOSAN nem `absolute` a szülőhöz képest: a
+   panelek `overflow: auto`-val görgethetők (`shell/shell.css` `.vem-panel`),
+   egy hozzájuk képest pozicionált buborék ott levágódna a panel szélénél
+   (2026-09-04, felhasználói jelzés). A `fixed` a viewporthoz igazodik, azt
+   semmilyen szülő `overflow`-ja nem vágja le. */
+.vem-info-tooltip__bubble {
+  position: fixed;
+  z-index: 100;
+  width: max-content;
+  /* A jobb panel csak 272px széles (`--w-panel-right`, min. 222px) — ennél
+     szűkebb buborék kell, különben a bal szélen kilógna a panelból. */
+  max-width: 220px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--callout-bg);
+  border: 1px solid var(--callout-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-menu);
+  color: var(--callout-text);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
 }
 
 /* ── Státusz ────────────────────────────────────────────────────────────── */

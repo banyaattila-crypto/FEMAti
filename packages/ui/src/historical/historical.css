@@ -4,13 +4,9 @@
  * nyomtatható papír-nézet — interaktív, animált, képernyő-only panel.
  */
 
+/* A közös háttér-tulajdonságok `design/base.css` `.vem-overlay`-jéből jönnek
+   — a JSX a két osztályt együtt adja. Itt csak a flex-középre-igazítás marad. */
 .vem-historical-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  background: rgba(20, 20, 20, 0.55);
-  overflow: auto;
-  padding: 28px 0 60px;
   display: flex;
   justify-content: center;
 }

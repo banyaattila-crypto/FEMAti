@@ -590,7 +590,7 @@ export function TheoryView(): JSX.Element | null {
   const content = CONTENT[theoryTopic];
 
   return (
-    <div className="vem-theory-overlay" onPointerDown={close}>
+    <div className="vem-overlay vem-theory-overlay" onPointerDown={close}>
       <div className="vem-theory" onPointerDown={(e) => e.stopPropagation()}>
         <nav className="vem-theory__nav" aria-label="Elmélet témák">
           <h1>Elmélet</h1>

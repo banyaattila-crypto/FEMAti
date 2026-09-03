@@ -10,21 +10,7 @@
  * azonnal érvényteleníti ezt az eredményt — ezt az `App.tsx` egy
  * `useModelStore.subscribe()` hívással érvényesíti (`clear()` hívásával).
  */
-import { create } from 'zustand';
+import { createRunStore } from './createRunStore.js';
 import type { NonlinearRun } from '../model/nonlinear.js';
 
-interface NonlinearState {
-  readonly run: NonlinearRun | null;
-  readonly error: string | null;
-  setRun: (run: NonlinearRun) => void;
-  setError: (error: string) => void;
-  clear: () => void;
-}
-
-export const useNonlinearStore = create<NonlinearState>()((set) => ({
-  run: null,
-  error: null,
-  setRun: (run) => set({ run, error: null }),
-  setError: (error) => set({ run: null, error }),
-  clear: () => set({ run: null, error: null }),
-}));
+export const useNonlinearStore = createRunStore<NonlinearRun>();

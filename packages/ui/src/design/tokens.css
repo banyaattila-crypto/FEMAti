@@ -79,6 +79,16 @@
   --brand-gold-border: #8a6c2f;
   --brand-gold-text: #241a08;
 
+  /* ── Infó-tooltip (2026-09-04, felhasználói kérés: "kis kattintható i
+     betű, sárga háttér, keret") — TUDATOSAN NEM a `--brand-gold-*`-ból,
+     bár hasonló árnyalatú: az a birtokolt "elsődleges CTA" jelentést
+     hordozza, ez egy semleges magyarázó-buborék, más ok miatt sárga
+     (klasszikus "sticky note" nyelv). Szándékosan VILÁGOS, a sötét
+     munkaasztal-témától függetlenül — mint egy natív böngésző-tooltip. */
+  --callout-bg: #fff6d8;
+  --callout-border: #d9b93a;
+  --callout-text: #4a3f14;
+
   /* ── Szemantikus színek — mechanikai jelentéssel ────────────────────── */
   --sem-elastic: #5c6975;
   --sem-elastic-edge: #3d4854;
@@ -183,18 +193,20 @@
   --type-field-label-size: 10.5px;
   --type-body-size: 13px;
   --type-body-sm-size: 11.5px;
-  --type-value-size: 13px;
-  /* 2026-09-04: kétkörös csökkentés (eredetileg 15→13.5→13 / 17→15→14) — a
-     jobb panel "large"/"hero" hangsúlyú sorai a vasbeton-ULS bővítéssel
+  --type-value-size: 12px;
+  /* 2026-09-04: HARMADIK csökkentési kör (eredetileg 15→13.5→13→12 / 17→15→14→12.5)
+     — a jobb panel "large"/"hero" hangsúlyú sorai a vasbeton-ULS bővítéssel
      jelentősen megszaporodtak (a Határteher-ellenőrzés kártyán mostanra
      4-5 "large" sor is egymás alatt van), a keskeny (272px) panelben ez
-     felhasználói jelzés szerint összefolyó, olvashatatlan hatást adott — a
-     felhasználó egy második körben jelezte, hogy még mindig sok. A "large"
-     mostantól az ALAP mérettel EGYEZIK (csak a 600-as súly különbözteti
-     meg), a "hero" (a 4 fő eredmény) egy fokkal marad nagyobb/félkövérebb. */
-  --type-value-lg-size: 13px;
-  --type-value-xl-size: 14px;
-  --type-unit-size: 11px;
+     felhasználói jelzés szerint összefolyó, olvashatatlan hatást adott. Az
+     előző két kör után a felhasználó ISMÉT jelezte, hogy még mindig nagy —
+     ezzel a bal panel csúszka-értékeivel (11.5px, ld. `components.css`
+     `.vem-slider__value`) összhangba hozva. A "large" továbbra is az ALAP
+     mérettel EGYEZIK (csak a 600-as súly különbözteti meg), a "hero" (a 4 fő
+     eredmény) egy fokkal marad nagyobb/félkövérebb. */
+  --type-value-lg-size: 12px;
+  --type-value-xl-size: 12.5px;
+  --type-unit-size: 10.5px;
   --type-title-size: 14px;
 
   /* ── Térköz ─────────────────────────────────────────────────────────── */

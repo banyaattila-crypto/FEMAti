@@ -10,21 +10,7 @@
  * ugyanaz a `useModelStore.subscribe()` hívás érvényesíti, ami a
  * nemlineáris store-t is törli.
  */
-import { create } from 'zustand';
+import { createRunStore } from './createRunStore.js';
 import type { DynamicRun } from '../model/dynamicRun.js';
 
-interface DynamicState {
-  readonly run: DynamicRun | null;
-  readonly error: string | null;
-  setRun: (run: DynamicRun) => void;
-  setError: (error: string) => void;
-  clear: () => void;
-}
-
-export const useDynamicStore = create<DynamicState>()((set) => ({
-  run: null,
-  error: null,
-  setRun: (run) => set({ run, error: null }),
-  setError: (error) => set({ run: null, error }),
-  clear: () => set({ run: null, error: null }),
-}));
+export const useDynamicStore = createRunStore<DynamicRun>();

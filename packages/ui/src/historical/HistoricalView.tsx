@@ -96,7 +96,7 @@ export function HistoricalView(): JSX.Element | null {
 
   if (computed.error !== null || computed.result === null) {
     return (
-      <div className="vem-historical-overlay" onPointerDown={close}>
+      <div className="vem-overlay vem-historical-overlay" onPointerDown={close}>
         <div className="vem-historical" onPointerDown={(e) => e.stopPropagation()}>
           <header className="vem-historical__header">
             <h1>FEMAti — Történelmi mód</h1>
@@ -127,7 +127,7 @@ export function HistoricalView(): JSX.Element | null {
   const skylineBarW = result.skylineMeanBandwidth * (skylineWidth / maxScaleWidth);
 
   return (
-    <div className="vem-historical-overlay" onPointerDown={close}>
+    <div className="vem-overlay vem-historical-overlay" onPointerDown={close}>
       <div className="vem-historical" onPointerDown={(e) => e.stopPropagation()}>
         <header className="vem-historical__header">
           <div>
