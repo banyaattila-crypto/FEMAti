@@ -256,7 +256,7 @@ export interface SolveOutcome {
 export function solveEditableModel(editable: EditableModel): SolveOutcome {
   const model = compileModel(editable);
   try {
-    const result = solveLinear(model);
+    const result = solveLinear(model, { axialForce: editable.axialForce });
     return { model, result, error: null };
   } catch (error) {
     if (error instanceof InvalidModelError) {

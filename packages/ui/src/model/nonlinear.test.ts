@@ -154,4 +154,13 @@ describe('runNonlinearEditableModel', () => {
     expect(outcome.run).toBeNull();
     expect(outcome.error).toContain('nem támogatott');
   });
+
+  it('axiális erő (P-Δ) mellett egyértelmű hibaüzenetet ad, nem próbál (rossz) eredményt számolni', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = { ...presetToEditable(preset, 'simple', 6, 8, 'IPE300', 'S235', false, 'selective'), axialForce: 500 };
+    const outcome = runNonlinearEditableModel(editable, OPTIONS);
+    expect(outcome.run).toBeNull();
+    expect(outcome.error).toContain('másodrendű');
+  });
 });

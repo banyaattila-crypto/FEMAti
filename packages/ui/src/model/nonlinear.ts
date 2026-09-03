@@ -316,6 +316,17 @@ export function runNonlinearEditableModel(editable: EditableModel, options: Nonl
   if (editable.composite.enabled) {
     return { run: null, error: 'Kompozit keresztmetszetre a nemlineáris (rugalmas-képlékeny) elemzés még nem támogatott.' };
   }
+  // 2026-09-04: a másodrendű (P-Δ) hatás MVP-je szándékosan csak a lineáris
+  // megoldásra vonatkozik — ld. `model/editable.ts` `axialForce` fejléce. A
+  // geometriailag ÉS anyagilag is nemlineáris kapcsolt elemzés (a geometriai
+  // merevséget a Newton-Raphson lépésenkénti érintő-merevségébe is be
+  // kellene kötni) egy önálló, később megfontolandó lépés.
+  if (editable.axialForce !== 0) {
+    return {
+      run: null,
+      error: 'Axiális nyomó-/húzóerő mellett a nemlineáris elemzés még nem veszi figyelembe a másodrendű hatást.',
+    };
+  }
   let model: Model;
   try {
     model = compileLayeredModel(editable);

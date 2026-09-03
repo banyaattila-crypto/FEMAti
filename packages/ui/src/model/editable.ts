@@ -157,6 +157,18 @@ export interface EditableModel {
   readonly selfWeight: boolean;
   /** Önsúly-szorzó (2026-09-04, ULS/SLS kombináció) — hiányában 1 (`model/compile.ts`). ULS-kombinációnál γG-re skálázva (`model/combinations.ts`), mert az önsúly szerkezetileg mindig "állandó" teher. */
   readonly selfWeightFactor?: number;
+  /**
+   * Referencia axiális erő [kN] — másodrendű (P-Δ) hatás, 2026-09-04.
+   * Pozitív = nyomóerő (csökkenti a hajlítási merevséget), negatív =
+   * húzóerő (növeli). `0` = kikapcsolva (nincs külön enabled-mező, ugyanaz
+   * a minta, mint `selfWeightFactor`-nál). A modellnek NINCS axiális
+   * szabadságfoka — ez egy KÜLSŐLEG megadott, nem "megoldott" mennyiség
+   * (ld. `@femati/fem-core` `element/timoshenko3.ts`
+   * `elementGeometricStiffness()` fejléce). CSAK a lineáris (rugalmas)
+   * megoldásra hat (`model/compile.ts`) — a nemlineáris futtatás
+   * (`model/nonlinear.ts`) N≠0 esetén hibát ad.
+   */
+  readonly axialForce: number;
   readonly thermalLoad: ThermalLoadState;
   readonly rebar: RebarState;
   readonly composite: CompositeState;
@@ -232,6 +244,7 @@ export function presetToEditable(
     sectionId,
     materialId,
     selfWeight,
+    axialForce: 0,
     thermalLoad: DEFAULT_THERMAL_LOAD,
     rebar: DEFAULT_REBAR,
     composite: DEFAULT_COMPOSITE,

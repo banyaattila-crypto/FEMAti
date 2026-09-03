@@ -168,6 +168,8 @@ export interface SolveOptions {
   readonly selfCheck?: SelfCheckLevel;
   /** Teherszorzó (λ). */
   readonly scale?: number;
+  /** Referencia axiális erő [kN] — másodrendű (P-Δ) hatás, ld. `assembly/assembler.ts` `AssemblyOptions.axialForce`. */
+  readonly axialForce?: number;
 }
 
 /** A modell érvénytelen, ezért nem futtatható. */
@@ -405,6 +407,7 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
   const system = assemble(model, {
     ...(options.strategy !== undefined ? { strategy: options.strategy } : {}),
     ...(options.penalty !== undefined ? { penalty: options.penalty } : {}),
+    ...(options.axialForce !== undefined ? { axialForce: options.axialForce } : {}),
   });
 
   const collector = new SelfCheckCollector(options.selfCheck ?? 'full');
@@ -509,15 +512,17 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
     });
   }
 
-  // Egyensúly: a külső terhek és a reakciók összege zérus.
-  const reactionVector = new Float64Array(system.map.totalDofs);
-  for (const r of reactions) {
-    const i = system.map.nodeIndex.get(r.nodeId as string);
-    if (i === undefined) continue;
-    reactionVector[2 * i] = r.fz;
-    reactionVector[2 * i + 1] = r.my;
-  }
-  const equilibrium = checkEquilibrium(system, loads.full, reactionVector);
+  // Egyensúly: a külső terhek és a reakciók összege zérus. A `residual`
+  // (TELJES DOF-vektor, nem csak a támasz-csomópontokra szűrt `reactions`)
+  // szándékosan ELTÉR a nyilvános reakció-listától: az ágyazat/rugó esetén
+  // a kettő EGYBEESIK (ott minden "extra" merevség-hozzájárulás támasz-
+  // szerű csomópontokon jelentkezik), de a másodrendű (P-Δ) geometriai
+  // merevség (`AssemblyOptions.axialForce`) MINDEN elemre hat, nem csak a
+  // támaszokéra — ha itt a szűrt `reactions`-t használnánk, a belső
+  // elemeken keletkező geometriai reziduum kimaradna az összegzésből, és
+  // az egyensúly hamisan nem teljesülne, holott a (Ke − N·Kg)·u = F
+  // energiaelv szerint a megoldás egzaktul egyensúlyban van.
+  const equilibrium = checkEquilibrium(system, loads.full, residual);
 
   collector.add({
     id: 'global.equilibrium-force',

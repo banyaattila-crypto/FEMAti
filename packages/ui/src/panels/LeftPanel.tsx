@@ -449,6 +449,7 @@ export function LeftPanel(): JSX.Element {
   const model = useModelStore((state) => state.model);
   const setSelfWeight = useModelStore((state) => state.setSelfWeight);
   const setThermalLoad = useModelStore((state) => state.setThermalLoad);
+  const setAxialForce = useModelStore((state) => state.setAxialForce);
   const setRebar = useModelStore((state) => state.setRebar);
   const setComposite = useModelStore((state) => state.setComposite);
   const setSectionId = useModelStore((state) => state.setSectionId);
@@ -763,6 +764,23 @@ export function LeftPanel(): JSX.Element {
                   editable
                 />
               </>
+            ) : null}
+            <Slider
+              label={`axiális erő N = ${model.axialForce.toFixed(0)} kN (P-Δ)`}
+              min={-1000}
+              max={1000}
+              step={10}
+              value={model.axialForce}
+              onChange={setAxialForce}
+              display={`${model.axialForce.toFixed(0)} kN`}
+              editable
+            />
+            {model.axialForce !== 0 ? (
+              <NoteBox tone="warn">
+                Másodrendű (P-Δ) hatás: {model.axialForce > 0 ? 'nyomóerő' : 'húzóerő'} — csak a fő M/T/w/φ
+                diagramokra és az SLS lehajlásra hat. Kihajlási/kritikus teher ellenőrzés és nemlineáris
+                (F5) elemzés N≠0 mellett még nem elérhető.
+              </NoteBox>
             ) : null}
             <Checkbox label="Gauss-pontok megjelenítése" checked={s.showGaussPoints} onChange={s.setShowGaussPoints} />
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>

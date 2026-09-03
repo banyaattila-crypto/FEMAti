@@ -43,6 +43,7 @@ export interface ModelState {
   readonly setSectionId: (id: string) => void;
   readonly setMaterialId: (id: string) => void;
   readonly setSelfWeight: (v: boolean) => void;
+  readonly setAxialForce: (v: number) => void;
   readonly setThermalLoad: (v: ThermalLoadState) => void;
   readonly setRebar: (v: RebarState) => void;
   readonly setComposite: (v: CompositeState) => void;
@@ -164,6 +165,7 @@ export const useModelStore = create<ModelState>()((set, get) => {
     setSectionId: (id) => edit((d) => void (d.sectionId = id)),
     setMaterialId: (id) => edit((d) => void (d.materialId = id)),
     setSelfWeight: (v) => edit((d) => void (d.selfWeight = v)),
+    setAxialForce: (v) => edit((d) => void (d.axialForce = v)),
     setThermalLoad: (v) => edit((d) => void (d.thermalLoad = v)),
     setRebar: (v) => edit((d) => void (d.rebar = v)),
     setComposite: (v) => edit((d) => void (d.composite = v)),

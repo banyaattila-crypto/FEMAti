@@ -19,7 +19,7 @@ import { SkylineMatrix } from '../linalg/skyline.js';
 import { GAUSS_3 } from '../element/quadrature.js';
 import { shapeFunctions } from '../element/shapeFunctions.js';
 import { jacobian } from '../element/jacobian.js';
-import { elementStiffness } from '../element/timoshenko3.js';
+import { elementGeometricStiffness, elementStiffness } from '../element/timoshenko3.js';
 import { sectionStiffness, type SectionStiffness } from '../element/constitutive.js';
 import {
   buildDofMap,
@@ -62,6 +62,14 @@ export interface PreparedElement {
 export interface AssemblyOptions {
   readonly strategy?: ConstraintStrategy;
   readonly penalty?: number;
+  /**
+   * Referencia axiális erő [kN] — másodrendű (P-Δ) hatás, 2026-09-04.
+   * Pozitív = nyomóerő (csökkenti a hajlítási merevséget), negatív =
+   * húzóerő (növeli). A modellnek NINCS axiális szabadságfoka — ez egy
+   * KÜLSŐLEG megadott, nem "megoldott" mennyiség (ld. `element/timoshenko3.ts`
+   * `elementGeometricStiffness()` fejléce).
+   */
+  readonly axialForce?: number;
 }
 
 export interface AssembledSystem {
@@ -79,7 +87,7 @@ export interface AssembledSystem {
 }
 
 /** Az elemek előkészítése: geometria feloldása és a Kₑ mátrixok előállítása. */
-export function prepareElements(model: Model, map: DofMap): PreparedElement[] {
+export function prepareElements(model: Model, map: DofMap, axialForce = 0): PreparedElement[] {
   const materials = new Map(model.materials.map((m) => [m.id as string, m]));
   const sections = new Map(model.sections.map((s) => [s.id as string, s]));
   const lookup = (id: string): ReturnType<typeof materials.get> => materials.get(id);
@@ -113,10 +121,19 @@ export function prepareElements(model: Model, map: DofMap): PreparedElement[] {
 
     // Winkler-féle rugalmas ágyazat (Diplomaterv 3.28 és 5. fejezet)
     const foundationC = foundationFor(model.foundations, nodeX);
-    const keEffective =
-      foundationC > 0
-        ? ke.clone().addScaled(1, foundationMatrix(nodeX, foundationC, elementId))
-        : ke;
+    let keEffective = ke;
+    if (foundationC > 0) {
+      keEffective = keEffective.clone().addScaled(1, foundationMatrix(nodeX, foundationC, elementId));
+    }
+    // Másodrendű (P-Δ) hatás — 2026-09-04, ld. `AssemblyOptions.axialForce` és
+    // `elementGeometricStiffness()` fejléce. Pozitív N (nyomóerő) csökkenti a
+    // hajlítási merevséget, ezért a Kg₀ kernel MÍNUSZ N-nel szorozva adódik hozzá.
+    if (axialForce !== 0) {
+      keEffective = (keEffective === ke ? keEffective.clone() : keEffective).addScaled(
+        -axialForce,
+        elementGeometricStiffness({ nodeX, elementId }),
+      );
+    }
 
     return {
       id: elementId,
@@ -188,7 +205,7 @@ export function assemble(model: Model, options: AssemblyOptions = {}): Assembled
   const penalty = options.penalty ?? DEFAULT_PENALTY;
 
   const map = buildDofMap(model, strategy);
-  const elements = prepareElements(model, map);
+  const elements = prepareElements(model, map, options.axialForce ?? 0);
 
   // Profil felépítése a topológiából
   const k = SkylineMatrix.fromConnectivity(

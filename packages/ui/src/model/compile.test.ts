@@ -107,3 +107,30 @@ describe('kompozit acél-beton keresztmetszet (2026-09-04)', () => {
     expect(stiffness.ei).toBeGreaterThan(Es * iSteelOwn);
   });
 });
+
+describe('másodrendű (P-Δ) hatás — axialForce (2026-09-04)', () => {
+  it('nyomóerő nagyobb, húzóerő kisebb lehajlást ad ugyanarra a keresztteherre', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const neutral = presetToEditable(preset, 'simple', 6, 8, 'IPE300', 'S235', false, 'selective');
+    const compressed = { ...neutral, axialForce: 500 };
+    const tensioned = { ...neutral, axialForce: -500 };
+
+    const wNeutral = Math.abs(solveEditableModel(neutral).result?.extremes.w.value ?? 0);
+    const wCompressed = Math.abs(solveEditableModel(compressed).result?.extremes.w.value ?? 0);
+    const wTensioned = Math.abs(solveEditableModel(tensioned).result?.extremes.w.value ?? 0);
+
+    expect(wCompressed).toBeGreaterThan(wNeutral);
+    expect(wTensioned).toBeLessThan(wNeutral);
+  });
+
+  it('axialForce=0 (alapértelmezés) esetén bájtra ugyanazt adja, mint eddig (regresszió)', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = presetToEditable(preset, 'simple', 6, 8, 'IPE300', 'S235', false, 'selective');
+    expect(editable.axialForce).toBe(0);
+
+    const result = solveEditableModel(editable).result;
+    expect(result?.equilibrium.satisfied).toBe(true);
+  });
+});

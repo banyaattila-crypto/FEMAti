@@ -318,6 +318,10 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
       sectionId: str(model, 'sectionId', 'model'),
       materialId: str(model, 'materialId', 'model'),
       selfWeight: bool(model, 'selfWeight', 'model'),
+      // 2026-09-04: ÚJ mező (másodrendű P-Δ hatás) — hiányzó mezőnél 0-ra
+      // (kikapcsolt állapot) esik vissza, ugyanaz a visszamenőleges
+      // kompatibilitási minta, mint a többi 2026-09-04-es bővítésnél.
+      axialForce: optNum(model, 'axialForce', 'model') ?? 0,
       thermalLoad,
       rebar,
       composite,

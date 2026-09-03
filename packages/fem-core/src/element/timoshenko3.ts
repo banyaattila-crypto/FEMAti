@@ -79,6 +79,42 @@ export function elementStiffness(
 }
 
 /**
+ * Geometriai merevségi mátrix, EGYSÉGNYI (referencia) axiális erőre —
+ * 2026-09-04, stabilitás/másodrendű (P-Δ) hatás.
+ *
+ *   Kg₀ = ∫ (dNw/dx)ᵀ·(dNw/dx) dx
+ *
+ * Ez a klasszikus geometriai-merevség kernel, ami a keresztirányú
+ * elmozdulás (w) MEREDEKSÉGÉBŐL adódó másodrendű munkát fejezi ki egy
+ * axiális erő alatt. A `dw/dx` sor NEM igényel új alakfüggvény-gépezetet:
+ * a `bMatrix.ts` `bRows()` már kiszámítja ezt a `gamma` sor w-komponenseként
+ * (`gamma[w] = -dNdx`, ld. `bMatrix.ts` fejléce) — csak a φ-komponenseket
+ * kell nullázni, mert a `dw/dx` sor NEM tartalmaz φ-tagot (ellentétben a
+ * `gamma = φ − dw/dx` nyírási torzulással).
+ *
+ * A hívó (`assembly/assembler.ts`) skálázza N-nel: a POZITÍV N (nyomóerő)
+ * a hajlítási merevséget CSÖKKENTI (`keEffective -= N·Kg₀`), a negatív
+ * (húzóerő) NÖVELI.
+ *
+ * Teljes, 3-pontos Gauss-kvadratúra — a `(dw/dx)²` integrandus csak
+ * másodfokú (a `w` alakfüggvény kvadratikus), ennél nincs "záródási
+ * jelenség", amit a szelektív integrálás (`elementStiffness` nyírási tagja)
+ * orvosolna, ezért a `scheme` paraméter itt felesleges.
+ */
+export function elementGeometricStiffness(geom: ElementGeometry): DenseMatrix {
+  const kg = new DenseMatrix(DOF_PER_ELEMENT, DOF_PER_ELEMENT);
+
+  for (const gp of GAUSS_3) {
+    const { gamma, detJ } = bRows(geom.nodeX, gp.xi, geom.elementId);
+    const dwdx = new Float64Array(DOF_PER_ELEMENT);
+    for (let i = 0; i < 3; i++) dwdx[2 * i] = -(gamma[2 * i] ?? 0);
+    addOuterProduct(kg, dwdx, detJ * gp.w);
+  }
+
+  return kg;
+}
+
+/**
  * Az elemi (konzisztens) tömegmátrix (6×6) — ADR-0016.
  *
  *   Mₑ = ∫ (m'·Nwᵀ·Nw + m'ᵩ·Nᵩᵀ·Nᵩ)·|J| dξ
