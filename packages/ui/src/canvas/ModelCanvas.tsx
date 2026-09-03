@@ -456,6 +456,27 @@ export function ModelCanvas(): JSX.Element {
             tulajdonsága, nem a modellé). */}
         <rect x={0} y={0} width={VIEW_WIDTH} height={viewH} fill="url(#vem-grid-major)" />
         <rect x={0} y={0} width={VIEW_WIDTH} height={viewH} fill="url(#vem-canvas-vignette)" />
+        {/* Koordináta-tengely jelző (2026-09-04, felhasználói kérés) — a
+            rajz jobb felső sarkában, screen-space (NEM követi a pan/zoom-ot,
+            mindig ugyanott, ugyanakkora — egy klasszikus CAD-viewport
+            "iránytű"). A z NYÍL LEFELÉ mutat, mert a modell előjelkonvenciója
+            szerint z lefelé pozitív (docs/CONVENTIONS.md §2,
+            `material/concreteEC2.ts` fejléce) — ez a leggyakoribb forrása a
+            "miért lefelé nő a lehajlás" félreértésnek, ezt hivatott
+            egyértelművé tenni. */}
+        <g transform={`translate(${VIEW_WIDTH - 54}, 34)`} aria-hidden="true">
+          <line x1={0} y1={0} x2={22} y2={0} stroke="var(--text-faint)" strokeWidth={1.3} />
+          <path d="M22,0 L16,-3 L16,3 Z" fill="var(--text-faint)" />
+          <text x={27} y={3.5} fontSize={10.5} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+            x
+          </text>
+          <line x1={0} y1={0} x2={0} y2={22} stroke="var(--text-faint)" strokeWidth={1.3} />
+          <path d="M0,22 L-3,16 L3,16 Z" fill="var(--text-faint)" />
+          <text x={0} y={34} textAnchor="middle" fontSize={10.5} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+            z
+          </text>
+          <circle cx={0} cy={0} r={1.4} fill="var(--text-faint)" />
+        </g>
         <g transform={`translate(${camera.tx},${camera.ty}) scale(${camera.scale})`}>
           {/* 2. réteg — eredeti tengely */}
           <line

@@ -184,8 +184,16 @@
   --type-body-size: 13px;
   --type-body-sm-size: 11.5px;
   --type-value-size: 13px;
-  --type-value-lg-size: 15px;
-  --type-value-xl-size: 17px;
+  /* 2026-09-04: kétkörös csökkentés (eredetileg 15→13.5→13 / 17→15→14) — a
+     jobb panel "large"/"hero" hangsúlyú sorai a vasbeton-ULS bővítéssel
+     jelentősen megszaporodtak (a Határteher-ellenőrzés kártyán mostanra
+     4-5 "large" sor is egymás alatt van), a keskeny (272px) panelben ez
+     felhasználói jelzés szerint összefolyó, olvashatatlan hatást adott — a
+     felhasználó egy második körben jelezte, hogy még mindig sok. A "large"
+     mostantól az ALAP mérettel EGYEZIK (csak a 600-as súly különbözteti
+     meg), a "hero" (a 4 fő eredmény) egy fokkal marad nagyobb/félkövérebb. */
+  --type-value-lg-size: 13px;
+  --type-value-xl-size: 14px;
   --type-unit-size: 11px;
   --type-title-size: 14px;
 
