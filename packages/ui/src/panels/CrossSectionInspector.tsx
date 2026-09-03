@@ -14,13 +14,25 @@
 import { useAppStore } from '../state/appStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { combinedSteps, findPreparedElement } from '../model/nonlinear.js';
+import { Legend } from '../components/Feedback.js';
+import { jetColor } from '../charts/colormap.js';
 import * as fmt from '../format/numbers.js';
 
-const PANEL_W = 420;
-const BAR_AREA_W = 200;
-const BAR_ROW_H = 14;
-const MK_W = 200;
-const MK_H = 140;
+const PANEL_W = 460;
+/* 2026-09-03 újratervezés (felhasználói kérés: "túl egyszerűen néznek ki"):
+   a korábbi 200×(14·rétegszám) puszta oszlopdiagram helyett margóval, σ-/z-
+   tengellyel, folytonos hőtérkép-kitöltéssel (`jetColor`, ugyanaz a nyelv,
+   mint a 3D-feszültségképen és az M/T/w/φ diagramokon) és a rétegállapot
+   (rugalmas/részben képlékeny/képlékeny) színes körvonallal jelölve. */
+const LEFT_MARGIN = 52;
+const TOP_MARGIN = 22;
+const BAR_AREA_W = 220;
+const BAR_ROW_H = 18;
+const RIGHT_PAD = 14;
+const BOTTOM_PAD = 6;
+const MK_W = 220;
+const MK_H = 160;
+const MK_PAD = 28;
 
 export function CrossSectionInspector(): JSX.Element | null {
   const inspector = useAppStore((s) => s.inspector);
@@ -79,9 +91,22 @@ export function CrossSectionInspector(): JSX.Element | null {
   const netAxial = layers.reduce((s, l, i) => s + (layerStates[i]?.sigma ?? 0) * l.b * l.t, 0);
   const netMoment = layers.reduce((s, l, i) => s + (layerStates[i]?.sigma ?? 0) * l.b * l.z * l.t, 0);
 
-  const zTop = -totalHeight / 2;
-  const zToY = (z: number): number => ((z - zTop) / totalHeight) * (layers.length * BAR_ROW_H);
-  const barCx = BAR_AREA_W / 2;
+  // 2026-09-03 javítás: a korábbi `zTop = -totalHeight/2` hallgatólagosan
+  // SZIMMETRIKUS keresztmetszetet tételezett fel (rect/kör/I-szelvénynél
+  // helyes, mert a réteg-koordináták a súlypontra szimmetrikusak) — az
+  // ASZIMMETRIKUS T-szelvénynél (ADR-0020) viszont NEM, ott a rétegek a
+  // valós, súlyponttól eltolt tetőponttól indulnak. A ténylegesen legfelső/
+  // legalsó réteg SZÉLÉBŐL számolva mindkét esetben helyes.
+  const topLayer = layers[0];
+  const bottomLayer = layers[layers.length - 1];
+  const zTop = (topLayer?.z ?? 0) - (topLayer?.t ?? 0) / 2;
+  const zBottom = (bottomLayer?.z ?? 0) + (bottomLayer?.t ?? 0) / 2;
+  const barPlotH = layers.length * BAR_ROW_H;
+  const zToY = (z: number): number => TOP_MARGIN + ((z - zTop) / totalHeight) * barPlotH;
+  const barCx = LEFT_MARGIN + BAR_AREA_W / 2;
+  const barHalfW = BAR_AREA_W / 2 - 6;
+  const svgW = LEFT_MARGIN + BAR_AREA_W + RIGHT_PAD;
+  const svgH = TOP_MARGIN + barPlotH + BOTTOM_PAD;
 
   const mkPoints = steps.map((s) => {
     const gp = s.states.get(elementId)?.gaussPoints[gaussIndex];
@@ -89,8 +114,8 @@ export function CrossSectionInspector(): JSX.Element | null {
   });
   const maxKappa = Math.max(1e-9, ...mkPoints.map((p) => Math.abs(p.kappa)));
   const maxM = Math.max(1e-9, ...mkPoints.map((p) => Math.abs(p.m)));
-  const mkSx = (k: number): number => MK_W / 2 + (k / maxKappa) * (MK_W / 2 - 10);
-  const mkSy = (m: number): number => MK_H / 2 - (m / maxM) * (MK_H / 2 - 10);
+  const mkSx = (k: number): number => MK_W / 2 + (k / maxKappa) * (MK_W / 2 - MK_PAD);
+  const mkSy = (m: number): number => MK_H / 2 - (m / maxM) * (MK_H / 2 - MK_PAD);
   const mkPath = mkPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${mkSx(p.kappa).toFixed(2)},${mkSy(p.m).toFixed(2)}`).join(' ');
 
   return (
@@ -117,19 +142,49 @@ export function CrossSectionInspector(): JSX.Element | null {
           <div>
             <div className="vem-section-label-sm">Rétegenkénti σ-profil (a keresztmetszet magassága mentén)</div>
             <svg
-              viewBox={`0 0 ${BAR_AREA_W} ${layers.length * BAR_ROW_H}`}
-              width={BAR_AREA_W}
-              height={layers.length * BAR_ROW_H}
+              viewBox={`0 0 ${svgW} ${svgH}`}
+              width={svgW}
+              height={svgH}
               role="img"
-              aria-label="Rétegenkénti feszültségprofil"
+              aria-label="Rétegenkénti feszültségprofil, hőtérkép-kitöltéssel"
             >
-              <line x1={barCx} y1={0} x2={barCx} y2={layers.length * BAR_ROW_H} stroke="var(--border-medium)" strokeWidth={1} />
+              {/* σ-tengely: skála-vonal + 3 jelölő (bal: max nyomás, közép: 0, jobb: max húzás). */}
+              <line x1={barCx - barHalfW} y1={TOP_MARGIN - 10} x2={barCx + barHalfW} y2={TOP_MARGIN - 10} stroke="var(--border-medium)" strokeWidth={1} />
+              {[barCx - barHalfW, barCx, barCx + barHalfW].map((tx, i) => (
+                <line key={i} x1={tx} y1={TOP_MARGIN - 13} x2={tx} y2={TOP_MARGIN - 7} stroke="var(--border-medium)" strokeWidth={1} />
+              ))}
+              <text x={barCx - barHalfW} y={TOP_MARGIN - 15} textAnchor="start" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+                {fmt.stress(-maxAbsStress).value}
+              </text>
+              <text x={barCx} y={TOP_MARGIN - 15} textAnchor="middle" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+                0
+              </text>
+              <text x={barCx + barHalfW} y={TOP_MARGIN - 15} textAnchor="end" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+                +{fmt.stress(maxAbsStress).value} {fmt.stress(maxAbsStress).unit}
+              </text>
+
+              {/* z-tengely: a keresztmetszet tetejének/aljának pozíciója. */}
+              <text x={LEFT_MARGIN - 6} y={TOP_MARGIN + 3} textAnchor="end" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+                {(zTop * 1e3).toFixed(0)} mm
+              </text>
+              <text x={LEFT_MARGIN - 6} y={TOP_MARGIN + barPlotH} textAnchor="end" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+                {(zBottom * 1e3).toFixed(0)} mm
+              </text>
+
+              <line x1={barCx} y1={TOP_MARGIN} x2={barCx} y2={TOP_MARGIN + barPlotH} stroke="var(--border-medium)" strokeWidth={1} />
               {layers.map((layer, i) => {
                 const st = layerStates[i];
                 if (st === undefined) return null;
                 const y = zToY(layer.z) - BAR_ROW_H / 2;
-                const w = (Math.abs(st.sigma) / maxAbsStress) * (BAR_AREA_W / 2 - 6);
+                const magnitude = Math.abs(st.sigma) / maxAbsStress;
+                const w = magnitude * barHalfW;
                 const x = st.sigma >= 0 ? barCx : barCx - w;
+                // A KITÖLTÉS mostantól a feszültség NAGYSÁGÁT hőtérképként
+                // mutatja (`jetColor`, ugyanaz, mint a 3D-feszültségképen és
+                // az M/T/w/φ diagramokon) — az ÁLLAPOTOT (rugalmas/részben
+                // képlékeny/képlékeny) a színes KÖRVONAL jelzi, ld. lentebb a
+                // jelmagyarázatot.
+                const stateColor = st.yielded ? 'var(--sem-plastic-edge)' : st.epsPEff > 0 ? 'var(--sem-partial-edge)' : 'var(--sem-elastic-edge)';
                 return (
                   <rect
                     key={i}
@@ -137,17 +192,17 @@ export function CrossSectionInspector(): JSX.Element | null {
                     y={y + 1.5}
                     width={Math.max(0.5, w)}
                     height={BAR_ROW_H - 3}
-                    fill={st.yielded ? 'var(--sem-plastic)' : st.epsPEff > 0 ? 'var(--sem-partial)' : 'var(--sem-elastic)'}
-                    stroke={st.yielded ? 'var(--sem-plastic-edge)' : 'var(--sem-elastic-edge)'}
-                    strokeWidth={0.6}
+                    fill={jetColor(magnitude)}
+                    stroke={stateColor}
+                    strokeWidth={1.4}
                   />
                 );
               })}
               {neutralZ !== null ? (
                 <line
-                  x1={0}
+                  x1={LEFT_MARGIN}
                   y1={zToY(neutralZ)}
-                  x2={BAR_AREA_W}
+                  x2={LEFT_MARGIN + BAR_AREA_W}
                   y2={zToY(neutralZ)}
                   stroke="var(--sem-deformed)"
                   strokeWidth={1.2}
@@ -155,20 +210,42 @@ export function CrossSectionInspector(): JSX.Element | null {
                 />
               ) : null}
             </svg>
-            <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
               {neutralZ !== null
                 ? `semleges tengely: z ≈ ${(neutralZ * 1e3).toFixed(1)} mm`
                 : 'semleges tengely a szélső rétegen kívül esik (a teljes szelvény egy előjelű feszültségű)'}
+            </div>
+            <div style={{ marginTop: 6 }}>
+              <Legend
+                items={[
+                  { label: 'rugalmas', fill: 'transparent', stroke: 'var(--sem-elastic-edge)' },
+                  { label: 'részben képlékeny', fill: 'transparent', stroke: 'var(--sem-partial-edge)' },
+                  { label: 'képlékeny', fill: 'transparent', stroke: 'var(--sem-plastic-edge)' },
+                ]}
+              />
             </div>
           </div>
 
           <div>
             <div className="vem-section-label-sm">M–κ görbe (a teljes tehertörténetre)</div>
             <svg viewBox={`0 0 ${MK_W} ${MK_H}`} width={MK_W} height={MK_H} role="img" aria-label="M-kappa görbe">
+              {/* Halvány rács a jobb olvashatóságért. */}
+              {[0.25, 0.75].map((f) => (
+                <g key={f}>
+                  <line x1={MK_W * f} y1={0} x2={MK_W * f} y2={MK_H} stroke="var(--border-subtle)" strokeWidth={0.4} strokeDasharray="2 3" />
+                  <line x1={0} y1={MK_H * f} x2={MK_W} y2={MK_H * f} stroke="var(--border-subtle)" strokeWidth={0.4} strokeDasharray="2 3" />
+                </g>
+              ))}
               <line x1={0} y1={MK_H / 2} x2={MK_W} y2={MK_H / 2} stroke="var(--border-subtle)" strokeWidth={0.6} />
               <line x1={MK_W / 2} y1={0} x2={MK_W / 2} y2={MK_H} stroke="var(--border-subtle)" strokeWidth={0.6} />
               <path d={mkPath} fill="none" stroke="var(--accent)" strokeWidth={1.6} />
               <circle cx={mkSx(currentGp.kappa)} cy={mkSy(currentGp.m)} r={4} fill="var(--accent)" stroke="var(--surface-canvas)" strokeWidth={1.3} />
+              <text x={MK_W - 2} y={MK_H / 2 - 4} textAnchor="end" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+                κ_max ≈ {maxKappa.toExponential(2)}
+              </text>
+              <text x={MK_W / 2 + 4} y={10} textAnchor="start" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+                M_max ≈ {fmt.moment(maxM).value} kNm
+              </text>
             </svg>
           </div>
 

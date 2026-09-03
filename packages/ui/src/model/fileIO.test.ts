@@ -37,6 +37,17 @@ describe('serializeEditableModel / parseEditableModelFile', () => {
     expect(restored.solverSettings).toEqual(fullSolverSettings);
   });
 
+  it.each(['dynamic', 'utilization'] as const)(
+    'a(z) "%s" diagram-fül aktív állapotban is sértetlenül visszaáll (regresszió: ezek a fülek eddig hiányoztak a beolvasás érvényességi listájáról)',
+    (activeDiagram) => {
+      const model = fullModel();
+      const settings: SolverSettingsFile = { ...fullSolverSettings, activeDiagram };
+      const json = serializeEditableModel(model, settings);
+      const restored = parseEditableModelFile(json);
+      expect(restored.solverSettings.activeDiagram).toBe(activeDiagram);
+    },
+  );
+
   it('érvénytelen JSON esetén ModelFileError-t dob', () => {
     expect(() => parseEditableModelFile('{ nem json')).toThrow(ModelFileError);
   });

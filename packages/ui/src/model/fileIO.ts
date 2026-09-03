@@ -33,6 +33,7 @@
  *   azonnal felugorna).
  */
 import {
+  DEFAULT_REBAR,
   DEFAULT_THERMAL_LOAD,
   type EditableFoundation,
   type EditableLoad,
@@ -181,7 +182,22 @@ function parseFoundation(v: unknown, index: number): EditableFoundation {
 
 const ALGORITHMS: readonly SolverAlgorithm[] = ['newton', 'modified-newton'];
 const LOAD_HISTORIES: readonly LoadHistoryMode[] = ['monotonic', 'unloading'];
-const DIAGRAM_TABS: readonly DiagramTab[] = ['M', 'T', 'w', 'phi', 'load-displacement', 'convergence', 'stress3d', 'modal'];
+// 2026-09-03: VALÓDI hiba javítva — ez a lista két új fület (`dynamic`,
+// `fb4a9a0`, 2026-09-02; `utilization`, ma) sosem kapott meg, ezért egy
+// dinamika/kihasználtság fül aktív állapotában mentett `.femati.json`
+// visszatöltéskor "érvénytelen activeDiagram érték" hibát dobott volna.
+const DIAGRAM_TABS: readonly DiagramTab[] = [
+  'M',
+  'T',
+  'w',
+  'phi',
+  'utilization',
+  'load-displacement',
+  'convergence',
+  'stress3d',
+  'modal',
+  'dynamic',
+];
 
 /** A `solverSettings` mező beolvasása — hiányzó fájlnál (1. verziójú, `solverSettings` nélküli mentés) az alapértelmezésekre esik vissza, nem hibázik. */
 function parseSolverSettings(v: unknown): SolverSettingsFile {
@@ -236,6 +252,24 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
           return { enabled: bool(t, 'enabled', 'model.thermalLoad'), tRef: num(t, 'tRef', 'model.thermalLoad'), tTop: num(t, 'tTop', 'model.thermalLoad'), tBottom: num(t, 'tBottom', 'model.thermalLoad') };
         })();
 
+  // 2026-09-03: ÚJ mező (vasbeton ULS-ellenőrzés) — a korábbi (ma előtti)
+  // mentések nem ismerik, ezért hiányzó `model.rebar`-nál az alapértelmezésre
+  // (kikapcsolt vasalás) esik vissza, ugyanúgy, mint a `thermalLoad`/
+  // `foundations` visszamenőleges kompatibilitása.
+  const rebarRaw = model.rebar;
+  const rebar =
+    rebarRaw === undefined
+      ? DEFAULT_REBAR
+      : (() => {
+          const r = record(rebarRaw, 'model.rebar');
+          return {
+            enabled: bool(r, 'enabled', 'model.rebar'),
+            asBottom: num(r, 'asBottom', 'model.rebar'),
+            asTop: num(r, 'asTop', 'model.rebar'),
+            cover: num(r, 'cover', 'model.rebar'),
+          };
+        })();
+
   return {
     model: {
       presetId: str(model, 'presetId', 'model'),
@@ -245,6 +279,7 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
       materialId: str(model, 'materialId', 'model'),
       selfWeight: bool(model, 'selfWeight', 'model'),
       thermalLoad,
+      rebar,
       integration: integration as IntegrationScheme,
       supports: array(model.supports, 'model.supports').map(parseSupport),
       loads: array(model.loads, 'model.loads').map(parseLoad),

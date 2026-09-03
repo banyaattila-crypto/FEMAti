@@ -7,6 +7,7 @@
  * az egeret mind a négy ábrán megjelenik a metszet értéke" teljesüljön.
  */
 import { useRef, useState } from 'react';
+import { shearMomentInteraction } from '@femati/fem-core';
 import { useModelStore } from '../state/modelStore.js';
 import { useAppStore } from '../state/appStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
@@ -86,6 +87,72 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
     return (
       <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
         Nincs számítási eredmény.
+      </div>
+    );
+  }
+
+  if (activeDiagram === 'utilization') {
+    // 2026-09-03, felhasználói kérés ("milyen látványos diagramot lehetne
+    // még csinálni M/T/w/φ mellé") — az M-V interakciós ellenőrzés
+    // (ADR-0018, `panels/RightPanel.tsx`) eddig csak a globális M-max/T-max
+    // szélsőértékekből, EGYETLEN számként jelent meg. Itt UGYANAZ a
+    // `shearMomentInteraction()` fut le, de a gerenda MINDEN csomópontján
+    // (ugyanaz az `n.m`/`n.t` sor, amit az M/T diagram is rajzol) — a
+    // kihasználtság így folytonos görbeként látszik, megmutatva, HOL a
+    // legkritikusabb keresztmetszet, nem csak hogy mennyi a legrosszabb.
+    const { mp, vpl } = result.props;
+    if (mp === null || vpl === null) {
+      return (
+        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
+          A kihasználtsági térképhez folyáshatárral (σY) rendelkező anyag szükséges — a jelenlegi anyagnak nincs
+          megadva képlékeny teherbírása.
+        </div>
+      );
+    }
+    const uXs = result.nodes.map((n) => n.x);
+    // 200%-nál felül elvágva: egy Vpl-t is meghaladó, numerikusan végtelen
+    // kihasználtságú pont (ld. `test/shearMomentInteraction.test.ts` "V >
+    // Vpl" regressziós próbája) még mindig SÚLYOS túllépésként látszik a
+    // diagramon, nem törné el a görbe skáláját.
+    const uYs = uXs.map((_, i) => {
+      const node = result.nodes[i];
+      const u = shearMomentInteraction(node?.m ?? 0, node?.t ?? 0, mp, vpl).utilization;
+      return Math.min(u, 2) * 100;
+    });
+    const uElements: ChartElementSpan[] = result.elements.map((el, i) => ({
+      x1: result.nodes[2 * i]?.x ?? 0,
+      x2: result.nodes[2 * i + 2]?.x ?? 0,
+      errorEstimate: el.errorEstimate,
+    }));
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+        <div
+          style={{
+            padding: '2px var(--space-6)',
+            fontSize: 12,
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--text-muted)',
+            flex: 'none',
+          }}
+        >
+          M-V kihasználtság (EN 1993-1-1 6.2.8) a gerenda mentén — 100% fölött a keresztmetszet túllépi a redukált
+          teherbírást (200%-nál a skála levágva)
+        </div>
+        <div style={{ flex: 1, minHeight: 0, height: CHART_HEIGHT }}>
+          <DiagramChart
+            title="M-V kihasználtság"
+            xs={uXs}
+            ys={uYs}
+            span={model.span}
+            elements={uElements}
+            format={fmt.percent}
+            hoverX={hoverX}
+            onHoverX={setHoverX}
+            svgRef={(el) => {
+              svgRef.current = el;
+            }}
+          />
+        </div>
       </div>
     );
   }
