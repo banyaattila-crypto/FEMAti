@@ -85,15 +85,18 @@ function LoadsList({ loads }: { readonly loads: readonly EditableLoad[] }): JSX.
   const selection = useModelStore((s) => s.selection);
   const select = useModelStore((s) => s.select);
 
+  /** "G"/"Q" jelölő a listasoron — ULS-nél γG=1,35 / γQ=1,5, ld. `model/combinations.ts`. */
+  const categoryTag = (load: EditableLoad): string => (load.category === 'permanent' ? 'G' : 'Q');
+
   const rowText = (load: EditableLoad): { readonly label: string; readonly value: string } => {
-    if (load.kind === 'point') return { label: `x = ${load.x.toFixed(2)} m`, value: `P = ${load.p.toFixed(0)} kN` };
-    if (load.kind === 'moment') return { label: `x = ${load.x.toFixed(2)} m`, value: `M = ${load.m.toFixed(0)} kNm` };
+    if (load.kind === 'point') return { label: `${categoryTag(load)} · x = ${load.x.toFixed(2)} m`, value: `P = ${load.p.toFixed(0)} kN` };
+    if (load.kind === 'moment') return { label: `${categoryTag(load)} · x = ${load.x.toFixed(2)} m`, value: `M = ${load.m.toFixed(0)} kNm` };
     if (load.kind === 'distributed') {
       const qLabel = load.q1 === load.q2 ? `q = ${load.q1.toFixed(0)} kN/m` : `q = ${load.q1.toFixed(0)}→${load.q2.toFixed(0)} kN/m`;
-      return { label: `${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`, value: qLabel };
+      return { label: `${categoryTag(load)} · ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`, value: qLabel };
     }
     const mLabel = load.m1 === load.m2 ? `m = ${load.m1.toFixed(0)} kNm/m` : `m = ${load.m1.toFixed(0)}→${load.m2.toFixed(0)} kNm/m`;
-    return { label: `${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`, value: mLabel };
+    return { label: `${categoryTag(load)} · ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`, value: mLabel };
   };
 
   return (
@@ -137,6 +140,7 @@ function SelectionSheet(): JSX.Element | null {
   const setLoadMagnitude = useModelStore((s) => s.setLoadMagnitude);
   const setDistributedLoadMagnitudes = useModelStore((s) => s.setDistributedLoadMagnitudes);
   const setDistributedMomentMagnitudes = useModelStore((s) => s.setDistributedMomentMagnitudes);
+  const setLoadCategory = useModelStore((s) => s.setLoadCategory);
   const setFoundationRange = useModelStore((s) => s.setFoundationRange);
   const setFoundationStiffness = useModelStore((s) => s.setFoundationStiffness);
   const removeSelected = useModelStore((s) => s.removeSelected);
@@ -284,6 +288,19 @@ function SelectionSheet(): JSX.Element | null {
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
           {load.kind === 'point' ? 'pontteher' : load.kind === 'moment' ? 'nyomatékteher' : load.kind === 'distributed' ? 'megoszló teher' : 'megoszló nyomatékteher'}
         </div>
+        {/* Teherkategória (2026-09-04, EN 1990 teherkombináció) — ULS-nél
+            γG=1,35 (állandó) vagy γQ=1,5 (esetleges), ld. `model/
+            combinations.ts`. Az önsúlynak NINCS ilyen választója, mert az
+            szerkezetileg mindig állandó. */}
+        <SegmentedControl
+          ariaLabel="Teher kategóriája"
+          value={load.category}
+          onChange={(v) => setLoadCategory(load.id, v)}
+          options={[
+            { value: 'permanent', label: 'állandó (G)', title: 'ULS-nél γG = 1,35-tel szorozva' },
+            { value: 'variable', label: 'esetleges (Q)', title: 'ULS-nél γQ = 1,5-tel szorozva' },
+          ]}
+        />
         {load.kind === 'point' ? (
           <>
             <Slider

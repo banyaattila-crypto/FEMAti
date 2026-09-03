@@ -138,7 +138,7 @@ export function compileModel(editable: EditableModel): Model {
             : distributedMoment(l.x1, l.x2, l.m1, l.m2, l.id),
     ),
     ...supportDisplacements,
-    ...(editable.selfWeight ? [selfWeightLoad(1, 'G-self')] : []),
+    ...(editable.selfWeight ? [selfWeightLoad(editable.selfWeightFactor ?? 1, 'G-self')] : []),
     ...(editable.thermalLoad.enabled
       ? [thermalLoad(editable.thermalLoad.tTop, editable.thermalLoad.tBottom, editable.thermalLoad.tRef, 'T-global')]
       : []),

@@ -329,9 +329,10 @@ export function App(): JSX.Element {
         { label: "Diplomaterv '96", onSelect: () => s.openTheory('thesis96'), separatorAfter: true },
         { label: 'Timoshenko gerendaelem', onSelect: () => s.openTheory('timoshenko') },
         { label: 'Szelektív redukált integrálás', onSelect: () => s.openTheory('integration') },
+        { label: 'Reziduális erők (REFORB)', onSelect: () => s.openTheory('reforb') },
         {
-          label: 'Reziduális erők (REFORB)',
-          onSelect: () => s.openTheory('reforb'),
+          label: 'Teljes elmélet',
+          onSelect: () => s.openTheory('fullPdf'),
           separatorAfter: true,
         },
         { label: 'Történelmi mód: frontális megoldó', onSelect: openHistorical, separatorAfter: true },

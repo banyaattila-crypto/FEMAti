@@ -26,7 +26,11 @@ const TOPICS: readonly { id: TheoryTopic; label: string }[] = [
   { id: 'timoshenko', label: 'Timoshenko gerendaelem' },
   { id: 'integration', label: 'Szelektív redukált integrálás' },
   { id: 'reforb', label: 'Reziduális erők (REFORB)' },
+  { id: 'fullPdf', label: 'Teljes elmélet' },
 ];
+
+/** A "Teljes elmélet" fül PDF-je — statikus asset (`public/theory/`), a böngésző natív PDF-nézőjével (iframe), új függőség nélkül. */
+const FULL_THEORY_PDF_PATH = '/theory/femati-timoshenko-beam-2026.pdf';
 
 function Ref({ children }: { readonly children: string }): JSX.Element {
   return <span className="vem-theory__ref">{children}</span>;
@@ -576,6 +580,25 @@ const CONTENT: Record<TheoryTopic, TopicContent> = {
       </p>,
     ],
   },
+  fullPdf: {
+    title: 'Teljes elmélet',
+    subtitle: 'FEM@ti — Timoshenko gerenda (2026), a teljes dokumentum a böngésző beépített PDF-nézőjében',
+    body: [
+      <iframe
+        key="pdf"
+        src={FULL_THEORY_PDF_PATH}
+        title="FEM@ti — Timoshenko beam (2026), teljes elmélet PDF"
+        className="vem-theory__pdf"
+      />,
+      <p key="fallback" className="vem-theory__pdf-fallback">
+        Ha a PDF nem jelenik meg beágyazva,{' '}
+        <a href={FULL_THEORY_PDF_PATH} target="_blank" rel="noreferrer">
+          nyisd meg külön lapon
+        </a>
+        .
+      </p>,
+    ],
+  },
 };
 
 export function TheoryView(): JSX.Element | null {
@@ -589,9 +612,11 @@ export function TheoryView(): JSX.Element | null {
   const close = (): void => setTheoryOpen(false);
   const content = CONTENT[theoryTopic];
 
+  const isFullPdf = theoryTopic === 'fullPdf';
+
   return (
     <div className="vem-overlay vem-theory-overlay" onPointerDown={close}>
-      <div className="vem-theory" onPointerDown={(e) => e.stopPropagation()}>
+      <div className={isFullPdf ? 'vem-theory vem-theory--wide' : 'vem-theory'} onPointerDown={(e) => e.stopPropagation()}>
         <nav className="vem-theory__nav" aria-label="Elmélet témák">
           <h1>Elmélet</h1>
           {TOPICS.map((t) => (

@@ -34,6 +34,16 @@ export interface EditableSupport {
   readonly dPhi?: number | undefined;
 }
 
+/**
+ * Teherkategória (2026-09-04, EN 1990 teherkombináció) — az önsúly
+ * (`EditableModel.selfWeight`) mindig automatikusan "állandó", ahhoz NEM
+ * kell ez a mező, mert szerkezetileg sosem lehet más; ez KIZÁRÓLAG a
+ * felhasználó által felvett terhekre vonatkozik. `'variable'` az
+ * alapértelmezés új teher felvételekor (a leggyakoribb eset — élő teher,
+ * hó stb.), ld. `model/combinations.ts`.
+ */
+export type LoadCategory = 'permanent' | 'variable';
+
 export interface EditablePointLoad {
   readonly id: string;
   readonly kind: 'point';
@@ -41,6 +51,7 @@ export interface EditablePointLoad {
   readonly x: number;
   /** Erő [kN], z irányban (lefelé pozitív). */
   readonly p: number;
+  readonly category: LoadCategory;
 }
 
 /** Koncentrált nyomatékteher [kNm], hálócsomópontra illesztve. */
@@ -49,6 +60,7 @@ export interface EditableMomentLoad {
   readonly kind: 'moment';
   readonly x: number;
   readonly m: number;
+  readonly category: LoadCategory;
 }
 
 export interface EditableDistributedLoad {
@@ -59,6 +71,7 @@ export interface EditableDistributedLoad {
   /** Intenzitás a szakasz elején/végén [kN/m] — q1===q2 esetén egyenletes, egyébként trapéz. */
   readonly q1: number;
   readonly q2: number;
+  readonly category: LoadCategory;
 }
 
 /** Megoszló nyomatékteher m(x) [kNm/m] — a megoszló erő egyenes párja. */
@@ -69,6 +82,7 @@ export interface EditableDistributedMomentLoad {
   readonly x2: number;
   readonly m1: number;
   readonly m2: number;
+  readonly category: LoadCategory;
 }
 
 export type EditableLoad = EditablePointLoad | EditableMomentLoad | EditableDistributedLoad | EditableDistributedMomentLoad;
@@ -121,6 +135,8 @@ export interface EditableModel {
   readonly sectionId: string;
   readonly materialId: string;
   readonly selfWeight: boolean;
+  /** Önsúly-szorzó (2026-09-04, ULS/SLS kombináció) — hiányában 1 (`model/compile.ts`). ULS-kombinációnál γG-re skálázva (`model/combinations.ts`), mert az önsúly szerkezetileg mindig "állandó" teher. */
+  readonly selfWeightFactor?: number;
   readonly thermalLoad: ThermalLoadState;
   readonly rebar: RebarState;
   readonly integration: IntegrationScheme;
@@ -167,16 +183,24 @@ export function presetToEditable(
   }));
   const loads: EditableLoad[] = [];
   if (preset.q > 0) {
-    loads.push({ id: nextEntityId('Q'), kind: 'distributed', x1: 0, x2: span, q1: preset.q, q2: preset.q });
+    loads.push({ id: nextEntityId('Q'), kind: 'distributed', x1: 0, x2: span, q1: preset.q, q2: preset.q, category: 'variable' });
   }
   if (preset.p > 0) {
-    loads.push({ id: nextEntityId('P'), kind: 'point', x: snapToNode(preset.xp * span, span, elementCount), p: preset.p });
+    loads.push({ id: nextEntityId('P'), kind: 'point', x: snapToNode(preset.xp * span, span, elementCount), p: preset.p, category: 'variable' });
   }
   for (const extra of preset.extraLoads ?? []) {
     if (extra.kind === 'moment') {
-      loads.push({ id: nextEntityId('M'), kind: 'moment', x: snapToNode(extra.r * span, span, elementCount), m: extra.value });
+      loads.push({ id: nextEntityId('M'), kind: 'moment', x: snapToNode(extra.r * span, span, elementCount), m: extra.value, category: 'variable' });
     } else {
-      loads.push({ id: nextEntityId('Q'), kind: 'distributed', x1: extra.r1 * span, x2: extra.r2 * span, q1: extra.q1, q2: extra.q2 });
+      loads.push({
+        id: nextEntityId('Q'),
+        kind: 'distributed',
+        x1: extra.r1 * span,
+        x2: extra.r2 * span,
+        q1: extra.q1,
+        q2: extra.q2,
+        category: 'variable',
+      });
     }
   }
   return {

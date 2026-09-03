@@ -70,8 +70,8 @@ describe('MATERIALS', () => {
   it('a `family` szerinti csoportosítás a várt tagságot adja (UI-csoportosítás alapja)', () => {
     const byFamily = (family: string): string[] => MATERIALS.filter((m) => m.family === family).map((m) => m.id);
     expect(byFamily('steel')).toEqual(['S235', 'S275', 'S355', 'S420', 'S460', 'S235H', 'S460N']);
-    expect(byFamily('stainless')).toEqual(['X5CRNI1810']);
-    expect(byFamily('castiron')).toEqual(['GJS400']);
+    expect(byFamily('stainless')).toEqual(['X5CRNI1810', 'X2CRNI1911', 'X5CRNIMO17122', 'X2CRNIMO17122']);
+    expect(byFamily('castiron')).toEqual(['GJS400', 'GJS450', 'GJS500', 'GJS600']);
     expect(byFamily('aluminum')).toEqual(['AW6082', 'AW5754', 'AW6061', 'AW7075']);
     expect(byFamily('concrete')).toEqual(['C1620', 'C2025', 'C25', 'C3037', 'C3545', 'C4050', 'C4555', 'C5060']);
     expect(byFamily('timber')).toEqual(['C18', 'C30', 'C24', 'GL24h', 'C16', 'GL28h']);

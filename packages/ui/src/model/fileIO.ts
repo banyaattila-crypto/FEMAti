@@ -40,6 +40,7 @@ import {
   type EditableModel,
   type EditableSupport,
   type IntegrationScheme,
+  type LoadCategory,
   type SupportType,
 } from './editable.js';
 import type { DiagramTab, LoadHistoryMode, SolverAlgorithm } from '../state/appStore.js';
@@ -147,13 +148,24 @@ function parseSupport(v: unknown, index: number): EditableSupport {
   return { id, x, type: type as SupportType, ...(k !== undefined ? { k } : {}), dz, dPhi };
 }
 
+const LOAD_CATEGORIES: readonly LoadCategory[] = ['permanent', 'variable'];
+
+/** Teherkategória beolvasása — 2026-09-04 óta létező mező; hiányában (régebbi mentés) `'variable'`-re esik vissza, ugyanaz a minta, mint a `showReactions` mezőnél (`parseSolverSettings`). */
+function loadCategory(obj: Record<string, unknown>, where: string): LoadCategory {
+  const v = obj.category;
+  if (v === undefined) return 'variable';
+  assert(typeof v === 'string' && LOAD_CATEGORIES.includes(v as LoadCategory), `${where}: ismeretlen teherkategória "${String(v)}".`);
+  return v as LoadCategory;
+}
+
 function parseLoad(v: unknown, index: number): EditableLoad {
   const where = `loads[${index}]`;
   const o = record(v, where);
   const id = str(o, 'id', where);
   const kind = str(o, 'kind', where);
-  if (kind === 'point') return { id, kind: 'point', x: num(o, 'x', where), p: num(o, 'p', where) };
-  if (kind === 'moment') return { id, kind: 'moment', x: num(o, 'x', where), m: num(o, 'm', where) };
+  const category = loadCategory(o, where);
+  if (kind === 'point') return { id, kind: 'point', x: num(o, 'x', where), p: num(o, 'p', where), category };
+  if (kind === 'moment') return { id, kind: 'moment', x: num(o, 'x', where), m: num(o, 'm', where), category };
   if (kind === 'distributed') {
     return {
       id,
@@ -162,6 +174,7 @@ function parseLoad(v: unknown, index: number): EditableLoad {
       x2: num(o, 'x2', where),
       q1: num(o, 'q1', where),
       q2: num(o, 'q2', where),
+      category,
     };
   }
   if (kind === 'distributed-moment') {
@@ -172,6 +185,7 @@ function parseLoad(v: unknown, index: number): EditableLoad {
       x2: num(o, 'x2', where),
       m1: num(o, 'm1', where),
       m2: num(o, 'm2', where),
+      category,
     };
   }
   throw new ModelFileError(`${where}: ismeretlen tehertípus "${kind}".`);

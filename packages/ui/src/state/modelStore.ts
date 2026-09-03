@@ -15,6 +15,7 @@ import {
   type EditableModel,
   type EditableSupport,
   type IntegrationScheme,
+  type LoadCategory,
   type RebarState,
   type SupportType,
   type ThermalLoadState,
@@ -55,6 +56,8 @@ export interface ModelState {
   readonly addMomentLoad: (x: number, m: number) => void;
   readonly addDistributedLoad: (x1: number, x2: number, q1: number, q2: number) => void;
   readonly addDistributedMomentLoad: (x1: number, x2: number, m1: number, m2: number) => void;
+  /** Teher kategóriájának (állandó/esetleges) beállítása — ld. `model/combinations.ts`. */
+  readonly setLoadCategory: (id: string, category: LoadCategory) => void;
   readonly moveLoad: (id: string, deltaX: number) => void;
   /** Pont-/nyomatékteher ABSZOLÚT pozíciójának pontos beállítása (pl. begépelt érték) — a hálócsomópontra illesztve, mint a `moveSupport`. */
   readonly setLoadPosition: (id: string, x: number) => void;
@@ -204,13 +207,13 @@ export const useModelStore = create<ModelState>()((set, get) => {
     addPointLoad: (x, p) =>
       edit((d) => {
         const id = nextEntityId('P');
-        d.loads.push({ id, kind: 'point', x: snapToNode(x, d.span, d.elementCount), p } as EditableLoad);
+        d.loads.push({ id, kind: 'point', x: snapToNode(x, d.span, d.elementCount), p, category: 'variable' } as EditableLoad);
       }),
 
     addMomentLoad: (x, m) =>
       edit((d) => {
         const id = nextEntityId('M');
-        d.loads.push({ id, kind: 'moment', x: snapToNode(x, d.span, d.elementCount), m } as EditableLoad);
+        d.loads.push({ id, kind: 'moment', x: snapToNode(x, d.span, d.elementCount), m, category: 'variable' } as EditableLoad);
       }),
 
     addDistributedLoad: (x1, x2, q1, q2) =>
@@ -219,7 +222,7 @@ export const useModelStore = create<ModelState>()((set, get) => {
         const lo = Math.max(0, Math.min(x1, x2));
         const hi = Math.min(d.span, Math.max(x1, x2));
         if (hi - lo < 1e-6) return;
-        d.loads.push({ id, kind: 'distributed', x1: lo, x2: hi, q1, q2 } as EditableLoad);
+        d.loads.push({ id, kind: 'distributed', x1: lo, x2: hi, q1, q2, category: 'variable' } as EditableLoad);
       }),
 
     addDistributedMomentLoad: (x1, x2, m1, m2) =>
@@ -228,7 +231,14 @@ export const useModelStore = create<ModelState>()((set, get) => {
         const lo = Math.max(0, Math.min(x1, x2));
         const hi = Math.min(d.span, Math.max(x1, x2));
         if (hi - lo < 1e-6) return;
-        d.loads.push({ id, kind: 'distributed-moment', x1: lo, x2: hi, m1, m2 } as EditableLoad);
+        d.loads.push({ id, kind: 'distributed-moment', x1: lo, x2: hi, m1, m2, category: 'variable' } as EditableLoad);
+      }),
+
+    setLoadCategory: (id, category) =>
+      edit((d) => {
+        const l = d.loads.find((x) => x.id === id);
+        if (l === undefined) return;
+        l.category = category;
       }),
 
     moveLoad: (id, deltaX) =>

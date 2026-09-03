@@ -153,6 +153,56 @@
   overflow-x: auto;
 }
 
+/* "Teljes elmélet" fül — a böngésző natív PDF-nézője beágyazva (2026-09-04,
+   felhasználói kérés), nincs hozzá új könyvtár/függőség. Alapból a
+   `.vem-theory__content` 80vh-s max-magasságán belül a lehető legnagyobb —
+   a `.vem-theory--wide` módosító (lentebb) ennél jóval nagyobb, majdnem
+   teljes képernyős méretet ad, mert egy teljes dokumentumhoz a többi
+   elmélet-témával közös 920px-es keskeny ablak szűknek bizonyult. */
+.vem-theory__pdf {
+  display: block;
+  width: 100%;
+  height: 72vh;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+}
+
+.vem-theory__pdf-fallback {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex: none;
+}
+
+/* Majdnem teljes képernyős méret a "Teljes elmélet" fülhöz (2026-09-04,
+   felhasználói kérés: a normál 920px×fit-content ablak "túl szűk egy
+   teljes dokumentumhoz") — CSAK ezen a fülön aktív (`TheoryView.tsx`
+   `isFullPdf`), a többi (rövidebb, prózaszerű) témánál a normál,
+   kompaktabb méret marad. */
+.vem-theory--wide {
+  width: min(1400px, calc(100vw - 32px));
+  height: 92vh;
+}
+
+.vem-theory--wide .vem-theory__content {
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.vem-theory--wide .vem-theory__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vem-theory--wide .vem-theory__pdf {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
 /* Fejezetcím a hosszú, több szakaszos "Diplomaterv '96" összefoglalón belül —
    a többi (rövidebb, egytémájú) Elmélet-oldal nem használja. */
 .vem-theory__section {

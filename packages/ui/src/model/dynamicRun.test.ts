@@ -34,7 +34,7 @@ describe('runDynamicEditableModel', () => {
   });
 
   it('csillapítatlan lépcsőgerjesztésnél a csúcs-lehajlás közelítőleg a statikus érték kétszerese (klasszikus lépés-válasz felnagyítás)', () => {
-    const editable = { ...cantileverModel(), loads: [{ id: 'P1', kind: 'point' as const, x: 4, p: 20 }] };
+    const editable = { ...cantileverModel(), loads: [{ id: 'P1', kind: 'point' as const, x: 4, p: 20, category: 'variable' as const }] };
     const model = compileModel(editable);
     const staticResult = solveLinear(model);
     const staticTipW = Math.abs(staticResult.extremes.w.value);
@@ -54,7 +54,7 @@ describe('runDynamicEditableModel', () => {
   });
 
   it('a csillapítás ténylegesen csökkenti a válasz későbbi (beállt) ingását a csillapítatlan esethez képest', () => {
-    const editable = { ...cantileverModel(), loads: [{ id: 'P1', kind: 'point' as const, x: 4, p: 20 }] };
+    const editable = { ...cantileverModel(), loads: [{ id: 'P1', kind: 'point' as const, x: 4, p: 20, category: 'variable' as const }] };
     const baseSettings: DynamicSettings = { ...DEFAULT_DYNAMIC_SETTINGS, steps: 800, dt: 0.001 };
 
     const undamped = runDynamicEditableModel(editable, { ...baseSettings, dampingAlpha: 0, dampingBeta: 0 });

@@ -27,7 +27,7 @@ describe('runNonlinearEditableModel', () => {
     if (preset === undefined) throw new Error('simpleP preset hiányzik');
     // Kisebb teher, mint a katalógus alapértéke, hogy biztosan konvergáljon λ_cél-ig.
     const editable = { ...presetToEditable(preset, 'simpleP', 6, 8, 'IPE300', 'S235', false, 'selective'), loads: [] };
-    const withLoad = { ...editable, loads: preset.p > 0 ? [{ id: 'P1', kind: 'point' as const, x: 3, p: 10 }] : [] };
+    const withLoad = { ...editable, loads: preset.p > 0 ? [{ id: 'P1', kind: 'point' as const, x: 3, p: 10, category: 'variable' as const }] : [] };
 
     const outcome = runNonlinearEditableModel(withLoad, OPTIONS);
     expect(outcome.error).toBeNull();

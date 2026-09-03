@@ -186,6 +186,28 @@
     "verified": false
   },
   {
+    "id": "IPE550",
+    "name": "IPE 550",
+    "kind": "I",
+    "h": 550,
+    "b": 210,
+    "tw": 11.1,
+    "tf": 17.2,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "IPE600",
+    "name": "IPE 600",
+    "kind": "I",
+    "h": 600,
+    "b": 220,
+    "tw": 12.0,
+    "tf": 19.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
     "id": "HEA100",
     "name": "HEA 100",
     "kind": "I",
@@ -305,6 +327,72 @@
     "verified": false
   },
   {
+    "id": "HEA450",
+    "name": "HEA 450",
+    "kind": "I",
+    "h": 440,
+    "b": 300,
+    "tw": 11.5,
+    "tf": 21.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEA500",
+    "name": "HEA 500",
+    "kind": "I",
+    "h": 490,
+    "b": 300,
+    "tw": 12.0,
+    "tf": 23.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEA550",
+    "name": "HEA 550",
+    "kind": "I",
+    "h": 540,
+    "b": 300,
+    "tw": 12.5,
+    "tf": 24.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEA600",
+    "name": "HEA 600",
+    "kind": "I",
+    "h": 590,
+    "b": 300,
+    "tw": 13.0,
+    "tf": 25.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEA650",
+    "name": "HEA 650",
+    "kind": "I",
+    "h": 640,
+    "b": 300,
+    "tw": 13.5,
+    "tf": 26.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEA700",
+    "name": "HEA 700",
+    "kind": "I",
+    "h": 690,
+    "b": 300,
+    "tw": 14.5,
+    "tf": 27.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
     "id": "HEB100",
     "name": "HEB 100",
     "kind": "I",
@@ -406,6 +494,72 @@
     "b": 300,
     "tw": 13.5,
     "tf": 24.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEB450",
+    "name": "HEB 450",
+    "kind": "I",
+    "h": 450,
+    "b": 300,
+    "tw": 14.0,
+    "tf": 26.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEB500",
+    "name": "HEB 500",
+    "kind": "I",
+    "h": 500,
+    "b": 300,
+    "tw": 14.5,
+    "tf": 28.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEB550",
+    "name": "HEB 550",
+    "kind": "I",
+    "h": 550,
+    "b": 300,
+    "tw": 15.0,
+    "tf": 29.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEB600",
+    "name": "HEB 600",
+    "kind": "I",
+    "h": 600,
+    "b": 300,
+    "tw": 15.5,
+    "tf": 30.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEB650",
+    "name": "HEB 650",
+    "kind": "I",
+    "h": 650,
+    "b": 300,
+    "tw": 16.0,
+    "tf": 31.0,
+    "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "HEB700",
+    "name": "HEB 700",
+    "kind": "I",
+    "h": 700,
+    "b": 300,
+    "tw": 17.0,
+    "tf": 32.0,
     "source": "EN 10365 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
     "verified": false
   },
@@ -517,6 +671,50 @@
     "verified": false
   },
   {
+    "id": "UPN260",
+    "name": "UPN 260",
+    "kind": "U",
+    "h": 260,
+    "b": 90,
+    "tw": 10.0,
+    "tf": 14.0,
+    "source": "DIN 1026-1 / EN 10279 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "UPN280",
+    "name": "UPN 280",
+    "kind": "U",
+    "h": 280,
+    "b": 95,
+    "tw": 10.0,
+    "tf": 15.0,
+    "source": "DIN 1026-1 / EN 10279 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "UPN300",
+    "name": "UPN 300",
+    "kind": "U",
+    "h": 300,
+    "b": 100,
+    "tw": 10.0,
+    "tf": 16.0,
+    "source": "DIN 1026-1 / EN 10279 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
+    "id": "UPN320",
+    "name": "UPN 320",
+    "kind": "U",
+    "h": 320,
+    "b": 100,
+    "tw": 14.0,
+    "tf": 17.5,
+    "source": "DIN 1026-1 / EN 10279 névleges méretek, emlékezetből felvéve — ELLENŐRZÉS ELŐTT NE HASZNÁLD ÉLES SZÁMÍTÁSHOZ",
+    "verified": false
+  },
+  {
     "id": "CIRC150",
     "name": "Kör ⌀150",
     "kind": "circle",
@@ -557,6 +755,46 @@
     "verified": true
   },
   {
+    "id": "CIRC50",
+    "name": "Kör ⌀50",
+    "kind": "circle",
+    "h": 50,
+    "b": 50,
+    "d": 50,
+    "source": "paraméteres alak — nincs gyártói katalógus, a kör A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "CIRC250",
+    "name": "Kör ⌀250",
+    "kind": "circle",
+    "h": 250,
+    "b": 250,
+    "d": 250,
+    "source": "paraméteres alak — nincs gyártói katalógus, a kör A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "CIRC350",
+    "name": "Kör ⌀350",
+    "kind": "circle",
+    "h": 350,
+    "b": 350,
+    "d": 350,
+    "source": "paraméteres alak — nincs gyártói katalógus, a kör A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "CIRC400",
+    "name": "Kör ⌀400",
+    "kind": "circle",
+    "h": 400,
+    "b": 400,
+    "d": 400,
+    "source": "paraméteres alak — nincs gyártói katalógus, a kör A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
     "id": "TUBE200",
     "name": "Körgyűrű ⌀200×10",
     "kind": "tube",
@@ -586,6 +824,39 @@
     "b": 300,
     "d": 300,
     "t": 12,
+    "source": "paraméteres alak — nincs gyártói katalógus, a körgyűrű A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "TUBE150",
+    "name": "Körgyűrű ⌀150×8",
+    "kind": "tube",
+    "h": 150,
+    "b": 150,
+    "d": 150,
+    "t": 8,
+    "source": "paraméteres alak — nincs gyártói katalógus, a körgyűrű A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "TUBE250",
+    "name": "Körgyűrű ⌀250×10",
+    "kind": "tube",
+    "h": 250,
+    "b": 250,
+    "d": 250,
+    "t": 10,
+    "source": "paraméteres alak — nincs gyártói katalógus, a körgyűrű A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "TUBE400",
+    "name": "Körgyűrű ⌀400×14",
+    "kind": "tube",
+    "h": 400,
+    "b": 400,
+    "d": 400,
+    "t": 14,
     "source": "paraméteres alak — nincs gyártói katalógus, a körgyűrű A/I egzakt zárt alakból számol",
     "verified": true
   },
@@ -667,6 +938,46 @@
     "verified": true
   },
   {
+    "id": "RHS250x150x8",
+    "name": "RHS 250×150×8",
+    "kind": "rhs",
+    "h": 250,
+    "b": 150,
+    "t": 8,
+    "source": "paraméteres alak — nincs gyártói katalógus, a zárt szelvény A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "RHS300x200x10",
+    "name": "RHS 300×200×10",
+    "kind": "rhs",
+    "h": 300,
+    "b": 200,
+    "t": 10,
+    "source": "paraméteres alak — nincs gyártói katalógus, a zárt szelvény A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "SHS200x200x8",
+    "name": "SHS 200×200×8",
+    "kind": "rhs",
+    "h": 200,
+    "b": 200,
+    "t": 8,
+    "source": "paraméteres alak — nincs gyártói katalógus, a zárt szelvény A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "SHS250x250x10",
+    "name": "SHS 250×250×10",
+    "kind": "rhs",
+    "h": 250,
+    "b": 250,
+    "t": 10,
+    "source": "paraméteres alak — nincs gyártói katalógus, a zárt szelvény A/I egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
     "id": "T100",
     "name": "T 100×100×6/8",
     "kind": "t",
@@ -696,6 +1007,28 @@
     "b": 150,
     "tw": 8,
     "tf": 12,
+    "source": "paraméteres alak — nincs gyártói katalógus, a T-szelvény A/I/Wpl (aszimmetrikus súlypont, egyenlő területű semleges tengely) egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "T250",
+    "name": "T 250×180×10/14",
+    "kind": "t",
+    "h": 250,
+    "b": 180,
+    "tw": 10,
+    "tf": 14,
+    "source": "paraméteres alak — nincs gyártói katalógus, a T-szelvény A/I/Wpl (aszimmetrikus súlypont, egyenlő területű semleges tengely) egzakt zárt alakból számol",
+    "verified": true
+  },
+  {
+    "id": "T300",
+    "name": "T 300×200×12/16",
+    "kind": "t",
+    "h": 300,
+    "b": 200,
+    "tw": 12,
+    "tf": 16,
     "source": "paraméteres alak — nincs gyártói katalógus, a T-szelvény A/I/Wpl (aszimmetrikus súlypont, egyenlő területű semleges tengely) egzakt zárt alakból számol",
     "verified": true
   }

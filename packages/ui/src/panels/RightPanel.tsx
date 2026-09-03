@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { crackingMomentUtilization } from '@femati/fem-core';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { ResultRow } from '../components/Value.js';
@@ -5,6 +6,8 @@ import { findMaterial } from '../data/catalog.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
+import { solveEditableModel } from '../model/compile.js';
+import { scaleModelForSls, scaleModelForUls } from '../model/combinations.js';
 import { computeUtilizations } from '../model/designChecks.js';
 import * as fmt from '../format/numbers.js';
 import { utilizationVerdict } from '../format/utilization.js';
@@ -23,11 +26,20 @@ export function RightPanel(): JSX.Element {
   const nonlinearRun = useNonlinearStore((s) => s.run);
   const lastLoadingStep = nonlinearRun?.loadingSteps.at(-1);
 
+  // ULS (1.35G+1.5Q) és SLS (G+Q) kombináció, KÜLÖN a fent már megoldott
+  // jellemző (γ=1) `result`-tól — az "Eredmények" kártya (w/M/T/φ max)
+  // TOVÁBBRA IS a jellemző választ mutatja, KIZÁRÓLAG a lenti "Határteher-
+  // ellenőrzés" kártya számít a tényleges kombinációkra (felhasználói
+  // döntés, 2026-09-04: a napi munkafolyamat nem változik, csak az
+  // ellenőrzések input-forrása).
+  const ulsResult = useMemo(() => solveEditableModel(scaleModelForUls(model)).result, [model]);
+  const slsResult = useMemo(() => solveEditableModel(scaleModelForSls(model)).result, [model]);
+
   // M-V interakció, lehajlás-ellenőrzés, vasbeton ULS — megosztott logika
   // (`model/designChecks.ts`), amit a szelvény-optimalizálás (`model/
   // optimize.ts`) is ugyanígy hív minden jelölt szelvényre, hogy a kettő ne
   // csúszhasson szét egymástól.
-  const utils = result ? computeUtilizations(model, result) : null;
+  const utils = ulsResult && slsResult ? computeUtilizations(model, ulsResult, slsResult) : null;
   const mvVerdict = utilizationVerdict(utils?.mv ?? null);
   const deflectionVerdict = utilizationVerdict(utils?.deflection ?? null);
   const rcVerdict = utilizationVerdict(utils?.rc ?? null);
@@ -107,6 +119,12 @@ export function RightPanel(): JSX.Element {
         </Card>
 
         <Card title="Határteher-ellenőrzés" accent="results">
+          <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
+            <NoteBox tone="info">
+              Az ellenőrzések ULS (1,35·G+1,5·Q) / SLS (G+Q) kombinációra futnak (EN 1990) — a fenti "Eredmények" kártya
+              w/φ/M/T max sorai ettől függetlenül a jellemző (nem faktorozott) terhet mutatják.
+            </NoteBox>
+          </div>
           <ResultRow
             label="rugalmas teherbírás Mₑ"
             formatted={fmt.moment(result?.props.me ?? null)}

@@ -12,7 +12,7 @@ function fullModel() {
     ...model,
     thermalLoad: { enabled: true, tRef: 10, tTop: 30, tBottom: -5 },
     supports: model.supports.map((s, i) => (i === 0 ? { ...s, type: 'spring' as const, k: 4000, dz: 0.002, dPhi: 0.001 } : s)),
-    loads: [...model.loads, { id: 'MQ1', kind: 'distributed-moment' as const, x1: 1, x2: 3, m1: 2, m2: 5 }],
+    loads: [...model.loads, { id: 'MQ1', kind: 'distributed-moment' as const, x1: 1, x2: 3, m1: 2, m2: 5, category: 'permanent' as const }],
     foundations: [{ id: 'W1', x1: 4, x2: 8, c: 1500 }],
   };
 }
