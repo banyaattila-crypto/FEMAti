@@ -62,6 +62,21 @@ import { DEFAULT_SPRING_STIFFNESS, type EditableModel } from './editable.js';
 // elhanyagolható.
 const LAYER_COUNT = 32;
 
+// Belső betonacél-anyag a vasalás-rétegekhez (2026-09-03, vasbeton ULS-
+// ellenőrzés) — NEM választható katalógus-anyag (nincs értelme "csupa
+// betonacélból" gerendát választani), csak a réteg `materialId`-
+// hivatkozása. Rugalmas-tökéletesen képlékeny (nincs keményedés), B500B
+// jellemző (nem tervezési) folyáshatárral — ugyanaz az egyszerűsítés, mint
+// a zárt alakú `model/rcCapacity.ts`-ben.
+const REBAR_MATERIAL = makeMaterial('B500B-internal', 'B500B betonacél (belső, vasalás-réteg)', {
+  e: 200e6, // 200 GPa -> kN/m²
+  sigmaY: 500e3, // fyk = 500 MPa -> kN/m²
+  density: 7850,
+  alpha: 1.2e-5,
+});
+/** A vasalás-rétegek tetszőleges "vastagsága" [m] — csak a `b·t = Aₛ` szorzat számít, ld. `Layer.reinforcement` doksi. */
+const REBAR_LAYER_THICKNESS = 0.001;
+
 function toShape(section: SectionEntry): SectionShape {
   const cm = (mm: number): number => mm / 1000;
   switch (section.kind) {
@@ -120,10 +135,55 @@ export function compileLayeredModel(editable: EditableModel): Model {
   });
 
   const rawLayers = generateLayers(shape, LAYER_COUNT);
+  const concreteLayers = rawLayers.map((l) => ({
+    b: l.b,
+    t: l.t,
+    z: l.z,
+    ...(l.plateThickness !== undefined ? { plateThickness: l.plateThickness } : {}),
+  }));
+
+  // Vasbeton vasalás-rétegek (2026-09-03) — csak akkor, ha be van kapcsolva
+  // ÉS a keresztmetszet téglalap (a fedés-alapú z-pozíció csak szimmetrikus,
+  // állandó szélességű szelvénynél egyértelmű, ld. `panels/LeftPanel.tsx`
+  // feltételes megjelenítése). A rétegek `reinforcement: true` jelzéssel
+  // KIHAGYVA a hézag-/átfedés-ellenőrzésből (ld. `model/types.ts`
+  // `Layer.reinforcement`), majd z szerint BEFŰZVE a beton rétegek közé —
+  // a keresztmetszet-inspektor σ-profilja (`panels/CrossSectionInspector.tsx`)
+  // a legfelső/legalsó RÉTEGBŐL (nem a listaindex sorrendjéből) számol, ezért
+  // a z-sorrend megőrzése szükséges.
+  const rebarEnabled = editable.rebar.enabled && sec.kind === 'rect' && (editable.rebar.asBottom > 0 || editable.rebar.asTop > 0);
+  const halfHeight = sec.h / 1000 / 2;
+  const rebarLayers = rebarEnabled
+    ? [
+        ...(editable.rebar.asBottom > 0
+          ? [
+              {
+                b: editable.rebar.asBottom / REBAR_LAYER_THICKNESS,
+                t: REBAR_LAYER_THICKNESS,
+                z: halfHeight - editable.rebar.cover,
+                materialId: REBAR_MATERIAL.id as unknown as string,
+                reinforcement: true,
+              },
+            ]
+          : []),
+        ...(editable.rebar.asTop > 0
+          ? [
+              {
+                b: editable.rebar.asTop / REBAR_LAYER_THICKNESS,
+                t: REBAR_LAYER_THICKNESS,
+                z: -(halfHeight - editable.rebar.cover),
+                materialId: REBAR_MATERIAL.id as unknown as string,
+                reinforcement: true,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
   const section = makeLayeredSection(
     sec.id,
     sec.name,
-    rawLayers.map((l) => ({ b: l.b, t: l.t, z: l.z, ...(l.plateThickness !== undefined ? { plateThickness: l.plateThickness } : {}) })),
+    [...concreteLayers, ...rebarLayers].sort((a, b) => a.z - b.z),
     recommendedShearFactor(shape, material.nu as number),
   );
 
@@ -164,7 +224,7 @@ export function compileLayeredModel(editable: EditableModel): Model {
     name: editable.presetId,
     nodes: mesh.nodes,
     elements: mesh.elements,
-    materials: [material],
+    materials: rebarEnabled ? [material, REBAR_MATERIAL] : [material],
     sections: [section],
     boundaries,
     loads,

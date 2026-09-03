@@ -146,7 +146,7 @@ export const tProfile = (h: number, b: number, tw: number, tf: number): SectionS
 export function makeLayeredSection(
   id: string,
   name: string,
-  layers: readonly { b: number; t: number; z: number; materialId?: string; plateThickness?: number }[],
+  layers: readonly { b: number; t: number; z: number; materialId?: string; plateThickness?: number; reinforcement?: boolean }[],
   shearFactor = RECT_SHEAR_FACTOR,
   includeLayerOwnInertia = false,
 ): LayeredSection {
@@ -156,6 +156,7 @@ export function makeLayeredSection(
     z: m(l.z),
     ...(l.materialId !== undefined ? { materialId: materialId(l.materialId) } : {}),
     ...(l.plateThickness !== undefined ? { plateThickness: m(l.plateThickness) } : {}),
+    ...(l.reinforcement !== undefined ? { reinforcement: l.reinforcement } : {}),
   }));
   return {
     id: sectionId(id),

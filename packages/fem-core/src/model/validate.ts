@@ -307,7 +307,10 @@ function checkLayers(layers: readonly Layer[], sectionName: string, id: string, 
     }
   }
 
-  const sorted = [...layers].sort((a, b) => (a.z as number) - (b.z as number));
+  // A beágyazott vasalás-rétegek (`Layer.reinforcement`) TUDATOSAN egybeesnek
+  // egy meglévő beton fiber-réteggel — ezeket a hézag-/átfedés-ellenőrzés
+  // NEM vizsgálja (ld. `model/types.ts` `Layer.reinforcement` doksi).
+  const sorted = layers.filter((l) => l.reinforcement !== true).sort((a, b) => (a.z as number) - (b.z as number));
   const eps = 1e-9;
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1];

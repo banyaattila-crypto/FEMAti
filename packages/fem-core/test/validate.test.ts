@@ -333,6 +333,29 @@ describe('rétegelt keresztmetszet', () => {
     const d = validateModel(withLayers(s));
     expect(d.filter((x) => x.severity === 'error')).toEqual([]);
   });
+
+  it('a `reinforcement: true` réteg TUDATOSAN átfedő betétet jelöl — nem ad LAYER_OVERLAP hibát (2026-09-03, vasbeton ULS)', () => {
+    const s = makeLayeredSection('R1', 'Vasalt', [
+      { b: 0.3, t: 0.02, z: -0.24 },
+      { b: 0.3, t: 0.02, z: -0.22 },
+      // Egy vasalás-réteg, ami a fenti két beton fiber-réteg z-tartományán
+      // BELÜL van (z=-0.23, t=0.001) — enélkül a jelzés nélkül ez
+      // szükségszerűen átfedést jelentene.
+      { b: 0.006, t: 0.001, z: -0.23, materialId: 'S235', reinforcement: true },
+    ]);
+    const d = validateModel(withLayers(s));
+    expect(d.map((x) => x.code)).not.toContain('LAYER_OVERLAP');
+  });
+
+  it('ellenőrzés: a `reinforcement` jelzés NÉLKÜL ugyanez az elrendezés VALÓBAN LAYER_OVERLAP hibát adna (negatív kontroll)', () => {
+    const s = makeLayeredSection('R1', 'Vasalatlan (kontroll)', [
+      { b: 0.3, t: 0.02, z: -0.24 },
+      { b: 0.3, t: 0.02, z: -0.22 },
+      { b: 0.006, t: 0.001, z: -0.23, materialId: 'S235' },
+    ]);
+    const d = validateModel(withLayers(s));
+    expect(d.map((x) => x.code)).toContain('LAYER_OVERLAP');
+  });
 });
 
 describe('terhek', () => {

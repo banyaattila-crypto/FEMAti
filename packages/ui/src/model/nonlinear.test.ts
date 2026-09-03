@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { isRunnable, validateModel } from '@femati/fem-core';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from './editable.js';
 import {
   combinedSteps,
+  compileLayeredModel,
   computeHingeMarkers,
   elementPlasticity,
   nodalDisplacements,
@@ -93,6 +95,36 @@ describe('runNonlinearEditableModel', () => {
     if (fixedElementId === undefined) throw new Error('nincs elem');
     const kind = elementPlasticity(lastStep, fixedElementId);
     expect(['elastic', 'partial', 'plastic']).toContain(kind);
+  });
+
+  it('vasbeton vasalás bekapcsolásakor a rétegelt modell futtatható marad (2026-09-03, LAYER_OVERLAP regresszió)', () => {
+    // A vasalás-réteg (`Layer.reinforcement`, `model/types.ts`) SZÁNDÉKOSAN
+    // egybeesik egy beton fiber-réteggel — enélkül a jelzés nélkül a
+    // `checkLayers()` hézag-/átfedés-ellenőrzése hamis LAYER_OVERLAP hibát
+    // dobna, és a modell NEM lenne futtatható (`isRunnable` false-t adna).
+    const preset = PRESETS.find((p) => p.id === 'simpleP');
+    if (preset === undefined) throw new Error('simpleP preset hiányzik');
+    const editable = {
+      ...presetToEditable(preset, 'simpleP', 6, 8, 'RECT500', 'C25', false, 'selective'),
+      rebar: { enabled: true, asBottom: 12e-4, asTop: 4e-4, cover: 0.04 },
+    };
+    const model = compileLayeredModel(editable);
+    const diagnostics = validateModel(model);
+    expect(isRunnable(diagnostics)).toBe(true);
+
+    const section = model.sections[0];
+    if (section === undefined || section.kind !== 'layered') throw new Error('a keresztmetszetnek rétegeltnek kell lennie');
+    const reinforcementLayers = section.layers.filter((l) => l.reinforcement === true);
+    expect(reinforcementLayers.length).toBe(2);
+    // Az alsó (húzott oldali) vasalás POZITÍV z-nél, a felső NEGATÍVNÁL —
+    // ugyanaz az előjel-konvenció, mint a beton EC2-modellnél
+    // (`concreteEC2.ts` fejléce: pozitív κ-nál a z>0 szál húzott).
+    expect(reinforcementLayers.some((l) => (l.z as number) > 0)).toBe(true);
+    expect(reinforcementLayers.some((l) => (l.z as number) < 0)).toBe(true);
+
+    const outcome = runNonlinearEditableModel(editable, OPTIONS);
+    expect(outcome.error).toBeNull();
+    expect(outcome.run).not.toBeNull();
   });
 
   it('nodalDisplacements a teljes csomópontszámnak megfelelő listát ad, előírt DOF-oknál 0-val', () => {

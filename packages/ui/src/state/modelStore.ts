@@ -15,6 +15,7 @@ import {
   type EditableModel,
   type EditableSupport,
   type IntegrationScheme,
+  type RebarState,
   type SupportType,
   type ThermalLoadState,
 } from '../model/editable.js';
@@ -41,6 +42,7 @@ export interface ModelState {
   readonly setMaterialId: (id: string) => void;
   readonly setSelfWeight: (v: boolean) => void;
   readonly setThermalLoad: (v: ThermalLoadState) => void;
+  readonly setRebar: (v: RebarState) => void;
   readonly setIntegration: (v: IntegrationScheme) => void;
 
   readonly select: (selection: Selection | null) => void;
@@ -158,6 +160,7 @@ export const useModelStore = create<ModelState>()((set, get) => {
     setMaterialId: (id) => edit((d) => void (d.materialId = id)),
     setSelfWeight: (v) => edit((d) => void (d.selfWeight = v)),
     setThermalLoad: (v) => edit((d) => void (d.thermalLoad = v)),
+    setRebar: (v) => edit((d) => void (d.rebar = v)),
     setIntegration: (v) => edit((d) => void (d.integration = v)),
 
     select: (selection) => set({ selection }),

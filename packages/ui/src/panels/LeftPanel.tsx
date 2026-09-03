@@ -428,6 +428,7 @@ export function LeftPanel(): JSX.Element {
   const model = useModelStore((state) => state.model);
   const setSelfWeight = useModelStore((state) => state.setSelfWeight);
   const setThermalLoad = useModelStore((state) => state.setThermalLoad);
+  const setRebar = useModelStore((state) => state.setRebar);
   const section = findSection(model.sectionId);
   const material = findMaterial(model.materialId);
   const sectionProps = geometricProperties(toShape(section));
@@ -487,6 +488,53 @@ export function LeftPanel(): JSX.Element {
               {section.verified ? '' : ` Szelvény (${section.name}): ${section.source}.`}
             </NoteBox>
           </div>
+          {material.family === 'concrete' && section.kind === 'rect' ? (
+            <div style={{ padding: '0 var(--space-5) var(--space-2)' }}>
+              <Checkbox
+                label="vasalás (ULS teherbírás-ellenőrzéshez)"
+                checked={model.rebar.enabled}
+                onChange={(v) => setRebar({ ...model.rebar, enabled: v })}
+              />
+              {model.rebar.enabled ? (
+                <>
+                  <Slider
+                    label="alsó vasalás Aₛ [cm²]"
+                    min={0}
+                    max={40}
+                    step={0.1}
+                    value={model.rebar.asBottom * 1e4}
+                    onChange={(v) => setRebar({ ...model.rebar, asBottom: v / 1e4 })}
+                    display={`${(model.rebar.asBottom * 1e4).toFixed(2)} cm²`}
+                    editable
+                  />
+                  <Slider
+                    label="felső vasalás Aₛ' [cm²]"
+                    min={0}
+                    max={40}
+                    step={0.1}
+                    value={model.rebar.asTop * 1e4}
+                    onChange={(v) => setRebar({ ...model.rebar, asTop: v / 1e4 })}
+                    display={`${(model.rebar.asTop * 1e4).toFixed(2)} cm²`}
+                    editable
+                  />
+                  <Slider
+                    label="fedés c [mm]"
+                    min={15}
+                    max={80}
+                    step={1}
+                    value={model.rebar.cover * 1000}
+                    onChange={(v) => setRebar({ ...model.rebar, cover: v / 1000 })}
+                    display={`${(model.rebar.cover * 1000).toFixed(0)} mm`}
+                    editable
+                  />
+                  <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
+                    ULS-teherbírás: egyszerűsített téglalap feszültségblokk (EC2 3.1.7(3)), B500B betonacél, γ=1.0
+                    (jellemző érték) — ld. jobb panel "Vasbeton ULS" sor.
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
         </Card>
 
         <Card title="Megoldó" accent="solver">

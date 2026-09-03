@@ -160,6 +160,19 @@ export interface Layer {
    * (ami a rétegszám finomításától függ) — ld. `material/layeredSection.ts`.
    */
   readonly plateThickness?: Meter;
+  /**
+   * Igaz, ha ez a réteg BEÁGYAZOTT vasalást (nem a szelvény kontúrjából
+   * generált fiber-réteget) képvisel — 2026-09-03, vasbeton ULS-ellenőrzés.
+   * Egy vasalás-réteg SZÁNDÉKOSAN egybeesik (fedi) egy már meglévő beton
+   * fiber-réteggel (a rúd ténylegesen a betonon BELÜL van) — ez minden
+   * fiber-szekciós RC-modellezés bevett, elhanyagolt egyszerűsítése (a
+   * kiszorított beton területe tipikusan <2% a bruttó keresztmetszetből).
+   * `model/validate.ts` `checkLayers()` ezért az ilyen rétegeket KIHAGYJA a
+   * hézag-/átfedés-ellenőrzésből — enélkül minden vasalás-réteg hamis
+   * LAYER_OVERLAP hibát dobna (hiszen a beton rétegek már réstelenül
+   * lefedik a teljes magasságot).
+   */
+  readonly reinforcement?: boolean;
 }
 
 export interface ParametricSection {

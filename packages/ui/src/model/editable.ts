@@ -95,6 +95,24 @@ export interface ThermalLoadState {
 
 export type IntegrationScheme = 'selective' | 'full';
 
+/**
+ * Vasbeton vasalás — 2026-09-03, felhasználói kérés ("a legnagyobb tényleges
+ * hiányosság... nincs valódi As alapú ULS-teherbírás-ellenőrzés"). CSAK
+ * `rect` keresztmetszetnél és beton anyagnál értelmezett (ld.
+ * `panels/LeftPanel.tsx`/`panels/RightPanel.tsx` feltételes megjelenítése) —
+ * a klasszikus téglalap feszültségblokk (EC2 3.1.7(3)) csak állandó
+ * szélességű nyomott zónára érvényes.
+ */
+export interface RebarState {
+  readonly enabled: boolean;
+  /** Alsó (húzott oldali, pozitív M-nél mérvadó) vasalás területe [m²] */
+  readonly asBottom: number;
+  /** Felső (nyomott oldali, negatív M-nél tension-oldali) vasalás területe [m²] */
+  readonly asTop: number;
+  /** Tengelytávolság a szélső betonszáltól (fedés + Ø/2 közelítéssel) [m] */
+  readonly cover: number;
+}
+
 export interface EditableModel {
   readonly presetId: string;
   /** Fesztáv [m] */
@@ -104,6 +122,7 @@ export interface EditableModel {
   readonly materialId: string;
   readonly selfWeight: boolean;
   readonly thermalLoad: ThermalLoadState;
+  readonly rebar: RebarState;
   readonly integration: IntegrationScheme;
   readonly supports: readonly EditableSupport[];
   readonly loads: readonly EditableLoad[];
@@ -111,6 +130,7 @@ export interface EditableModel {
 }
 
 export const DEFAULT_THERMAL_LOAD: ThermalLoadState = { enabled: false, tRef: 0, tTop: 0, tBottom: 0 };
+export const DEFAULT_REBAR: RebarState = { enabled: false, asBottom: 0, asTop: 0, cover: 0.03 };
 /** Alapértelmezett rugóállandó [kN/m] új rugós támasz elhelyezésekor. */
 export const DEFAULT_SPRING_STIFFNESS = 5000;
 /** Alapértelmezett ágyazási tényező [kN/m²] új Winkler-ágyazat elhelyezésekor. */
@@ -167,6 +187,7 @@ export function presetToEditable(
     materialId,
     selfWeight,
     thermalLoad: DEFAULT_THERMAL_LOAD,
+    rebar: DEFAULT_REBAR,
     integration,
     supports,
     loads,

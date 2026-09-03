@@ -1,10 +1,11 @@
 import { crackingMomentUtilization, deflectionUtilization, shearMomentInteraction } from '@femati/fem-core';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { ResultRow } from '../components/Value.js';
-import { findMaterial } from '../data/catalog.js';
+import { findMaterial, findSection } from '../data/catalog.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
+import { rcMomentCapacity } from '../model/rcCapacity.js';
 import * as fmt from '../format/numbers.js';
 import { utilizationVerdict } from '../format/utilization.js';
 
@@ -36,6 +37,25 @@ export function RightPanel(): JSX.Element {
   const mcr = result && materialEntry.fctm !== undefined ? materialEntry.fctm * 1e4 * result.props.elasticModulus : null;
   const crackingUtil = result && mcr !== null ? crackingMomentUtilization(result.extremes.m.value, mcr) : null;
   const crackingVerdict = utilizationVerdict(crackingUtil);
+
+  // Vasbeton ULS (2026-09-03) — a zárt alakú téglalap feszültségblokk
+  // (ld. `model/rcCapacity.ts`) a globális M-max/M-min ELŐJELÉTŐL függően
+  // választja ki, melyik vasalás van HÚZOTT oldalon (pozitív M: alsó,
+  // negatív M: felső) — ugyanaz a "globális szélsőértékből, konzervatív
+  // becslés" elv, mint az M-V ellenőrzésnél (ADR-0018/ADR-0021).
+  const sectionEntry = findSection(model.sectionId);
+  const rcCapacity =
+    result && model.rebar.enabled && sectionEntry.kind === 'rect' && materialEntry.fck !== undefined
+      ? rcMomentCapacity(
+          { b: sectionEntry.b / 1000, h: sectionEntry.h / 1000 },
+          materialEntry.fck * 1e4,
+          result.extremes.m.value >= 0 ? model.rebar.asBottom : model.rebar.asTop,
+          result.extremes.m.value >= 0 ? model.rebar.asTop : model.rebar.asBottom,
+          model.rebar.cover,
+        )
+      : null;
+  const rcUtil = result && rcCapacity ? Math.abs(result.extremes.m.value) / rcCapacity.mu : null;
+  const rcVerdict = utilizationVerdict(rcUtil);
 
   return (
     <aside className="vem-panel vem-panel--right" aria-label="Eredmények">
@@ -124,7 +144,7 @@ export function RightPanel(): JSX.Element {
                 formatted={fmt.percent(crackingUtil !== null && Number.isFinite(crackingUtil) ? crackingUtil * 100 : null)}
                 tone={crackingVerdict.tone}
                 emphasis="large"
-                title="M_cr = fctm·Kₑ — TÁJÉKOZTATÓ, SLS-jellegű jelzés arról, mikor lép túl a modell a rugalmas (repedésmentes) tartományon. NEM vasbeton ULS teherbírás-ellenőrzés — nincs vasalás-modellezés a motorban (ADR-0019, ADR-0021)"
+                title="M_cr = fctm·Kₑ — TÁJÉKOZTATÓ, SLS-jellegű jelzés arról, mikor lép túl a modell a rugalmas (repedésmentes) tartományon. Ez ÖNMAGÁBAN nem vasbeton ULS teherbírás-ellenőrzés — az a lenti 'Vasbeton ULS' sorban jelenik meg, ha a vasalás be van kapcsolva (ADR-0019, ADR-0021)"
               />
               <ResultRow
                 label="verdikt"
@@ -132,6 +152,23 @@ export function RightPanel(): JSX.Element {
                 tone={crackingVerdict.tone}
                 title="'túllépi a határt' itt azt jelenti: a keresztmetszet elméletileg berepedt — a rugalmas merevségi feltevés innentől nem érvényes, NEM azt, hogy a tartó tönkremegy"
               />
+            </>
+          ) : null}
+          {rcCapacity !== null ? (
+            <>
+              <ResultRow
+                label="vasbeton ULS teherbírás MRd"
+                formatted={fmt.moment(rcCapacity.mu)}
+                title="Egyszerűsített téglalap feszültségblokk (EC2 3.1.7(3)), jellemző (γ=1.0) érték, B500B betonacél — a húzott oldal a globális M előjelétől függ"
+              />
+              <ResultRow
+                label="Vasbeton ULS kihasználtság"
+                formatted={fmt.percent(rcUtil !== null && Number.isFinite(rcUtil) ? rcUtil * 100 : null)}
+                tone={rcVerdict.tone}
+                emphasis="large"
+                title="|M-max| / MRd — a globális M-max/M-min szélsőértékre, NEM feltétlenül a legkritikusabb keresztmetszetre (konzervatív becslés, mint a többi ULS-ellenőrzésnél)"
+              />
+              <ResultRow label="verdikt" formatted={{ value: rcVerdict.label, unit: '' }} tone={rcVerdict.tone} />
             </>
           ) : null}
           <ResultRow
