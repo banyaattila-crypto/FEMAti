@@ -34,10 +34,43 @@
   box-sizing: border-box;
 }
 
-.vem-theory__nav h1 {
-  font-size: 15px;
+.vem-theory__nav-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 0 0 14px;
   padding: 0 6px;
+}
+
+.vem-theory__nav-head h1 {
+  font-size: 15px;
+  margin: 0;
+}
+
+/* HU/EN élő váltó, csak az Elméletek nézethez (2026-09-04, felhasználói
+   kérés) — nem az egész app i18n-je, ld. TheoryView.tsx header-komment. */
+.vem-theory__lang {
+  display: flex;
+  gap: 2px;
+}
+
+.vem-theory__lang-btn {
+  border: 1px solid var(--border-subtle);
+  background: none;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.vem-theory__lang-btn[aria-pressed='true'] {
+  background: var(--accent-soft, var(--sem-elastic));
+  color: var(--text-primary);
+  border-color: transparent;
 }
 
 .vem-theory__nav-item {
@@ -153,57 +186,7 @@
   overflow-x: auto;
 }
 
-/* "Teljes elmélet" fül — a böngésző natív PDF-nézője beágyazva (2026-09-04,
-   felhasználói kérés), nincs hozzá új könyvtár/függőség. Alapból a
-   `.vem-theory__content` 80vh-s max-magasságán belül a lehető legnagyobb —
-   a `.vem-theory--wide` módosító (lentebb) ennél jóval nagyobb, majdnem
-   teljes képernyős méretet ad, mert egy teljes dokumentumhoz a többi
-   elmélet-témával közös 920px-es keskeny ablak szűknek bizonyult. */
-.vem-theory__pdf {
-  display: block;
-  width: 100%;
-  height: 72vh;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--surface-panel);
-}
-
-.vem-theory__pdf-fallback {
-  font-size: 11px;
-  color: var(--text-muted);
-  flex: none;
-}
-
-/* Majdnem teljes képernyős méret a "Teljes elmélet" fülhöz (2026-09-04,
-   felhasználói kérés: a normál 920px×fit-content ablak "túl szűk egy
-   teljes dokumentumhoz") — CSAK ezen a fülön aktív (`TheoryView.tsx`
-   `isFullPdf`), a többi (rövidebb, prózaszerű) témánál a normál,
-   kompaktabb méret marad. */
-.vem-theory--wide {
-  width: min(1400px, calc(100vw - 32px));
-  height: 92vh;
-}
-
-.vem-theory--wide .vem-theory__content {
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.vem-theory--wide .vem-theory__body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.vem-theory--wide .vem-theory__pdf {
-  flex: 1;
-  min-height: 0;
-  height: auto;
-}
-
-/* Fejezetcím a hosszú, több szakaszos "Diplomaterv '96" összefoglalón belül —
+/* Fejezetcím a hosszú, több szakaszos "Matematikai összefoglaló" oldalon belül —
    a többi (rövidebb, egytémájú) Elmélet-oldal nem használja. */
 .vem-theory__section {
   font-size: 14.5px;

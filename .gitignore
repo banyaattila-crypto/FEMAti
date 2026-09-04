@@ -11,3 +11,8 @@ docs/VALIDATION.md
 .tmp/
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# Az eredeti 1996-os diplomaterv szövegét tartalmazó munkafájlok — szándékosan
+# nincsenek a publikus repóban (ld. memória: github-publish-readiness).
+FEM@ti-Timoshenko beam (2026).doc
+FEM@ti-Timoshenko beam (2026).pdf

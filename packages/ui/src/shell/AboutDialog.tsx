@@ -18,7 +18,7 @@ export function AboutDialog(): JSX.Element | null {
 
   return (
     <div className="vem-inspector-overlay" onPointerDown={() => setOpen(false)}>
-      <div className="vem-inspector vem-inspector--about" style={{ width: 360 }} onPointerDown={(e) => e.stopPropagation()}>
+      <div className="vem-inspector vem-inspector--about" style={{ width: 380, height: 420 }} onPointerDown={(e) => e.stopPropagation()}>
         <div className="vem-inspector__header">
           <span>Névjegy</span>
           <button type="button" className="vem-btn vem-btn--sm" onClick={() => setOpen(false)}>
