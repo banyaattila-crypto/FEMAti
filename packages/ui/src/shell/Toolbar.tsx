@@ -1,4 +1,4 @@
-import { Button, SegmentedControl } from '../components/Button.js';
+import { SegmentedControl } from '../components/Button.js';
 import { Combobox } from '../components/Combobox.js';
 import { Slider } from '../components/Field.js';
 import { findPreset } from '../data/catalog.js';
@@ -28,16 +28,11 @@ function Cell({ caption, hint, minWidth, children }: CellProps): JSX.Element {
   );
 }
 
-export interface ToolbarProps {
-  readonly onRun: () => void;
-  readonly onOpenReport: () => void;
-}
-
 /**
  * Eszközsor — DESIGN-TERV 3.1. Cellákra osztott, minden cella alján
  * UPPERCASE kategória-címkével. Tördelhető (`flex-wrap`).
  */
-export function Toolbar({ onRun, onOpenReport }: ToolbarProps): JSX.Element {
+export function Toolbar(): JSX.Element {
   const s = useAppStore();
   const model = useModelStore((st) => st.model);
   const loadPreset = useModelStore((st) => st.loadPreset);
@@ -46,12 +41,8 @@ export function Toolbar({ onRun, onOpenReport }: ToolbarProps): JSX.Element {
   const setSectionId = useModelStore((st) => st.setSectionId);
   const setMaterialId = useModelStore((st) => st.setMaterialId);
   const setIntegration = useModelStore((st) => st.setIntegration);
-  const undo = useModelStore((st) => st.undo);
-  const redo = useModelStore((st) => st.redo);
-  const canUndo = useModelStore((st) => st.canUndo);
-  const canRedo = useModelStore((st) => st.canRedo);
   const preset = findPreset(model.presetId);
-  const running = s.status === 'running';
+  const spanUnit = fmt.editableLength();
 
   return (
     <div className="vem-toolbar">
@@ -61,13 +52,13 @@ export function Toolbar({ onRun, onOpenReport }: ToolbarProps): JSX.Element {
 
       <Cell caption="Geometria" minWidth={206}>
         <Slider
-          label="Fesztáv L [m]"
-          min={2}
-          max={16}
-          step={0.5}
-          value={model.span}
-          onChange={setSpan}
-          display={fmt.length(model.span).value}
+          label={`Fesztáv L [${spanUnit.unit}]`}
+          min={spanUnit.toDisplay(2)}
+          max={spanUnit.toDisplay(16)}
+          step={spanUnit.toDisplay(0.5)}
+          value={spanUnit.toDisplay(model.span)}
+          onChange={(v) => setSpan(spanUnit.toCore(v))}
+          display={`${spanUnit.toDisplay(model.span).toFixed(2)} ${spanUnit.unit}`}
           editable
         />
       </Cell>
@@ -110,7 +101,7 @@ export function Toolbar({ onRun, onOpenReport }: ToolbarProps): JSX.Element {
       <Cell
         caption="Tehertörténet"
         hint={s.loadHistory === 'unloading' ? `λ→${s.peakLambda.toFixed(2)}→0` : undefined}
-        minWidth={238}
+        minWidth={205}
       >
         <SegmentedControl
           ariaLabel="Tehertörténet"
@@ -126,23 +117,6 @@ export function Toolbar({ onRun, onOpenReport }: ToolbarProps): JSX.Element {
           ]}
         />
       </Cell>
-
-      <div className="vem-toolbar__headline" aria-hidden="true">
-        Rugalmas–képlékeny Timoshenko-gerenda végeselemes analízis
-      </div>
-
-      <div className="vem-toolbar__actions">
-        <Button onClick={undo} disabled={!canUndo} title="Visszavonás (Ctrl+Z)" ariaLabel="Visszavonás">
-          ↶
-        </Button>
-        <Button onClick={redo} disabled={!canRedo} title="Újra (Ctrl+Y)" ariaLabel="Újra">
-          ↷
-        </Button>
-        <Button variant="primary" onClick={onRun} loading={running}>
-          SZÁMÍTÁS
-        </Button>
-        <Button onClick={onOpenReport}>Jegyzőkönyv</Button>
-      </div>
     </div>
   );
 }

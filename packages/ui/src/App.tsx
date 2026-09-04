@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, type CSSProperties } from 'react';
+import { Button } from './components/Button.js';
 import { Legend, StatusPill } from './components/Feedback.js';
 import { Logo } from './components/Logo.js';
 import { ModelCanvas } from './canvas/ModelCanvas.js';
@@ -368,16 +369,27 @@ export function App(): JSX.Element {
       <header className="vem-chrome">
         <div className="vem-chrome__brand">
           <Logo variant="mark" theme="dark" size={20} />
-          <div className="vem-chrome__name">FEMAti</div>
-          <div className="vem-chrome__subtitle">Timoshenko gerenda · rugalmas–képlékeny analízis</div>
+          <div className="vem-chrome__name">FEM@ti</div>
+          <div className="vem-chrome__subtitle">Timoshenko gerenda · rugalmas–képlékeny végeselemes analízis</div>
         </div>
         <MenuBar menus={menus} />
         <div className="vem-chrome__spacer" />
+        <div className="vem-chrome__actions">
+          <Button onClick={undo} disabled={!canUndo} title="Visszavonás (Ctrl+Z)" ariaLabel="Visszavonás">
+            ↶
+          </Button>
+          <Button onClick={redo} disabled={!canRedo} title="Újra (Ctrl+Y)" ariaLabel="Újra">
+            ↷
+          </Button>
+          <Button size="sm" variant="primary" onClick={run} loading={s.status === 'running'}>
+            SZÁMÍTÁS
+          </Button>
+        </div>
         <div className="vem-chrome__file">{preset.id}.femati.json</div>
         <StatusPill status={s.status} detail={s.statusDetail} />
       </header>
 
-      <Toolbar onRun={run} onOpenReport={openReport} />
+      <Toolbar />
       <ToolRibbon />
 
       <nav className="vem-mobile-tabs" role="tablist" aria-label="Nézet (mobil)">
@@ -395,7 +407,17 @@ export function App(): JSX.Element {
         ))}
       </nav>
 
-      <main className="vem-main" data-mobile-tab={s.mobileTab}>
+      <main className="vem-main" data-mobile-tab={s.mobileTab} data-tablet-model-open={s.tabletModelOpen}>
+        <button
+          type="button"
+          className="vem-tablet-toggle"
+          aria-expanded={s.tabletModelOpen}
+          aria-label="Modell panel"
+          onClick={() => s.setTabletModelOpen(!s.tabletModelOpen)}
+        >
+          Modell
+        </button>
+
         <LeftPanel />
 
         <section className="vem-center" aria-label="Modellvászon">

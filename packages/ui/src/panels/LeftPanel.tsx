@@ -26,6 +26,8 @@ const SUPPORT_TYPE_LABEL: Record<SupportType, string> = {
 function SupportsList({ supports }: { readonly supports: readonly EditableSupport[] }): JSX.Element {
   const selection = useModelStore((s) => s.selection);
   const select = useModelStore((s) => s.select);
+  const L = fmt.editableLength();
+  const K = fmt.editableLinearLoad();
 
   return (
     <Card title="Támaszok" accent="support">
@@ -42,9 +44,11 @@ function SupportsList({ supports }: { readonly supports: readonly EditableSuppor
               onClick={() => select({ kind: 'support', id: sup.id })}
             >
               <SupportIcon type={sup.type} />
-              <span className="vem-item-label">x = {sup.x.toFixed(2)} m</span>
+              <span className="vem-item-label">x = {L.toDisplay(sup.x).toFixed(2)} {L.unit}</span>
               <span className="vem-item-value">
-                {sup.type === 'spring' ? `k = ${(sup.k ?? DEFAULT_SPRING_STIFFNESS).toFixed(0)} kN/m` : SUPPORT_TYPE_LABEL[sup.type]}
+                {sup.type === 'spring'
+                  ? `k = ${K.toDisplay(sup.k ?? DEFAULT_SPRING_STIFFNESS).toFixed(0)} ${K.unit}`
+                  : SUPPORT_TYPE_LABEL[sup.type]}
               </span>
             </button>
           ))
@@ -58,6 +62,8 @@ function SupportsList({ supports }: { readonly supports: readonly EditableSuppor
 function FoundationsList({ foundations }: { readonly foundations: readonly EditableFoundation[] }): JSX.Element | null {
   const selection = useModelStore((s) => s.selection);
   const select = useModelStore((s) => s.select);
+  const L = fmt.editableLength();
+  const C = fmt.editableFoundationModulus();
   if (foundations.length === 0) return null;
 
   return (
@@ -72,9 +78,9 @@ function FoundationsList({ foundations }: { readonly foundations: readonly Edita
             onClick={() => select({ kind: 'foundation', id: f.id })}
           >
             <span className="vem-item-label">
-              {f.x1.toFixed(2)}–{f.x2.toFixed(2)} m
+              {L.toDisplay(f.x1).toFixed(2)}–{L.toDisplay(f.x2).toFixed(2)} {L.unit}
             </span>
-            <span className="vem-item-value">c = {f.c.toFixed(0)} kN/m²</span>
+            <span className="vem-item-value">c = {C.toDisplay(f.c).toFixed(0)} {C.unit}</span>
           </button>
         ))}
       </div>
@@ -86,19 +92,29 @@ function FoundationsList({ foundations }: { readonly foundations: readonly Edita
 function LoadsList({ loads }: { readonly loads: readonly EditableLoad[] }): JSX.Element {
   const selection = useModelStore((s) => s.selection);
   const select = useModelStore((s) => s.select);
+  const L = fmt.editableLength();
+  const F = fmt.editableForce();
+  const M = fmt.editableMoment();
+  const Q = fmt.editableLinearLoad();
+  const MPL = fmt.editableMomentPerLength();
 
   /** "G"/"Q" jelölő a listasoron — ULS-nél γG=1,35 / γQ=1,5, ld. `model/combinations.ts`. */
   const categoryTag = (load: EditableLoad): string => (load.category === 'permanent' ? 'G' : 'Q');
 
   const rowText = (load: EditableLoad): { readonly label: string; readonly value: string } => {
-    if (load.kind === 'point') return { label: `${categoryTag(load)} · x = ${load.x.toFixed(2)} m`, value: `P = ${load.p.toFixed(0)} kN` };
-    if (load.kind === 'moment') return { label: `${categoryTag(load)} · x = ${load.x.toFixed(2)} m`, value: `M = ${load.m.toFixed(0)} kNm` };
+    const x = (v: number): string => `${L.toDisplay(v).toFixed(2)} ${L.unit}`;
+    if (load.kind === 'point') return { label: `${categoryTag(load)} · x = ${x(load.x)}`, value: `P = ${F.toDisplay(load.p).toFixed(0)} ${F.unit}` };
+    if (load.kind === 'moment') return { label: `${categoryTag(load)} · x = ${x(load.x)}`, value: `M = ${M.toDisplay(load.m).toFixed(0)} ${M.unit}` };
     if (load.kind === 'distributed') {
-      const qLabel = load.q1 === load.q2 ? `q = ${load.q1.toFixed(0)} kN/m` : `q = ${load.q1.toFixed(0)}→${load.q2.toFixed(0)} kN/m`;
-      return { label: `${categoryTag(load)} · ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`, value: qLabel };
+      const q1 = Q.toDisplay(load.q1).toFixed(0);
+      const q2 = Q.toDisplay(load.q2).toFixed(0);
+      const qLabel = load.q1 === load.q2 ? `q = ${q1} ${Q.unit}` : `q = ${q1}→${q2} ${Q.unit}`;
+      return { label: `${categoryTag(load)} · ${x(load.x1)}–${x(load.x2)}`, value: qLabel };
     }
-    const mLabel = load.m1 === load.m2 ? `m = ${load.m1.toFixed(0)} kNm/m` : `m = ${load.m1.toFixed(0)}→${load.m2.toFixed(0)} kNm/m`;
-    return { label: `${categoryTag(load)} · ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`, value: mLabel };
+    const m1 = MPL.toDisplay(load.m1).toFixed(1);
+    const m2 = MPL.toDisplay(load.m2).toFixed(1);
+    const mLabel = load.m1 === load.m2 ? `m = ${m1} ${MPL.unit}` : `m = ${m1}→${m2} ${MPL.unit}`;
+    return { label: `${categoryTag(load)} · ${x(load.x1)}–${x(load.x2)}`, value: mLabel };
   };
 
   return (
@@ -146,6 +162,13 @@ function SelectionSheet(): JSX.Element | null {
   const setFoundationRange = useModelStore((s) => s.setFoundationRange);
   const setFoundationStiffness = useModelStore((s) => s.setFoundationStiffness);
   const removeSelected = useModelStore((s) => s.removeSelected);
+  const L = fmt.editableLength();
+  const SL = fmt.editableSmallLength();
+  const F = fmt.editableForce();
+  const M = fmt.editableMoment();
+  const Q = fmt.editableLinearLoad();
+  const MPL = fmt.editableMomentPerLength();
+  const C = fmt.editableFoundationModulus();
 
   if (selection === null) return null;
 
@@ -158,13 +181,13 @@ function SelectionSheet(): JSX.Element | null {
       <Card title="Kijelölt támasz" accent="support">
         <div className="vem-panel__body--padded">
           <Slider
-            label="x [m]"
-            min={0}
-            max={model.span}
-            step={0.01}
-            value={support.x}
-            onChange={(v) => moveSupport(support.id, v)}
-            display={`${support.x.toFixed(2)} m`}
+            label={`x [${L.unit}]`}
+            min={L.toDisplay(0)}
+            max={L.toDisplay(model.span)}
+            step={L.toDisplay(0.01)}
+            value={L.toDisplay(support.x)}
+            onChange={(v) => moveSupport(support.id, L.toCore(v))}
+            display={`${L.toDisplay(support.x).toFixed(2)} ${L.unit}`}
             editable
           />
           <SegmentedControl
@@ -180,13 +203,13 @@ function SelectionSheet(): JSX.Element | null {
           />
           {support.type === 'spring' ? (
             <Slider
-              label="k [kN/m]"
-              min={100}
-              max={50000}
-              step={100}
-              value={support.k ?? DEFAULT_SPRING_STIFFNESS}
-              onChange={(v) => setSpringStiffness(support.id, v)}
-              display={`${(support.k ?? DEFAULT_SPRING_STIFFNESS).toFixed(0)} kN/m`}
+              label={`k [${Q.unit}]`}
+              min={Q.toDisplay(100)}
+              max={Q.toDisplay(50000)}
+              step={Q.toDisplay(100)}
+              value={Q.toDisplay(support.k ?? DEFAULT_SPRING_STIFFNESS)}
+              onChange={(v) => setSpringStiffness(support.id, Q.toCore(v))}
+              display={`${Q.toDisplay(support.k ?? DEFAULT_SPRING_STIFFNESS).toFixed(0)} ${Q.unit}`}
               editable
             />
           ) : null}
@@ -203,13 +226,13 @@ function SelectionSheet(): JSX.Element | null {
           />
           {dzEnabled ? (
             <Slider
-              label="dz (süllyedés) [mm]"
-              min={-50}
-              max={50}
-              step={0.5}
-              value={(support.dz ?? 0) * 1000}
-              onChange={(v) => setSupportDisplacement(support.id, v / 1000, support.dPhi)}
-              display={`${((support.dz ?? 0) * 1000).toFixed(1)} mm`}
+              label={`dz (süllyedés) [${SL.unit}]`}
+              min={SL.toDisplay(-0.05)}
+              max={SL.toDisplay(0.05)}
+              step={SL.toDisplay(0.0005)}
+              value={SL.toDisplay(support.dz ?? 0)}
+              onChange={(v) => setSupportDisplacement(support.id, SL.toCore(v), support.dPhi)}
+              display={`${SL.toDisplay(support.dz ?? 0).toFixed(1)} ${SL.unit}`}
               editable
             />
           ) : null}
@@ -245,33 +268,33 @@ function SelectionSheet(): JSX.Element | null {
       <Card title="Kijelölt ágyazat" accent="foundation">
         <div className="vem-panel__body--padded">
           <Slider
-            label="x₁ (kezdet) [m]"
-            min={0}
-            max={model.span}
-            step={0.01}
-            value={foundation.x1}
-            onChange={(v) => setFoundationRange(foundation.id, v, foundation.x2)}
-            display={`${foundation.x1.toFixed(2)} m`}
+            label={`x₁ (kezdet) [${L.unit}]`}
+            min={L.toDisplay(0)}
+            max={L.toDisplay(model.span)}
+            step={L.toDisplay(0.01)}
+            value={L.toDisplay(foundation.x1)}
+            onChange={(v) => setFoundationRange(foundation.id, L.toCore(v), foundation.x2)}
+            display={`${L.toDisplay(foundation.x1).toFixed(2)} ${L.unit}`}
             editable
           />
           <Slider
-            label="x₂ (vég) [m]"
-            min={0}
-            max={model.span}
-            step={0.01}
-            value={foundation.x2}
-            onChange={(v) => setFoundationRange(foundation.id, foundation.x1, v)}
-            display={`${foundation.x2.toFixed(2)} m`}
+            label={`x₂ (vég) [${L.unit}]`}
+            min={L.toDisplay(0)}
+            max={L.toDisplay(model.span)}
+            step={L.toDisplay(0.01)}
+            value={L.toDisplay(foundation.x2)}
+            onChange={(v) => setFoundationRange(foundation.id, foundation.x1, L.toCore(v))}
+            display={`${L.toDisplay(foundation.x2).toFixed(2)} ${L.unit}`}
             editable
           />
           <Slider
-            label="c [kN/m²]"
-            min={100}
-            max={20000}
-            step={100}
-            value={foundation.c}
-            onChange={(v) => setFoundationStiffness(foundation.id, v)}
-            display={`${foundation.c.toFixed(0)} kN/m²`}
+            label={`c [${C.unit}]`}
+            min={C.toDisplay(100)}
+            max={C.toDisplay(20000)}
+            step={C.toDisplay(100)}
+            value={C.toDisplay(foundation.c)}
+            onChange={(v) => setFoundationStiffness(foundation.id, C.toCore(v))}
+            display={`${C.toDisplay(foundation.c).toFixed(0)} ${C.unit}`}
             editable
           />
           <button type="button" className="vem-btn vem-btn--sm" style={{ marginTop: 8 }} onClick={removeSelected}>
@@ -306,132 +329,132 @@ function SelectionSheet(): JSX.Element | null {
         {load.kind === 'point' ? (
           <>
             <Slider
-              label="x [m]"
-              min={0}
-              max={model.span}
-              step={0.01}
-              value={load.x}
-              onChange={(v) => setLoadPosition(load.id, v)}
-              display={`${load.x.toFixed(2)} m`}
+              label={`x [${L.unit}]`}
+              min={L.toDisplay(0)}
+              max={L.toDisplay(model.span)}
+              step={L.toDisplay(0.01)}
+              value={L.toDisplay(load.x)}
+              onChange={(v) => setLoadPosition(load.id, L.toCore(v))}
+              display={`${L.toDisplay(load.x).toFixed(2)} ${L.unit}`}
               editable
             />
             <Slider
-              label="P [kN]"
-              min={1}
-              max={200}
-              step={0.01}
-              value={load.p}
-              onChange={(v) => setLoadMagnitude(load.id, v)}
-              display={`${load.p.toFixed(0)} kN`}
+              label={`P [${F.unit}]`}
+              min={F.toDisplay(1)}
+              max={F.toDisplay(200)}
+              step={F.toDisplay(0.01)}
+              value={F.toDisplay(load.p)}
+              onChange={(v) => setLoadMagnitude(load.id, F.toCore(v))}
+              display={`${F.toDisplay(load.p).toFixed(0)} ${F.unit}`}
               editable
             />
           </>
         ) : load.kind === 'moment' ? (
           <>
             <Slider
-              label="x [m]"
-              min={0}
-              max={model.span}
-              step={0.01}
-              value={load.x}
-              onChange={(v) => setLoadPosition(load.id, v)}
-              display={`${load.x.toFixed(2)} m`}
+              label={`x [${L.unit}]`}
+              min={L.toDisplay(0)}
+              max={L.toDisplay(model.span)}
+              step={L.toDisplay(0.01)}
+              value={L.toDisplay(load.x)}
+              onChange={(v) => setLoadPosition(load.id, L.toCore(v))}
+              display={`${L.toDisplay(load.x).toFixed(2)} ${L.unit}`}
               editable
             />
             <Slider
-              label="M [kNm]"
-              min={1}
-              max={200}
-              step={0.01}
-              value={load.m}
-              onChange={(v) => setLoadMagnitude(load.id, v)}
-              display={`${load.m.toFixed(0)} kNm`}
+              label={`M [${M.unit}]`}
+              min={M.toDisplay(1)}
+              max={M.toDisplay(200)}
+              step={M.toDisplay(0.01)}
+              value={M.toDisplay(load.m)}
+              onChange={(v) => setLoadMagnitude(load.id, M.toCore(v))}
+              display={`${M.toDisplay(load.m).toFixed(0)} ${M.unit}`}
               editable
             />
           </>
         ) : load.kind === 'distributed' ? (
           <>
             <Slider
-              label="x₁ (kezdet) [m]"
-              min={0}
-              max={model.span}
-              step={0.01}
-              value={load.x1}
-              onChange={(v) => setLoadRange(load.id, v, load.x2)}
-              display={`${load.x1.toFixed(2)} m`}
+              label={`x₁ (kezdet) [${L.unit}]`}
+              min={L.toDisplay(0)}
+              max={L.toDisplay(model.span)}
+              step={L.toDisplay(0.01)}
+              value={L.toDisplay(load.x1)}
+              onChange={(v) => setLoadRange(load.id, L.toCore(v), load.x2)}
+              display={`${L.toDisplay(load.x1).toFixed(2)} ${L.unit}`}
               editable
             />
             <Slider
-              label="x₂ (vég) [m]"
-              min={0}
-              max={model.span}
-              step={0.01}
-              value={load.x2}
-              onChange={(v) => setLoadRange(load.id, load.x1, v)}
-              display={`${load.x2.toFixed(2)} m`}
+              label={`x₂ (vég) [${L.unit}]`}
+              min={L.toDisplay(0)}
+              max={L.toDisplay(model.span)}
+              step={L.toDisplay(0.01)}
+              value={L.toDisplay(load.x2)}
+              onChange={(v) => setLoadRange(load.id, load.x1, L.toCore(v))}
+              display={`${L.toDisplay(load.x2).toFixed(2)} ${L.unit}`}
               editable
             />
             <Slider
-              label="q₁ (kezdet) [kN/m]"
-              min={1}
-              max={100}
-              step={0.01}
-              value={load.q1}
-              onChange={(v) => setDistributedLoadMagnitudes(load.id, v, load.q2)}
-              display={`${load.q1.toFixed(0)} kN/m`}
+              label={`q₁ (kezdet) [${Q.unit}]`}
+              min={Q.toDisplay(1)}
+              max={Q.toDisplay(100)}
+              step={Q.toDisplay(0.01)}
+              value={Q.toDisplay(load.q1)}
+              onChange={(v) => setDistributedLoadMagnitudes(load.id, Q.toCore(v), load.q2)}
+              display={`${Q.toDisplay(load.q1).toFixed(0)} ${Q.unit}`}
               editable
             />
             <Slider
-              label="q₂ (vég) [kN/m]"
-              min={1}
-              max={100}
-              step={0.01}
-              value={load.q2}
-              onChange={(v) => setDistributedLoadMagnitudes(load.id, load.q1, v)}
-              display={`${load.q2.toFixed(0)} kN/m`}
+              label={`q₂ (vég) [${Q.unit}]`}
+              min={Q.toDisplay(1)}
+              max={Q.toDisplay(100)}
+              step={Q.toDisplay(0.01)}
+              value={Q.toDisplay(load.q2)}
+              onChange={(v) => setDistributedLoadMagnitudes(load.id, load.q1, Q.toCore(v))}
+              display={`${Q.toDisplay(load.q2).toFixed(0)} ${Q.unit}`}
               editable
             />
           </>
         ) : (
           <>
             <Slider
-              label="x₁ (kezdet) [m]"
-              min={0}
-              max={model.span}
-              step={0.01}
-              value={load.x1}
-              onChange={(v) => setLoadRange(load.id, v, load.x2)}
-              display={`${load.x1.toFixed(2)} m`}
+              label={`x₁ (kezdet) [${L.unit}]`}
+              min={L.toDisplay(0)}
+              max={L.toDisplay(model.span)}
+              step={L.toDisplay(0.01)}
+              value={L.toDisplay(load.x1)}
+              onChange={(v) => setLoadRange(load.id, L.toCore(v), load.x2)}
+              display={`${L.toDisplay(load.x1).toFixed(2)} ${L.unit}`}
               editable
             />
             <Slider
-              label="x₂ (vég) [m]"
-              min={0}
-              max={model.span}
-              step={0.01}
-              value={load.x2}
-              onChange={(v) => setLoadRange(load.id, load.x1, v)}
-              display={`${load.x2.toFixed(2)} m`}
+              label={`x₂ (vég) [${L.unit}]`}
+              min={L.toDisplay(0)}
+              max={L.toDisplay(model.span)}
+              step={L.toDisplay(0.01)}
+              value={L.toDisplay(load.x2)}
+              onChange={(v) => setLoadRange(load.id, load.x1, L.toCore(v))}
+              display={`${L.toDisplay(load.x2).toFixed(2)} ${L.unit}`}
               editable
             />
             <Slider
-              label="m₁ (kezdet) [kNm/m]"
-              min={0.1}
-              max={50}
-              step={0.01}
-              value={load.m1}
-              onChange={(v) => setDistributedMomentMagnitudes(load.id, v, load.m2)}
-              display={`${load.m1.toFixed(1)} kNm/m`}
+              label={`m₁ (kezdet) [${MPL.unit}]`}
+              min={MPL.toDisplay(0.1)}
+              max={MPL.toDisplay(50)}
+              step={MPL.toDisplay(0.01)}
+              value={MPL.toDisplay(load.m1)}
+              onChange={(v) => setDistributedMomentMagnitudes(load.id, MPL.toCore(v), load.m2)}
+              display={`${MPL.toDisplay(load.m1).toFixed(1)} ${MPL.unit}`}
               editable
             />
             <Slider
-              label="m₂ (vég) [kNm/m]"
-              min={0.1}
-              max={50}
-              step={0.01}
-              value={load.m2}
-              onChange={(v) => setDistributedMomentMagnitudes(load.id, load.m1, v)}
-              display={`${load.m2.toFixed(1)} kNm/m`}
+              label={`m₂ (vég) [${MPL.unit}]`}
+              min={MPL.toDisplay(0.1)}
+              max={MPL.toDisplay(50)}
+              step={MPL.toDisplay(0.01)}
+              value={MPL.toDisplay(load.m2)}
+              onChange={(v) => setDistributedMomentMagnitudes(load.id, load.m1, MPL.toCore(v))}
+              display={`${MPL.toDisplay(load.m2).toFixed(1)} ${MPL.unit}`}
               editable
             />
           </>
@@ -458,12 +481,16 @@ export function LeftPanel(): JSX.Element {
   const material = findMaterial(model.materialId);
   const sectionProps = geometricProperties(toShape(section));
   const compositeStiffness = model.composite.enabled ? compositeSectionStiffness(model) : null;
+  const A = fmt.editableArea();
+  const SL = fmt.editableSmallLength();
+  const T = fmt.editableTemperature();
+  const F = fmt.editableForce();
 
   /** A "legkisebb megfelelő szelvény" keresés eredménye — lokális, effemer UI-állapot (nem globális store: nem kell perzisztálni/undo-zni, egyszeri gombnyomás-eredmény). */
   const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
 
   const tree: readonly { label: string; value: string }[] = [
-    { label: 'Geometria', value: `${fmt.length(model.span).value} m` },
+    { label: 'Geometria', value: `${fmt.length(model.span).value} ${fmt.length(model.span).unit}` },
     { label: 'Anyag', value: material.id },
     { label: 'Szelvény', value: section.name },
     { label: 'Háló', value: `${model.elementCount} elem` },
@@ -542,33 +569,33 @@ export function LeftPanel(): JSX.Element {
               {model.rebar.enabled ? (
                 <>
                   <Slider
-                    label="alsó vasalás Aₛ [cm²]"
-                    min={0}
-                    max={40}
-                    step={0.1}
-                    value={model.rebar.asBottom * 1e4}
-                    onChange={(v) => setRebar({ ...model.rebar, asBottom: v / 1e4 })}
-                    display={`${(model.rebar.asBottom * 1e4).toFixed(2)} cm²`}
+                    label={`alsó vasalás Aₛ [${A.unit}]`}
+                    min={A.toDisplay(0)}
+                    max={A.toDisplay(0.004)}
+                    step={A.toDisplay(0.00001)}
+                    value={A.toDisplay(model.rebar.asBottom)}
+                    onChange={(v) => setRebar({ ...model.rebar, asBottom: A.toCore(v) })}
+                    display={`${A.toDisplay(model.rebar.asBottom).toFixed(2)} ${A.unit}`}
                     editable
                   />
                   <Slider
-                    label="felső vasalás Aₛ' [cm²]"
-                    min={0}
-                    max={40}
-                    step={0.1}
-                    value={model.rebar.asTop * 1e4}
-                    onChange={(v) => setRebar({ ...model.rebar, asTop: v / 1e4 })}
-                    display={`${(model.rebar.asTop * 1e4).toFixed(2)} cm²`}
+                    label={`felső vasalás Aₛ' [${A.unit}]`}
+                    min={A.toDisplay(0)}
+                    max={A.toDisplay(0.004)}
+                    step={A.toDisplay(0.00001)}
+                    value={A.toDisplay(model.rebar.asTop)}
+                    onChange={(v) => setRebar({ ...model.rebar, asTop: A.toCore(v) })}
+                    display={`${A.toDisplay(model.rebar.asTop).toFixed(2)} ${A.unit}`}
                     editable
                   />
                   <Slider
-                    label="fedés c [mm]"
-                    min={15}
-                    max={80}
-                    step={1}
-                    value={model.rebar.cover * 1000}
-                    onChange={(v) => setRebar({ ...model.rebar, cover: v / 1000 })}
-                    display={`${(model.rebar.cover * 1000).toFixed(0)} mm`}
+                    label={`fedés c [${SL.unit}]`}
+                    min={SL.toDisplay(0.015)}
+                    max={SL.toDisplay(0.08)}
+                    step={SL.toDisplay(0.001)}
+                    value={SL.toDisplay(model.rebar.cover)}
+                    onChange={(v) => setRebar({ ...model.rebar, cover: SL.toCore(v) })}
+                    display={`${SL.toDisplay(model.rebar.cover).toFixed(0)} ${SL.unit}`}
                     editable
                   />
                   <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
@@ -593,23 +620,23 @@ export function LeftPanel(): JSX.Element {
               {model.composite.enabled ? (
                 <>
                   <Slider
-                    label="lemez szélesség b [mm]"
-                    min={100}
-                    max={3000}
-                    step={10}
-                    value={model.composite.slabWidth * 1000}
-                    onChange={(v) => setComposite({ ...model.composite, slabWidth: v / 1000 })}
-                    display={`${(model.composite.slabWidth * 1000).toFixed(0)} mm`}
+                    label={`lemez szélesség b [${SL.unit}]`}
+                    min={SL.toDisplay(0.1)}
+                    max={SL.toDisplay(3)}
+                    step={SL.toDisplay(0.01)}
+                    value={SL.toDisplay(model.composite.slabWidth)}
+                    onChange={(v) => setComposite({ ...model.composite, slabWidth: SL.toCore(v) })}
+                    display={`${SL.toDisplay(model.composite.slabWidth).toFixed(0)} ${SL.unit}`}
                     editable
                   />
                   <Slider
-                    label="lemez vastagság t [mm]"
-                    min={40}
-                    max={400}
-                    step={5}
-                    value={model.composite.slabThickness * 1000}
-                    onChange={(v) => setComposite({ ...model.composite, slabThickness: v / 1000 })}
-                    display={`${(model.composite.slabThickness * 1000).toFixed(0)} mm`}
+                    label={`lemez vastagság t [${SL.unit}]`}
+                    min={SL.toDisplay(0.04)}
+                    max={SL.toDisplay(0.4)}
+                    step={SL.toDisplay(0.005)}
+                    value={SL.toDisplay(model.composite.slabThickness)}
+                    onChange={(v) => setComposite({ ...model.composite, slabThickness: SL.toCore(v) })}
+                    display={`${SL.toDisplay(model.composite.slabThickness).toFixed(0)} ${SL.unit}`}
                     editable
                   />
                   <div style={{ marginBottom: 'var(--space-2)' }}>
@@ -737,45 +764,45 @@ export function LeftPanel(): JSX.Element {
             {model.thermalLoad.enabled ? (
               <>
                 <Slider
-                  label="tRef (feszültségmentes hőmérséklet) [°C]"
-                  min={-20}
-                  max={40}
+                  label={`tRef (feszültségmentes hőmérséklet) [${T.unit}]`}
+                  min={T.toDisplay(-20)}
+                  max={T.toDisplay(40)}
                   step={1}
-                  value={model.thermalLoad.tRef}
-                  onChange={(v) => setThermalLoad({ ...model.thermalLoad, tRef: v })}
-                  display={`${model.thermalLoad.tRef.toFixed(0)} °C`}
+                  value={T.toDisplay(model.thermalLoad.tRef)}
+                  onChange={(v) => setThermalLoad({ ...model.thermalLoad, tRef: T.toCore(v) })}
+                  display={`${T.toDisplay(model.thermalLoad.tRef).toFixed(0)} ${T.unit}`}
                   editable
                 />
                 <Slider
-                  label="tTop (felső szél) [°C]"
-                  min={-30}
-                  max={60}
+                  label={`tTop (felső szél) [${T.unit}]`}
+                  min={T.toDisplay(-30)}
+                  max={T.toDisplay(60)}
                   step={1}
-                  value={model.thermalLoad.tTop}
-                  onChange={(v) => setThermalLoad({ ...model.thermalLoad, tTop: v })}
-                  display={`${model.thermalLoad.tTop.toFixed(0)} °C`}
+                  value={T.toDisplay(model.thermalLoad.tTop)}
+                  onChange={(v) => setThermalLoad({ ...model.thermalLoad, tTop: T.toCore(v) })}
+                  display={`${T.toDisplay(model.thermalLoad.tTop).toFixed(0)} ${T.unit}`}
                   editable
                 />
                 <Slider
-                  label="tBottom (alsó szél) [°C]"
-                  min={-30}
-                  max={60}
+                  label={`tBottom (alsó szél) [${T.unit}]`}
+                  min={T.toDisplay(-30)}
+                  max={T.toDisplay(60)}
                   step={1}
-                  value={model.thermalLoad.tBottom}
-                  onChange={(v) => setThermalLoad({ ...model.thermalLoad, tBottom: v })}
-                  display={`${model.thermalLoad.tBottom.toFixed(0)} °C`}
+                  value={T.toDisplay(model.thermalLoad.tBottom)}
+                  onChange={(v) => setThermalLoad({ ...model.thermalLoad, tBottom: T.toCore(v) })}
+                  display={`${T.toDisplay(model.thermalLoad.tBottom).toFixed(0)} ${T.unit}`}
                   editable
                 />
               </>
             ) : null}
             <Slider
-              label={`axiális erő N = ${model.axialForce.toFixed(0)} kN (P-Δ)`}
-              min={-1000}
-              max={1000}
-              step={10}
-              value={model.axialForce}
-              onChange={setAxialForce}
-              display={`${model.axialForce.toFixed(0)} kN`}
+              label={`axiális erő N = ${F.toDisplay(model.axialForce).toFixed(0)} ${F.unit} (P-Δ)`}
+              min={F.toDisplay(-1000)}
+              max={F.toDisplay(1000)}
+              step={F.toDisplay(10)}
+              value={F.toDisplay(model.axialForce)}
+              onChange={(v) => setAxialForce(F.toCore(v))}
+              display={`${F.toDisplay(model.axialForce).toFixed(0)} ${F.unit}`}
               editable
             />
             {model.axialForce !== 0 ? (
@@ -793,13 +820,13 @@ export function LeftPanel(): JSX.Element {
             {model.movingLoad.enabled ? (
               <>
                 <Slider
-                  label="mozgó pontteher P [kN]"
-                  min={1}
-                  max={200}
-                  step={1}
-                  value={model.movingLoad.magnitude}
-                  onChange={(v) => setMovingLoad({ ...model.movingLoad, magnitude: v })}
-                  display={`${model.movingLoad.magnitude.toFixed(0)} kN`}
+                  label={`mozgó pontteher P [${F.unit}]`}
+                  min={F.toDisplay(1)}
+                  max={F.toDisplay(200)}
+                  step={F.toDisplay(1)}
+                  value={F.toDisplay(model.movingLoad.magnitude)}
+                  onChange={(v) => setMovingLoad({ ...model.movingLoad, magnitude: F.toCore(v) })}
+                  display={`${F.toDisplay(model.movingLoad.magnitude).toFixed(0)} ${F.unit}`}
                   editable
                 />
                 <NoteBox tone="info">

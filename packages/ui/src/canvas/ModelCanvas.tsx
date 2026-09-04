@@ -399,7 +399,7 @@ export function ModelCanvas(): JSX.Element {
       : [];
 
   const ariaLabel =
-    `${fmt.length(model.span).value} m fesztáv, ${section.name} keresztmetszet, ${model.elementCount} végeselem, ` +
+    `${model.span.toFixed(2)} m fesztáv, ${section.name} keresztmetszet, ${model.elementCount} végeselem, ` +
     `${model.supports.length} támasz, ${model.loads.length} teher. ` +
     (result ? 'Van érvényes számítási eredmény.' : error ? `Hiba: ${error}` : 'Számítási eredmény még nincs.') +
     ` Vászon-eszköz: ${tool}.`;
@@ -604,7 +604,7 @@ export function ModelCanvas(): JSX.Element {
                     />
                     <text x={rx + 6} y={farY + 6} fontSize={13} fontWeight={600} fontFamily="var(--font-mono)" fill="var(--sem-error)">
                       R<tspan fontSize={9.5} dy={3}>{`z${i + 1}`}</tspan>
-                      <tspan dy={-3}>{` = ${fmt.force(r.fz).value} kN`}</tspan>
+                      <tspan dy={-3}>{` = ${fmt.force(r.fz).value} ${fmt.force(r.fz).unit}`}</tspan>
                     </text>
                   </g>
                 );
@@ -798,7 +798,7 @@ export function ModelCanvas(): JSX.Element {
               fill="var(--text-muted)"
               style={{ font: "500 15px var(--font-mono)" }}
             >
-              L = {fmt.length(model.span).value} m · {material.name}
+              L = {model.span.toFixed(2)} m · {material.name}
             </text>
           </g>
         </g>

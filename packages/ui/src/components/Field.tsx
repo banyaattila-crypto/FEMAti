@@ -68,25 +68,36 @@ export interface NumberInputProps {
 }
 
 /**
+ * A `step` alapján ésszerű tizedesjegy-számot ad (pl. step=0.01 → 2 tizedes,
+ * step=100 → egész) — a mértékegység-váltó (2026-09-04) miatt a `value`
+ * gyakran egy konverzió eredménye (pl. 30 mm → 1.1811023622047243 in),
+ * enélkül a mező csúnya, hosszú tizedesekkel telne meg.
+ */
+function stepDecimals(step: number): number {
+  if (!Number.isFinite(step) || step <= 0) return 2;
+  return Math.max(0, Math.min(4, Math.ceil(-Math.log10(step))));
+}
+
+/**
  * Pontos érték begépelésére szolgáló számmező — a csúszka mellett, azzal
  * kétirányban szinkronban. Szabad gépelést enged (átmenetileg érvénytelen
  * állapot, pl. "23." vagy üres mező) — a tényleges `onChange` csak
  * elfogadható számra, blur-kor/Enterre fut, ekkor a min/max-ra vágva.
  */
 export function NumberInput({ value, min, max, step, onChange, disabled = false }: NumberInputProps): JSX.Element {
-  const [text, setText] = useState(() => String(value));
+  const [text, setText] = useState(() => value.toFixed(stepDecimals(step)));
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    if (!focused) setText(String(value));
-  }, [value, focused]);
+    if (!focused) setText(value.toFixed(stepDecimals(step)));
+  }, [value, step, focused]);
 
   const commit = (): void => {
     const parsed = Number(text.replace(',', '.'));
     if (Number.isFinite(parsed)) {
       onChange(Math.min(max, Math.max(min, parsed)));
     } else {
-      setText(String(value));
+      setText(value.toFixed(stepDecimals(step)));
     }
   };
 

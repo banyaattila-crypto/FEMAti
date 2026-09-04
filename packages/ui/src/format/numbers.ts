@@ -21,10 +21,16 @@
  * nélkül (`useAppStore()`), és a kódbázisban nincs `React.memo` — bármely
  * store-mező (így `unitSystem`) változása mindent újrarenderel alatta.
  *
- * A BEMENET (csúszkák, vászon-feliratok, katalógus-visszhangok) EZZEL
- * SZÁNDÉKOSAN NEM váltható — mindig SI marad, mert a szerkesztés maga is
- * SI-alapú (min/max/step a `Slider`-eken). Rendszer-független mennyiségek
- * (idő, szög, frekvencia, dimenziótlan arányok — `rotation`, `frequencyHz`,
+ * A BAL PANEL BEMENETE (csúszkák, számmezők) 2026-09-04 óta SZINTÉN vált —
+ * ld. lentebb az `editable*` függvénycsaládot, ami a `makeConvertible`-től
+ * eltérően nem csak kijelez, hanem a `Slider` `value`/`min`/`max`/`step`-jét
+ * is konvertálja (oda-vissza, `toDisplay`/`toCore`), a mag SI-tárolásának
+ * érintetlenül hagyása mellett. A VÁSZON-FELIRATOK és a KATALÓGUS-
+ * VISSZHANGOK (a `findSection`/`findMaterial` fix katalógusadatai, pl. A/I/
+ * E/G a "Keresztmetszet" kártyán) továbbra is SZÁNDÉKOSAN SI-ben maradnak —
+ * ezek nem a felhasználó által beírt/húzott mennyiségek, hanem a katalógus
+ * saját (metrikus) adatai. Rendszer-független mennyiségek (idő, szög,
+ * frekvencia, dimenziótlan arányok — `rotation`, `frequencyHz`,
  * `angularFrequency`, `modeShape`, `time`, `lambda`, `shapeFactor`,
  * `percent`, `count`) VÁLTOZATLANOK maradnak `unitSystem`-től függetlenül.
  */
@@ -169,6 +175,72 @@ export const count = (v: number | null | undefined, unit = ''): Formatted => ({
 
 /** Hossz [m] (SI) / ft (US), 2 tizedes. */
 export const length = makeConvertible({ digits: 2, unit: 'm', scale: 1 }, { digits: 2, unit: 'ft', scale: M_TO_FT });
+
+// ─── Szerkeszthető mezők (csúszkák) mértékegység-váltója (2026-09-04) ─────────
+//
+// A fenti `makeConvertible` CSAK kijelez (a `format/numbers.ts` fejléce
+// szerint a mag mindig SI-ben számol, a bal panel bemenete pedig eddig
+// szándékosan mindig SI maradt — ld. git history). A felhasználó kérésére
+// ez kiterjed a bal panel MINDEN szerkeszthető csúszkájára/számmezőjére is:
+// nem csak kijelez, hanem a `Slider` `value`/`min`/`max`/`step`-jét is az
+// aktuális `unitSystem`-nek megfelelő alapra hozza. A hívó oldal (Toolbar/
+// LeftPanel) a visszakapott `toDisplay`/`toCore` függvényekkel konvertál
+// oda-vissza — a modell VÁLTOZATLANUL a mag SI-alapú (vagy a meglévő
+// "SI-szép" — cm²/mm —) egységében tárol.
+export interface EditableUnit {
+  readonly unit: string;
+  readonly toDisplay: (core: number) => number;
+  readonly toCore: (display: number) => number;
+}
+
+const linearUnit = (unit: string, scale: number): EditableUnit => ({
+  unit,
+  toDisplay: (core) => core * scale,
+  toCore: (display) => display / scale,
+});
+
+const editableField =
+  (si: EditableUnit, imperial: EditableUnit) =>
+  (): EditableUnit =>
+    useAppStore.getState().unitSystem === 'imperial' ? imperial : si;
+
+/** Hossz (fesztáv, pozíciók) — mag méterben. */
+export const editableLength = editableField(linearUnit('m', 1), linearUnit('ft', M_TO_FT));
+
+/** Kis hossz (süllyedés, vasalás-fedés, lemezvastagság) — mag méterben, SI-ben mm-ként szerkesztve. */
+export const editableSmallLength = editableField(linearUnit('mm', 1e3), linearUnit('in', M_TO_IN));
+
+/** Terület (vasalás Aₛ) — mag m²-ben, SI-ben cm²-ként szerkesztve. */
+export const editableArea = editableField(linearUnit('cm²', 1e4), linearUnit('in²', M_TO_IN * M_TO_IN));
+
+/** Erő (pontteher, mozgó teher, axiális erő). */
+export const editableForce = editableField(linearUnit('kN', 1), linearUnit('kip', KN_TO_KIP));
+
+/** Koncentrált nyomatékteher. */
+export const editableMoment = editableField(linearUnit('kNm', 1), linearUnit('kip·ft', KN_TO_KIP * M_TO_FT));
+
+/** Megoszló teher és rugóállandó (mindkettő erő/hossz — kN/m). */
+export const editableLinearLoad = editableField(linearUnit('kN/m', 1), linearUnit('kip/ft', KN_TO_KIP / M_TO_FT));
+
+/** Megoszló nyomatékteher (kNm/m). */
+export const editableMomentPerLength = editableField(linearUnit('kNm/m', 1), linearUnit('kip·ft/ft', KN_TO_KIP));
+
+/** Rugalmas ágyazási modulus (kN/m²). */
+export const editableFoundationModulus = editableField(
+  linearUnit('kN/m²', 1),
+  linearUnit('kip/ft²', KN_TO_KIP / (M_TO_FT * M_TO_FT)),
+);
+
+/**
+ * Hőmérséklet — AFFIN átváltás (°F = °C·9/5+32), ezért NEM `linearUnit`:
+ * a `toDisplay`/`toCore` a `step`-re/deltára hívva hibás lenne (az eltolás
+ * torzítaná), a hívó oldal ezért a hőteher-csúszkáknál a `step`-et fixen,
+ * mértékegység-függetlenül adja meg (1 °C ≈ 1-2 °F, elhanyagolható eltérés).
+ */
+export function editableTemperature(): EditableUnit {
+  if (useAppStore.getState().unitSystem !== 'imperial') return linearUnit('°C', 1);
+  return { unit: '°F', toDisplay: (c) => c * 1.8 + 32, toCore: (f) => (f - 32) / 1.8 };
+}
 
 // ─── Eltérés-értékelés (DESIGN-TERV 6.2) ─────────────────────────────────────
 

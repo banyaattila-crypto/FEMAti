@@ -107,7 +107,7 @@
 
 .vem-segmented__item {
   height: var(--h-control);
-  padding: 0 var(--space-5);
+  padding: 0 var(--space-4);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-sm);
   background: var(--surface-raised);
@@ -686,6 +686,13 @@
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
   max-height: 88vh;
   overflow: auto;
+}
+
+/* A Névjegy (About) kifejezett kérésre lekerekítettebb, mint a többi
+   `.vem-inspector`-alapú párbeszédablak (Kezdő lépések, Keresztmetszet-
+   inspektor) — azokat szándékosan nem érinti. */
+.vem-inspector--about {
+  border-radius: 16px;
 }
 
 .vem-inspector__header {

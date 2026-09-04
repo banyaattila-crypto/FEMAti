@@ -18,7 +18,7 @@ export function AboutDialog(): JSX.Element | null {
 
   return (
     <div className="vem-inspector-overlay" onPointerDown={() => setOpen(false)}>
-      <div className="vem-inspector" style={{ width: 320 }} onPointerDown={(e) => e.stopPropagation()}>
+      <div className="vem-inspector vem-inspector--about" style={{ width: 360 }} onPointerDown={(e) => e.stopPropagation()}>
         <div className="vem-inspector__header">
           <span>Névjegy</span>
           <button type="button" className="vem-btn vem-btn--sm" onClick={() => setOpen(false)} aria-label="Névjegy bezárása">
@@ -38,12 +38,21 @@ export function AboutDialog(): JSX.Element | null {
 
           <div style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
             <p style={{ margin: 0 }}>
-              A FEMAti egy Timoshenko-gerenda rugalmas–képlékeny végeselemes analízis szoftver:
+              A FEM@ti egy Timoshenko-gerenda rugalmas–képlékeny végeselemes analízis szoftver:
             </p>
             <ul style={{ margin: 'var(--space-3) 0 0 var(--space-5)', padding: 0 }}>
+              <li>rugalmas–képlékeny (nemlineáris) analízis, tehertörténettel — monoton vagy terhelés–tehermentesítés</li>
               <li>dinamikai analízis — sajátfrekvencia, módalakok, Rayleigh-csillapítás, Newmark-β tranziens válasz</li>
               <li>Cowper-féle, Poisson-tényezőtől függő nyírási korrekciós tényező</li>
               <li>képlékeny hajlítás–nyírás (M-V) interakciós teherbírás-ellenőrzés</li>
+              <li>vasbeton keresztmetszet vasalással, ULS teherbírás-ellenőrzés (EC2)</li>
+              <li>kompozit keresztmetszet (acél gerenda + betonlemez)</li>
+              <li>hőterhelés (hőmérsékleti gradiens az alsó/felső szélen)</li>
+              <li>másodrendű (P-Δ) hatás axiális erő mellett</li>
+              <li>mozgó teher — burkolóábra (M/T envelope)</li>
+              <li>hálófüggetlenségi (h-konvergencia) vizsgálat</li>
+              <li>mértékegység-váltás: SI ↔ US customary</li>
+              <li>szelvény- és anyagadatbázis, jegyzőkönyv-export (Word/PDF)</li>
             </ul>
           </div>
 

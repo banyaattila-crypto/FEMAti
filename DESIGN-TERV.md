@@ -274,6 +274,12 @@ készült el — a felhasználó jelezte, hogy a bal/jobb panel a tényleges kó
 csak eltűnt, visszanyitás nélkül. Pótolva: `appStore.ts` `mobileTab`
 állapota + a fejezet-fülsáv (`App.tsx`, `shell.css` `.vem-mobile-tabs`).
 
+**2026-09-04 frissítés:** a `768–1099px` sor ugyanígy csak leírva volt, meg
+nem valósítva — a bal panel `display: none`-nal eltűnt, visszanyitó fül
+nélkül. Pótolva: `appStore.ts` `tabletModelOpen` állapota + `.vem-tablet-toggle`
+fül (`App.tsx`, `shell.css`), ami a bal panelt overlayként nyitja a vászon fölé
+ebben a sávban.
+
 ---
 
 ## 4. KOMPONENS-INVENTÁR

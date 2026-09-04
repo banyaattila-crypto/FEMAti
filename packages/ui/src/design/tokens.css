@@ -187,6 +187,8 @@
   --font-ui: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
   --font-serif: 'Spectral', Georgia, serif;
+  /* A fejléc arany alcíme — a felhasználó 3-4 jelöltből választotta (2026-09-04). */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
 
   --type-label-size: 10.5px;
   --type-label-weight: 600;
