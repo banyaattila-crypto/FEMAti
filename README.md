@@ -1,74 +1,84 @@
-# FEMAti
+# FEM@ti
 
-**Rugalmas–képlékeny Timoshenko-gerenda végeselemes analízis** — modern,
-TypeScript alapú, validált végeselemes program.
+*[Magyarul](README.hu.md)*
 
----
+**Elastic–plastic Timoshenko-beam finite element analysis** — a modern,
+TypeScript-based, validated FEA program.
 
-## Mi ez?
-
-1996-ban egy BME diplomaterv keretében készült egy rugalmas–képlékeny
-Timoshenko-gerenda végeselemes program: 3-csomópontos, kvadratikus
-gerendaelemekkel, szelektív redukált integrálással (a nyírási záródás
-ellen), frontális egyenletmegoldóval, és réteges (fiber) keresztmetszeti
-modellel a képlékeny alakváltozás nyomon követésére.
-
-A FEMAti ugyanezt a szerkezetmechanikai modellt valósítja meg újra,
-harminc évvel később, egy modern böngészőben futó, interaktív felülettel —
-de nem "ihletet merít" a diplomatervből, hanem **soronként megfelelteti**
-minden implementált képletet a diplomaterv adott oldalszámának és
-egyenletszámának (ld. [`docs/THEORY.md`](docs/THEORY.md)), és minden
-mechanikai állítást validációs teszttel bizonyít, zárt alakú vagy
-kézzel-számolt referenciaértékek ellen (ld. [`docs/VALIDATION.md`](docs/VALIDATION.md)).
-
-Ahol a mai szoftver-mérnöki gyakorlat és az 1996-os megoldás eltér (pl. a
-frontális egyenletmegoldó helyett skyline-tárolás a produkciós útvonalon),
-azt egy külön architektúra-döntési feljegyzés (ADR) rögzíti — beleértve
-magát az EREDETI, frontális algoritmust is, ami a felület "Történelmi
-mód" nézetében animálva, didaktikus célból elérhető marad (ld.
-[ADR-0002](docs/ADR/0002-skyline-vs-frontalis.md)).
-
-### Miért érdemes megnézni?
-
-- **Interaktív modellvászon**: kattintással/húzással szerkeszthető
-  gerenda-modell (támaszok, koncentrált/megoszló terhek), élő
-  újraszámolással minden módosításnál.
-- **Lineáris ÉS nemlineáris (rugalmas–képlékeny) analízis**: Newton–Raphson
-  megoldó, adaptív teherlépcsőzéssel, REFORB feszültség-visszavetítéssel,
-  teherlépcső-idővonallal és képlékeny zóna-megjelenítéssel.
-- **Teljes, ellenőrizhető levezetés** minden lépésre — Gauss-pontonkénti
-  alakfüggvény/Jacobi/B-mátrix/merevségi mátrix számokkal, réteges
-  képlékeny visszavetítéssel, Word (.docx) és nyomtatható PDF exporttal.
-- **Számítási jegyzőkönyv** és **"Történelmi mód"** (az eredeti 1996-os
-  frontális algoritmus animált bemutatása, összevetve a mai skyline
-  megoldóval).
-- **~480 automatizált teszt**, ezen belül egy 10 000-elemes fuzz-teszt
-  (`fast-check`), amely véletlen szerkezeteken bizonyítja, hogy a megoldó
-  sosem dob kezeletlen kivételt, és mindig egyensúlyban lévő eredményt ad.
+> **Note on language:** the application UI, source comments, and the deeper
+> documentation (`docs/`, ADRs) are in Hungarian — this is a personal project
+> built around a Hungarian engineering thesis. This README exists so an
+> English-speaking visitor can understand what the project does and judge
+> its engineering/software quality without reading Hungarian. If you want to
+> actually run it, the on-screen labels will be Hungarian; the physics
+> notation (M, T, w, φ, E, G, I, A) is standard and language-independent.
 
 ---
 
-## Futtatás
+## What is this?
 
-Előfeltétel: **Node.js ≥ 20**, **pnpm 10** (a repó `packageManager` mezője
-rögzíti a pontos verziót — `corepack enable` után automatikusan a
-megfelelő pnpm-et használja).
+In 1996, a thesis at the Budapest University of Technology (BME) produced an
+elastic–plastic Timoshenko-beam finite element program: 3-node quadratic
+beam elements, selective reduced integration (against shear locking), a
+frontal equation solver, and a layered (fiber) cross-section model to track
+plastic deformation.
+
+FEM@ti reimplements the same structural-mechanics model thirty years later,
+as a modern, interactive, browser-based application — not "inspired by" the
+thesis, but **line-by-line traceable** to it: every implemented formula is
+matched to the thesis's exact page and equation number (see
+[`docs/THEORY.md`](docs/THEORY.md)), and every mechanical claim is proven by
+a validation test against closed-form or hand-calculated reference values
+(see [`docs/VALIDATION.md`](docs/VALIDATION.md)).
+
+Wherever current software-engineering practice diverges from the 1996
+solution (e.g. skyline storage instead of the frontal solver on the
+production path), that divergence is recorded in a dedicated architecture
+decision record (ADR) — including the ORIGINAL frontal algorithm itself,
+which remains available, animated, in the app's "Historical mode" view for
+teaching purposes (see [ADR-0002](docs/ADR/0002-skyline-vs-frontalis.md)).
+
+### Why it's worth a look
+
+- **Interactive model canvas** — click/drag-editable beam model (supports,
+  point/distributed loads), with live recomputation on every change.
+- **Linear AND nonlinear (elastic–plastic) analysis** — Newton–Raphson
+  solver with adaptive load stepping, REFORB stress return-mapping, a
+  load-step timeline, and plastic-zone visualization.
+- **Full, auditable derivation** for every step — per-Gauss-point shape
+  function / Jacobian / B-matrix / stiffness-matrix values, layered plastic
+  return-mapping, with Word (.docx, real OOXML math objects) and printable
+  PDF export.
+- **Calculation report** and a **"Historical mode"** (an animated replay of
+  the original 1996 frontal algorithm, side by side with today's skyline
+  solver).
+- **~660 automated tests**, including a 10,000-element fuzz test
+  (`fast-check`) proving the solver never throws an unhandled exception and
+  always returns an equilibrated result on random structures.
+
+---
+
+## Running it
+
+Prerequisite: **Node.js ≥ 20**, **pnpm 10** (the repo's `packageManager`
+field pins the exact version — after `corepack enable` the correct pnpm is
+picked up automatically).
 
 ```bash
 pnpm install
 pnpm --filter @femati/ui dev
 ```
 
-Ez elindítja a fejlesztői szervert (Vite) — a böngészőben a kiírt
-`http://localhost:5173` címen érhető el.
+This starts the Vite dev server — open the printed
+`http://localhost:5173` URL in a browser.
 
-### Ellenőrzés (típusellenőrzés + lint + teszt, minden csomagra)
+### Verification (typecheck + lint + test, across all packages)
 
 ```bash
 pnpm check
 ```
 
-### Éles build
+### Production build
 
 ```bash
 pnpm build
@@ -76,34 +86,34 @@ pnpm build
 
 ---
 
-## Monorepo-szerkezet
+## Monorepo layout
 
-pnpm workspace, 4 csomag:
+pnpm workspace, 4 packages:
 
-| Csomag | Tartalom |
+| Package | Contents |
 |---|---|
-| [`packages/fem-core`](packages/fem-core) | A tényleges végeselemes mag: modell, elemek, megoldók (skyline-LDLᵀ és a történelmi frontális), anyagmodellek, validáció, utófeldolgozás — **nincs DOM-függősége**, önmagában is használható. |
-| [`packages/fem-db`](packages/fem-db) | Anyag- és szelvénykatalógus, forrás-megjelöléssel (minden rekordon kötelező `source`/`verified` mező). |
-| [`packages/fem-validation`](packages/fem-validation) | A `docs/VALIDATION.md`-t GENERÁLÓ validációs esetek (zárt alakú/kézi referenciák ellen). |
-| [`packages/ui`](packages/ui) | React + Vite alapú, kliens-oldali felület — a számítás a böngészőben fut, nincs backend. |
+| [`packages/fem-core`](packages/fem-core) | The actual FEM core: model, elements, solvers (skyline-LDLᵀ and the historical frontal one), material models, validation, post-processing — **no DOM dependency**, usable standalone. |
+| [`packages/fem-db`](packages/fem-db) | Material and cross-section catalog, with source attribution (every record requires a `source`/`verified` field). |
+| [`packages/fem-validation`](packages/fem-validation) | The validation cases that GENERATE `docs/VALIDATION.md` (against closed-form/hand-calculated references). |
+| [`packages/ui`](packages/ui) | React + Vite client-side UI — computation runs in the browser, no backend. |
 
-## Dokumentáció
+## Documentation
 
-| Dokumentum | Tartalom |
+| Document | Contents |
 |---|---|
-| [`docs/THEORY.md`](docs/THEORY.md) | Minden implementált képlet: kód helye ÉS diplomaterv-oldalszám. |
-| [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) | Rögzített mérnöki/kódolási konvenciók (előjelek, DOF-sorrend, egységek). |
-| [`docs/VALIDATION.md`](docs/VALIDATION.md) | Generált validációs jegyzőkönyv. |
-| [`docs/HIBATURESI-POLITIKA.md`](docs/HIBATURESI-POLITIKA.md) | A hibakezelési/kockázati politika (K1–K8). |
-| [`docs/ADR/`](docs/ADR) | Architektúra-döntési feljegyzések. |
-| [`MASTER-PROMPT-TERV.md`](MASTER-PROMPT-TERV.md) | A projekt teljes, fázisokra bontott terve. |
-| [`STATUS_REPORT.md`](STATUS_REPORT.md) | Fázisonkénti, folyamatosan frissülő állapotjelentés. |
+| [`docs/THEORY.md`](docs/THEORY.md) | Every implemented formula: code location AND thesis page number. (Hungarian) |
+| [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) | Fixed engineering/coding conventions (sign conventions, DOF order, units). (Hungarian) |
+| [`docs/VALIDATION.md`](docs/VALIDATION.md) | Generated validation report. (Hungarian) |
+| [`docs/HIBATURESI-POLITIKA.md`](docs/HIBATURESI-POLITIKA.md) | Error-handling/risk policy (K1–K8). (Hungarian) |
+| [`docs/ADR/`](docs/ADR) | Architecture decision records. (Hungarian) |
+| [`MASTER-PROMPT-TERV.md`](MASTER-PROMPT-TERV.md) | The project's full, phase-by-phase plan. (Hungarian) |
+| [`STATUS_REPORT.md`](STATUS_REPORT.md) | Continuously updated, phase-by-phase status report. (Hungarian) |
 
-A felület "Elmélet" menüje ugyanezeket a tartalmakat közvetlenül az
-alkalmazásban, KaTeX-szel szedett képletekkel is elérhetővé teszi.
+The app's "Elméletek" (Theories) menu exposes the same content directly in
+the application, typeset with KaTeX.
 
 ---
 
-*A projekt a `Diplomaterv (BME).pdf` (73 oldal) teljes átolvasása alapján
-készült — minden mechanikai formula ellenőrzött forrásból származik, egy
-sem lett kitalálva.*
+*Built on a full read-through of the original `Diplomaterv (BME).pdf`
+(73 pages) — every mechanical formula comes from a verified source, none
+was invented.*
