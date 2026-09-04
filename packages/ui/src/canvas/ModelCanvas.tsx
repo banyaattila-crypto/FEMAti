@@ -15,6 +15,7 @@ import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
 import { DEFAULT_DISTRIBUTED_MOMENT, DEFAULT_FOUNDATION_STIFFNESS, DEFAULT_SPRING_STIFFNESS, snapToNode, type SupportType } from '../model/editable.js';
 import { combinedSteps, elementPlasticity, nodalDisplacements } from '../model/nonlinear.js';
+import { jetColor } from '../charts/colormap.js';
 import {
   CanvasDefs,
   DistributedLoad,
@@ -378,30 +379,55 @@ export function ModelCanvas(): JSX.Element {
         }))
       : [];
 
-  const gaussMarks = (() => {
-    if (!showGaussPoints || currentNonlinearStep === undefined) return [];
-    const raw = preparedElements.flatMap((e) => {
-      const state = currentNonlinearStep.states.get(e.id);
-      return GAUSS_XI.map((xi, gpIndex) => {
-        const xMeters = e.nodeX[1] + (xi * (e.nodeX[2] - e.nodeX[0])) / 2;
-        const gp = state?.gaussPoints[gpIndex];
-        const yielded = gp !== undefined && (gp.kind === 'resultant' ? gp.state.yielded : gp.layers.some((l) => l.yielded));
-        return {
-          key: `${e.id}#${gpIndex}`,
-          elementId: e.id,
-          gaussIndex: gpIndex as 0 | 1 | 2,
-          x: t.sx(xMeters),
-          xMeters,
-          yielded,
-          absM: gp !== undefined ? Math.abs(gp.m) : 0,
-        };
-      });
-    });
-    // A méret/szín a láthaó pontok közti LEGNAGYOBB |M|-re normál — a "hőtérkép"
-    // relatív, egy adott pillanathoz/modellhez, nem abszolút feszültség-skála.
-    const maxAbsM = Math.max(1e-9, ...raw.map((g) => g.absM));
-    return raw.map((g) => ({ ...g, magnitude: g.absM / maxAbsM }));
-  })();
+  // A Gauss-pont-adat (pozíció + |M|-magnitúdó) a pöttyöktől FÜGGETLENÜL is
+  // kell (ld. lent a tengely-hőtérkép-gradiens) — a `showGaussPoints`
+  // kapcsoló csak azt dönti el, hogy a kattintható pöttyök is látszanak-e.
+  const gaussData =
+    currentNonlinearStep === undefined
+      ? []
+      : (() => {
+          const raw = preparedElements.flatMap((e) => {
+            const state = currentNonlinearStep.states.get(e.id);
+            return GAUSS_XI.map((xi, gpIndex) => {
+              const xMeters = e.nodeX[1] + (xi * (e.nodeX[2] - e.nodeX[0])) / 2;
+              const gp = state?.gaussPoints[gpIndex];
+              const yielded = gp !== undefined && (gp.kind === 'resultant' ? gp.state.yielded : gp.layers.some((l) => l.yielded));
+              return {
+                key: `${e.id}#${gpIndex}`,
+                elementId: e.id,
+                gaussIndex: gpIndex as 0 | 1 | 2,
+                x: t.sx(xMeters),
+                xMeters,
+                yielded,
+                absM: gp !== undefined ? Math.abs(gp.m) : 0,
+              };
+            });
+          });
+          // A méret/szín a láthaó pontok közti LEGNAGYOBB |M|-re normál — a
+          // "hőtérkép" relatív, egy adott pillanathoz/modellhez, nem
+          // abszolút feszültség-skála.
+          const maxAbsM = Math.max(1e-9, ...raw.map((g) => g.absM));
+          return raw.map((g) => ({ ...g, magnitude: g.absM / maxAbsM }));
+        })();
+
+  const gaussMarks = showGaussPoints ? gaussData : [];
+
+  /** A gerenda-tengely hőtérkép-színezéséhez elemenkénti gradiens (3 Gauss-
+   * pont-megállóval) — a felhasználó kérésére ("milyen látványos diagram
+   * jöhetne még") a tengely maga is a σ/M-mezőt mutatja, folytonosan, nem
+   * csak a diszkrét pöttyökön. Csak akkor váltja fel a sima tengelyvonalat,
+   * ha VAN nemlineáris eredmény (ld. lent a JSX-ben). */
+  const axisHeatGradients =
+    currentNonlinearStep === undefined
+      ? []
+      : preparedElements.map((e) => {
+          const x1 = t.sx(e.nodeX[0]);
+          const x2 = t.sx(e.nodeX[2]);
+          const stops = gaussData
+            .filter((g) => g.elementId === e.id)
+            .map((g) => ({ offset: x2 !== x1 ? (g.x - x1) / (x2 - x1) : 0, color: jetColor(g.magnitude) }));
+          return { elementId: e.id, x1, x2, stops };
+        });
 
   const ariaLabel =
     `${model.span.toFixed(2)} m fesztáv, ${section.name} keresztmetszet, ${model.elementCount} végeselem, ` +
@@ -489,16 +515,43 @@ export function ModelCanvas(): JSX.Element {
       >
         <CanvasDefs />
         <g transform={`translate(${camera.tx},${camera.ty}) scale(${camera.scale})`}>
-          {/* 2. réteg — eredeti tengely */}
-          <line
-            x1={AXIS_X0}
-            y1={axisY}
-            x2={AXIS_X1}
-            y2={axisY}
-            stroke={result ? 'var(--sem-undeformed)' : 'var(--text-secondary)'}
-            strokeWidth={result ? 1.2 : 2}
-            strokeDasharray={result ? '5 4' : undefined}
-          />
+          {/* 2. réteg — eredeti tengely: nemlineáris eredménnyel az M-mező
+             folytonos hőtérképe (elemenkénti gradiens), különben sima vonal. */}
+          {axisHeatGradients.length > 0 ? (
+            <>
+              <defs>
+                {axisHeatGradients.map((g) => (
+                  <linearGradient key={g.elementId} id={`vem-axis-heat-${g.elementId}`} gradientUnits="userSpaceOnUse" x1={g.x1} y1={axisY} x2={g.x2} y2={axisY}>
+                    {g.stops.map((s, i) => (
+                      <stop key={i} offset={s.offset} stopColor={s.color} />
+                    ))}
+                  </linearGradient>
+                ))}
+              </defs>
+              {axisHeatGradients.map((g) => (
+                <line
+                  key={g.elementId}
+                  x1={g.x1}
+                  y1={axisY}
+                  x2={g.x2}
+                  y2={axisY}
+                  stroke={`url(#vem-axis-heat-${g.elementId})`}
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                />
+              ))}
+            </>
+          ) : (
+            <line
+              x1={AXIS_X0}
+              y1={axisY}
+              x2={AXIS_X1}
+              y2={axisY}
+              stroke={result ? 'var(--sem-undeformed)' : 'var(--text-secondary)'}
+              strokeWidth={result ? 1.2 : 2}
+              strokeDasharray={result ? '5 4' : undefined}
+            />
+          )}
 
           {/* 3. réteg — elemhatárok és csomópontok */}
           <g>
