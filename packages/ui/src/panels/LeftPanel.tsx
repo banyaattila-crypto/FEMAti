@@ -79,6 +79,7 @@ function FoundationsList({ foundations }: { readonly foundations: readonly Edita
           >
             <span className="vem-item-label">
               {L.toDisplay(f.x1).toFixed(2)}–{L.toDisplay(f.x2).toFixed(2)} {L.unit}
+              {f.noTension ? ' · no-tension' : ''}
             </span>
             <span className="vem-item-value">c = {C.toDisplay(f.c).toFixed(0)} {C.unit}</span>
           </button>
@@ -161,6 +162,7 @@ function SelectionSheet(): JSX.Element | null {
   const setLoadCategory = useModelStore((s) => s.setLoadCategory);
   const setFoundationRange = useModelStore((s) => s.setFoundationRange);
   const setFoundationStiffness = useModelStore((s) => s.setFoundationStiffness);
+  const setFoundationNoTension = useModelStore((s) => s.setFoundationNoTension);
   const removeSelected = useModelStore((s) => s.removeSelected);
   const L = fmt.editableLength();
   const SL = fmt.editableSmallLength();
@@ -296,6 +298,11 @@ function SelectionSheet(): JSX.Element | null {
             onChange={(v) => setFoundationStiffness(foundation.id, C.toCore(v))}
             display={`${C.toDisplay(foundation.c).toFixed(0)} ${C.unit}`}
             editable
+          />
+          <Checkbox
+            label="no-tension (csak nyomásra dolgozik)"
+            checked={foundation.noTension ?? false}
+            onChange={(v) => setFoundationNoTension(foundation.id, v)}
           />
           <button type="button" className="vem-btn vem-btn--sm" style={{ marginTop: 8 }} onClick={removeSelected}>
             Ágyazat törlése

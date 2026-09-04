@@ -336,6 +336,16 @@ export interface ElasticFoundation {
   readonly x1: Meter;
   readonly x2: Meter;
   readonly c: KiloNewtonPerSquareMeter;
+  /**
+   * Ha igaz, az ágyazat CSAK NYOMÁSRA dolgozik — a talaj nem tud "lehúzni"
+   * egy tőle felemelkedő gerendaszakaszt (no-tension/no-uplift Winkler-
+   * ágyazat, klasszikus geotechnikai eset). MODERN kiegészítés, nem a
+   * diplomaterv része — a `solver/linearSolver.ts` `solveLinearContact()`
+   * oldja meg, elemenkénti kontakt-állapot iterációval (ld. ADR-0022).
+   * Alapértelmezés (hiányzó/false): az ágyazat mindkét irányban dolgozik,
+   * ahogy eddig.
+   */
+  readonly noTension?: boolean;
 }
 
 // ─── Tehertörténet ────────────────────────────────────────────────────────────

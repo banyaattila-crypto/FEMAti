@@ -337,10 +337,11 @@ export const springSupport = (node: string, k: number): Boundary => ({
   springW: kNpm(k),
 });
 
-export const foundation = (x1: number, x2: number, c: number): ElasticFoundation => ({
+export const foundation = (x1: number, x2: number, c: number, noTension?: boolean): ElasticFoundation => ({
   x1: m(x1),
   x2: m(x2),
   c: kNpm2(c),
+  ...(noTension !== undefined ? { noTension } : {}),
 });
 
 export const singleStep: LoadHistory = { lambdaTargets: [1], stepsPerTarget: 1 };

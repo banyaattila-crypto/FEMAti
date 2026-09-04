@@ -70,6 +70,13 @@ export interface AssemblyOptions {
    * `elementGeometricStiffness()` fejléce).
    */
   readonly axialForce?: number;
+  /**
+   * No-tension Winkler-ágyazat kontakt-iterációja (2026-09-04, ld. ADR-0022):
+   * ezen elem-azonosítók ágyazati hozzájárulása KIKAPCSOLVA marad, függetlenül
+   * a geometriai átfedéstől — ezt `solver/linearSolver.ts`
+   * `solveLinearContact()` tölti fel, elemenkénti kontakt-állapotként.
+   */
+  readonly excludedFoundationElementIds?: ReadonlySet<string>;
 }
 
 export interface AssembledSystem {
@@ -87,7 +94,12 @@ export interface AssembledSystem {
 }
 
 /** Az elemek előkészítése: geometria feloldása és a Kₑ mátrixok előállítása. */
-export function prepareElements(model: Model, map: DofMap, axialForce = 0): PreparedElement[] {
+export function prepareElements(
+  model: Model,
+  map: DofMap,
+  axialForce = 0,
+  excludedFoundationElementIds?: ReadonlySet<string>,
+): PreparedElement[] {
   const materials = new Map(model.materials.map((m) => [m.id as string, m]));
   const sections = new Map(model.sections.map((s) => [s.id as string, s]));
   const lookup = (id: string): ReturnType<typeof materials.get> => materials.get(id);
@@ -119,8 +131,10 @@ export function prepareElements(model: Model, map: DofMap, axialForce = 0): Prep
     const elementId = element.id as string;
     const ke = elementStiffness({ nodeX, elementId }, stiffness, element.integration);
 
-    // Winkler-féle rugalmas ágyazat (Diplomaterv 3.28 és 5. fejezet)
-    const foundationC = foundationFor(model.foundations, nodeX);
+    // Winkler-féle rugalmas ágyazat (Diplomaterv 3.28 és 5. fejezet) — a
+    // no-tension kontakt-iteráció ezen az elemen aktuálisan "felemelkedettnek"
+    // ítélt elemekre kényszeríti a nullát, a geometriai átfedéstől függetlenül.
+    const foundationC = excludedFoundationElementIds?.has(elementId) ? 0 : foundationFor(model.foundations, nodeX);
     let keEffective = ke;
     if (foundationC > 0) {
       keEffective = keEffective.clone().addScaled(1, foundationMatrix(nodeX, foundationC, elementId));
@@ -205,7 +219,7 @@ export function assemble(model: Model, options: AssemblyOptions = {}): Assembled
   const penalty = options.penalty ?? DEFAULT_PENALTY;
 
   const map = buildDofMap(model, strategy);
-  const elements = prepareElements(model, map, options.axialForce ?? 0);
+  const elements = prepareElements(model, map, options.axialForce ?? 0, options.excludedFoundationElementIds);
 
   // Profil felépítése a topológiából
   const k = SkylineMatrix.fromConnectivity(

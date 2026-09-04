@@ -94,6 +94,8 @@ export interface EditableFoundation {
   readonly x2: number;
   /** Ágyazási tényező [kN/m²]. */
   readonly c: number;
+  /** Ha igaz, az ágyazat csak nyomásra dolgozik — no-tension/no-uplift talaj (ADR-0022). */
+  readonly noTension?: boolean;
 }
 
 /** Globális hőteher — nem pozícionált, az egész tartóra hat (a fem-core `thermal()` alapértelmezése). */

@@ -170,6 +170,8 @@ export interface SolveOptions {
   readonly scale?: number;
   /** Referencia axiális erő [kN] — másodrendű (P-Δ) hatás, ld. `assembly/assembler.ts` `AssemblyOptions.axialForce`. */
   readonly axialForce?: number;
+  /** No-tension ágyazat kontakt-iterációja — ld. `assembly/assembler.ts` `AssemblyOptions.excludedFoundationElementIds` és `solveLinearContact()` lent. */
+  readonly excludedFoundationElementIds?: ReadonlySet<string>;
 }
 
 /** A modell érvénytelen, ezért nem futtatható. */
@@ -408,6 +410,9 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
     ...(options.strategy !== undefined ? { strategy: options.strategy } : {}),
     ...(options.penalty !== undefined ? { penalty: options.penalty } : {}),
     ...(options.axialForce !== undefined ? { axialForce: options.axialForce } : {}),
+    ...(options.excludedFoundationElementIds !== undefined
+      ? { excludedFoundationElementIds: options.excludedFoundationElementIds }
+      : {}),
   });
 
   const collector = new SelfCheckCollector(options.selfCheck ?? 'full');
@@ -670,3 +675,114 @@ function indexOfActive(system: AssembledSystem, activeDof: number): number {
 
 /** A megoldás euklideszi normája — konvergencia-vizsgálatokhoz. */
 export const displacementNorm = (result: LinearResult): number => norm2(result.displacements);
+
+// ─── No-tension ágyazat — kontakt-állapot iteráció (ADR-0022) ─────────────────
+
+export interface ContactResult extends LinearResult {
+  /**
+   * Azon elemek azonosítói, amelyek a JELENLEGI (végleges) kontakt-állapotban
+   * FELEMELKEDTEK a no-tension ágyazatról — az ágyazatuk ezért ki van
+   * kapcsolva. Üres, ha nincs `noTension` ágyazat a modellben, vagy ha van,
+   * de sehol nem lépett fel felemelkedés.
+   */
+  readonly foundationLiftOff: readonly string[];
+  /** Hány kontakt-iterációra volt szükség a stabil állapotig (0, ha nem is kellett). */
+  readonly contactIterations: number;
+}
+
+const MAX_CONTACT_ITERATIONS = 25;
+
+/** Azon elem-azonosítók, amelyek geometriailag átfednek egy `noTension` ágyazat-szakasszal — ezek a kontakt-vizsgálat jelöltjei. */
+function candidateFoundationElements(model: Model): ReadonlySet<string> {
+  const noTensionSegments = model.foundations.filter((f) => f.noTension === true);
+  const candidates = new Set<string>();
+  if (noTensionSegments.length === 0) return candidates;
+
+  const nodeX = new Map(model.nodes.map((n) => [n.id as string, n.x as number]));
+  for (const el of model.elements) {
+    const xs = el.nodes.map((id) => nodeX.get(id as string) ?? 0);
+    const x1 = Math.min(...xs);
+    const x2 = Math.max(...xs);
+    for (const f of noTensionSegments) {
+      const overlap = Math.min(x2, f.x2 as number) - Math.max(x1, f.x1 as number);
+      if (overlap > 0) {
+        candidates.add(el.id as string);
+        break;
+      }
+    }
+  }
+  return candidates;
+}
+
+/**
+ * Egy jelölt elem "felemelkedett-e" a jelenlegi megoldásból — a w
+ * (lefelé pozitív) csomóponti értékeinek átlaga alapján: negatív átlag azt
+ * jelenti, hogy a szakasz a talajtól ELTÁVOLODIK, ahol az ágyazat (talaj)
+ * nem tud "lehúzni" (no-tension).
+ *
+ * ELEMENKÉNTI (nem Gauss-ponti) granularitás — MVP-egyszerűsítés: egy
+ * elemen belüli részleges felemelkedést nem old fel. Durvább hálónál ez
+ * pontatlanságot okozhat; finomabb hálóval (több elem az ágyazat alatt) a
+ * közelítés önmagától javul. Ld. ADR-0022.
+ */
+function elementLiftedOff(model: Model, elementId: string, wByNode: ReadonlyMap<string, number>): boolean {
+  const el = model.elements.find((e) => e.id === elementId);
+  if (el === undefined) return false;
+  const ws = el.nodes.map((id) => wByNode.get(id as string) ?? 0);
+  const avg = (ws.reduce((s, v) => s + v, 0)) / ws.length;
+  return avg < 0;
+}
+
+function sameSet(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+}
+
+/**
+ * Lineárisan rugalmas megoldás, no-tension (felemelkedésre képes) Winkler-
+ * ágyazattal — ha a modellben nincs `noTension: true` ágyazat, EGYETLEN
+ * híváshoz esik vissza `solveLinear()`-re (a viselkedés a meglévő
+ * modelleknél bit-azonos marad).
+ *
+ * Az algoritmus egy klasszikus kontakt-állapot iteráció (NEM anyagi
+ * nemlinearitás, nem `newtonRaphson.ts`): minden lépésben lineárisan
+ * megoldjuk a rendszert egy próbált "aktív ágyazat" halmazzal, megnézzük,
+ * mely jelölt elemek emelkedtek fel (negatív átlagos w), és ha ez eltér az
+ * előző próbától, azzal a halmazzal újraoldunk — amíg a halmaz stabilizálódik
+ * vagy el nem érjük az iterációs korlátot (ld. ADR-0022).
+ */
+export function solveLinearContact(model: Model, options: SolveOptions = {}): ContactResult {
+  const candidates = candidateFoundationElements(model);
+  if (candidates.size === 0) {
+    const result = solveLinear(model, options);
+    return { ...result, foundationLiftOff: [], contactIterations: 0 };
+  }
+
+  let excluded = new Set<string>();
+  let result = solveLinear(model, { ...options, excludedFoundationElementIds: excluded });
+
+  for (let iteration = 1; iteration <= MAX_CONTACT_ITERATIONS; iteration++) {
+    const wByNode = new Map(result.nodes.map((n) => [n.nodeId as string, n.w]));
+    const nextExcluded = new Set<string>();
+    for (const id of candidates) {
+      if (elementLiftedOff(model, id, wByNode)) nextExcluded.add(id);
+    }
+    if (sameSet(nextExcluded, excluded)) {
+      return { ...result, foundationLiftOff: [...excluded], contactIterations: iteration - 1 };
+    }
+    excluded = nextExcluded;
+    result = solveLinear(model, { ...options, excludedFoundationElementIds: excluded });
+  }
+
+  return {
+    ...result,
+    foundationLiftOff: [...excluded],
+    contactIterations: MAX_CONTACT_ITERATIONS,
+    warnings: [
+      ...result.warnings,
+      `A no-tension ágyazat kontakt-állapota ${MAX_CONTACT_ITERATIONS} iteráció után sem ` +
+        `stabilizálódott — az eredmény az utolsó próbált állapotot mutatja, de oszcillálhat.`,
+    ],
+  };
+}

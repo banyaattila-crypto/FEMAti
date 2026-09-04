@@ -95,6 +95,14 @@ export function RightPanel(): JSX.Element {
         </Card>
 
         <Card title="Reakciók · egyensúly" accent="results">
+          {result && result.foundationLiftOff.length > 0 ? (
+            <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
+              <NoteBox tone="info">
+                {result.foundationLiftOff.length} elem felemelkedett a no-tension ágyazatról (ADR-0022) — ott az
+                ágyazat pillanatnyilag nem fejt ki erőt.
+              </NoteBox>
+            </div>
+          ) : null}
           {/* Az "Rz{n}" sorszámozás UGYANAZ a `result.reactions` tömb-sorrend,
               mint amit a vászon reakció-nyilai (`canvas/ModelCanvas.tsx`)
               használnak — ugyanaz a támasz mindkét helyen ugyanazt az

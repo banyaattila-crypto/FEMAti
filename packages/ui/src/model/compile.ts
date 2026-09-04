@@ -29,12 +29,12 @@ import {
   selfWeight as selfWeightLoad,
   recommendedShearFactor,
   sectionStiffness,
-  solveLinear,
+  solveLinearContact,
   solveModal,
   uniformMesh,
   InvalidModelError,
   type Material,
-  type LinearResult,
+  type ContactResult,
   type Model,
   type ModalResult,
   type Section,
@@ -246,7 +246,7 @@ export function compileModel(editable: EditableModel): Model {
       : []),
   ];
 
-  const foundations = editable.foundations.map((f) => foundation(f.x1, f.x2, f.c));
+  const foundations = editable.foundations.map((f) => foundation(f.x1, f.x2, f.c, f.noTension));
 
   return buildModel({
     name: editable.presetId,
@@ -262,15 +262,21 @@ export function compileModel(editable: EditableModel): Model {
 
 export interface SolveOutcome {
   readonly model: Model;
-  readonly result: LinearResult | null;
+  readonly result: ContactResult | null;
   readonly error: string | null;
 }
 
-/** A modell lefordítása és lineáris megoldása, hibatűrő módon (a felület sosem omlik össze egy érvénytelen modelltől). */
+/**
+ * A modell lefordítása és lineáris megoldása, hibatűrő módon (a felület sosem
+ * omlik össze egy érvénytelen modelltől). A `solveLinearContact()` a
+ * no-tension (felemelkedésre képes) ágyazatok kontakt-állapotát is kezeli
+ * (ADR-0022) — olyan modellekre, ahol egyetlen ágyazat sem `noTension`, EGY
+ * `solveLinear()`-hívásra esik vissza, bit-azonos eredménnyel.
+ */
 export function solveEditableModel(editable: EditableModel): SolveOutcome {
   const model = compileModel(editable);
   try {
-    const result = solveLinear(model, { axialForce: editable.axialForce });
+    const result = solveLinearContact(model, { axialForce: editable.axialForce });
     return { model, result, error: null };
   } catch (error) {
     if (error instanceof InvalidModelError) {

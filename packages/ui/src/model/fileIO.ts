@@ -116,6 +116,13 @@ function optNum(obj: Record<string, unknown>, key: string, where: string): numbe
   return v as number;
 }
 
+function optBool(obj: Record<string, unknown>, key: string, where: string): boolean | undefined {
+  const v = obj[key];
+  if (v === undefined) return undefined;
+  assert(typeof v === 'boolean', `${where}: "${key}" nem logikai érték.`);
+  return v as boolean;
+}
+
 function str(obj: Record<string, unknown>, key: string, where: string): string {
   const v = obj[key];
   assert(typeof v === 'string' && v.length > 0, `${where}: "${key}" hiányzik vagy nem szöveg.`);
@@ -199,7 +206,14 @@ function parseLoad(v: unknown, index: number): EditableLoad {
 function parseFoundation(v: unknown, index: number): EditableFoundation {
   const where = `foundations[${index}]`;
   const o = record(v, where);
-  return { id: str(o, 'id', where), x1: num(o, 'x1', where), x2: num(o, 'x2', where), c: num(o, 'c', where) };
+  const noTension = optBool(o, 'noTension', where);
+  return {
+    id: str(o, 'id', where),
+    x1: num(o, 'x1', where),
+    x2: num(o, 'x2', where),
+    c: num(o, 'c', where),
+    ...(noTension !== undefined ? { noTension } : {}),
+  };
 }
 
 const ALGORITHMS: readonly SolverAlgorithm[] = ['newton', 'modified-newton'];

@@ -20,7 +20,7 @@ function fullModel() {
     axialForce: 250,
     supports: model.supports.map((s, i) => (i === 0 ? { ...s, type: 'spring' as const, k: 4000, dz: 0.002, dPhi: 0.001 } : s)),
     loads: [...model.loads, { id: 'MQ1', kind: 'distributed-moment' as const, x1: 1, x2: 3, m1: 2, m2: 5, category: 'permanent' as const }],
-    foundations: [{ id: 'W1', x1: 4, x2: 8, c: 1500 }],
+    foundations: [{ id: 'W1', x1: 4, x2: 8, c: 1500, noTension: true }],
   };
 }
 
@@ -78,6 +78,16 @@ describe('serializeEditableModel / parseEditableModelFile', () => {
     delete file.model.foundations;
     const restored = parseEditableModelFile(JSON.stringify(file));
     expect(restored.model.foundations).toEqual([]);
+  });
+
+  it('hiányzó foundations[].noTension mezőnél nem kerül be a mezőnk (2026-09-04 előtti mentések, ADR-0022)', () => {
+    const model = fullModel();
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as {
+      model: { foundations: Array<Record<string, unknown>> };
+    };
+    delete file.model.foundations[0]?.noTension;
+    const restored = parseEditableModelFile(JSON.stringify(file));
+    expect(restored.model.foundations[0]).toEqual({ id: 'W1', x1: 4, x2: 8, c: 1500 });
   });
 
   it('hiányzó composite mezőnél a kikapcsolt alapértelmezésre esik vissza (2026-09-04 előtti mentések, visszamenőleges kompatibilitás)', () => {

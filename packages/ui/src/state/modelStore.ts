@@ -76,6 +76,8 @@ export interface ModelState {
   /** Ágyazat szakaszhatárainak pontos, független beállítása — ld. `setLoadRange`. */
   readonly setFoundationRange: (id: string, x1: number, x2: number) => void;
   readonly setFoundationStiffness: (id: string, c: number) => void;
+  /** No-tension (felemelkedésre képes) ágyazat be/ki — ADR-0022. */
+  readonly setFoundationNoTension: (id: string, noTension: boolean) => void;
   readonly removeSelected: () => void;
 
   readonly undo: () => void;
@@ -358,6 +360,13 @@ export const useModelStore = create<ModelState>()((set, get) => {
         const f = d.foundations.find((x) => x.id === id);
         if (f === undefined) return;
         f.c = c;
+      }),
+
+    setFoundationNoTension: (id, noTension) =>
+      edit((d) => {
+        const f = d.foundations.find((x) => x.id === id);
+        if (f === undefined) return;
+        f.noTension = noTension;
       }),
 
     removeSelected: () => {
