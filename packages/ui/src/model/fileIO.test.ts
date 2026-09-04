@@ -11,6 +11,13 @@ function fullModel() {
   return {
     ...model,
     thermalLoad: { enabled: true, tRef: 10, tTop: 30, tBottom: -5 },
+    // BEKAPCSOLT, valódi (nem alapértelmezett) állapotban — a fő kör-út
+    // teszt enélkül csak azt bizonyítaná, hogy a KIKAPCSOLT alapértelmezés
+    // marad kikapcsolt, nem hogy a TÉNYLEGES adat is sértetlenül átmegy.
+    rebar: { enabled: true, asBottom: 12e-4, asTop: 4e-4, cover: 0.04 },
+    composite: { enabled: true, slabWidth: 1.2, slabThickness: 0.12, slabMaterialId: 'C3037' },
+    movingLoad: { enabled: true, magnitude: 35 },
+    axialForce: 250,
     supports: model.supports.map((s, i) => (i === 0 ? { ...s, type: 'spring' as const, k: 4000, dz: 0.002, dPhi: 0.001 } : s)),
     loads: [...model.loads, { id: 'MQ1', kind: 'distributed-moment' as const, x1: 1, x2: 3, m1: 2, m2: 5, category: 'permanent' as const }],
     foundations: [{ id: 'W1', x1: 4, x2: 8, c: 1500 }],
