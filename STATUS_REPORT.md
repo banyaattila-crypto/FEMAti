@@ -2,7 +2,7 @@
 
 **Utolsó frissítés:** 2026-09-04
 **Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
-**Utolsó commit:** `851c2d1` — reakcióerő-nyilak a vásznon (Rz-indexelés, ki/be kapcsolható) + canvas rács/tengely javítása
+**Utolsó commit:** `53d24f9` — fejléc/eszközsor UI-finomítások + mértékegység-váltó kiterjesztése a bal panelre
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -80,11 +80,13 @@ pnpm check   → typecheck + lint + test, mindhárom csomagra, TISZTA
 
 | Csomag | Teszt-fájl | Teszt | fem-core lefedettség |
 |---|---|---|---|
-| `fem-core` | 34 (31 fut, 3 `PROFILE=1` mögé zárt profilozó teszt mindig skip) | 501 (+3 skip) | küszöb: ≥90% (a P16 óta nem mérve újra ezen a frissítésen) |
+| `fem-core` | 35 (32 fut, 3 `PROFILE=1` mögé zárt profilozó teszt mindig skip) | 504 (+3 skip) | küszöb: ≥90% (a P16 óta nem mérve újra ezen a frissítésen) |
 | `fem-validation` | 2 | 30 | — (validációs esetek, nem klasszikus unit teszt) |
 | `fem-db` | 2 | 25 | — (adatkonzisztencia: Ecm-képlet visszaellenőrzés, katalógus-geometria ±6%-os egyezés a fem-core zárt alakjával, forrás/verified-mező kötelező jelenléte) |
-| `ui` | 14 | 78 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
-| **Összesen** | **52** | **634** (+3 skip) | |
+| `ui` | 18 | 105 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, a mértékegység-váltó SI/US mindkét iránya, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
+| **Összesen** | **57** | **664** (+3 skip) | |
+
+(2026-09-04-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 61–67. pont commitjai óta is, beleértve a bal panel mértékegység-váltó kiterjesztését.)
 
 (2026-09-04-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — az 52–56. pont commitjai óta is.)
 
@@ -1844,6 +1846,178 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     egy alulméretezett IPE100-ról ténylegesen nagyobb, ≤100%-os
     kihasználtságú IPE-t javasol. `pnpm check` (mind a 4 csomag, 637
     teszt) zöld.
+
+61. **Teherkombináció (EN 1990 ULS/SLS) + "Teljes elmélet" PDF-nézet +
+    katalógusbővítés** (`3eddabd`): új `model/combinations.ts` — ULS =
+    1,35G + 1,5Q, SLS = G + Q; a Határteher-ellenőrzés kártya és a
+    szelvény-optimalizálás mostantól mindkét (faktorozott ULS és
+    faktorozatlan SLS) teherszintre számol, a fő M/T/w/φ diagramok és a
+    "hero" értékek változatlanul a jellemző (nem faktorozott) terhet
+    mutatják — az önsúlynak emiatt kapott a modell egy `selfWeightFactor`
+    mezőt (sosem éri el az élő, szerkesztett állapotot, csak egy
+    ideiglenes másolaton él a kombináció-számítás alatt). Új "Teljes
+    elmélet" menüpont (Elmélet menü): a `FEM@ti-Timoshenko beam (2026)`
+    PDF böngésző natív nézőben, széles ablakban nyílik meg. `fem-db`
+    katalógusbővítés: szelvények 61→92, anyagok 27→33, forrás-
+    hivatkozásokkal a becsült értékeknél. Verziószám 0.2.0→0.3.0.
+
+62. **Kompozit acél-beton keresztmetszet (rugalmas MVP)** (`1191079`,
+    utólagos hibajavítással `3c9b214`): acél alapszelvény + betonlemez
+    transzformált (rugalmas) merevsége a fő lineáris M/T/w/φ megoldásban
+    és az SLS lehajlás-ellenőrzésben — `model/compile.ts`
+    `buildCompositeSection()` rétegelt (`LayeredSection`) keresztmetszetet
+    épít (acél + beton rétegek, saját `materialId`-vel) és explicit
+    transzformált-súlypont korrekciót (`zBar = ΣE·A·z / ΣE·A`) végez,
+    mielőtt a meglévő `sectionStiffness()` EI-képletet használja — e
+    lépés nélkül a számított EI mérnökileg hamis lenne. Hatókör: csak a
+    lineáris viselkedésre; az M-V plasztikus interakció és a vasbeton
+    ULS kompozit szelvényen "nem alkalmazható" (`null`), a nemlineáris
+    (F5) futtatás egyértelmű hibaüzenettel elutasítja — egyik sem próbál
+    csendben rossz eredményt adni. **VALÓDI hiba, utólag felfedve
+    (`3c9b214`):** a felhasználó megkérdezte, milyen anyagválasztásnál
+    jelenik meg a kompozit kapcsoló — kiderült, hogy MINDIG látható volt,
+    függetlenül a választott anyagtól, holott a felirat kifejezetten
+    acélt ígért. Javítva: a checkbox csak `material.family === 'steel'`
+    esetén jelenik meg (a vasalás-blokk mintáját követve); `setMaterialId`
+    automatikusan kikapcsolja a kompozit módot nem-acél anyagra váltáskor;
+    új, exportált `isCompositeActive()` — a `compileModel()`,
+    `nonlinear.ts` és `designChecks.ts` mostantól EZT nézi a nyers
+    `composite.enabled` helyett, hogy egy régi (a korlátozás előtti)
+    mentésből betöltött, nem-acél anyagú + bekapcsolt kompozit állapot
+    ne fusson le csendben értelmetlen eredménnyel.
+
+63. **Stabilitás/másodrendű (P-Δ) hatás** (`f77ba3a`): egy megadott
+    axiális erő (nyomó-/húzóerő) mostantól helyesen csökkenti/növeli a
+    hajlítási merevséget a fő lineáris M/T/w/φ megoldásban, teljes
+    Timoshenko-konzisztens geometriai merevségi taggal — `fem-core`
+    `element/timoshenko3.ts` `elementGeometricStiffness()` (egységnyi
+    referencia-axiális erőre vett geometriai kernel, a már meglévő
+    `bRows()` γ-soraiból származtatva, új alakfüggvény-gépezet nélkül),
+    `assembly/assembler.ts` `AssemblyOptions.axialForce` additív tagként.
+    **VALÓDI hiba javítva:** a `checkEquilibrium` önellenőrzés eddig csak
+    a támasz-csomópontokra szűkített reakció-listát összegezte — ez a
+    Winkler-ágyazatnál/rugóknál véletlenül helyes volt, de a geometriai
+    merevségnél (ami MINDEN elemre hat) ~21%-os hamis egyensúlytalanságot
+    jelzett; javítva a teljes DOF-vektoros reziduumra. Hatókör: csak a
+    lineáris megoldásra — egy teljes kihajlási sajátérték-feladat ennél a
+    független φ-mezővel dolgozó Timoshenko-elemnél a meglévő Cholesky-
+    alapú megoldóval matematikailag nem oldható meg (Kg szinguláris a
+    φ-altérben), önálló, későbbi lépés lehetne; a nemlineáris (F5)
+    futtatás `axialForce ≠ 0` mellett egyértelmű hibaüzenetet ad. Bal
+    panel: új "axiális erő N (P-Δ)" csúszka a Megoldó kártyán.
+
+64. **Mozgó teher — burkolóábra (M/T envelope) MVP** (`a0d1c9d`): egy
+    megadott nagyságú mozgó pontteher végigsétál a tartó minden
+    hálócsomópontján (a meglévő terhekre szuperponálva), és egy új
+    diagram-fülön mutatja a lehetséges legnagyobb/legkisebb M-et/T-t
+    minden keresztmetszetre — `model/envelope.ts` `computeEnvelope()` a
+    meglévő `solveEditableModel()` csomópont-listáját véve, csomópontonként
+    egy extra ponttehertel újra megoldva gyűjti a szélsőértékeket;
+    `solve/useEnvelopeResult.ts` gated újraszámolás (a `useModalResult.ts`
+    mintájára — akár 201 külön megoldás is lehet nagy elemszámnál, ezért
+    csak fülnyitáskor fut). Új `EnvelopeChart.tsx` önálló SVG-komponens.
+    Hatókör: csak a jellemző (nem faktorozott) teherre, egyetlen mozgó
+    pontteherre (nincs tengelycsoport).
+
+65. **Mértékegység-váltó SI ↔ US customary, csak kijelzés** (`5ecbab0`,
+    kör-út teszt-lefedettséggel `c91ad38`): a "Nézet" menüből váltható,
+    hogy a SZÁMÍTOTT eredmények (jobb panel, M/T/w/φ diagramok,
+    Jegyzőkönyv) SI-ben vagy US customary (kip/ft/in/ksi) egységben
+    jelenjenek meg — ekkor még TUDATOSAN csak a kijelzés, a bevitel
+    (csúszkák) és a bemenet-visszhangok változatlanul SI-ben maradtak
+    (ld. 67. pont, ahol ez kiterjesztésre kerül). Új `format/numbers.ts`
+    `makeConvertible()` factory, ami a `state/appStore.ts` `unitSystem`
+    globális kapcsolóját olvassa (nem hook — plain zustand-állapot-olvasás,
+    nincs kör-import); a React-újrarenderelés ingyen jár, mert `App.tsx`
+    már a TELJES store-ra iratkozik fel szelektor nélkül. 11 formázó
+    konvertálható (deflection/moment/shear/force/acceleration/
+    bendingStiffness/shearStiffness/area/inertia/stress/length), a
+    rendszer-független mennyiségek (rotation, frequencyHz, lambda, stb.)
+    változatlanok maradnak. **Kör-út teszt-hiányosság pótolva
+    (`c91ad38`):** a fő ".femati.json mentés/betöltés minden mező
+    sértetlenül visszaáll" teszt eddig csak KIKAPCSOLT (alapértelmezett)
+    rebar/composite/movingLoad/axialForce állapottal futott — a
+    `fullModel()` teszthelper mostantól bekapcsolt állapotú vasalást,
+    kompozit keresztmetszetet, mozgó terhet és nemnulla axiális erőt is
+    tartalmaz, hogy egy csendes mentés/betöltés-regresszió ezeken a
+    mezőkön se maradhasson észrevétlen.
+
+66. **Fejléc/eszközsor UI-finomítások és About-frissítés** (2026-09-04,
+    egy folytonos felhasználói munkamenetben, még commit előtt): (a) a
+    768–1099px sávban a bal panel a `DESIGN-TERV.md` 3.3 pontja szerint
+    "alapból összecsukott, fülről nyitható" kellene legyen — a tényleges
+    kód eddig csak `display: none`-nal eltüntette, visszanyitás nélkül
+    (ugyanaz a hibaosztály, mint a <768px sávnál 2026-08-23-án már
+    javított eset). Pótolva: `appStore.ts` új `tabletModelOpen` állapota +
+    `.vem-tablet-toggle` fül, ami a bal panelt overlayként nyitja a
+    vászon fölé. (b) Az eszközsor arany, dekoratív Spectral-feliratú
+    "hero" címe (`.vem-toolbar__headline`, aria-hidden, nulla információ)
+    törölve; a vissza/újra/SZÁMÍTÁS gombok a fejlécbe (`.vem-chrome`)
+    költöztek — ez a Tehertörténet-cellát felszabadította, az eszközsor
+    2 sorról 1 sorra zsugorodott, ~64px-et nyerve a modell-vászonnak
+    (méréssel megerősítve, 1396px ablakszélességnél). A Jegyzőkönyv gomb
+    (a File menüben már létező elem duplikátuma volt) törölve a
+    fejlécből. (c) A fejléc alcíme ("Timoshenko gerenda · rugalmas–
+    képlékeny [végeselemes] analízis") a felhasználó szerint maga a
+    "cím" (ez a szoftver tárgya) — Cormorant Garamond betűtípust és arany
+    színt (a meglévő `--brand-gold-*` lánc) kapott, a törölt headline
+    embossed text-shadow receptjével; a fejlécnév "FEMAti"→"FEM@ti".
+    **Menet közben talált méretezési probléma:** a nagyobb (20px) cím
+    keskenyebb ablaknál belelógott volna a menüsorba — nem csonkolással
+    (ami a betűközzel kombinálva el is nyelte volna a "…" jelet), hanem a
+    fejléc-elemek közti rés szűkítésével (18px→14px) oldva meg, hogy a
+    TELJES cím kiférjen. Egy második jelzés (a jobb felső "buborék", a
+    `StatusPill`, szerkesztés közben jóval hosszabb szöveget mutat és
+    ilyenkor levágja a bal oldali címet) miatt a betűméret végül 13px-re
+    csökkent — élőben szimulálva a leghosszabb valós buborék-szöveggel,
+    amíg a teljes cím csonkolás nélkül kifért. (d) About-ablak: "FEMAti"→
+    "FEM@ti" a szövegben, a 3 soros képességlista 12 sorra bővült (a
+    ténylegesen megvalósult funkciók alapján — nemlineáris analízis,
+    dinamika, Cowper-korrekció, M-V interakció, vasbeton ULS, kompozit
+    keresztmetszet, hőterhelés, P-Δ, mozgó teher, hálófüggetlenség,
+    mértékegység-váltás, adatbázis/export), verziószám 0.3.0→0.3.3
+    (`package.json`), az ablak 16px lekerekítést kapott — csak ezt az
+    ablakot, a megosztott `.vem-inspector` osztályt (Kezdő lépések,
+    Keresztmetszet-inspektor) nem érintve.
+
+67. **Mértékegység-váltó kiterjesztése a bal panel MINDEN szerkeszthető
+    mezőjére** (2026-09-04, még commit előtt): a felhasználó jelezte,
+    hogy US↔SI váltáskor a bal panel (bemeneti oldal) mértékegységei
+    változatlanul SI-ben maradnak — ez a 65. pontban dokumentáltan
+    TUDATOS korlát volt ("amit a felhasználó SI-ben írt be, azt SI-ben is
+    kell visszaadni"), de a felhasználó explicit kérésére most kiterjesztve:
+    minden bal paneli csúszka/számmező (Fesztáv L, támasz-pozíció/
+    rugóállandó/süllyedés, ágyazat, terhek — pont/nyomaték/megoszló/
+    megoszló nyomaték —, vasalás, kompozit lemez, axiális erő, mozgó
+    teher) mostantól US módban a megfelelő US-egységet mutatja és fogadja
+    el szerkesztéskor, a mag SI-tárolásának érintetlenül hagyása mellett.
+    Új `format/numbers.ts` `editable*` függvénycsalád (`editableLength`,
+    `editableSmallLength`, `editableArea`, `editableForce`,
+    `editableMoment`, `editableLinearLoad`, `editableMomentPerLength`,
+    `editableFoundationModulus`, `editableTemperature`) — a
+    `makeConvertible`-től eltérően nem csak kijelez, hanem
+    `toDisplay`/`toCore` függvénypárt ad a `Slider` `value`/`min`/`max`/
+    `step`-jének oda-vissza konverziójához. A hőteher (tRef/tTop/tBottom)
+    is vált — ÚJ °C↔°F affin átváltás (`F = C·9/5+32`), amit a `linearUnit`
+    tiszta szorzó-modellje nem tudott volna kifejezni, ezért külön
+    kezelve (a `step` emiatt tudatosan mértékegység-független marad). A
+    dφ (elfordulás, szög) szándékosan VÁLTOZATLAN — a rendszer-független
+    mennyiségek meglévő elvét követve. **Két VALÓDI hiba is előkerült és
+    javítva menet közben:** (1) a modell-vászon "L = … m" felirata és a
+    reakcióerő-nyilak felirata a *számot* már a 65. pont óta konvertálták,
+    de a mértékegység-*betűt* fixen "m"/"kN"-re hagyták — most a
+    span-visszhang (bemeneti érték) tudatosan mindig SI marad, a
+    reakcióerő (számított eredmény) pedig helyesen, dinamikusan követi a
+    váltást. (2) A szerkeszthető számmezők (`components/Field.tsx`
+    `NumberInput`) a konverzió után hosszú, csúnya tizedesjegyeket
+    mutattak (pl. `1.1811023622047243`) — csak a mező szűk szélessége
+    miatt tűntek rendben egy futó pillantásra. Egyetlen helyen javítva
+    (`stepDecimals()`, a `step` nagyságrendjéhez igazodó kerekítés) —
+    ez minden csúszkát érint (a réginket is), nem csak az újakat. Élőben,
+    valós UI-interakcióval ellenőrizve: teljes oda-vissza kör (US-ben
+    beírt érték SI-re visszaváltva pontos, pl. 1 in → 25,4 mm), vasalás/
+    kompozit beton+acél anyagválasztással, span/támasz/teher/rugó minden
+    mezőn. `pnpm check` (mind a 4 csomag, 664+3 skip teszt) teljes zöld.
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
