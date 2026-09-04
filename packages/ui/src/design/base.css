@@ -126,3 +126,30 @@ input[type='range'] {
     transform: rotate(360deg);
   }
 }
+
+/* Lüktető gyűrű a megfolyt Gauss-pontokon a vásznon (marks.tsx
+   GaussPointMark) — halkan felhívja a figyelmet a képlékeny zóna
+   kialakulására, statikus piros pötty helyett. */
+@keyframes vem-gauss-pulse {
+  0% {
+    r: 6;
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    r: 15;
+    opacity: 0;
+  }
+}
+
+.vem-gauss-pulse {
+  animation: vem-gauss-pulse 1.8s ease-out infinite;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vem-gauss-pulse {
+    animation: none;
+    opacity: 0;
+  }
+}

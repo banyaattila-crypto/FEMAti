@@ -5,6 +5,7 @@
  */
 
 import type { SupportType } from '../data/catalog.js';
+import { jetColor } from '../charts/colormap.js';
 
 /** Típusonkénti teher-/támaszszín (2026-08-30, felhasználói kérés) — a `design/tokens.css` `--sem-load-*`/`--sem-support-*` tokenjeire mutat. */
 export const SUPPORT_COLOR: Record<SupportType, string> = {
@@ -431,10 +432,22 @@ export interface GaussPointMarkProps {
   readonly selected: boolean;
   readonly onClick: () => void;
   readonly label: string;
+  /**
+   * A pont igénybevétele (|M|), a vászonon éppen látható Gauss-pontok
+   * legnagyobbikára normálva, 0..1 — a méret és a szín ezt a "hőtérkép"
+   * skálát követi (2026-09-04, felhasználói kérés: a korábbi egyforma
+   * méretű, lapos pöttyök "vizuálisan gyengék" voltak). Ugyanaz a
+   * `jetColor` skála, mint a keresztmetszet-inspektorban és a 3D-
+   * feszültségképen.
+   */
+  readonly magnitude: number;
 }
 
 /** Kattintható Gauss-pont-jel — a keresztmetszet-inspektor (P13 #4) belépési pontja. */
-export function GaussPointMark({ x, y, yielded, selected, onClick, label }: GaussPointMarkProps): JSX.Element {
+export function GaussPointMark({ x, y, yielded, selected, onClick, label, magnitude }: GaussPointMarkProps): JSX.Element {
+  const m = Number.isFinite(magnitude) ? Math.min(1, Math.max(0, magnitude)) : 0;
+  const r = 3 + m * 5.5;
+  const fill = jetColor(m);
   return (
     <g
       tabIndex={0}
@@ -452,14 +465,16 @@ export function GaussPointMark({ x, y, yielded, selected, onClick, label }: Gaus
       }}
       style={{ cursor: 'pointer', outline: 'none' }}
     >
-      {selected ? <circle cx={x} cy={y} r={8} fill="var(--accent-a10)" /> : null}
+      {selected ? <circle cx={x} cy={y} r={r + 6} fill="var(--accent-a10)" /> : null}
+      {m > 0.55 ? <circle cx={x} cy={y} r={r + 5} fill={fill} opacity={0.18} /> : null}
+      {yielded ? <circle className="vem-gauss-pulse" cx={x} cy={y} r={6} fill="none" stroke="var(--sem-plastic)" strokeWidth={1.6} /> : null}
       <circle
         cx={x}
         cy={y}
-        r={3.4}
-        fill={yielded ? 'var(--sem-plastic)' : 'var(--surface-canvas)'}
-        stroke={yielded ? 'var(--sem-plastic-edge)' : 'var(--sem-elastic-edge)'}
-        strokeWidth={1.2}
+        r={r}
+        fill={fill}
+        stroke={yielded ? 'var(--sem-plastic-edge)' : 'var(--surface-canvas)'}
+        strokeWidth={yielded ? 1.8 : 1.2}
       />
     </g>
   );

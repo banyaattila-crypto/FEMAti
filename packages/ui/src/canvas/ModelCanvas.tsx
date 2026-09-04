@@ -378,25 +378,30 @@ export function ModelCanvas(): JSX.Element {
         }))
       : [];
 
-  const gaussMarks =
-    showGaussPoints && currentNonlinearStep !== undefined
-      ? preparedElements.flatMap((e) => {
-          const state = currentNonlinearStep.states.get(e.id);
-          return GAUSS_XI.map((xi, gpIndex) => {
-            const xMeters = e.nodeX[1] + (xi * (e.nodeX[2] - e.nodeX[0])) / 2;
-            const gp = state?.gaussPoints[gpIndex];
-            const yielded = gp !== undefined && (gp.kind === 'resultant' ? gp.state.yielded : gp.layers.some((l) => l.yielded));
-            return {
-              key: `${e.id}#${gpIndex}`,
-              elementId: e.id,
-              gaussIndex: gpIndex as 0 | 1 | 2,
-              x: t.sx(xMeters),
-              xMeters,
-              yielded,
-            };
-          });
-        })
-      : [];
+  const gaussMarks = (() => {
+    if (!showGaussPoints || currentNonlinearStep === undefined) return [];
+    const raw = preparedElements.flatMap((e) => {
+      const state = currentNonlinearStep.states.get(e.id);
+      return GAUSS_XI.map((xi, gpIndex) => {
+        const xMeters = e.nodeX[1] + (xi * (e.nodeX[2] - e.nodeX[0])) / 2;
+        const gp = state?.gaussPoints[gpIndex];
+        const yielded = gp !== undefined && (gp.kind === 'resultant' ? gp.state.yielded : gp.layers.some((l) => l.yielded));
+        return {
+          key: `${e.id}#${gpIndex}`,
+          elementId: e.id,
+          gaussIndex: gpIndex as 0 | 1 | 2,
+          x: t.sx(xMeters),
+          xMeters,
+          yielded,
+          absM: gp !== undefined ? Math.abs(gp.m) : 0,
+        };
+      });
+    });
+    // A méret/szín a láthaó pontok közti LEGNAGYOBB |M|-re normál — a "hőtérkép"
+    // relatív, egy adott pillanathoz/modellhez, nem abszolút feszültség-skála.
+    const maxAbsM = Math.max(1e-9, ...raw.map((g) => g.absM));
+    return raw.map((g) => ({ ...g, magnitude: g.absM / maxAbsM }));
+  })();
 
   const ariaLabel =
     `${model.span.toFixed(2)} m fesztáv, ${section.name} keresztmetszet, ${model.elementCount} végeselem, ` +
@@ -531,6 +536,7 @@ export function ModelCanvas(): JSX.Element {
               x={g.x}
               y={axisY}
               yielded={g.yielded}
+              magnitude={g.magnitude}
               selected={inspector?.elementId === g.elementId && inspector.gaussIndex === g.gaussIndex}
               onClick={() => openInspector({ elementId: g.elementId, gaussIndex: g.gaussIndex })}
               label={`Gauss-pont, ${g.elementId}, x ≈ ${g.xMeters.toFixed(2)} m${g.yielded ? ' (folyva)' : ''}`}
