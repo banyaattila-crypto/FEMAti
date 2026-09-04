@@ -5,8 +5,16 @@
  * SZÁNDÉKOSAN nem számol semmit újra — a `DerivationView.tsx`-ben már
  * meglévő objektumokat (a fem-core `deriveElementStiffness`/`deriveLayerStep`
  * kimenetét, a `LinearResult`-ot, a `NonlinearRun`-t) alakítja át
- * docx-barát (táblázat-sor) formára, hogy a képernyőn látott és a .docx-be
- * exportált szám UGYANONNAN származzon (ADR-0005 szelleme).
+ * docx-barát formára, hogy a képernyőn látott és a .docx-be exportált szám
+ * UGYANONNAN származzon (ADR-0005 szelleme).
+ *
+ * KÉPLETEK (2026-09-04 óta): a képlet-mezők a `formulaLatex.ts` UGYANAZON
+ * LaTeX-sorait használják, amiket a `DerivationView.tsx` KaTeX-hez —
+ * korábban (ADR-0005) egy KÜLÖN, sima szöveges `formulaText.ts` modul adta
+ * ezeket a .docx-hez; ez a felhasználó kifejezett kérésére megszűnt (a
+ * `.docx`-ben mostantól valódi Word-képletobjektum jelenik meg, ld.
+ * `formulaOmml.ts`), ezért itt is a LaTeX-sorokat exponáljuk — a
+ * `docxExport.ts` alakítja őket OOXML-lé.
  */
 import type { ElementInternalForceDerivation, ElementLoadDerivation, ElementResult, LinearResult } from '@femati/fem-core';
 import type { ElementMassDerivation, ElementStiffnessDerivation, LayerStepDerivation } from '@femati/fem-core';
@@ -15,20 +23,22 @@ import type { EditableModel } from '../model/editable.js';
 import type { NonlinearRun } from '../model/nonlinear.js';
 import type { ReportHinge } from '../report/reportData.js';
 import {
-  bendingGaussBlock,
-  convergenceBlock,
-  distributedLoadGaussBlock,
-  extrapolationBlock,
-  internalForceBlock,
-  jacobianLines,
-  keDiagonalDemo,
-  massDiagonalDemo,
-  massGaussBlock,
-  nodalLoadLine,
-  plasticLayerFormula,
-  shearGaussBlock,
-  thermalLoadGaussBlock,
-} from './formulaText.js';
+  bendingGaussTex,
+  convergenceTex,
+  distributedLoadGaussTex,
+  extrapolationTex,
+  internalForceTex,
+  jacobianTex,
+  keDiagonalTex,
+  layerSumTex,
+  massDiagonalTex,
+  massGaussTex,
+  meMpTex,
+  nodalLoadTex,
+  plasticLayerTex,
+  shearGaussTex,
+  thermalLoadGaussTex,
+} from './formulaLatex.js';
 
 const DISTRIBUTED_LOAD_LABEL_TEXT: Record<'distributed-force' | 'distributed-moment' | 'self-weight', string> = {
   'distributed-force': 'Megoszló erő',
@@ -36,45 +46,50 @@ const DISTRIBUTED_LOAD_LABEL_TEXT: Record<'distributed-force' | 'distributed-mom
   'self-weight': 'Önsúly',
 };
 
-/** A 4.7 pont terhenkénti, TELJES levezetése — szöveges (docx-barát) blokkokra bontva. */
-function buildLoadFormulas(loadDerivation: ElementLoadDerivation | undefined, ei: number): readonly string[] {
+/** Egy képlet-mező sora: sima felirat VAGY egy LaTeX-sor (→ valódi Word-képlet, ld. `formulaOmml.ts`). */
+export type FormulaLine = { readonly kind: 'text'; readonly text: string } | { readonly kind: 'math'; readonly latex: string };
+
+const text = (t: string): FormulaLine => ({ kind: 'text', text: t });
+const mathLines = (lines: readonly string[]): readonly FormulaLine[] => lines.map((latex) => ({ kind: 'math', latex }) as const);
+
+/** A 4.7 pont terhenkénti, TELJES levezetése — feliratok és LaTeX-képletsorok vegyesen. */
+function buildLoadFormulas(loadDerivation: ElementLoadDerivation | undefined, ei: number): readonly FormulaLine[] {
   if (loadDerivation === undefined) return [];
-  const blocks: string[] = [];
+  const lines: FormulaLine[] = [];
   if (loadDerivation.distributed.length === 0 && loadDerivation.nodal.length === 0 && loadDerivation.thermal === null) {
-    blocks.push('Erre az elemre nem hat közvetlen teher (a q_e = 0 vektor helyes).');
+    lines.push(text('Erre az elemre nem hat közvetlen teher (a q_e = 0 vektor helyes).'));
   }
   for (const contribution of loadDerivation.distributed) {
-    const unit = contribution.dofOffset === 0 ? 'kN/m' : 'kNm/m';
-    blocks.push(
-      [
+    const unit = contribution.dofOffset === 0 ? '\\text{kN/m}' : '\\text{kNm/m}';
+    lines.push(
+      text(
         `${DISTRIBUTED_LOAD_LABEL_TEXT[contribution.kind]} (${contribution.loadId}) — q_e = ∫Nᵀ·p dx, ${contribution.points.length} pontos Gauss-integrálással:`,
-        ...contribution.points.map((gp, i) => distributedLoadGaussBlock(gp, i, unit)),
-      ].join('\n'),
+      ),
+      ...contribution.points.flatMap((gp, i) => mathLines(distributedLoadGaussTex(gp, i, unit))),
     );
   }
   for (const contribution of loadDerivation.nodal) {
-    const unit = contribution.dofOffset === 0 ? 'kN' : 'kNm';
-    blocks.push(
-      `${contribution.kind === 'nodal-force' ? 'Koncentrált csomóponti erő' : 'Koncentrált csomóponti nyomaték'} (${contribution.loadId}):\n${nodalLoadLine(contribution.localNode, contribution.dofOffset, contribution.value, unit)}`,
+    const unit = contribution.dofOffset === 0 ? '\\text{kN}' : '\\text{kNm}';
+    lines.push(
+      text(contribution.kind === 'nodal-force' ? `Koncentrált csomóponti erő (${contribution.loadId}):` : `Koncentrált csomóponti nyomaték (${contribution.loadId}):`),
+      ...mathLines(nodalLoadTex(contribution.localNode, contribution.dofOffset, contribution.value, unit)),
     );
   }
   if (loadDerivation.thermal !== null) {
     const thermal = loadDerivation.thermal;
-    blocks.push(
-      [
-        `Hőteher (κ₀-ból) — q_e = +∫Bᵀ·D·ε₀ dx (ADR-0006 előjel). κ₀ = ${thermal.kappa0.toExponential(3)} 1/m`,
-        ...thermal.points.map((gp, i) => thermalLoadGaussBlock(gp, i, ei, thermal.kappa0)),
-      ].join('\n'),
+    lines.push(
+      text(`Hőteher (κ₀-ból) — q_e = +∫Bᵀ·D·ε₀ dx (ADR-0006 előjel). κ₀ = ${thermal.kappa0.toExponential(3)} 1/m`),
+      ...thermal.points.flatMap((gp, i) => mathLines(thermalLoadGaussTex(gp, i, ei, thermal.kappa0))),
     );
   }
-  return blocks;
+  return lines;
 }
 
 export interface DerivationExportPlastic {
   readonly stepRows: readonly (readonly string[])[];
-  readonly convergenceFormula: string | null;
+  readonly convergenceFormula: readonly string[] | null;
   readonly sampleTitle: string;
-  readonly sampleFormula: string | null;
+  readonly sampleFormula: readonly string[] | null;
   readonly layerRows: readonly (readonly string[])[];
   readonly hingeRows: readonly (readonly string[])[];
 }
@@ -98,12 +113,13 @@ export interface DerivationExportData {
   readonly loadRows: readonly (readonly string[])[];
 
   readonly layerRows: readonly (readonly string[])[];
-  readonly layerASum: string;
-  readonly layerISum: string;
+  readonly layerSumFormula: readonly string[];
   readonly me: string;
   readonly mp: string;
   readonly shapeFactor: string;
-  readonly meMpFormula: string;
+  /** `null` esetén nincs σY (ld. `meMpNote`), egyébként 3 LaTeX-sor (Mₑ/Mₚ/c). */
+  readonly meMpFormula: readonly string[] | null;
+  readonly meMpNote: string;
 
   readonly elementLength: number;
   readonly nodeCount: number;
@@ -111,26 +127,23 @@ export interface DerivationExportData {
 
   readonly elementId: string;
   readonly elementNodeX: readonly [string, string, string];
-  readonly jacobianJ: string;
-  readonly jacobianDetJ: string;
-  readonly jacobianInvJ: string;
-  readonly jacobianFormula: string;
+  readonly jacobianFormula: readonly string[];
   readonly bendingRows: readonly (readonly string[])[];
   readonly shearRows: readonly (readonly string[])[];
   readonly bendingFormulas: readonly string[];
   readonly shearFormulas: readonly string[];
-  readonly keDiagonalFormula: string;
+  readonly keDiagonalFormula: readonly string[];
   readonly ei: string;
   readonly gas: string;
   readonly keRows: readonly string[];
-  readonly loadFormulas: readonly string[];
+  readonly loadFormulas: readonly FormulaLine[];
   readonly loadVectorRow: string;
 
   readonly massPerLength: string;
   readonly rotaryInertiaPerLength: string;
   readonly massRows: readonly (readonly string[])[];
   readonly massFormulas: readonly string[];
-  readonly massDiagonalFormula: string;
+  readonly massDiagonalFormula: readonly string[];
   readonly meRows: readonly string[];
 
   readonly assemblyRows: readonly (readonly string[])[];
@@ -199,7 +212,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
           convergenceFormula: (() => {
             const lastIter = ctx.nonlinearRun?.loadingSteps.at(-1)?.iterations.at(-1);
             if (lastIter === undefined || ctx.nonlinearRun === null) return null;
-            return convergenceBlock(
+            return convergenceTex(
               lastIter.psiNorm,
               lastIter.fNorm,
               lastIter.residualPercent,
@@ -210,7 +223,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
           sampleTitle: ctx.plasticSampleTitle,
           sampleFormula:
             ctx.plasticLayerDerivations.length > 0
-              ? plasticLayerFormula(
+              ? plasticLayerTex(
                   ctx.plasticLayerDerivations.reduce(
                     (best, r) => (Math.abs(r.derived.sigmaTrial) > Math.abs(best.derived.sigmaTrial) ? r : best),
                     ctx.plasticLayerDerivations[0] as (typeof ctx.plasticLayerDerivations)[number],
@@ -278,19 +291,22 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       (l.t * 1e3).toFixed(2),
       (l.z * 1e3).toFixed(2),
     ]),
-    layerASum: `${(layerA * 1e4).toFixed(2)} cm²`,
-    layerISum: `${(layerI * 1e8).toFixed(0)} cm⁴`,
+    layerSumFormula: layerSumTex(layerA * 1e4, layerI * 1e8),
     me: fixed(linear.props.me, 2),
     mp: fixed(linear.props.mp, 2),
     shapeFactor: fixed(linear.props.shapeFactor, 3),
     meMpFormula:
       linear.props.me !== null && linear.props.mp !== null
-        ? [
-            `Mₑ = σY·Wₑ = ${material.sigmaY.toFixed(2)} kN/cm² · ${(linear.props.elasticModulus * 1e6).toFixed(1)} cm³ = ${fixed(linear.props.me, 2)} kNm`,
-            `Mₚ = σY·Wₚ = ${material.sigmaY.toFixed(2)} kN/cm² · ${(linear.props.plasticModulus * 1e6).toFixed(1)} cm³ = ${fixed(linear.props.mp, 2)} kNm`,
-            `c = Mₚ/Mₑ = ${fixed(linear.props.shapeFactor, 3)}`,
-          ].join('\n')
-        : `Az anyagnak (${material.name}) nincs megadott folyáshatára (σY) — Mₑ és Mₚ NEM értelmezhető. A c = Wₚ/Wₑ alaki tényező σY-tól függetlenül érvényes: c = ${fixed(linear.props.shapeFactor, 3)}.`,
+        ? meMpTex(
+            material.sigmaY,
+            linear.props.elasticModulus * 1e6,
+            linear.props.plasticModulus * 1e6,
+            linear.props.me,
+            linear.props.mp,
+            linear.props.shapeFactor,
+          )
+        : null,
+    meMpNote: `Az anyagnak (${material.name}) nincs megadott folyáshatára (σY) — Mₑ és Mₚ NEM értelmezhető. A c = Wₚ/Wₑ alaki tényező σY-tól függetlenül érvényes: c = ${fixed(linear.props.shapeFactor, 3)}.`,
 
     elementLength: elementDerivation.length,
     nodeCount: linear.nodes.length,
@@ -302,10 +318,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       fixed(elementDerivation.nodeX[1], 3),
       fixed(elementDerivation.nodeX[2], 3),
     ],
-    jacobianJ: fixed(elementDerivation.bendingPoints[0]?.jacobian.j ?? 0, 5),
-    jacobianDetJ: fixed(elementDerivation.bendingPoints[0]?.jacobian.detJ ?? 0, 5),
-    jacobianInvJ: fixed(elementDerivation.bendingPoints[0]?.jacobian.invJ ?? 0, 5),
-    jacobianFormula: jacobianLines(
+    jacobianFormula: jacobianTex(
       elementDerivation.bendingPoints[0]?.dn ?? [0, 0, 0],
       elementDerivation.nodeX,
       elementDerivation.bendingPoints[0]?.jacobian.j ?? 0,
@@ -322,9 +335,9 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       fixed(gp.dn[2]),
     ]),
     shearRows: elementDerivation.shearPoints.map((gp) => [fixed(gp.xi), fixed(gp.w), fixed(gp.n[0]), fixed(gp.n[1]), fixed(gp.n[2])]),
-    bendingFormulas: elementDerivation.bendingPoints.map((gp, i) => bendingGaussBlock(gp, i, elementDerivation.stiffness.ei)),
-    shearFormulas: elementDerivation.shearPoints.map((gp, i) => shearGaussBlock(gp, i, elementDerivation.stiffness.gas)),
-    keDiagonalFormula: keDiagonalDemo(
+    bendingFormulas: elementDerivation.bendingPoints.flatMap((gp, i) => bendingGaussTex(gp, i, elementDerivation.stiffness.ei)),
+    shearFormulas: elementDerivation.shearPoints.flatMap((gp, i) => shearGaussTex(gp, i, elementDerivation.stiffness.gas)),
+    keDiagonalFormula: keDiagonalTex(
       elementDerivation.bendingPoints,
       elementDerivation.shearPoints,
       elementDerivation.stiffness.ei,
@@ -348,10 +361,10 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       fixed(gp.n[1]),
       fixed(gp.n[2]),
     ]),
-    massFormulas: ctx.massDerivation.points.map((gp, i) =>
-      massGaussBlock(gp, i, ctx.massDerivation.mass.massPerLength, ctx.massDerivation.mass.rotaryInertiaPerLength),
+    massFormulas: ctx.massDerivation.points.flatMap((gp, i) =>
+      massGaussTex(gp, i, ctx.massDerivation.mass.massPerLength, ctx.massDerivation.mass.rotaryInertiaPerLength),
     ),
-    massDiagonalFormula: massDiagonalDemo(
+    massDiagonalFormula: massDiagonalTex(
       ctx.massDerivation.points,
       ctx.massDerivation.mass.massPerLength,
       ctx.massDerivation.mass.rotaryInertiaPerLength,
@@ -384,8 +397,8 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
         : '',
     internalForceFormulas:
       ctx.internalForceDerivation !== undefined
-        ? ctx.internalForceDerivation.points.map((gp, i) =>
-            internalForceBlock(
+        ? ctx.internalForceDerivation.points.flatMap((gp, i) =>
+            internalForceTex(
               i,
               gp.xi,
               gp.x,
@@ -421,8 +434,8 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       const xis: readonly [number, number, number] = [xi0, xi1, xi2];
       const mValues: readonly [number, number, number] = [gp0.m, gp1.m, gp2.m];
       return [
-        extrapolationBlock('M', mValues, xis, -1, 'ξ=-1 (bal csp.)', 'kNm'),
-        extrapolationBlock('M', mValues, xis, 1, 'ξ=+1 (jobb csp.)', 'kNm'),
+        ...extrapolationTex('M', mValues, xis, -1, '\\xi{=}{-}1\\ (\\text{bal csp.})', '\\text{kNm}'),
+        ...extrapolationTex('M', mValues, xis, 1, '\\xi{=}{+}1\\ (\\text{jobb csp.})', '\\text{kNm}'),
       ];
     })(),
     sumFz: fixed(linear.equilibrium.sumFz, 4),

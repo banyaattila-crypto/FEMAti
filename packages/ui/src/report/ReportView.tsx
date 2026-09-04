@@ -119,7 +119,7 @@ export function ReportView(): JSX.Element | null {
         {/* 1. Fejléc */}
         <header className="vem-report__header">
           <div>
-            <h1>FEMAti — Számítási jegyzőkönyv</h1>
+            <h1>FEM@ti — Számítási jegyzőkönyv</h1>
             <p className="vem-report__subtitle">
               {preset.name} (ref. {preset.ref})
             </p>

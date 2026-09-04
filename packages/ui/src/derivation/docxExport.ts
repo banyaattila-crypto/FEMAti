@@ -1,10 +1,14 @@
 /**
- * Levezetés — .docx export (MASTER-PROMPT-TERV P15/A prompt, ADR-0005).
+ * Levezetés — .docx export (MASTER-PROMPT-TERV P15/A prompt).
  *
- * Valódi OOXML a `docx` npm könyvtárral — a képletek strukturált szövegként
- * (monospace, Unicode jelekkel) kerülnek be, NEM képként, hogy a dokumentum
- * Word-ben szerkeszthető és kereshető maradjon (ADR-0005 "Képletek
- * megjelenítése" pontja).
+ * Valódi OOXML a `docx` npm könyvtárral. A KÉPLETEK 2026-09-04 óta VALÓDI
+ * Word-képletobjektumok (`<m:oMath>`, `formulaOmml.ts` — a `formulaLatex.ts`
+ * ugyanazon LaTeX-sorait alakítja OOXML-lé, amiket a `DerivationView.tsx`
+ * KaTeX-hez használ), NEM sima szöveg — ez a felhasználó kifejezett
+ * kérésére FELÜLBÍRÁLJA a korábbi ADR-0005 "monospace Unicode-szöveg"
+ * döntését. A `mono()` segédfüggvény ezután csak a ténylegesen egyszerű
+ * (nem behelyettesítéses) érték-felsorolásokhoz marad (pl. mátrix-sorok,
+ * összegzés-vektorok) — ott nincs mit "képletesíteni".
  */
 import {
   Document,
@@ -17,7 +21,8 @@ import {
   TextRun,
   WidthType,
 } from 'docx';
-import type { DerivationExportData } from './derivationExportData.js';
+import type { DerivationExportData, FormulaLine } from './derivationExportData.js';
+import { mathParagraph, mathParagraphs } from './formulaOmml.js';
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
   return new Paragraph({ text, heading: level, spacing: { before: 240, after: 120 } });
@@ -47,6 +52,11 @@ function cell(text: string, opts: { readonly header?: boolean } = {}): TableCell
   });
 }
 
+/** Egy `FormulaLine`-lista (feliratok és LaTeX-képletsorok vegyesen) → bekezdés-lista. */
+function formulaLineParagraphs(lines: readonly FormulaLine[]): Paragraph[] {
+  return lines.map((l) => (l.kind === 'text' ? para(l.text) : mathParagraph(l.latex)));
+}
+
 function table(headerRow: readonly string[], rows: readonly (readonly string[])[]): Table {
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -66,7 +76,7 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
 
   // ── 0/1. Fejléc + Feladat ──────────────────────────────────────────────
   push(
-    new Paragraph({ text: 'FEMAti — Levezetés', heading: HeadingLevel.TITLE }),
+    new Paragraph({ text: 'FEM@ti — Levezetés', heading: HeadingLevel.TITLE }),
     para(`${data.presetName} (ref. ${data.presetRef}) · ${data.generatedAt} · v${data.appVersion} · mag: ${data.gitCommit}`),
     heading('1. Feladat', HeadingLevel.HEADING_1),
     table(
@@ -90,8 +100,8 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
     heading('2. Keresztmetszet', HeadingLevel.HEADING_1),
     para(`A rétegelt modell ${data.layerRows.length} rétegre osztja a keresztmetszetet (Diplomaterv 3.4.3, (3.54)).`),
     table(['l', 'b_l [mm]', 't_l [mm]', 'z_l [mm]'], data.layerRows),
-    mono(`A = Σ b_l·t_l = ${data.layerASum}\nI = Σ b_l·z_l²·t_l = ${data.layerISum}`),
-    mono(data.meMpFormula),
+    ...mathParagraphs(data.layerSumFormula),
+    ...(data.meMpFormula !== null ? mathParagraphs(data.meMpFormula) : [para(data.meMpNote)]),
   );
 
   // ── 3. Végeselem-felosztás ───────────────────────────────────────────────
@@ -113,21 +123,21 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
     heading(`4. A(z) ${data.elementId} elem teljes levezetése`, HeadingLevel.HEADING_1),
     mono(`x₁=${data.elementNodeX[0]}, x₂=${data.elementNodeX[1]}, x₃=${data.elementNodeX[2]} m, L_e=${data.elementLength.toFixed(3)} m`),
     heading('4.1 Jacobi', HeadingLevel.HEADING_2),
-    mono(data.jacobianFormula),
+    ...mathParagraphs(data.jacobianFormula),
     heading('4.2 Hajlítási Gauss-pontok — táblázat és teljes, behelyettesített levezetés', HeadingLevel.HEADING_2),
     table(['ξ', 'w', 'N₁', 'N₂', 'N₃', 'dN₁/dξ', 'dN₂/dξ', 'dN₃/dξ'], data.bendingRows),
-    ...data.bendingFormulas.map((f) => mono(f)),
+    ...mathParagraphs(data.bendingFormulas),
     heading('4.3 Nyírási Gauss-pontok — táblázat és teljes levezetés', HeadingLevel.HEADING_2),
     table(['ξ', 'w', 'N₁', 'N₂', 'N₃'], data.shearRows),
-    ...data.shearFormulas.map((f) => mono(f)),
+    ...mathParagraphs(data.shearFormulas),
     heading('4.4 D anyagmátrix', HeadingLevel.HEADING_2),
     mono(`EI = ${data.ei} kNm²   GAs = ${data.gas} kN`),
     heading('4.5 Kₑ integrálás — konkrét példa egy mátrixelemre', HeadingLevel.HEADING_2),
-    mono(data.keDiagonalFormula),
+    ...mathParagraphs(data.keDiagonalFormula),
     heading('4.6 A 6×6 Kₑ mátrix', HeadingLevel.HEADING_2),
     ...data.keRows.map((row) => mono(row)),
     heading('4.7 Elemi tehervektor (λ=1) — terhenkénti, teljes levezetés', HeadingLevel.HEADING_2),
-    ...data.loadFormulas.map((f) => mono(f)),
+    ...formulaLineParagraphs(data.loadFormulas),
     mono(`Összegzés: q_e = ${data.loadVectorRow}`),
   );
 
@@ -142,9 +152,9 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
     mono(`m' = γ·A/g = ${data.massPerLength} kN·s²/m²\nm'ᵩ = γ·I/g = ${data.rotaryInertiaPerLength} kN·s²`),
     heading('4A.1 Gauss-pontok — táblázat és teljes, behelyettesített levezetés', HeadingLevel.HEADING_2),
     table(['ξ', 'w', 'N₁', 'N₂', 'N₃'], data.massRows),
-    ...data.massFormulas.map((f) => mono(f)),
+    ...mathParagraphs(data.massFormulas),
     heading('4A.2 Mₑ integrálás — konkrét példa két mátrixelemre', HeadingLevel.HEADING_2),
-    mono(data.massDiagonalFormula),
+    ...mathParagraphs(data.massDiagonalFormula),
     heading('4A.3 A 6×6 Mₑ mátrix', HeadingLevel.HEADING_2),
     ...data.meRows.map((row) => mono(row)),
   );
@@ -174,11 +184,11 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
   push(
     heading('6. Eredmények és ellenőrzések', HeadingLevel.HEADING_1),
     heading('6.1 Igénybevétel-visszaszámítás — κ = B_κ·uₑ, γ = B_γ·uₑ, M = EI·(κ−κ₀), T = GAs·γ', HeadingLevel.HEADING_2),
-    ...data.internalForceFormulas.map((f) => mono(f)),
+    ...mathParagraphs(data.internalForceFormulas),
     heading('6.2 Gauss-ponti igénybevétel → csomóponti extrapoláció', HeadingLevel.HEADING_2),
     table(['Gauss-pont', 'x [m]', 'M [kNm]', 'T [kN]'], data.resultGaussRows),
     heading('6.3 A másodfokú (Lagrange-) extrapolációs képlet behelyettesítve', HeadingLevel.HEADING_2),
-    ...data.extrapolationFormulas.map((f) => mono(f)),
+    ...mathParagraphs(data.extrapolationFormulas),
     table(
       ['Jellemző', 'Érték'],
       [
@@ -194,9 +204,9 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
       heading('7. Képlékeny számítás', HeadingLevel.HEADING_1),
       table(['#', 'λ', 'iterációk', '‖ψ‖', '‖f‖', 'végső reziduum [%]'], data.plastic.stepRows),
       heading('A konvergencia-képlet behelyettesítve (100·‖ψ‖/‖f‖ ≤ Tolerancia)', HeadingLevel.HEADING_2),
-      ...(data.plastic.convergenceFormula !== null ? [mono(data.plastic.convergenceFormula)] : []),
+      ...(data.plastic.convergenceFormula !== null ? mathParagraphs(data.plastic.convergenceFormula) : []),
       heading(data.plastic.sampleTitle, HeadingLevel.HEADING_2),
-      ...(data.plastic.sampleFormula !== null ? [mono(data.plastic.sampleFormula)] : []),
+      ...(data.plastic.sampleFormula !== null ? mathParagraphs(data.plastic.sampleFormula) : []),
       table(
         ['réteg', 'z [mm]', 'σ_{r-1}', 'Δε', 'σ_trial', 'R', 'σ_új', 'folyva?'],
         data.plastic.layerRows,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import JSZip from 'jszip';
 import {
   deriveElementInternalForces,
   deriveElementLoadVector,
@@ -73,11 +74,25 @@ describe('docxExport — a teljes 4.7/5/6 bővítés nem töri el a .docx gener�
 
     // ADR-0016: a tömegmátrix-levezetés (4A pont) mezői is meg vannak töltve.
     expect(exportData.massRows.length).toBe(3);
-    expect(exportData.massFormulas.length).toBe(3);
+    // 3 Gauss-pont × a `massGaussTex` soronkénti kimenete — a képletek
+    // 2026-09-04 óta LaTeX-sorokra LAPÍTVA (nem \n-nel összefűzött blokkok),
+    // ld. `derivationExportData.ts` fejléce.
+    expect(exportData.massFormulas.length).toBeGreaterThan(0);
     expect(exportData.meRows.length).toBe(6);
-    expect(exportData.massDiagonalFormula).toContain('Mₑ[w₁,w₁]');
+    expect(exportData.massDiagonalFormula.join(' ')).toContain('M_e[w_1,w_1]');
 
     const blob = await buildDerivationDocx(exportData);
     expect(blob.size).toBeGreaterThan(0);
+
+    // A felhasználó kifejezett kérésére (2026-09-04) a képletek VALÓDI OOXML
+    // Word-képletobjektumként (`<m:oMath>`) kerülnek be, nem sima szövegként
+    // (a korábbi, ADR-0005 szerinti monospace-Unicode megoldás felülbírálva)
+    // — ez a regresszió, amit a `formulaOmml.ts` saját tesztjei mellett itt,
+    // a TÉNYLEGES exportált fájlon is ellenőrzünk.
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    const xml = await zip.file('word/document.xml')?.async('string');
+    if (xml === undefined) throw new Error('nincs word/document.xml a csomagban');
+    expect(xml).toContain('<m:oMath');
+    expect((xml.match(/<m:oMath[ >]/g) ?? []).length).toBeGreaterThan(10);
   });
 });

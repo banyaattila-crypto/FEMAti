@@ -1,9 +1,8 @@
 /**
- * Egy sor LaTeX-képlet KaTeX-szel szedve (ADR-0005 "Képletek megjelenítése"
- * pontja: "A HTML/PDF nézetben KaTeX-szel szedett képlet is megengedett").
- *
- * A `.docx`-be VÁLTOZATLANUL a `formulaText.ts` szöveges (monospace, Unicode)
- * formája kerül — ez a komponens KIZÁRÓLAG a HTML/nyomtatási nézetet szolgálja.
+ * Egy sor LaTeX-képlet KaTeX-szel szedve — ez a komponens a HTML/nyomtatási
+ * nézetet szolgálja. A `.docx` export (`formulaOmml.ts`) UGYANEZEKET a
+ * LaTeX-sorokat (`formulaLatex.ts`) alakítja valódi OOXML Word-
+ * képletobjektummá, nem KaTeX-et hív — a két kimenet így egy forrásból ered.
  *
  * A `tex` forrás mindig a mi saját, számokból generált kódunkból származik
  * (ld. `formulaLatex.ts`), sosem felhasználói bevitelből — de a biztonság

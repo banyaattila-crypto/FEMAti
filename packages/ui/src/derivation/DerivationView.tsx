@@ -52,6 +52,7 @@ import {
   convergenceTex,
   distributedLoadGaussTex,
   extrapolationTex,
+  internalForceTex,
   jacobianTex,
   keDiagonalTex,
   layerSumTex,
@@ -189,7 +190,7 @@ export function DerivationView(): JSX.Element | null {
         {/* 1. FELADAT */}
         <header className="vem-derivation__header">
           <div>
-            <h1>FEMAti — Levezetés</h1>
+            <h1>FEM@ti — Levezetés</h1>
             <p className="vem-derivation__subtitle">
               {preset.name} (ref. {preset.ref})
             </p>
@@ -823,13 +824,20 @@ export function DerivationView(): JSX.Element | null {
               {internalForceDerivation.points.map((gp, i) => (
                 <FormulaBlock
                   key={i}
-                  lines={[
-                    `\\text{Gauss-pont } ${i + 1}:\\ \\xi=${gp.xi.toFixed(4)},\\ x=${gp.x.toFixed(3)}\\ \\text{m}`,
-                    `\\kappa = B_\\kappa\\cdot u_e = [${Array.from(gp.bKappa).map((v) => v.toFixed(3)).join(',\\ ')}]\\cdot u_e = ${gp.kappa.toExponential(3)}\\ \\tfrac{1}{\\text{m}}`,
-                    `\\gamma = B_\\gamma\\cdot u_e = [${Array.from(gp.bGamma).map((v) => v.toFixed(3)).join(',\\ ')}]\\cdot u_e = ${gp.gamma.toExponential(3)}`,
-                    `M = EI\\cdot(\\kappa-\\kappa_0) = ${elementDerivation.stiffness.ei.toFixed(1)}\\cdot(${gp.kappa.toExponential(3)}-${internalForceDerivation.kappa0.toExponential(3)}) = ${gp.m.toFixed(3)}\\ \\text{kNm}`,
-                    `T = GA_s\\cdot\\gamma = ${elementDerivation.stiffness.gas.toFixed(1)}\\cdot ${gp.gamma.toExponential(3)} = ${gp.t.toFixed(3)}\\ \\text{kN}`,
-                  ]}
+                  lines={internalForceTex(
+                    i,
+                    gp.xi,
+                    gp.x,
+                    gp.bKappa,
+                    gp.bGamma,
+                    gp.kappa,
+                    gp.gamma,
+                    gp.m,
+                    gp.t,
+                    elementDerivation.stiffness.ei,
+                    elementDerivation.stiffness.gas,
+                    internalForceDerivation.kappa0,
+                  )}
                 />
               ))}
               {internalForceDerivation.kappa0 !== 0 ? (

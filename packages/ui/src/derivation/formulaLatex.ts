@@ -1,13 +1,14 @@
 /**
- * LaTeX (KaTeX) képlet-sorok a levezetéshez — a `formulaText.ts` szöveges
- * (monospace) párja, KIZÁRÓLAG a HTML/nyomtatási nézethez (ADR-0005: "A
- * HTML/PDF nézetben KaTeX-szel szedett képlet is megengedett, de a .docx-be
- * a szöveges forma kerül" — ezért a `.docx` export VÁLTOZATLANUL
- * `formulaText.ts`-t használja).
+ * LaTeX képlet-sorok a levezetéshez — a `DerivationView.tsx` KaTeX-szel
+ * szedi (HTML/nyomtatási nézet), a `formulaOmml.ts` pedig UGYANEZEKET a
+ * sorokat valódi OOXML Word-képletobjektummá alakítja a `.docx` exportban
+ * (`derivationExportData.ts`) — mindkét kimenet EGY forrásból származik,
+ * hogy sose csússzanak szét (2026-09-04-ig egy KÜLÖN, sima szöveges
+ * `formulaText.ts` modul adta a `.docx`-öt, ADR-0005 szerint; ez a
+ * felhasználó kifejezett kérésére megszűnt).
  *
- * Ugyanúgy, mint `formulaText.ts`: NEM számol semmit — csak a mag már
- * kiszámított értékeit rendezi LaTeX "képlet = behelyettesített számok =
- * eredmény" alakba.
+ * NEM számol semmit — csak a mag már kiszámított értékeit rendezi LaTeX
+ * "képlet = behelyettesített számok = eredmény" alakba.
  */
 import type { DistributedLoadGaussDetail, GaussStepDetail, MassGaussStepDetail, ThermalLoadGaussDetail } from '@femati/fem-core';
 import type { PlasticLayerRow } from './derivationData.js';
@@ -211,6 +212,35 @@ export function thermalLoadGaussTex(gp: ThermalLoadGaussDetail, index: number, e
     `f_e^{(${index + 1})} = [${Array.from(gp.contribution)
       .map((v) => f(v, 4))
       .join(',\\ ')}]`,
+  ];
+}
+
+/**
+ * Egy Gauss-pont κ/γ → M/T visszaszámítása (5→6. pont híd) — LaTeX sorok.
+ * Eddig csak a `DerivationView.tsx`-be volt beégetve — 2026-09-04-én
+ * kiemelve ide, hogy a `.docx` export (`formulaOmml.ts`) is
+ * újrahasználhassa.
+ */
+export function internalForceTex(
+  index: number,
+  xi: number,
+  x: number,
+  bKappa: Float64Array,
+  bGamma: Float64Array,
+  kappa: number,
+  gamma: number,
+  m: number,
+  t: number,
+  ei: number,
+  gas: number,
+  kappa0: number,
+): readonly string[] {
+  return [
+    `\\text{Gauss-pont } ${index + 1}:\\ \\xi=${f(xi)},\\ x=${f(x, 3)}\\ \\text{m}`,
+    `\\kappa = B_\\kappa\\cdot u_e = [${Array.from(bKappa).map((v) => f(v, 3)).join(',\\ ')}]\\cdot u_e = ${kappa.toExponential(3)}\\ \\tfrac{1}{\\text{m}}`,
+    `\\gamma = B_\\gamma\\cdot u_e = [${Array.from(bGamma).map((v) => f(v, 3)).join(',\\ ')}]\\cdot u_e = ${gamma.toExponential(3)}`,
+    `M = EI\\cdot(\\kappa-\\kappa_0) = ${f(ei, 1)}\\cdot(${kappa.toExponential(3)}-${kappa0.toExponential(3)}) = ${f(m, 3)}\\ \\text{kNm}`,
+    `T = GA_s\\cdot\\gamma = ${f(gas, 1)}\\cdot ${gamma.toExponential(3)} = ${f(t, 3)}\\ \\text{kN}`,
   ];
 }
 
