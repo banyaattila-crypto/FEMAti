@@ -2,7 +2,7 @@
 
 **Utolsó frissítés:** 2026-09-04
 **Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
-**Utolsó commit:** `53d24f9` — fejléc/eszközsor UI-finomítások + mértékegység-váltó kiterjesztése a bal panelre
+**Utolsó commit:** `63cd346` — valódi Word-képletobjektumok a Levezetés .docx exportjában + FEM@ti brandelés
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -83,8 +83,10 @@ pnpm check   → typecheck + lint + test, mindhárom csomagra, TISZTA
 | `fem-core` | 35 (32 fut, 3 `PROFILE=1` mögé zárt profilozó teszt mindig skip) | 504 (+3 skip) | küszöb: ≥90% (a P16 óta nem mérve újra ezen a frissítésen) |
 | `fem-validation` | 2 | 30 | — (validációs esetek, nem klasszikus unit teszt) |
 | `fem-db` | 2 | 25 | — (adatkonzisztencia: Ecm-képlet visszaellenőrzés, katalógus-geometria ±6%-os egyezés a fem-core zárt alakjával, forrás/verified-mező kötelező jelenléte) |
-| `ui` | 18 | 105 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, a mértékegység-váltó SI/US mindkét iránya, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
-| **Összesen** | **57** | **664** (+3 skip) | |
+| `ui` | 20 | 107 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, a mértékegység-váltó SI/US mindkét iránya, a LaTeX→OOXML képlet-konverter, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
+| **Összesen** | **59** | **666** (+3 skip) | |
+
+(2026-09-04-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 68–72. pont commitjai óta is, beleértve a Word-export valódi képletobjektumait.)
 
 (2026-09-04-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 61–67. pont commitjai óta is, beleértve a bal panel mértékegység-váltó kiterjesztését.)
 
@@ -2018,6 +2020,103 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     beírt érték SI-re visszaváltva pontos, pl. 1 in → 25,4 mm), vasalás/
     kompozit beton+acél anyagválasztással, span/támasz/teher/rugó minden
     mezőn. `pnpm check` (mind a 4 csomag, 664+3 skip teszt) teljes zöld.
+
+68. **Gauss-pont vizuális feldobás a vásznon — hőtérkép-méret + lüktető
+    gyűrű** (`1158117`): a felhasználó korábbi visszajelzése szerint a
+    vászon Gauss-pont-jelei "vizuálisan gyengék" voltak — fix méretű,
+    lapos pöttyök, semmi kapcsolat a tényleges igénybevétellel. 4
+    vizuális jelölt közül (külön artifactban bemutatva) a felhasználó az
+    1+3 kombinációt választotta. `marks.tsx` `GaussPointMark`: új
+    `magnitude` prop (0..1, a látható pontok közötti legnagyobb |M|-re
+    normálva) — a sugár 3–8,5px között skálázódik, a kitöltés a már
+    meglévő `jetColor()` "jet" hőtérkép-skálát követi (ugyanaz, mint a
+    keresztmetszet-inspektorban és a 3D-feszültségképen), nagy
+    igénybevételnél halvány izzással. `design/base.css`: új
+    `vem-gauss-pulse` keyframe — a ténylegesen megfolyt pontok halkan,
+    folyamatosan lüktető gyűrűt kapnak statikus piros pötty helyett,
+    `prefers-reduced-motion: reduce` alatt kikapcsolva. Eredmény: a
+    pöttyök sora vizuálisan követi az M-diagram alakját. Élőben
+    ellenőrizve (kattintás/inspektor-megnyitás változatlanul működik, a
+    lüktető animáció mérve ténylegesen fut: r 7,7px→15px, opacity
+    0,44→0 0,6s alatt). `pnpm check` (ui: 105 teszt) teljes zöld.
+
+69. **Folytonos M-hőtérkép a gerenda tengelyén** (`48f0717`): a
+    felhasználó korábban megjelölt második nyitott ötlete ("milyen új,
+    látványos diagram jöhetne az M/T/w/φ mellé") — a gerenda SAJÁT
+    tengelyvonala folytonos "jet" hőtérképpé válik, amint van érvényes
+    nemlineáris eredmény, nem csak a Gauss-pontokon. `ModelCanvas.tsx`:
+    a már meglévő Gauss-pont-adatgyűjtés (pozíció + |M|-magnitúdó)
+    szétválasztva a `showGaussPoints` kapcsolótól — a hőtérkép FÜGGETLENÜL
+    mindig látszik, ha van nemlineáris eredmény (a kattintható pöttyök
+    továbbra is külön kapcsolhatók). Új elemenkénti SVG `linearGradient`
+    (3 megállóval, a 3 Gauss-pont pozíciójában és `jetColor()`-színével)
+    — a tengelyvonal mind a 16 elemre saját gradienst kap, a szín
+    folytonosan követi az M(x) görbét a teljes fesztávon. Eredmény
+    nélkül változatlan a sima (szürke/pontozott) tengely. Élőben
+    ellenőrizve: a tengely színmenete pontosan követi az M-diagram
+    alakját, a csomópont-jelek/támaszok/terhek rajzolási sorrendje
+    változatlan. `pnpm check` (ui: 105 teszt + mindkét lint) teljes zöld.
+
+70. **Keresztmetszet-kártya mértékegység-váltása** (`6883b91`): a
+    felhasználó megkérdezte, miért marad SI-ben a bal panel
+    "Keresztmetszet" kártyája (méretek, A, I, E, G) US↔SI váltáskor —
+    ezek eddig tudatosan a "katalógus-visszhang" kategóriába tartoztak
+    (a 67. pontban dokumentált kizárás), ezért kimaradtak a bal-paneli
+    csúszka-kiterjesztésből. Új `format/numbers.ts` `smallLength`
+    display-only formázó (mm/in, a szelvény-katalógus már mm-ben tárolt
+    adataihoz); a szelvény-méretek (h/b/tw/tf), A, I és az anyag E/G
+    modulusa mostantól `fmt.smallLength`/`area`/`inertia`/`stress`-en át
+    jelenik meg, a szelvény-optimalizáló javaslat-sorának A-értékével
+    együtt. A vászon-feliratok (pl. "L = ... m") tudatosan változatlanul
+    SI-ben maradnak — azok a mag bemeneti visszhangjai, nem katalógus-
+    adatok. Élőben ellenőrizve (IPE 300, US módban: h=11,81in,
+    A=8,04in², E=30 457,93 ksi stb. — mind pontos átváltás).
+
+71. **About lista bővítése + Bezár gomb a fejlécbe** (`2748310`): két
+    külön felhasználói kérés. (1) A képességlista frissítve a
+    legutóbbi fejlesztésekkel — automatikus szelvény-optimalizálás
+    (korábban kimaradt, pedig régóta megvan), élő feszültség-/
+    nyomatékhőtérkép a modell-vásznon (a 68–69. pont), és a
+    mértékegység-váltás sora pontosítva ("bemenet és eredmény
+    egyaránt"). (2) A lenti "Bezár" gomb felköltözött a fejléc jobb
+    oldalára, az addigi "✕" ikon helyére — csak az About ablakot
+    érinti, a megosztott `.vem-inspector__header` mintát nem.
+
+72. **Valódi Word-képletobjektumok a Levezetés .docx exportjában +
+    FEM@ti brandelés** (`63cd346`): a felhasználó három menüpontot kért
+    frissíteni: "Levezetés megtekintése" és "Jegyzőkönyv megnyitása" —
+    mindkettő csak brandelés-frissítést igényelt ("FEMAti"→"FEM@ti" a
+    fejlécben, `DerivationView.tsx`/`ReportView.tsx`/`docxExport.ts`) —,
+    és "Export: Word (.docx) — képlethelyes elkészítése", ami végül egy
+    valódi, több órás fejlesztést jelentett. Vizsgálat: a jelenlegi
+    .docx-ben a képletek MÁR HELYESEN jelentek meg (tiszta Unicode-
+    szöveg, ellenőrizve egy ténylegesen letöltött fájl kicsomagolásával)
+    — ez viszont SZÁNDÉKOS, dokumentált döntés volt (ADR-0005): sima
+    szöveg, hogy a dokumentum szerkeszthető/kereshető maradjon. A
+    felhasználó ezt a döntést FELÜLBÍRÁLTA: valódi, grafikusan szedett
+    Word-képletobjektumot (OOXML `<m:oMath>`) kért a monospace-Unicode
+    helyett. Új `formulaOmml.ts`: kis, kifejezetten a projekt saját
+    LaTeX-részhalmazára (`\frac`, alsó/felső index, `\left(\right)`,
+    `\text{}`, egy rögzített görög/jel-szótár — kb. 20 konstrukció, NEM
+    általános LaTeX-értelmező) írt parser, ami a `docx` könyvtár
+    `Math`/`MathRun`/`MathFraction`/`MathSubScript`/stb. objektumaiként
+    adja vissza. `derivationExportData.ts` átállítva: a korábbi, külön
+    párhuzamos `formulaText.ts` (sima szöveg a .docx-hez) helyett most
+    ugyanazokat a `formulaLatex.ts` LaTeX-sorokat használja, amiket a
+    `DerivationView.tsx` KaTeX-hez — a két kimenet (HTML és .docx) egy
+    forrásból ered, sosem csúszhat szét. Egy korábban csak a nézetbe
+    beégetett képletet (belső erő visszaszámítás) kiemelve
+    `internalForceTex()`-ként a `formulaLatex.ts`-be. `formulaText.ts` +
+    tesztje törölve (használaton kívülre került). Új devDependency:
+    `jszip` (csak teszt-idő: a ténylegesen generált .docx ZIP-tartalmát
+    ellenőrzi). Új tesztek: `formulaOmml.test.ts` (7 db, konkrét LaTeX-
+    minták helyes OOXML-szerkezetére), `docxExport.test.ts` kibővítve (a
+    ténylegesen generált fájlban ellenőrzi a `<m:oMath>` elemek
+    jelenlétét). Élőben ellenőrizve: egy valódi letöltött .docx
+    kicsomagolva 162 db valódi képletobjektumot tartalmaz (133 tört,
+    124 felső index, 279 alsó index, 14 kombinált), a számok pontosak
+    (pl. Mₑ=124,50 kNm, c=1,133). `pnpm check` (mind a 4 csomag,
+    666+3 skip teszt) teljes zöld.
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
