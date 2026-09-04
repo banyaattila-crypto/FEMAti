@@ -2,7 +2,7 @@
 
 **Utolsó frissítés:** 2026-09-04
 **Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
-**Utolsó commit:** `63cd346` — valódi Word-képletobjektumok a Levezetés .docx exportjában + FEM@ti brandelés
+**Utolsó commit:** `d92526a` — no-tension (felemelkedésre képes) Winkler-ágyazat (ADR-0022)
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -2117,6 +2117,79 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     124 felső index, 279 alsó index, 14 kombinált), a számok pontosak
     (pl. Mₑ=124,50 kNm, c=1,133). `pnpm check` (mind a 4 csomag,
     666+3 skip teszt) teljes zöld.
+
+73. **GitHub-publikálási audit + angol README** (`4906e2c`): a felhasználó
+    megkérdezte, mi hiányzik ahhoz, hogy a jelenleg PRIVÁT repót publikusra
+    állítsa, és "nem ég-e le vele". Átvizsgálás (git history, `.gitignore`,
+    CI, `package.json`, secrets-grep, a beágyazott PDF tartalom-ellenőrzése
+    `pdftotext`-tel): nincs secret/API-kulcs a kódban, a CI értelmes
+    lépéseket futtat, DE nincs LICENSE fájl, a README a gitignore-olt
+    `docs/VALIDATION.md`-re mutat (törött link lenne), és — a legfontosabb
+    — a `packages/ui/public/theory/femati-timoshenko-beam-2026.pdf` szó
+    szerint az EREDETI 1996-os BME diplomaterv teljes szövege volt,
+    beágyazva az appba. Ezután felmerült: egy nem magyar látogató hogyan
+    boldogulna a tisztán magyar felületen — a válasz: a cél (kirakat/
+    portfólió, nem interaktív nemzetközi használat) alapján elég egy angol
+    README + látványelemek, a teljes UI-i18n-t nem indokolt megkezdeni
+    (ld. 74. pont döntése lent és a roadmap-memória). Létrehozva: angol
+    `README.md` (a magyar `README.hu.md`-vé nevezve át), mindkettő tetején
+    kereszthivatkozással, az angol változat elején explicit jelezve, hogy
+    a mélyebb dokumentáció magyar marad.
+
+74. **Elméletek nézet — átnevezések, diplomaterv nyers dokumentum
+    eltávolítása, HU/EN nyelv-váltó** (`1e5eb8c`): öt apró átnevezési kérés
+    (About-dialógus négyzetesítve/kisebbre; "Elmélet"→"Elméletek";
+    "Diplomaterv '96"→"Matematikai összefoglaló"; "A diplomatervről" és
+    "Matematikai összefoglaló" sorrendcseréje a `TheoryView.tsx` belső
+    fülsorában; "Teljes elmélet"→"A TUDÁS") után a 73. pont auditja nyomán
+    felmerült a diplomaterv-dokumentum sorsa: a felhasználó explicit úgy
+    döntött, hogy a NYERS dokumentumot (a teljes eredeti 1996-os szöveg,
+    saját nevével/dátumával) kivesszük a publikus repóból, de a
+    NARRATÍVÁT (README-történet, `THEORY.md` oldalszám-hivatkozások,
+    About-szöveg, "Történelmi mód") megtartjuk — ez a legerősebb egyedi
+    értéke a projektnek. A beágyazott PDF-et megjelenítő "A TUDÁS" fül
+    (és maga a fájl) törölve (`TheoryTopic` union, `App.tsx` menüpont,
+    `.vem-theory__pdf`/`--wide` halott CSS). Végül felmerült: ha a
+    diplomaterv-hivatkozások angolra sem fordíthatók le értelmesen (a
+    forrásdokumentum maga marad magyar), a hitelesség egy nem magyar
+    olvasónak nyelvfüggetlen jelekre (tesztszám, CI, validációs
+    számértékek) épülhet csak — ELDÖNTVE: a felhasználó mégis egy ÉLŐ
+    HU/EN váltót kért, DE csak erre az 5 fülre, NEM az egész app
+    i18n-jére (ami szándékosan elhalasztott, külön roadmap-pont marad).
+    `CONTENT_HU`/`CONTENT_EN` rekordok (`TheoryView.tsx`), localStorage-
+    perzisztált nyelv-választó gomb a navigációs fejlécben. A teljes 13
+    pontos matematikai levezetés, a diplomaterv-történet és a 3 rövidebb
+    altéma is lefordítva; a képletekbe (KaTeX) korábban beégetett magyar
+    szavak (`Tolerancia`, `ágy`, `alsó`/`felső`) az angol változatban is
+    lefordítva. Élőben ellenőrizve mindkét nyelven, több fülön át.
+
+75. **No-tension (felemelkedésre képes) Winkler-ágyazat** (`d92526a`,
+    ADR-0022): egy nemzetközi piackutatás ("mit fejlesszünk, hogy
+    felzárkózzunk a nagyokhoz") nyomán a felhasználó a "húzásra/nyomásra
+    egyoldali elemek" ötletet választotta — de a modell megismerése után
+    kiderült, hogy egy kábel-/húzottrúd-elem NEM illik az 1D
+    Timoshenko-gerendamodellhez (nincs axiális szabadságfok). A valódi,
+    illeszkedő megfelelő: a Winkler-ágyazat felemelkedésre képes (no-
+    tension/no-uplift) változata — klasszikus geotechnikai eset, amit a
+    felhasználó explicit hatókörnek választott (a csomóponti rugós/merev
+    támasz egyoldali változata KÉSŐBBRE maradt). Új `ElasticFoundation.
+    noTension?: boolean` mező; `solveLinearContact()` (`fem-core/solver/
+    linearSolver.ts`) — elemenkénti KONTAKT-ÁLLAPOT iteráció (NEM a
+    meglévő Newton–Raphson anyagi nemlinearitás-gépezete: próbált aktív-
+    ágyazat halmazzal oldunk, megnézzük mely jelölt elemek emelkedtek fel
+    — negatív átlagos csomóponti `w` —, és amíg a halmaz nem
+    stabilizálódik, újraoldunk, max. 25 iterációig). Modelleknél, ahol
+    nincs `noTension` ágyazat, EGY `solveLinear()`-hívásra esik vissza,
+    bit-azonos eredménnyel — ez a `packages/ui/src/model/compile.ts`
+    egyetlen hívási helyén cserélve, tehát MINDEN meglévő modell
+    érintetlen marad. UI: jelölőnégyzet a kijelölt ágyazat panelen,
+    figyelmeztetés az Eredmények panelen felemelkedésnél. Új teszt:
+    `fem-core/test/contactFoundation.test.ts` (V-08, 7 teszt) — túlnyúló
+    végű tartó Winkler-ágyazaton, bekötve vs. no-tension összevetve,
+    globális egyensúly a kontakt-iteráció UTÁN is gépi pontossággal
+    ellenőrizve. Élőben ellenőrizve böngészőben (jelölőnégyzet létrehoz/
+    töröl, nem omlik össze). `pnpm check` (mind a 4 csomag, 674 teszt)
+    teljes zöld.
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
