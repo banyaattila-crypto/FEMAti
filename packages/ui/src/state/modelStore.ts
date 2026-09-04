@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand';
 import { produce, type Draft } from 'immer';
-import { DEFAULT_MATERIAL_ID, DEFAULT_PRESET_ID, DEFAULT_SECTION_ID, findPreset } from '../data/catalog.js';
+import { DEFAULT_MATERIAL_ID, DEFAULT_PRESET_ID, DEFAULT_SECTION_ID, findMaterial, findPreset } from '../data/catalog.js';
 import {
   nextEntityId,
   presetToEditable,
@@ -165,7 +165,18 @@ export const useModelStore = create<ModelState>()((set, get) => {
       }),
 
     setSectionId: (id) => edit((d) => void (d.sectionId = id)),
-    setMaterialId: (id) => edit((d) => void (d.materialId = id)),
+    setMaterialId: (id) =>
+      edit((d) => {
+        d.materialId = id;
+        // A kompozit keresztmetszet (acél alapszelvény + betonlemez, ld.
+        // `model/editable.ts` `CompositeState` fejléce) csak acél
+        // alapanyagnál értelmezett — ha a felhasználó nem-acél anyagra
+        // vált, a bekapcsolt kompozit mód automatikusan kikapcsolódik
+        // (2026-09-04, korábban a UI ezt nem korlátozta — LeftPanel.tsx).
+        if (d.composite.enabled && findMaterial(id).family !== 'steel') {
+          d.composite = { ...d.composite, enabled: false };
+        }
+      }),
     setSelfWeight: (v) => edit((d) => void (d.selfWeight = v)),
     setAxialForce: (v) => edit((d) => void (d.axialForce = v)),
     setThermalLoad: (v) => edit((d) => void (d.thermalLoad = v)),

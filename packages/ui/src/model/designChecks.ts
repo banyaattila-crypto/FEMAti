@@ -19,6 +19,7 @@
  */
 import { deflectionUtilization, shearMomentInteraction, type LinearResult } from '@femati/fem-core';
 import { findMaterial, findSection } from '../data/catalog.js';
+import { isCompositeActive } from './compile.js';
 import { rcMomentCapacity } from './rcCapacity.js';
 import type { EditableModel } from './editable.js';
 
@@ -48,7 +49,7 @@ export function computeUtilizations(model: EditableModel, ulsResult: LinearResul
   // csak a rugalmas viselkedésre vonatkozik, ld. `model/compile.ts`
   // `buildCompositeSection()` fejléce. A lehajlás-ellenőrzés anyagfüggetlen,
   // a helyesen számított kompozit EI-vel TOVÁBBRA IS érvényes.
-  const isComposite = model.composite.enabled;
+  const isComposite = isCompositeActive(model);
 
   const interaction =
     !isComposite && ulsResult.props.mp !== null && ulsResult.props.vpl !== null

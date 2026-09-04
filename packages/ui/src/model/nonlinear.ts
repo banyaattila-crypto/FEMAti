@@ -53,6 +53,7 @@ import {
   type SectionShape,
 } from '@femati/fem-core';
 import { findMaterial, findSection, type SectionEntry } from '../data/catalog.js';
+import { isCompositeActive } from './compile.js';
 import { DEFAULT_SPRING_STIFFNESS, type EditableModel } from './editable.js';
 
 // 32 réteg — a 16-os alapérték mellett az Mₑ/Mₚ ~4-5%-kal tért el a zárt
@@ -313,7 +314,7 @@ export function runNonlinearEditableModel(editable: EditableModel, options: Nonl
   // `buildCompositeSection()` fejléce. A nemlineáris (képlékeny) viselkedés
   // kompozit szelvényen (hol a képlékeny semleges tengely, milyen a nyírt
   // kapcsolat foka) egy önálló, később megfontolandó lépés.
-  if (editable.composite.enabled) {
+  if (isCompositeActive(editable)) {
     return { run: null, error: 'Kompozit keresztmetszetre a nemlineáris (rugalmas-képlékeny) elemzés még nem támogatott.' };
   }
   // 2026-09-04: a másodrendű (P-Δ) hatás MVP-je szándékosan csak a lineáris

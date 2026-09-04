@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from './editable.js';
-import { compileModel, compositeSectionStiffness, solveEditableModel } from './compile.js';
+import { compileModel, compositeSectionStiffness, isCompositeActive, solveEditableModel } from './compile.js';
 
 beforeEach(() => resetEntityIds());
 
@@ -64,6 +64,8 @@ describe('kompozit acél-beton keresztmetszet (2026-09-04)', () => {
       composite: { enabled: true, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' },
     };
 
+    expect(isCompositeActive(editable)).toBe(true);
+
     const model = compileModel(editable);
     expect(model.sections[0]?.kind).toBe('layered');
     expect(model.materials.length).toBe(2);
@@ -71,6 +73,21 @@ describe('kompozit acél-beton keresztmetszet (2026-09-04)', () => {
     const { result, error } = solveEditableModel(editable);
     expect(error).toBeNull();
     expect(result?.equilibrium.satisfied).toBe(true);
+  });
+
+  it('nem-acél alapanyagnál a kompozit "enabled: true" ellenére NEM aktiválódik (2026-09-04, VALÓDI hiba: a UI korábban bármilyen anyagnál felkínálta a kapcsolót, egy régi mentés emiatt hordozhatna ilyen állapotot)', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = {
+      ...presetToEditable(preset, 'simple', 6, 8, 'RECT500', 'C25', false, 'selective'),
+      composite: { enabled: true, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' },
+    };
+
+    expect(isCompositeActive(editable)).toBe(false);
+
+    const model = compileModel(editable);
+    expect(model.sections[0]?.kind).toBe('parametric');
+    expect(model.materials.length).toBe(1);
   });
 
   it('a transzformált EI egyezik a kézi (klasszikus "n = Es/Ec") zárt alakú számítással', () => {

@@ -71,6 +71,20 @@ export function toShape(section: SectionEntry): SectionShape {
   }
 }
 
+/**
+ * A kompozit keresztmetszet (acél alapszelvény + betonlemez) csak acél
+ * alapanyagnál értelmezett — 2026-09-04, VALÓDI hiba javítva: a UI eredetileg
+ * bármilyen anyagnál felkínálta a "kompozit" kapcsolót, `panels/LeftPanel.tsx`
+ * mostantól ezt korlátozza, DE egy régebbi (a korlátozás előtti) mentésből
+ * betöltött modell ELVILEG még hordozhat `composite.enabled: true`-t
+ * nem-acél anyaggal — ez a fordítási réteg (nem csak a felület) zárja ki
+ * végérvényesen, hogy egy ilyen állapot csendben, félrevezető "kompozit"
+ * eredményt adjon.
+ */
+export function isCompositeActive(editable: EditableModel): boolean {
+  return editable.composite.enabled && findMaterial(editable.materialId).family === 'steel';
+}
+
 /** A fem-core anyag előállítása egy katalógus-anyagbejegyzésből (mm / kN·cm² → SI). */
 function buildCatalogMaterial(mat: ReturnType<typeof findMaterial>): Material {
   return makeMaterial(mat.id, mat.name, {
@@ -182,7 +196,7 @@ function nodeIdAt(x: number, span: number, elementCount: number): string {
 
 /** Az `EditableModel` lefordítása egy futtatható `fem-core` `Model`-lé. */
 export function compileModel(editable: EditableModel): Model {
-  const { section, materials }: { section: Section; materials: readonly Material[] } = editable.composite.enabled
+  const { section, materials }: { section: Section; materials: readonly Material[] } = isCompositeActive(editable)
     ? buildCompositeSection(editable)
     : (() => {
         const parts = buildCatalogParts(editable.materialId, editable.sectionId);
