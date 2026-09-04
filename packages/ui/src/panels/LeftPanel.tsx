@@ -533,18 +533,18 @@ export function LeftPanel(): JSX.Element {
               <div className="vem-section-preview__name">{section.name}</div>
               {dimensionRowsFor(section).map((r) => (
                 <div key={r.label}>
-                  {r.symbol} = {r.v !== undefined ? r.v.toFixed(1) : '—'} mm
+                  {r.symbol} = {r.v !== undefined ? `${fmt.smallLength(r.v / 1000).value} ${fmt.smallLength(r.v / 1000).unit}` : '—'}
                 </div>
               ))}
-              <div>A = {(sectionProps.area * 1e4).toFixed(2)} cm²</div>
-              <div>I = {(sectionProps.inertia * 1e8).toFixed(0)} cm⁴</div>
+              <div>A = {fmt.area(sectionProps.area).value} {fmt.area(sectionProps.area).unit}</div>
+              <div>I = {fmt.inertia(sectionProps.inertia).value} {fmt.inertia(sectionProps.inertia).unit}</div>
               <div>c = {sectionProps.shapeFactor.toFixed(2)}</div>
             </div>
           </div>
           <div className="vem-section-preview__figures" style={{ padding: '0 var(--space-5) var(--space-3)' }}>
             <div className="vem-section-preview__name">{material.name}</div>
-            <div>E = {material.e.toFixed(0)} kN/cm²</div>
-            <div>G = {shearModulus(material).toFixed(0)} kN/cm²</div>
+            <div>E = {fmt.stress(material.e * 1e4).value} {fmt.stress(material.e * 1e4).unit}</div>
+            <div>G = {fmt.stress(shearModulus(material) * 1e4).value} {fmt.stress(shearModulus(material) * 1e4).unit}</div>
           </div>
           <div style={{ padding: '0 var(--space-5)' }}>
             <NoteBox tone={material.verified && section.verified ? 'info' : 'warn'}>
@@ -682,7 +682,7 @@ export function LeftPanel(): JSX.Element {
                 {optimizeResult.best ? (
                   <>
                     <NoteBox tone="info">
-                      Javaslat: {optimizeResult.best.name} (A = {(optimizeResult.best.area * 1e4).toFixed(2)} cm², kihasználtság{' '}
+                      Javaslat: {optimizeResult.best.name} (A = {fmt.area(optimizeResult.best.area).value} {fmt.area(optimizeResult.best.area).unit}, kihasználtság{' '}
                       {optimizeResult.best.governing !== null ? `${(optimizeResult.best.governing * 100).toFixed(0)}%` : '—'})
                     </NoteBox>
                     <button

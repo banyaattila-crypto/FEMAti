@@ -10,9 +10,9 @@
  * egység.
  *
  * MÉRTÉKEGYSÉG-VÁLTÓ (2026-09-04, CSAK KIJELZÉS): a SZÁMÍTOTT eredmény-
- * jellegű mennyiségek (`makeConvertible()` — deflection/moment/shear/
- * force/acceleration/bendingStiffness/shearStiffness/area/inertia/stress/
- * length) a `state/appStore.ts` `unitSystem` globális kapcsolójától
+ * jellegű mennyiségek (`makeConvertible()` — deflection/smallLength/moment/
+ * shear/force/acceleration/bendingStiffness/shearStiffness/area/inertia/
+ * stress/length) a `state/appStore.ts` `unitSystem` globális kapcsolójától
  * függően SI vagy US customary (kip/ft/in/ksi) egységben jelennek meg. EZ
  * TUDATOS, MINIMÁLIS reaktív csatolás: a modul `useAppStore.getState()`-et
  * olvas (nem hook — plain zustand-store-olvasás, nincs kör-import, mert az
@@ -25,11 +25,15 @@
  * ld. lentebb az `editable*` függvénycsaládot, ami a `makeConvertible`-től
  * eltérően nem csak kijelez, hanem a `Slider` `value`/`min`/`max`/`step`-jét
  * is konvertálja (oda-vissza, `toDisplay`/`toCore`), a mag SI-tárolásának
- * érintetlenül hagyása mellett. A VÁSZON-FELIRATOK és a KATALÓGUS-
- * VISSZHANGOK (a `findSection`/`findMaterial` fix katalógusadatai, pl. A/I/
- * E/G a "Keresztmetszet" kártyán) továbbra is SZÁNDÉKOSAN SI-ben maradnak —
- * ezek nem a felhasználó által beírt/húzott mennyiségek, hanem a katalógus
- * saját (metrikus) adatai. Rendszer-független mennyiségek (idő, szög,
+ * érintetlenül hagyása mellett. A "Keresztmetszet" kártya katalógus-
+ * visszhangjai (méretek, A/I, E/G) 2026-09-04 óta SZINTÉN váltanak (a
+ * felhasználó jelezte, hogy a bal panel többi részével inkonzisztens volt,
+ * ha ez SI-ben ragad) — ezek is a `makeConvertible`-alapú display-only
+ * formázókat használják (`smallLength`/`area`/`inertia`/`stress`), mert
+ * nem szerkeszthetők, csak kijeleznek. A VÁSZON-FELIRATOK (a modell-
+ * vászon saját feliratai, pl. "L = ... m") maradnak SZÁNDÉKOSAN SI-ben —
+ * azok a mag belső, mindig SI-alapú ábrázolásának közvetlen tükrei, nem
+ * felhasználói bemenet vagy katalógus-adat. Rendszer-független mennyiségek (idő, szög,
  * frekvencia, dimenziótlan arányok — `rotation`, `frequencyHz`,
  * `angularFrequency`, `modeShape`, `time`, `lambda`, `shapeFactor`,
  * `percent`, `count`) VÁLTOZATLANOK maradnak `unitSystem`-től függetlenül.
@@ -94,6 +98,9 @@ const makeConvertible =
 
 /** Lehajlás [m] → mm (SI) / in (US), 3 tizedes. */
 export const deflection = makeConvertible({ digits: 3, unit: 'mm', scale: 1e3 }, { digits: 3, unit: 'in', scale: M_TO_IN });
+
+/** Kis hossz (keresztmetszet-méretek) [m] → mm (SI) / in (US), 1 tizedes. */
+export const smallLength = makeConvertible({ digits: 1, unit: 'mm', scale: 1e3 }, { digits: 2, unit: 'in', scale: M_TO_IN });
 
 /** Elfordulás [rad] → ×10⁻³ rad, 3 tizedes — RENDSZER-FÜGGETLEN (a radián nem SI/US-specifikus). */
 export const rotation = make(3, '×10⁻³ rad', 1e3);
