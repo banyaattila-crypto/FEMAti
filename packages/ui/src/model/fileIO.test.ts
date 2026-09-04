@@ -26,6 +26,7 @@ const fullSolverSettings: SolverSettingsFile = {
   showGaussPoints: true,
   momentTensionSide: false,
   showReactions: false,
+  unitSystem: 'imperial',
   activeDiagram: 'T',
 };
 

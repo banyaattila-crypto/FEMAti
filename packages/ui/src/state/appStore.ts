@@ -36,6 +36,8 @@ function hasSeenWelcome(): boolean {
   }
 }
 
+/** Mértékegység-rendszer a kijelzéshez (2026-09-04) — ld. `format/numbers.ts`. */
+export type UnitSystem = 'si' | 'imperial';
 export type SolverAlgorithm = 'newton' | 'modified-newton';
 export type LoadHistoryMode = 'monotonic' | 'unloading';
 export type DiagramTab = 'M' | 'T' | 'w' | 'phi' | 'utilization' | 'envelope' | 'load-displacement' | 'convergence' | 'stress3d' | 'modal' | 'dynamic';
@@ -76,6 +78,12 @@ export interface AppState {
   momentTensionSide: boolean;
   /** Reakcióerők piros nyíllal a vásznon a támaszoknál (2026-09-04, felhasználói kérés), ki/be kapcsolható. */
   showReactions: boolean;
+  /**
+   * Mértékegység-rendszer a SZÁMÍTOTT eredmények kijelzésénél (2026-09-04)
+   * — CSAK a kijelzést váltja (`format/numbers.ts`), a bemenet (csúszkák,
+   * vászon-feliratok) MINDIG SI marad, ld. `format/numbers.ts` fejléce.
+   */
+  unitSystem: UnitSystem;
   /** A keresztmetszet-inspektor (P13 #4) nyitott panelje; `null` = zárva. */
   inspector: InspectorSelection | null;
   /** A számítási jegyzőkönyv (P15) nyitva van-e. */
@@ -114,6 +122,7 @@ export interface AppState {
   setShowGaussPoints: (v: boolean) => void;
   setMomentTensionSide: (v: boolean) => void;
   setShowReactions: (v: boolean) => void;
+  setUnitSystem: (v: UnitSystem) => void;
   setStatus: (status: SolverStatus, detail?: string) => void;
   openInspector: (selection: InspectorSelection) => void;
   closeInspector: () => void;
@@ -147,6 +156,7 @@ export const useAppStore = create<AppState>()((set) => ({
   showGaussPoints: false,
   momentTensionSide: true,
   showReactions: true,
+  unitSystem: 'si',
   inspector: null,
   reportOpen: false,
   derivationOpen: false,
@@ -173,6 +183,7 @@ export const useAppStore = create<AppState>()((set) => ({
   setShowGaussPoints: (v) => set({ showGaussPoints: v }),
   setMomentTensionSide: (v) => set({ momentTensionSide: v }),
   setShowReactions: (v) => set({ showReactions: v }),
+  setUnitSystem: (v) => set({ unitSystem: v }),
   setStatus: (status, detail = '') => set({ status, statusDetail: detail }),
   openInspector: (selection) => set({ inspector: selection }),
   closeInspector: () => set({ inspector: null }),

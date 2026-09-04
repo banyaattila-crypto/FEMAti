@@ -45,7 +45,7 @@ import {
   type LoadCategory,
   type SupportType,
 } from './editable.js';
-import type { DiagramTab, LoadHistoryMode, SolverAlgorithm } from '../state/appStore.js';
+import type { DiagramTab, LoadHistoryMode, SolverAlgorithm, UnitSystem } from '../state/appStore.js';
 
 export const EDITOR_FILE_FORMAT_VERSION = 2 as const;
 
@@ -59,6 +59,8 @@ export interface SolverSettingsFile {
   readonly momentTensionSide: boolean;
   /** Reakcióerők piros nyíllal a vásznon (2026-09-04) — a régebbi (e mező nélküli) mentéseknél `true`-ra esik vissza, ld. `parseSolverSettings`. */
   readonly showReactions: boolean;
+  /** Mértékegység-rendszer a kijelzéshez (2026-09-04, `format/numbers.ts`) — a régebbi (e mező nélküli) mentéseknél `'si'`-re esik vissza. */
+  readonly unitSystem: UnitSystem;
   readonly activeDiagram: DiagramTab;
 }
 
@@ -71,6 +73,7 @@ export const DEFAULT_SOLVER_SETTINGS: SolverSettingsFile = {
   showGaussPoints: false,
   momentTensionSide: true,
   showReactions: true,
+  unitSystem: 'si',
   activeDiagram: 'M',
 };
 
@@ -243,6 +246,8 @@ function parseSolverSettings(v: unknown): SolverSettingsFile {
     // formátum-verzión belül csak tolerálva, hiányzásnál alapértékre esve
     // szabad hozzáadni, nem szigorú `bool()`-lal (ami hibát dobna).
     showReactions: o.showReactions === undefined ? true : bool(o, 'showReactions', 'solverSettings'),
+    // ÚJ mező (2026-09-04, mértékegység-váltó) — ugyanaz a toleráns minta, mint `showReactions`-nál.
+    unitSystem: o.unitSystem === 'imperial' ? 'imperial' : 'si',
     activeDiagram: activeDiagram as DiagramTab,
   };
 }
