@@ -2,6 +2,7 @@
   "name": "femati",
   "version": "0.3.3",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Rugalmas-képlékeny Timoshenko gerenda végeselemes analízis",
   "packageManager": "pnpm@10.33.2",

@@ -112,6 +112,10 @@ pnpm workspace, 4 packages:
 The app's "Elméletek" (Theories) menu exposes the same content directly in
 the application, typeset with KaTeX.
 
+## License
+
+[MIT](LICENSE)
+
 ---
 
 *Built on a full read-through of the original `Diplomaterv (BME).pdf`

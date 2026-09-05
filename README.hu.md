@@ -104,6 +104,10 @@ pnpm workspace, 4 csomag:
 A felület "Elméletek" menüje ugyanezeket a tartalmakat közvetlenül az
 alkalmazásban, KaTeX-szel szedett képletekkel is elérhetővé teszi.
 
+## Licenc
+
+[MIT](LICENSE)
+
 ---
 
 *A projekt a `Diplomaterv (BME).pdf` (73 oldal) teljes átolvasása alapján
