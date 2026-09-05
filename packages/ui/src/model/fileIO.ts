@@ -94,54 +94,116 @@ export function serializeEditableModel(model: EditableModel, solverSettings: Sol
   return JSON.stringify(file, null, 2);
 }
 
-/** Érvénytelen/sérült `.femati.json` fájl beolvasásakor dobott hiba — a felhasználónak érthető üzenettel (HIBATURESI-POLITIKA). */
-export class ModelFileError extends Error {
-  override readonly name = 'ModelFileError';
+/**
+ * Nyelv-semleges leírása annak, mi ment el egy `.femati.json` fájl
+ * beolvasásakor — az adatréteg (ez a fájl) nem tudhat UI-nyelvet, a
+ * ténylegesen megjelenő szöveget az `i18n/errors.ts` állítja elő ebből,
+ * a felület aktuális nyelve alapján.
+ */
+export type ModelFileErrorInfo =
+  | { readonly code: 'invalid-json' }
+  | { readonly code: 'unsupported-format-version'; readonly expected: number; readonly got: unknown }
+  | { readonly code: 'missing-or-not-object'; readonly where: string }
+  | { readonly code: 'not-array'; readonly where: string }
+  | { readonly code: 'missing-or-not-number'; readonly where: string; readonly key: string }
+  | { readonly code: 'not-number'; readonly where: string; readonly key: string }
+  | { readonly code: 'missing-or-not-string'; readonly where: string; readonly key: string }
+  | { readonly code: 'missing-or-not-boolean'; readonly where: string; readonly key: string }
+  | { readonly code: 'not-boolean'; readonly where: string; readonly key: string }
+  | { readonly code: 'invalid-enum-value'; readonly where: string; readonly key: string; readonly value: string }
+  | { readonly code: 'unknown-support-type'; readonly where: string; readonly value: string }
+  | { readonly code: 'unknown-load-category'; readonly where: string; readonly value: string }
+  | { readonly code: 'unknown-load-kind'; readonly where: string; readonly value: string };
+
+/** A korábbi, kizárólag magyar hibaszövegekkel megegyező alapértelmezés — az `Error.message` erre esik vissza, amíg a hívó (App.tsx) nem az `info` mezőt formázza a saját nyelvén (i18n 3. fázis). */
+function formatModelFileErrorHu(info: ModelFileErrorInfo): string {
+  switch (info.code) {
+    case 'invalid-json':
+      return 'A fájl nem érvényes JSON.';
+    case 'unsupported-format-version':
+      return (
+        `Ismeretlen vagy nem támogatott .femati.json formátum-verzió (várt: ${String(info.expected)}, kapott: ${String(info.got)}). ` +
+        'Ez a fájl vagy nem a FEMAti szerkesztőből származik, vagy egy újabb verzióból.'
+      );
+    case 'missing-or-not-object':
+      return `${info.where}: hiányzik vagy nem objektum.`;
+    case 'not-array':
+      return `${info.where}: nem tömb.`;
+    case 'missing-or-not-number':
+      return `${info.where}: "${info.key}" hiányzik vagy nem (véges) szám.`;
+    case 'not-number':
+      return `${info.where}: "${info.key}" nem (véges) szám.`;
+    case 'missing-or-not-string':
+      return `${info.where}: "${info.key}" hiányzik vagy nem szöveg.`;
+    case 'missing-or-not-boolean':
+      return `${info.where}: "${info.key}" hiányzik vagy nem logikai érték.`;
+    case 'not-boolean':
+      return `${info.where}: "${info.key}" nem logikai érték.`;
+    case 'invalid-enum-value':
+      return `${info.where}: érvénytelen "${info.key}" érték "${info.value}".`;
+    case 'unknown-support-type':
+      return `${info.where}: ismeretlen támasztípus "${info.value}".`;
+    case 'unknown-load-category':
+      return `${info.where}: ismeretlen teherkategória "${info.value}".`;
+    case 'unknown-load-kind':
+      return `${info.where}: ismeretlen tehertípus "${info.value}".`;
+  }
 }
 
-function assert(condition: boolean, message: string): asserts condition {
-  if (!condition) throw new ModelFileError(message);
+/** Érvénytelen/sérült `.femati.json` fájl beolvasásakor dobott hiba — a nyelv-semleges `info` mellett egy magyar `message`-t is hordoz (visszamenőleges kompatibilitás, ld. `formatModelFileErrorHu`). */
+export class ModelFileError extends Error {
+  override readonly name = 'ModelFileError';
+  readonly info: ModelFileErrorInfo;
+
+  constructor(info: ModelFileErrorInfo) {
+    super(formatModelFileErrorHu(info));
+    this.info = info;
+  }
+}
+
+function assert(condition: boolean, info: ModelFileErrorInfo): asserts condition {
+  if (!condition) throw new ModelFileError(info);
 }
 
 function num(obj: Record<string, unknown>, key: string, where: string): number {
   const v = obj[key];
-  assert(typeof v === 'number' && Number.isFinite(v), `${where}: "${key}" hiányzik vagy nem (véges) szám.`);
+  assert(typeof v === 'number' && Number.isFinite(v), { code: 'missing-or-not-number', where, key });
   return v as number;
 }
 
 function optNum(obj: Record<string, unknown>, key: string, where: string): number | undefined {
   const v = obj[key];
   if (v === undefined) return undefined;
-  assert(typeof v === 'number' && Number.isFinite(v), `${where}: "${key}" nem (véges) szám.`);
+  assert(typeof v === 'number' && Number.isFinite(v), { code: 'not-number', where, key });
   return v as number;
 }
 
 function optBool(obj: Record<string, unknown>, key: string, where: string): boolean | undefined {
   const v = obj[key];
   if (v === undefined) return undefined;
-  assert(typeof v === 'boolean', `${where}: "${key}" nem logikai érték.`);
+  assert(typeof v === 'boolean', { code: 'not-boolean', where, key });
   return v as boolean;
 }
 
 function str(obj: Record<string, unknown>, key: string, where: string): string {
   const v = obj[key];
-  assert(typeof v === 'string' && v.length > 0, `${where}: "${key}" hiányzik vagy nem szöveg.`);
+  assert(typeof v === 'string' && v.length > 0, { code: 'missing-or-not-string', where, key });
   return v as string;
 }
 
 function bool(obj: Record<string, unknown>, key: string, where: string): boolean {
   const v = obj[key];
-  assert(typeof v === 'boolean', `${where}: "${key}" hiányzik vagy nem logikai érték.`);
+  assert(typeof v === 'boolean', { code: 'missing-or-not-boolean', where, key });
   return v as boolean;
 }
 
 function record(v: unknown, where: string): Record<string, unknown> {
-  assert(typeof v === 'object' && v !== null, `${where}: hiányzik vagy nem objektum.`);
+  assert(typeof v === 'object' && v !== null, { code: 'missing-or-not-object', where });
   return v as Record<string, unknown>;
 }
 
 function array(v: unknown, where: string): readonly unknown[] {
-  assert(Array.isArray(v), `${where}: nem tömb.`);
+  assert(Array.isArray(v), { code: 'not-array', where });
   return v;
 }
 
@@ -153,7 +215,7 @@ function parseSupport(v: unknown, index: number): EditableSupport {
   const id = str(o, 'id', where);
   const x = num(o, 'x', where);
   const type = str(o, 'type', where);
-  assert(SUPPORT_TYPES.includes(type as SupportType), `${where}: ismeretlen támasztípus "${type}".`);
+  assert(SUPPORT_TYPES.includes(type as SupportType), { code: 'unknown-support-type', where, value: type });
   const k = optNum(o, 'k', where);
   const dz = optNum(o, 'dz', where);
   const dPhi = optNum(o, 'dPhi', where);
@@ -166,7 +228,7 @@ const LOAD_CATEGORIES: readonly LoadCategory[] = ['permanent', 'variable'];
 function loadCategory(obj: Record<string, unknown>, where: string): LoadCategory {
   const v = obj.category;
   if (v === undefined) return 'variable';
-  assert(typeof v === 'string' && LOAD_CATEGORIES.includes(v as LoadCategory), `${where}: ismeretlen teherkategória "${String(v)}".`);
+  assert(typeof v === 'string' && LOAD_CATEGORIES.includes(v as LoadCategory), { code: 'unknown-load-category', where, value: String(v) });
   return v as LoadCategory;
 }
 
@@ -200,7 +262,7 @@ function parseLoad(v: unknown, index: number): EditableLoad {
       category,
     };
   }
-  throw new ModelFileError(`${where}: ismeretlen tehertípus "${kind}".`);
+  throw new ModelFileError({ code: 'unknown-load-kind', where, value: kind });
 }
 
 function parseFoundation(v: unknown, index: number): EditableFoundation {
@@ -241,11 +303,11 @@ function parseSolverSettings(v: unknown): SolverSettingsFile {
   if (v === undefined) return DEFAULT_SOLVER_SETTINGS;
   const o = record(v, 'solverSettings');
   const algorithm = str(o, 'algorithm', 'solverSettings');
-  assert(ALGORITHMS.includes(algorithm as SolverAlgorithm), `solverSettings: érvénytelen "algorithm" érték "${algorithm}".`);
+  assert(ALGORITHMS.includes(algorithm as SolverAlgorithm), { code: 'invalid-enum-value', where: 'solverSettings', key: 'algorithm', value: algorithm });
   const loadHistory = str(o, 'loadHistory', 'solverSettings');
-  assert(LOAD_HISTORIES.includes(loadHistory as LoadHistoryMode), `solverSettings: érvénytelen "loadHistory" érték "${loadHistory}".`);
+  assert(LOAD_HISTORIES.includes(loadHistory as LoadHistoryMode), { code: 'invalid-enum-value', where: 'solverSettings', key: 'loadHistory', value: loadHistory });
   const activeDiagram = str(o, 'activeDiagram', 'solverSettings');
-  assert(DIAGRAM_TABS.includes(activeDiagram as DiagramTab), `solverSettings: érvénytelen "activeDiagram" érték "${activeDiagram}".`);
+  assert(DIAGRAM_TABS.includes(activeDiagram as DiagramTab), { code: 'invalid-enum-value', where: 'solverSettings', key: 'activeDiagram', value: activeDiagram });
   return {
     algorithm: algorithm as SolverAlgorithm,
     loadHistory: loadHistory as LoadHistoryMode,
@@ -275,18 +337,18 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new ModelFileError('A fájl nem érvényes JSON.');
+    throw new ModelFileError({ code: 'invalid-json' });
   }
   const file = record(raw, 'fájl');
-  assert(
-    file.femaiEditorFormat === 1 || file.femaiEditorFormat === EDITOR_FILE_FORMAT_VERSION,
-    `Ismeretlen vagy nem támogatott .femati.json formátum-verzió (várt: ${EDITOR_FILE_FORMAT_VERSION}, kapott: ${String(file.femaiEditorFormat)}). ` +
-      'Ez a fájl vagy nem a FEMAti szerkesztőből származik, vagy egy újabb verzióból.',
-  );
+  assert(file.femaiEditorFormat === 1 || file.femaiEditorFormat === EDITOR_FILE_FORMAT_VERSION, {
+    code: 'unsupported-format-version',
+    expected: EDITOR_FILE_FORMAT_VERSION,
+    got: file.femaiEditorFormat,
+  });
   const model = record(file.model, 'model');
 
   const integration = str(model, 'integration', 'model');
-  assert(integration === 'selective' || integration === 'full', `model: érvénytelen "integration" érték "${integration}".`);
+  assert(integration === 'selective' || integration === 'full', { code: 'invalid-enum-value', where: 'model', key: 'integration', value: integration });
 
   const thermalRaw = model.thermalLoad;
   const thermalLoad =
