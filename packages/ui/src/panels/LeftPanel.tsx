@@ -5,8 +5,9 @@ import { Checkbox, Slider } from '../components/Field.js';
 import { Combobox } from '../components/Combobox.js';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { SectionShapeDiagram } from '../components/SectionShapeDiagram.js';
-import { findMaterial, findPreset, findSection, dimensionRowsFor, shearModulus, UNVERIFIED_WARNING } from '../data/catalog.js';
+import { findMaterial, findSection, dimensionRowsFor, shearModulus, UNVERIFIED_WARNING } from '../data/catalog.js';
 import { materialComboOptions } from '../data/catalogIcons.js';
+import { presetDisplayName, sectionKindGroupLabel } from '../i18n/catalog.js';
 import { compositeSectionStiffness, toShape } from '../model/compile.js';
 import { findSmallestSuitableSection, type OptimizeResult } from '../model/optimize.js';
 import { useAppStore } from '../state/appStore.js';
@@ -516,7 +517,7 @@ export function LeftPanel(): JSX.Element {
               <span className="vem-tree__caret" aria-hidden="true">
                 ▾
               </span>
-              {findPreset(model.presetId).name}
+              {presetDisplayName(model.presetId, s.lang)}
             </div>
             {tree.map((n) => (
               <div className="vem-tree__row" key={n.label}>
@@ -649,7 +650,7 @@ export function LeftPanel(): JSX.Element {
                       ariaLabel={t.slabMaterialAria}
                       value={model.composite.slabMaterialId}
                       onChange={(id) => setComposite({ ...model.composite, slabMaterialId: id })}
-                      options={materialComboOptions('concrete')}
+                      options={materialComboOptions(s.lang, 'concrete')}
                     />
                   </div>
                   {compositeStiffness ? (
@@ -706,7 +707,7 @@ export function LeftPanel(): JSX.Element {
                     </button>
                   </>
                 ) : (
-                  <NoteBox tone="warn">{t.optimizeNoneFound(optimizeResult.kindLabel, optimizeResult.candidates.length)}</NoteBox>
+                  <NoteBox tone="warn">{t.optimizeNoneFound(sectionKindGroupLabel(optimizeResult.kind, s.lang), optimizeResult.candidates.length)}</NoteBox>
                 )}
                 {model.rebar.enabled ? (
                   <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-2)' }}>

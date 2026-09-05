@@ -4,12 +4,15 @@
  * felhasználó felé mutatkozó szövegei — a teljes UI i18n (2026-09-05)
  * 2. fázisa.
  *
- * ISMERT, TUDATOS RÉS: az `optimizeResult.kindLabel` (`model/optimize.ts`,
- * a `data/catalog.ts` `SECTION_KIND_GROUP`-jából) és a katalógus-eredetű
- * `UNVERIFIED_WARNING`/`material.source`/`section.source` szövegek NEM
- * ide tartoznak — az előbbi a 4. fázisban (`data/catalog.ts` UI-feliratok)
- * válik nyelv-függővé, az utóbbiak a `fem-db` csomag adattartalma, ami
- * explicit felhasználói döntés alapján KÍVÜL esik ezen az i18n-körön.
+ * `optimizeResult.kindLabel` (`model/optimize.ts`) a 4. fázisban nyelv-
+ * függővé vált — az `OptimizeResult` mostantól egy nyelv-semleges `kind`
+ * mezőt ad, a `LeftPanel.tsx` az `i18n/catalog.ts` `sectionKindGroupLabel`-
+ * jével fordítja (ugyanaz a minta, mint a `UtilizationVerdictCode`-nál).
+ *
+ * ISMERT, TUDATOS RÉS: a katalógus-eredetű `UNVERIFIED_WARNING`/
+ * `material.source`/`section.source` szövegek NEM ide tartoznak — ezek a
+ * `fem-db` csomag adattartalma, ami explicit felhasználói döntés alapján
+ * KÍVÜL esik ezen az i18n-körön.
  */
 import type { Lang } from '../state/appStore.js';
 import type { SupportType } from '../model/editable.js';

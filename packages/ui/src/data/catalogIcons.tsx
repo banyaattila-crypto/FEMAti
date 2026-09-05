@@ -20,16 +20,16 @@
 import { useId, type ReactNode } from 'react';
 import {
   MATERIALS,
-  MATERIAL_FAMILY_GROUP,
   PRESETS,
   SECTIONS,
-  SECTION_KIND_GROUP,
   type MaterialFamily,
   type PresetEntry,
   type SectionKind,
 } from './catalog.js';
 import type { ComboboxOption } from '../components/Combobox.js';
 import { LOAD_COLOR, SUPPORT_COLOR, arrowMarkerId } from '../canvas/marks.js';
+import type { Lang } from '../state/appStore.js';
+import { materialFamilyGroupLabel, presetDisplayName, sectionKindGroupLabel } from '../i18n/catalog.js';
 import concreteRef from '../assets/materials/concrete-ref.jpg';
 import timberRef from '../assets/materials/timber-ref.jpg';
 import castironRef from '../assets/materials/castiron-ref.jpg';
@@ -186,11 +186,11 @@ export function MaterialSwatch({ family, size = 16, shape = 'circle' }: Material
 }
 
 /** A "Szelvény" combobox opciói, típus szerint csoportosítva, alak-ikonnal. */
-export function sectionComboOptions(): readonly ComboboxOption[] {
+export function sectionComboOptions(lang: Lang): readonly ComboboxOption[] {
   return SECTIONS.map((s) => ({
     value: s.id,
     label: s.name,
-    group: SECTION_KIND_GROUP[s.kind],
+    group: sectionKindGroupLabel(s.kind, lang),
     icon: SECTION_ICON[s.kind],
   }));
 }
@@ -200,11 +200,11 @@ export function sectionComboOptions(): readonly ComboboxOption[] {
  * swatch-csal. `family` megadásával csak az adott családra szűkíthető (pl.
  * a kompozit keresztmetszet betonlemez-anyaga, `panels/LeftPanel.tsx`).
  */
-export function materialComboOptions(family?: MaterialFamily): readonly ComboboxOption[] {
+export function materialComboOptions(lang: Lang, family?: MaterialFamily): readonly ComboboxOption[] {
   return MATERIALS.filter((m) => family === undefined || m.family === family).map((m) => ({
     value: m.id,
     label: m.name,
-    group: MATERIAL_FAMILY_GROUP[m.family],
+    group: materialFamilyGroupLabel(m.family, lang),
     icon: <MaterialSwatch family={m.family} />,
   }));
 }
@@ -289,10 +289,10 @@ export function PresetIcon({ preset }: { readonly preset: PresetEntry }): JSX.El
 }
 
 /** A "Szerkezet" combobox opciói — minden statikai vázhoz a fenti sémarajz. */
-export function presetComboOptions(): readonly ComboboxOption[] {
+export function presetComboOptions(lang: Lang): readonly ComboboxOption[] {
   return PRESETS.map((p) => ({
     value: p.id,
-    label: p.name,
+    label: presetDisplayName(p.id, lang),
     icon: <PresetIcon preset={p} />,
   }));
 }

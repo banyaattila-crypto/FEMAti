@@ -24,7 +24,7 @@
  * jellemző teherre.
  */
 import { geometricProperties } from '@femati/fem-core';
-import { SECTIONS, SECTION_KIND_GROUP, findSection } from '../data/catalog.js';
+import { SECTIONS, findSection, type SectionKind } from '../data/catalog.js';
 import { solveEditableModel, toShape } from './compile.js';
 import { scaleModelForSls, scaleModelForUls } from './combinations.js';
 import { computeUtilizations } from './designChecks.js';
@@ -42,8 +42,8 @@ export interface OptimizeCandidate {
 }
 
 export interface OptimizeResult {
-  /** A vizsgált szelvénycsalád felhasználóbarát neve (`SECTION_KIND_GROUP`), a UI-szöveghez. */
-  readonly kindLabel: string;
+  /** A vizsgált szelvénycsalád — nyelv-semleges, a hívó (`panels/LeftPanel.tsx`) fordítja `i18n/catalog.ts` `sectionKindGroupLabel`-jével (ugyanaz a minta, mint a `format/utilization.ts` `UtilizationVerdictCode`-jánál). */
+  readonly kind: SectionKind;
   /** Terület szerint növekvő sorrendben — minden azonos `kind`-ú katalógus-szelvény. */
   readonly candidates: readonly OptimizeCandidate[];
   /** Az első `ok === true` jelölt — `null`, ha egyik sem felel meg. */
@@ -73,7 +73,7 @@ export function findSmallestSuitableSection(model: EditableModel): OptimizeResul
     });
 
   return {
-    kindLabel: SECTION_KIND_GROUP[currentSection.kind],
+    kind: currentSection.kind,
     candidates,
     best: candidates.find((c) => c.ok) ?? null,
   };

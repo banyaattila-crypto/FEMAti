@@ -49,7 +49,7 @@ export function Toolbar(): JSX.Element {
   return (
     <div className="vem-toolbar">
       <Cell caption={t.toolbarStructure} hint={`ref. ${preset.ref}`} minWidth={236}>
-        <Combobox ariaLabel={t.staticSchemeAria} value={model.presetId} onChange={loadPreset} options={presetComboOptions()} />
+        <Combobox ariaLabel={t.staticSchemeAria} value={model.presetId} onChange={loadPreset} options={presetComboOptions(s.lang)} />
       </Cell>
 
       <Cell caption={t.toolbarGeometry} minWidth={206}>
@@ -67,8 +67,8 @@ export function Toolbar(): JSX.Element {
 
       <Cell caption={t.toolbarSectionMaterial} minWidth={252}>
         <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-          <Combobox ariaLabel={t.crossSectionAria} value={model.sectionId} onChange={setSectionId} options={sectionComboOptions()} />
-          <Combobox ariaLabel={t.materialAria} value={model.materialId} onChange={setMaterialId} options={materialComboOptions()} />
+          <Combobox ariaLabel={t.crossSectionAria} value={model.sectionId} onChange={setSectionId} options={sectionComboOptions(s.lang)} />
+          <Combobox ariaLabel={t.materialAria} value={model.materialId} onChange={setMaterialId} options={materialComboOptions(s.lang)} />
         </div>
       </Cell>
 
