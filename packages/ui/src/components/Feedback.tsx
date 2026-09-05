@@ -9,18 +9,10 @@ export type SolverStatus =
   | 'diverged'
   | 'error';
 
-const STATUS_TEXT: Record<SolverStatus, string> = {
-  idle: 'kész',
-  editing: 'a modell módosult',
-  running: 'számítás fut',
-  converged: 'konvergált',
-  'limit-load': 'határteher elérve',
-  diverged: 'nem konvergált',
-  error: 'hiba',
-};
-
 export interface StatusPillProps {
   readonly status: SolverStatus;
+  /** A `status` felhasználó felé mutatkozó felirata — a hívó adja (i18n/shell.ts `statusLabels`), a komponens maga nem tudhat UI-nyelvet. */
+  readonly label: string;
   /** Kiegészítő szöveg, pl. „iteráció 3 / lépés 7". */
   readonly detail?: string;
 }
@@ -30,7 +22,7 @@ export interface StatusPillProps {
  * futás „sikeresnek" látsszon — ezért a `limit-load` és `diverged` külön
  * állapot, saját színnel és szöveggel.
  */
-export function StatusPill({ status, detail }: StatusPillProps): JSX.Element {
+export function StatusPill({ status, label, detail }: StatusPillProps): JSX.Element {
   const cls = status === 'editing' ? 'idle' : status;
   return (
     <span
@@ -39,7 +31,7 @@ export function StatusPill({ status, detail }: StatusPillProps): JSX.Element {
       aria-live={status === 'error' || status === 'diverged' ? 'assertive' : 'polite'}
     >
       <span className="vem-status__dot" aria-hidden="true" />
-      {STATUS_TEXT[status]}
+      {label}
       {detail ? ` · ${detail}` : ''}
     </span>
   );

@@ -27,6 +27,7 @@ import { useDynamicStore } from './state/dynamicStore.js';
 import { combinedSteps, runNonlinearEditableModel } from './model/nonlinear.js';
 import { ModelFileError, parseEditableModelFile, serializeEditableModel, type SolverSettingsFile } from './model/fileIO.js';
 import { DiagramPanel } from './charts/DiagramPanel.js';
+import { formatModelFileError } from './i18n/errors.js';
 
 export function App(): JSX.Element {
   const s = useAppStore();
@@ -87,7 +88,7 @@ export function App(): JSX.Element {
     // (ModelCanvas → useLiveResult) — ez a gomb/F5 a NEMLINEÁRIS (rétegelt
     // keresztmetszetű, rugalmas-képlékeny) teherlépcsőzést indítja
     // (MASTER-PROMPT-TERV 4.2 #2: "nemlineáris esetben explicit „Számítás" gombra").
-    s.setStatus('running', 'nemlineáris teherlépcsőzés fut…');
+    s.setStatus('running', t.statusRunning);
     const initialSteps = Math.max(2, Math.round(s.peakLambda / s.loadStep));
     const outcome = runNonlinearEditableModel(model, {
       algorithm: s.algorithm,
@@ -109,12 +110,12 @@ export function App(): JSX.Element {
     const all = combinedSteps(runResult);
     s.setActiveStep(Math.max(0, all.length - 1));
     if (runResult.status === 'converged') {
-      s.setStatus('converged', `λ = ${runResult.peakLambda.toFixed(3)}-ig konvergált`);
+      s.setStatus('converged', t.statusConverged(runResult.peakLambda.toFixed(3)));
     } else if (runResult.status === 'limit-load-reached') {
       const lastLambda = runResult.loadingSteps.at(-1)?.lambda ?? 0;
-      s.setStatus('limit-load', `a szerkezet a határteher közelébe ért (λ ≈ ${lastLambda.toFixed(3)})`);
+      s.setStatus('limit-load', t.statusLimitLoad(lastLambda.toFixed(3)));
     } else {
-      s.setStatus('diverged', 'a futás megszakadt');
+      s.setStatus('diverged', t.statusDiverged);
     }
   }, [s, model, nonlinear]);
 
@@ -189,16 +190,16 @@ export function App(): JSX.Element {
           s.setShowReactions(solverSettings.showReactions);
           s.setUnitSystem(solverSettings.unitSystem);
           s.setActiveDiagram(solverSettings.activeDiagram);
-          s.setStatus('editing', `betöltve: ${file.name}`);
+          s.setStatus('editing', t.statusLoaded(file.name));
         } catch (error) {
-          const message = error instanceof ModelFileError ? error.message : error instanceof Error ? error.message : String(error);
-          s.setStatus('error', `Modell betöltése sikertelen — ${message}`);
+          const message = error instanceof ModelFileError ? formatModelFileError(error.info, s.lang) : error instanceof Error ? error.message : String(error);
+          s.setStatus('error', t.statusLoadFailed(message));
         }
       };
-      reader.onerror = () => s.setStatus('error', 'A fájl beolvasása sikertelen.');
+      reader.onerror = () => s.setStatus('error', t.statusFileReadFailed);
       reader.readAsText(file);
     },
-    [loadModel, s],
+    [loadModel, s, t],
   );
 
   // A modell BÁRMELY módosítása azonnal érvényteleníti a nemlineáris ÉS a
@@ -211,7 +212,8 @@ export function App(): JSX.Element {
         if (state.model === prev.model) return;
         if (useNonlinearStore.getState().run !== null) {
           useNonlinearStore.getState().clear();
-          useAppStore.getState().setStatus('editing', 'a modell módosult — futtasd újra (F5)');
+          const appState = useAppStore.getState();
+          appState.setStatus('editing', SHELL[appState.lang].statusModelChanged);
         }
         if (useDynamicStore.getState().run !== null) {
           useDynamicStore.getState().clear();
@@ -401,7 +403,7 @@ export function App(): JSX.Element {
           </Button>
         </div>
         <div className="vem-chrome__file">{preset.id}.femati.json</div>
-        <StatusPill status={s.status} detail={s.statusDetail} />
+        <StatusPill status={s.status} label={t.statusLabels[s.status]} detail={s.statusDetail} />
       </header>
 
       <Toolbar />

@@ -13,6 +13,7 @@
  */
 import type { Lang, UnitSystem } from '../state/appStore.js';
 import type { CanvasTool } from '../canvas/ToolPalette.js';
+import type { SolverStatus } from '../components/Feedback.js';
 
 export interface ShellStrings {
   // ── Fejléc ──────────────────────────────────────────────────────────
@@ -139,6 +140,18 @@ export interface ShellStrings {
   readonly errorBody: string;
   readonly errorDetailsSummary: string;
   readonly errorReload: string;
+
+  // ── Státusz-üzenetek (App.tsx `s.setStatus(...)` hívásai) ──────────
+  readonly statusRunning: string;
+  readonly statusConverged: (lambda: string) => string;
+  readonly statusLimitLoad: (lambda: string) => string;
+  readonly statusDiverged: string;
+  readonly statusLoaded: (fileName: string) => string;
+  readonly statusLoadFailed: (message: string) => string;
+  readonly statusFileReadFailed: string;
+  readonly statusModelChanged: string;
+  /** A `StatusPill` (`components/Feedback.tsx`) állapot-felirata — a komponens maga nem tudhat UI-nyelvet. */
+  readonly statusLabels: Record<SolverStatus, string>;
 }
 
 export const SHELL: Record<Lang, ShellStrings> = {
@@ -294,6 +307,24 @@ export const SHELL: Record<Lang, ShellStrings> = {
       'A felület egy nem kezelt hibába ütközött, ezért nem tud tovább biztonságosan működni. A jelenlegi modell-állapot ELVESZHETETT az újratöltéskor — ha fontos beállítást szerkesztettél, jegyezd fel, mielőtt újratöltöd.',
     errorDetailsSummary: 'Technikai részletek',
     errorReload: 'Oldal újratöltése',
+
+    statusRunning: 'nemlineáris teherlépcsőzés fut…',
+    statusConverged: (lambda) => `λ = ${lambda}-ig konvergált`,
+    statusLimitLoad: (lambda) => `a szerkezet a határteher közelébe ért (λ ≈ ${lambda})`,
+    statusDiverged: 'a futás megszakadt',
+    statusLoaded: (fileName) => `betöltve: ${fileName}`,
+    statusLoadFailed: (message) => `Modell betöltése sikertelen — ${message}`,
+    statusFileReadFailed: 'A fájl beolvasása sikertelen.',
+    statusModelChanged: 'a modell módosult — futtasd újra (F5)',
+    statusLabels: {
+      idle: 'kész',
+      editing: 'a modell módosult',
+      running: 'számítás fut',
+      converged: 'konvergált',
+      'limit-load': 'határteher elérve',
+      diverged: 'nem konvergált',
+      error: 'hiba',
+    },
   },
 
   en: {
@@ -448,5 +479,23 @@ export const SHELL: Record<Lang, ShellStrings> = {
       'The application hit an unhandled error and can no longer run safely. The current model state MAY BE LOST on reload — if you were editing something important, write it down before reloading.',
     errorDetailsSummary: 'Technical details',
     errorReload: 'Reload page',
+
+    statusRunning: 'nonlinear load stepping running…',
+    statusConverged: (lambda) => `converged to λ = ${lambda}`,
+    statusLimitLoad: (lambda) => `structure approached its limit load (λ ≈ ${lambda})`,
+    statusDiverged: 'the run diverged',
+    statusLoaded: (fileName) => `loaded: ${fileName}`,
+    statusLoadFailed: (message) => `Failed to load model — ${message}`,
+    statusFileReadFailed: 'Failed to read the file.',
+    statusModelChanged: 'the model changed — run again (F5)',
+    statusLabels: {
+      idle: 'ready',
+      editing: 'model changed',
+      running: 'computing',
+      converged: 'converged',
+      'limit-load': 'limit load reached',
+      diverged: 'did not converge',
+      error: 'error',
+    },
   },
 };
