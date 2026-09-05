@@ -22,6 +22,11 @@ import type { MaterialEntry, PresetEntry, SectionEntry } from '../data/catalog.j
 import type { EditableModel } from '../model/editable.js';
 import type { NonlinearRun } from '../model/nonlinear.js';
 import type { ReportHinge } from '../report/reportData.js';
+import type { Lang } from '../state/appStore.js';
+import { SUPPORT_TYPE_LABEL } from '../i18n/panels.js';
+import { REPORT, formatReportDateTime } from '../i18n/report.js';
+import { DERIVATION, type DerivationStrings } from '../i18n/derivation.js';
+import { presetDisplayName } from '../i18n/catalog.js';
 import {
   bendingGaussTex,
   convergenceTex,
@@ -40,11 +45,9 @@ import {
   thermalLoadGaussTex,
 } from './formulaLatex.js';
 
-const DISTRIBUTED_LOAD_LABEL_TEXT: Record<'distributed-force' | 'distributed-moment' | 'self-weight', string> = {
-  'distributed-force': 'Megoszló erő',
-  'distributed-moment': 'Megoszló nyomaték',
-  'self-weight': 'Önsúly',
-};
+function distributedLoadLabel(kind: 'distributed-force' | 'distributed-moment' | 'self-weight', t: DerivationStrings): string {
+  return kind === 'distributed-force' ? t.distributedForceLabel : kind === 'distributed-moment' ? t.distributedMomentLabel : t.selfWeightLabel;
+}
 
 /** Egy képlet-mező sora: sima felirat VAGY egy LaTeX-sor (→ valódi Word-képlet, ld. `formulaOmml.ts`). */
 export type FormulaLine = { readonly kind: 'text'; readonly text: string } | { readonly kind: 'math'; readonly latex: string };
@@ -53,33 +56,32 @@ const text = (t: string): FormulaLine => ({ kind: 'text', text: t });
 const mathLines = (lines: readonly string[]): readonly FormulaLine[] => lines.map((latex) => ({ kind: 'math', latex }) as const);
 
 /** A 4.7 pont terhenkénti, TELJES levezetése — feliratok és LaTeX-képletsorok vegyesen. */
-function buildLoadFormulas(loadDerivation: ElementLoadDerivation | undefined, ei: number): readonly FormulaLine[] {
+function buildLoadFormulas(loadDerivation: ElementLoadDerivation | undefined, ei: number, lang: Lang): readonly FormulaLine[] {
   if (loadDerivation === undefined) return [];
+  const t = DERIVATION[lang];
   const lines: FormulaLine[] = [];
   if (loadDerivation.distributed.length === 0 && loadDerivation.nodal.length === 0 && loadDerivation.thermal === null) {
-    lines.push(text('Erre az elemre nem hat közvetlen teher (a q_e = 0 vektor helyes).'));
+    lines.push(text(t.noDirectLoad));
   }
   for (const contribution of loadDerivation.distributed) {
     const unit = contribution.dofOffset === 0 ? '\\text{kN/m}' : '\\text{kNm/m}';
     lines.push(
-      text(
-        `${DISTRIBUTED_LOAD_LABEL_TEXT[contribution.kind]} (${contribution.loadId}) — q_e = ∫Nᵀ·p dx, ${contribution.points.length} pontos Gauss-integrálással:`,
-      ),
-      ...contribution.points.flatMap((gp, i) => mathLines(distributedLoadGaussTex(gp, i, unit))),
+      text(`${t.distributedLoadHeading(distributedLoadLabel(contribution.kind, t), contribution.loadId, contribution.points.length)}:`),
+      ...contribution.points.flatMap((gp, i) => mathLines(distributedLoadGaussTex(gp, i, unit, lang))),
     );
   }
   for (const contribution of loadDerivation.nodal) {
     const unit = contribution.dofOffset === 0 ? '\\text{kN}' : '\\text{kNm}';
     lines.push(
-      text(contribution.kind === 'nodal-force' ? `Koncentrált csomóponti erő (${contribution.loadId}):` : `Koncentrált csomóponti nyomaték (${contribution.loadId}):`),
-      ...mathLines(nodalLoadTex(contribution.localNode, contribution.dofOffset, contribution.value, unit)),
+      text(`${contribution.kind === 'nodal-force' ? t.nodalForceHeading(contribution.loadId) : t.nodalMomentHeading(contribution.loadId)}:`),
+      ...mathLines(nodalLoadTex(contribution.localNode, contribution.dofOffset, contribution.value, unit, lang)),
     );
   }
   if (loadDerivation.thermal !== null) {
     const thermal = loadDerivation.thermal;
     lines.push(
-      text(`Hőteher (κ₀-ból) — q_e = +∫Bᵀ·D·ε₀ dx (ADR-0006 előjel). κ₀ = ${thermal.kappa0.toExponential(3)} 1/m`),
-      ...thermal.points.flatMap((gp, i) => mathLines(thermalLoadGaussTex(gp, i, ei, thermal.kappa0))),
+      text(`${t.thermalLoadHeading}. ${t.thermalKappa0Note(thermal.kappa0.toExponential(3))}`),
+      ...thermal.points.flatMap((gp, i) => mathLines(thermalLoadGaussTex(gp, i, ei, thermal.kappa0, lang))),
     );
   }
   return lines;
@@ -193,10 +195,14 @@ export interface DerivationExportContext {
     readonly zMm: number;
     readonly derived: LayerStepDerivation;
   }[];
+  /** Alapértelmezése `'hu'` — visszamenőlegesen kompatibilis a nyelvet nem ismerő hívókkal/tesztekkel. */
+  readonly lang?: Lang;
 }
 
 export function buildDerivationExportData(ctx: DerivationExportContext): DerivationExportData {
   const { model, preset, section, material, linear, layers, layerA, layerI, elementDerivation, elementResult } = ctx;
+  const lang: Lang = ctx.lang ?? 'hu';
+  const t = DERIVATION[lang];
 
   const plastic: DerivationExportPlastic | null =
     ctx.nonlinearRun !== null
@@ -218,6 +224,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
               lastIter.residualPercent,
               ctx.nonlinearRun.tolerancePercent,
               lastIter.residualPercent <= ctx.nonlinearRun.tolerancePercent,
+              lang,
             );
           })(),
           sampleTitle: ctx.plasticSampleTitle,
@@ -228,6 +235,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
                     (best, r) => (Math.abs(r.derived.sigmaTrial) > Math.abs(best.derived.sigmaTrial) ? r : best),
                     ctx.plasticLayerDerivations[0] as (typeof ctx.plasticLayerDerivations)[number],
                   ),
+                  lang,
                 )
               : null,
           layerRows: ctx.plasticLayerDerivations.map(({ layerIndex, zMm, derived }) => [
@@ -238,11 +246,11 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
             (derived.sigmaTrial * 1e-4).toFixed(3),
             derived.step.r.toFixed(3),
             (derived.step.sigma * 1e-4).toFixed(3),
-            derived.step.state.yielded ? 'igen' : 'nem',
+            derived.step.state.yielded ? t.yesWord : t.noWord,
           ]),
           hingeRows: ctx.hinges.map((h, i) => [
             String(i + 1),
-            h.kind === 'first-yield' ? 'első megfolyás' : 'képlékeny csukló',
+            REPORT[lang].hingeKindLabel[h.kind],
             h.elementId,
             h.xApprox !== null ? h.xApprox.toFixed(2) : '—',
             h.lambda.toFixed(3),
@@ -251,25 +259,21 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       : null;
 
   return {
-    generatedAt: new Intl.DateTimeFormat('hu-HU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date()),
+    generatedAt: formatReportDateTime(new Date(), lang),
     appVersion: __APP_VERSION__,
     gitCommit: __GIT_COMMIT__,
-    presetName: preset.name,
+    presetName: presetDisplayName(preset.id, lang),
     presetRef: preset.ref,
 
     span: model.span,
     elementCount: model.elementCount,
-    integrationLabel: model.integration === 'selective' ? 'szelektív redukált' : 'teljes',
+    integrationLabel: model.integration === 'selective' ? t.integrationSelective : t.integrationFull,
     sectionName: section.name,
     sectionSource: section.source,
     materialName: material.name,
     materialSummary: `E=${(material.e).toFixed(0)} kN/cm², σY=${material.sigmaY > 0 ? material.sigmaY.toFixed(2) : '—'} kN/cm²`,
     materialSource: material.source,
-    supportRows: model.supports.map((s) => [
-      s.id,
-      s.x.toFixed(2),
-      s.type === 'fixed' ? 'befogás' : s.type === 'pinned' ? 'csuklós' : s.type === 'roller' ? 'görgős' : 'rugós',
-    ]),
+    supportRows: model.supports.map((s) => [s.id, s.x.toFixed(2), SUPPORT_TYPE_LABEL[lang][s.type]]),
     loadRows: model.loads.map((l) => [
       l.id,
       l.kind === 'point'
@@ -306,7 +310,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
             linear.props.shapeFactor,
           )
         : null,
-    meMpNote: `Az anyagnak (${material.name}) nincs megadott folyáshatára (σY) — Mₑ és Mₚ NEM értelmezhető. A c = Wₚ/Wₑ alaki tényező σY-tól függetlenül érvényes: c = ${fixed(linear.props.shapeFactor, 3)}.`,
+    meMpNote: t.meMpNoteElastic(material.name, fixed(linear.props.shapeFactor, 3)),
 
     elementLength: elementDerivation.length,
     nodeCount: linear.nodes.length,
@@ -335,21 +339,22 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       fixed(gp.dn[2]),
     ]),
     shearRows: elementDerivation.shearPoints.map((gp) => [fixed(gp.xi), fixed(gp.w), fixed(gp.n[0]), fixed(gp.n[1]), fixed(gp.n[2])]),
-    bendingFormulas: elementDerivation.bendingPoints.flatMap((gp, i) => bendingGaussTex(gp, i, elementDerivation.stiffness.ei)),
-    shearFormulas: elementDerivation.shearPoints.flatMap((gp, i) => shearGaussTex(gp, i, elementDerivation.stiffness.gas)),
+    bendingFormulas: elementDerivation.bendingPoints.flatMap((gp, i) => bendingGaussTex(gp, i, elementDerivation.stiffness.ei, lang)),
+    shearFormulas: elementDerivation.shearPoints.flatMap((gp, i) => shearGaussTex(gp, i, elementDerivation.stiffness.gas, lang)),
     keDiagonalFormula: keDiagonalTex(
       elementDerivation.bendingPoints,
       elementDerivation.shearPoints,
       elementDerivation.stiffness.ei,
       elementDerivation.stiffness.gas,
       elementDerivation.ke.get(1, 1),
+      lang,
     ),
     ei: fixed(elementDerivation.stiffness.ei, 1),
     gas: fixed(elementDerivation.stiffness.gas, 1),
     keRows: Array.from({ length: 6 }, (_, i) =>
       Array.from({ length: 6 }, (_, j) => elementDerivation.ke.get(i, j).toExponential(3)).join('  '),
     ),
-    loadFormulas: buildLoadFormulas(ctx.loadDerivation, elementDerivation.stiffness.ei),
+    loadFormulas: buildLoadFormulas(ctx.loadDerivation, elementDerivation.stiffness.ei, lang),
     loadVectorRow: `[${Array.from(elementDerivation.loadVector).map((v) => v.toExponential(3)).join(', ')}]`,
 
     massPerLength: fixed(ctx.massDerivation.mass.massPerLength, 4),
@@ -362,7 +367,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       fixed(gp.n[2]),
     ]),
     massFormulas: ctx.massDerivation.points.flatMap((gp, i) =>
-      massGaussTex(gp, i, ctx.massDerivation.mass.massPerLength, ctx.massDerivation.mass.rotaryInertiaPerLength),
+      massGaussTex(gp, i, ctx.massDerivation.mass.massPerLength, ctx.massDerivation.mass.rotaryInertiaPerLength, lang),
     ),
     massDiagonalFormula: massDiagonalTex(
       ctx.massDerivation.points,
@@ -370,6 +375,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       ctx.massDerivation.mass.rotaryInertiaPerLength,
       ctx.massDerivation.me.get(0, 0),
       ctx.massDerivation.me.get(1, 1),
+      lang,
     ),
     meRows: Array.from({ length: 6 }, (_, i) =>
       Array.from({ length: 6 }, (_, j) => ctx.massDerivation.me.get(i, j).toExponential(3)).join('  '),
@@ -384,13 +390,13 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
         : [],
     assemblyNote:
       ctx.globalNodeIdx !== undefined
-        ? `K_global[I,J] += Kₑ[i,j] minden (i,j) lokális párra. Példa: Kₑ[φ₁,φ₁] = ${elementDerivation.ke.get(1, 1).toExponential(3)} → K_global[${2 * ctx.globalNodeIdx[0] + 1}, ${2 * ctx.globalNodeIdx[0] + 1}] (HOZZÁADVA, nem felülírva).`
+        ? t.assemblyNote(
+            elementDerivation.ke.get(1, 1).toExponential(3),
+            `${2 * ctx.globalNodeIdx[0] + 1}, ${2 * ctx.globalNodeIdx[0] + 1}`,
+          )
         : '',
     boundaryRows: ctx.boundaryRows,
-    boundaryNote:
-      linear.strategy === 'elimination'
-        ? `Eliminációs stratégia: az előírt DOF-ok kimaradnak a megoldandó rendszerből — a teljes ${linear.dofCount} DOF-ból ${linear.activeDofCount} marad aktív.`
-        : 'Penalty stratégia: az előírt DOF-ok nagy merevségű "rugóval" kényszerítve maradnak a rendszerben.',
+    boundaryNote: linear.strategy === 'elimination' ? t.eliminationNote(linear.dofCount, linear.activeDofCount) : t.penaltyNote,
     ueRow:
       ctx.internalForceDerivation !== undefined
         ? `uₑ = [${Array.from(ctx.internalForceDerivation.ue).map((v) => v.toExponential(3)).join(', ')}]`
@@ -411,12 +417,13 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
               elementDerivation.stiffness.ei,
               elementDerivation.stiffness.gas,
               (ctx.internalForceDerivation as ElementInternalForceDerivation).kappa0,
+              lang,
             ),
           )
         : [],
 
     meanBandwidth: fixed(linear.meanBandwidth, 2),
-    strategyLabel: linear.strategy === 'elimination' ? 'eliminációs (kizárt DOF)' : 'penalty',
+    strategyLabel: linear.strategy === 'elimination' ? t.strategyLabelElimination : t.strategyLabelPenalty,
     activeDofCount: linear.activeDofCount,
 
     resultGaussRows:
@@ -434,8 +441,8 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       const xis: readonly [number, number, number] = [xi0, xi1, xi2];
       const mValues: readonly [number, number, number] = [gp0.m, gp1.m, gp2.m];
       return [
-        ...extrapolationTex('M', mValues, xis, -1, '\\xi{=}{-}1\\ (\\text{bal csp.})', '\\text{kNm}'),
-        ...extrapolationTex('M', mValues, xis, 1, '\\xi{=}{+}1\\ (\\text{jobb csp.})', '\\text{kNm}'),
+        ...extrapolationTex('M', mValues, xis, -1, `\\xi{=}{-}1\\ (\\text{${t.extrapLeftNode}})`, '\\text{kNm}'),
+        ...extrapolationTex('M', mValues, xis, 1, `\\xi{=}{+}1\\ (\\text{${t.extrapRightNode}})`, '\\text{kNm}'),
       ];
     })(),
     sumFz: fixed(linear.equilibrium.sumFz, 4),

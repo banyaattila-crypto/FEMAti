@@ -65,24 +65,24 @@ import {
   thermalLoadGaussTex,
 } from './formulaLatex.js';
 import * as fmt from '../format/numbers.js';
+import { SUPPORT_TYPE_LABEL } from '../i18n/panels.js';
+import { REPORT, formatReportDateTime } from '../i18n/report.js';
+import { DERIVATION } from '../i18n/derivation.js';
+import { presetDisplayName } from '../i18n/catalog.js';
+import type { Lang } from '../state/appStore.js';
 
 function fmtNum(v: number, digits = 4): string {
   if (!Number.isFinite(v)) return '—';
   return Object.is(v, -0) ? (0).toFixed(digits) : v.toFixed(digits);
 }
 
-const HINGE_KIND_LABEL: Record<'first-yield' | 'full-hinge', string> = {
-  'first-yield': 'első megfolyás',
-  'full-hinge': 'képlékeny csukló (teljes keresztmetszet)',
-};
-
-const DISTRIBUTED_LOAD_LABEL: Record<'distributed-force' | 'distributed-moment' | 'self-weight', string> = {
-  'distributed-force': 'Megoszló erő',
-  'distributed-moment': 'Megoszló nyomaték',
-  'self-weight': 'Önsúly',
-};
+function distributedLoadLabel(kind: 'distributed-force' | 'distributed-moment' | 'self-weight', t: (typeof DERIVATION)['hu']): string {
+  return kind === 'distributed-force' ? t.distributedForceLabel : kind === 'distributed-moment' ? t.distributedMomentLabel : t.selfWeightLabel;
+}
 
 export function DerivationView(): JSX.Element | null {
+  const lang = useAppStore((s) => s.lang);
+  const t = DERIVATION[lang];
   const derivationOpen = useAppStore((s) => s.derivationOpen);
   const setDerivationOpen = useAppStore((s) => s.setDerivationOpen);
   const model = useModelStore((s) => s.model);
@@ -118,7 +118,7 @@ export function DerivationView(): JSX.Element | null {
     const nodeIndex = data.model.nodes.findIndex((n) => (n.id as unknown as string) === (b.nodeId as unknown as string));
     const x = data.model.nodes[nodeIndex]?.x as unknown as number | undefined;
     const dofs = [b.wFixed ? 'w = 0' : null, b.phiFixed ? 'φ = 0' : null].filter((v): v is string => v !== null);
-    return [String(nodeIndex), x !== undefined ? x.toFixed(3) : '—', dofs.length > 0 ? dofs.join(', ') : '(csak rugó)'] as const;
+    return [String(nodeIndex), x !== undefined ? x.toFixed(3) : '—', dofs.length > 0 ? dofs.join(', ') : t.springOnlyLabel] as const;
   });
   const elementResult = data.linear.elements.find((e) => e.elementId === elementId);
 
@@ -145,10 +145,11 @@ export function DerivationView(): JSX.Element | null {
       elementResult,
       nonlinearRun,
       hinges,
-      plasticSampleTitle: plasticSample !== null && nonlinearRun !== null ? plasticSampleTitle(plasticSample, nonlinearRun) : '',
+      plasticSampleTitle: plasticSample !== null && nonlinearRun !== null ? plasticSampleTitle(plasticSample, nonlinearRun, lang) : '',
       plasticLayerDerivations: plasticLayerRows ?? [],
+      lang,
     });
-    buildDerivationDocx(exportData)
+    buildDerivationDocx(exportData, lang)
       .then((blob) => downloadBlob(blob, `femati-levezetes-${model.presetId}.docx`))
       .catch((error: unknown) => {
          
@@ -161,7 +162,7 @@ export function DerivationView(): JSX.Element | null {
       <div className="vem-derivation-toolbar">
         <div className="vem-derivation-toolbar__inner" onPointerDown={(e) => e.stopPropagation()}>
           <label>
-            Levezetett elem
+            {t.derivedElementLabel}
             <select
               className="vem-select"
               value={elementId}
@@ -175,13 +176,13 @@ export function DerivationView(): JSX.Element | null {
             </select>
           </label>
           <button type="button" className="vem-btn vem-btn--sm" onClick={() => setDerivationOpen(false)}>
-            Bezárás
+            {t.close}
           </button>
           <button type="button" className="vem-btn vem-btn--sm" onClick={handleExportDocx}>
-            Export: Word (.docx)
+            {t.exportWord}
           </button>
           <button type="button" className="vem-btn vem-btn--primary vem-btn--sm" onClick={() => window.print()}>
-            Nyomtatás / PDF mentése
+            {t.printSave}
           </button>
         </div>
       </div>
@@ -190,48 +191,48 @@ export function DerivationView(): JSX.Element | null {
         {/* 1. FELADAT */}
         <header className="vem-derivation__header">
           <div>
-            <h1>FEM@ti — Levezetés</h1>
+            <h1>{t.title}</h1>
             <p className="vem-derivation__subtitle">
-              {preset.name} (ref. {preset.ref})
+              {presetDisplayName(preset.id, lang)} (ref. {preset.ref})
             </p>
           </div>
           <div className="vem-derivation__header-meta">
-            <div>{new Intl.DateTimeFormat('hu-HU', { dateStyle: 'long', timeStyle: 'short' }).format(new Date())}</div>
-            <div>
-              v{__APP_VERSION__} · mag: {__GIT_COMMIT__}
-            </div>
+            <div>{formatReportDateTime(new Date(), lang)}</div>
+            <div>{t.versionLabel(__APP_VERSION__, __GIT_COMMIT__)}</div>
           </div>
         </header>
 
         <section className="vem-derivation__section">
-          <h2>1. Feladat</h2>
+          <h2>{t.section1Title}</h2>
           <table>
             <tbody>
               <tr>
-                <th>Fesztáv L</th>
+                <th>{t.spanLabel}</th>
                 <td>{fmt.length(model.span).value} m</td>
               </tr>
               <tr>
-                <th>Elemszám</th>
+                <th>{t.elementCountLabel}</th>
                 <td>{model.elementCount}</td>
               </tr>
               <tr>
-                <th>Integrálási séma</th>
-                <td>{model.integration === 'selective' ? 'szelektív redukált' : 'teljes'}</td>
+                <th>{t.integrationLabel}</th>
+                <td>{model.integration === 'selective' ? t.integrationSelective : t.integrationFull}</td>
               </tr>
               <tr>
-                <th>Szelvény</th>
+                <th>{t.sectionLabel}</th>
                 <td>
                   {section.name}
-                  {!section.verified ? ` — ${section.source}` : ` (forrás: ${section.source})`}
+                  {!section.verified ? t.sectionSourceSuffixUnverified(section.source) : t.sectionSourceSuffixVerified(section.source)}
                 </td>
               </tr>
               <tr>
-                <th>Anyag</th>
+                <th>{t.materialLabel}</th>
                 <td>
-                  E = {fmt.stress(material.e * 1e4).value} kN/cm², σY ={' '}
-                  {material.sigmaY > 0 ? `${material.sigmaY.toFixed(2)} kN/cm²` : '— (rugalmas)'} — forrás:{' '}
-                  {material.source}
+                  {t.materialSummary(
+                    fmt.stress(material.e * 1e4).value,
+                    material.sigmaY > 0 ? `${material.sigmaY.toFixed(2)} kN/cm²` : t.materialElastic,
+                    material.source,
+                  )}
                 </td>
               </tr>
             </tbody>
@@ -239,9 +240,9 @@ export function DerivationView(): JSX.Element | null {
           <table style={{ marginTop: 6 }}>
             <thead>
               <tr>
-                <th>Támasz</th>
-                <th>x [m]</th>
-                <th>Típus</th>
+                <th>{t.supportHeader}</th>
+                <th>{t.xHeader}</th>
+                <th>{t.typeHeader}</th>
               </tr>
             </thead>
             <tbody>
@@ -249,7 +250,7 @@ export function DerivationView(): JSX.Element | null {
                 <tr key={s.id}>
                   <td>{s.id}</td>
                   <td>{s.x.toFixed(2)}</td>
-                  <td>{s.type === 'fixed' ? 'befogás' : s.type === 'pinned' ? 'csuklós' : 'görgős'}</td>
+                  <td>{SUPPORT_TYPE_LABEL[lang][s.type]}</td>
                 </tr>
               ))}
             </tbody>
@@ -257,8 +258,8 @@ export function DerivationView(): JSX.Element | null {
           <table style={{ marginTop: 6 }}>
             <thead>
               <tr>
-                <th>Teher</th>
-                <th>Jellemző</th>
+                <th>{t.loadHeader}</th>
+                <th>{t.valueHeader}</th>
               </tr>
             </thead>
             <tbody>
@@ -289,11 +290,8 @@ export function DerivationView(): JSX.Element | null {
 
         {/* 2. KERESZTMETSZET */}
         <section className="vem-derivation__section">
-          <h2>2. Keresztmetszet</h2>
-          <p>
-            A rétegelt (fiber) modell {layers.length} egyenlő vastagságú csíkra osztja a keresztmetszetet, a
-            kontúrszélességet minden csík KÖZÉPVONALÁBAN mintavételezve (Diplomaterv 3.4.3, (3.54)).
-          </p>
+          <h2>{t.section2Title}</h2>
+          <p>{t.layeredIntro(layers.length)}</p>
           <table>
             <thead>
               <tr>
@@ -362,11 +360,7 @@ export function DerivationView(): JSX.Element | null {
             </>
           ) : (
             <p className="vem-derivation__note">
-              Az anyagnak ({material.name}) nincs megadott folyáshatára (σY) — a katalógusban "csak rugalmas"
-              jelöléssel szerepel. Emiatt Mₑ és Mₚ NEM értelmezhető (nem 0, hanem definiálatlan); csak a
-              rugalmas keresztmetszeti jellemzők (A, I, Wₑ, Wₚ) számottevők ennél az anyagnál. A c = Wₚ/Wₑ alaki
-              tényező a σY-tól függetlenül, tisztán geometriai mennyiség, ezért az továbbra is érvényes:{' '}
-              c = {fmt.shapeFactor(data.linear.props.shapeFactor).value}.
+              {t.meMpNoteElastic(material.name, fmt.shapeFactor(data.linear.props.shapeFactor).value)}
             </p>
           )}
           {section.aCat !== undefined && section.iCat !== undefined
@@ -376,11 +370,10 @@ export function DerivationView(): JSX.Element | null {
                 const large = Math.abs(devA) > 10 || Math.abs(devI) > 10;
                 return (
                   <p className={`vem-derivation__note${large ? ' vem-derivation__note--warn' : ''}`}>
-                    Szelvénytáblázat: A = {section.aCat.toFixed(2)} cm² (eltérés {devA.toFixed(2)}%), I = {section.iCat}{' '}
-                    cm⁴ (eltérés {devI.toFixed(2)}%) —{' '}
+                    {t.sectionTableDeviation(section.aCat.toFixed(2), devA.toFixed(2), String(section.iCat), devI.toFixed(2))}
                     {large
-                      ? `JELENTŐS eltérés: ${layers.length} rétegnél a rétegvastagság (${((model.span > 0 ? (layers[0]?.t ?? 0) : 0) * 1e3).toFixed(1)} mm) meghaladja az öv vastagságát, ezért a középponti mintavétel az első/utolsó rétegnél a teljes övszélességet a valós övnél vastagabb sávra vetíti ki (a P-13 validációs eset szerint ez a hiba 64 rétegnél 1% alá csökken — ld. docs/THEORY.md).`
-                      : 'a rétegelt modell középponti mintavétele miatt kis mértékben eltér a lekerekítéseket is tartalmazó katalógusadattól.'}
+                      ? t.deviationLarge(layers.length, ((model.span > 0 ? (layers[0]?.t ?? 0) : 0) * 1e3).toFixed(1))
+                      : t.deviationSmall}
                   </p>
                 );
               })()
@@ -389,27 +382,29 @@ export function DerivationView(): JSX.Element | null {
 
         {/* 3. VÉGESELEM-FELOSZTÁS */}
         <section className="vem-derivation__section">
-          <h2>3. Végeselem-felosztás</h2>
+          <h2>{t.section3Title}</h2>
           <table>
             <tbody>
               <tr>
-                <th>Elemszám</th>
+                <th>{t.elementCountLabel}</th>
                 <td>{model.elementCount}</td>
               </tr>
               <tr>
-                <th>Elemhossz</th>
+                <th>{t.elementLengthLabel}</th>
                 <td>{(model.span / model.elementCount).toFixed(4)} m</td>
               </tr>
               <tr>
-                <th>Csomópontok száma</th>
+                <th>{t.nodeCountLabel}</th>
                 <td>{data.linear.nodes.length}</td>
               </tr>
               <tr>
-                <th>Szabadságfokok</th>
-                <td>{data.linear.dofCount} (2 DOF/csomópont: w, φ)</td>
+                <th>{t.dofLabel}</th>
+                <td>
+                  {data.linear.dofCount} {t.dofPerNodeSuffix}
+                </td>
               </tr>
               <tr>
-                <th>Aktív szabadságfokok</th>
+                <th>{t.activeDofLabel}</th>
                 <td>{data.linear.activeDofCount}</td>
               </tr>
             </tbody>
@@ -417,9 +412,9 @@ export function DerivationView(): JSX.Element | null {
           <table style={{ marginTop: 6, maxHeight: 200 }}>
             <thead>
               <tr>
-                <th>Csomópont</th>
-                <th>x [m]</th>
-                <th>DOF (w, φ)</th>
+                <th>{t.nodeHeader}</th>
+                <th>{t.xHeader}</th>
+                <th>{t.dofHeader}</th>
               </tr>
             </thead>
             <tbody>
@@ -438,14 +433,18 @@ export function DerivationView(): JSX.Element | null {
 
         {/* 4. EGY VÁLASZTOTT ELEM TELJES LEVEZETÉSE */}
         <section className="vem-derivation__section">
-          <h2>4. A(z) {elementId} elem teljes levezetése</h2>
+          <h2>{t.section4Title(elementId)}</h2>
           <p>
-            Csomópontok: x₁ = {elementDerivation.nodeX[0].toFixed(3)} m, x₂ = {elementDerivation.nodeX[1].toFixed(3)}{' '}
-            m, x₃ = {elementDerivation.nodeX[2].toFixed(3)} m — hossz L_e ={' '}
-            {elementDerivation.length.toFixed(3)} m. Integrálási séma: {elementDerivation.scheme === 'selective' ? 'szelektív redukált' : 'teljes'}.
+            {t.section4Intro(
+              elementDerivation.nodeX[0].toFixed(3),
+              elementDerivation.nodeX[1].toFixed(3),
+              elementDerivation.nodeX[2].toFixed(3),
+              elementDerivation.length.toFixed(3),
+              elementDerivation.scheme === 'selective' ? t.integrationSelective : t.integrationFull,
+            )}
           </p>
 
-          <h3>4.1 Jacobi (a leképezés minden ξ-ben azonos, mert az elem egyenes és a középső csomópont pontosan a felezőpontban van)</h3>
+          <h3>{t.section4_1Title}</h3>
           <FormulaBlock
             lines={jacobianTex(
               elementDerivation.bendingPoints[0]?.dn ?? [0, 0, 0],
@@ -454,12 +453,9 @@ export function DerivationView(): JSX.Element | null {
               elementDerivation.bendingPoints[0]?.jacobian.invJ ?? 0,
             )}
           />
-          <p className="vem-derivation__note">
-            (A dN/dξ-ből fentebb csak a B1 Gauss-pont értékét használtuk — J minden ξ-re ugyanezt adja, mert az
-            elem egyenes és a középső csomópont pontosan a felezőpontban van.)
-          </p>
+          <p className="vem-derivation__note">{t.jacobianNote}</p>
 
-          <h3>4.2 Hajlítási tag — 3 pontos Gauss-integrálás, MINDEN pont TELJES, behelyettesített levezetése</h3>
+          <h3>{t.section4_2Title}</h3>
           <table>
             <thead>
               <tr>
@@ -471,7 +467,7 @@ export function DerivationView(): JSX.Element | null {
                 <th>dN₁/dξ</th>
                 <th>dN₂/dξ</th>
                 <th>dN₃/dξ</th>
-                <th>κ-sor (B)</th>
+                <th>{t.bendingRowLabel}</th>
               </tr>
             </thead>
             <tbody>
@@ -491,13 +487,10 @@ export function DerivationView(): JSX.Element | null {
             </tbody>
           </table>
           {elementDerivation.bendingPoints.map((gp, i) => (
-            <FormulaBlock key={i} lines={bendingGaussTex(gp, i, elementDerivation.stiffness.ei)} />
+            <FormulaBlock key={i} lines={bendingGaussTex(gp, i, elementDerivation.stiffness.ei, lang)} />
           ))}
 
-          <h3>
-            4.3 Nyírási tag — {elementDerivation.shearPoints.length} pontos Gauss-integrálás, MINDEN pont TELJES
-            levezetése
-          </h3>
+          <h3>{t.section4_3Title(elementDerivation.shearPoints.length)}</h3>
           <table>
             <thead>
               <tr>
@@ -506,7 +499,7 @@ export function DerivationView(): JSX.Element | null {
                 <th>N₁</th>
                 <th>N₂</th>
                 <th>N₃</th>
-                <th>γ-sor (B)</th>
+                <th>{t.shearRowLabel}</th>
               </tr>
             </thead>
             <tbody>
@@ -523,10 +516,10 @@ export function DerivationView(): JSX.Element | null {
             </tbody>
           </table>
           {elementDerivation.shearPoints.map((gp, i) => (
-            <FormulaBlock key={i} lines={shearGaussTex(gp, i, elementDerivation.stiffness.gas)} />
+            <FormulaBlock key={i} lines={shearGaussTex(gp, i, elementDerivation.stiffness.gas, lang)} />
           ))}
 
-          <h3>4.4 D anyagmátrix</h3>
+          <h3>{t.section4_4Title}</h3>
           <FormulaBlock
             lines={[
               `EI = ${fmt.bendingStiffness(elementDerivation.stiffness.ei).value}\\ \\text{kNm}^2`,
@@ -534,12 +527,8 @@ export function DerivationView(): JSX.Element | null {
             ]}
           />
 
-          <h3>4.5 Kₑ integrálás — konkrét, ellenőrizhető példa egy mátrixelemre</h3>
-          <p>
-            A Kₑ minden eleme az öt Gauss-pont (3 hajlítási + {elementDerivation.shearPoints.length} nyírási)
-            hozzájárulásának ÖSSZEGE: Kₑ = Σ (tényező · Bᵀ·B). Az alábbi példa ezt egyetlen, teljesen kiírt
-            mátrixelemre mutatja be, amely mindkét tagból kap járulékot:
-          </p>
+          <h3>{t.section4_5Title}</h3>
+          <p>{t.keIntro(elementDerivation.shearPoints.length)}</p>
           <FormulaBlock
             lines={keDiagonalTex(
               elementDerivation.bendingPoints,
@@ -547,10 +536,11 @@ export function DerivationView(): JSX.Element | null {
               elementDerivation.stiffness.ei,
               elementDerivation.stiffness.gas,
               elementDerivation.ke.get(1, 1),
+              lang,
             )}
           />
 
-          <h3>4.6 A 6×6 Kₑ mátrix végső alakja</h3>
+          <h3>{t.section4_6Title}</h3>
           <div className="vem-derivation__matrix">
             <table>
               <tbody>
@@ -565,48 +555,42 @@ export function DerivationView(): JSX.Element | null {
             </table>
           </div>
 
-          <h3>4.7 Elemi tehervektor (λ = 1) — terhenkénti, TELJES levezetés</h3>
+          <h3>{t.section4_7Title}</h3>
           {loadDerivation !== undefined ? (
             <>
               {loadDerivation.distributed.length === 0 && loadDerivation.nodal.length === 0 && loadDerivation.thermal === null ? (
-                <p className="vem-derivation__note">Erre az elemre nem hat közvetlen teher (a q_e = 0 vektor helyes).</p>
+                <p className="vem-derivation__note">{t.noDirectLoad}</p>
               ) : null}
 
               {loadDerivation.distributed.map((contribution, ci) => (
                 <div key={ci}>
-                  <h4>
-                    {DISTRIBUTED_LOAD_LABEL[contribution.kind]} ({contribution.loadId}) — q_e = ∫Nᵀ·p dx, {contribution.points.length}{' '}
-                    pontos Gauss-integrálással a teher és az elem tartományának metszetén
-                  </h4>
+                  <h4>{t.distributedLoadHeading(distributedLoadLabel(contribution.kind, t), contribution.loadId, contribution.points.length)}</h4>
                   {contribution.points.map((gp, gi) => (
-                    <FormulaBlock key={gi} lines={distributedLoadGaussTex(gp, gi, contribution.dofOffset === 0 ? '\\text{kN/m}' : '\\text{kNm/m}')} />
+                    <FormulaBlock key={gi} lines={distributedLoadGaussTex(gp, gi, contribution.dofOffset === 0 ? '\\text{kN/m}' : '\\text{kNm/m}', lang)} />
                   ))}
                 </div>
               ))}
 
               {loadDerivation.nodal.map((contribution, ni) => (
                 <div key={ni}>
-                  <h4>
-                    {contribution.kind === 'nodal-force' ? 'Koncentrált csomóponti erő' : 'Koncentrált csomóponti nyomaték'} (
-                    {contribution.loadId})
-                  </h4>
+                  <h4>{contribution.kind === 'nodal-force' ? t.nodalForceHeading(contribution.loadId) : t.nodalMomentHeading(contribution.loadId)}</h4>
                   <FormulaBlock
-                    lines={nodalLoadTex(contribution.localNode, contribution.dofOffset, contribution.value, contribution.dofOffset === 0 ? '\\text{kN}' : '\\text{kNm}')}
+                    lines={nodalLoadTex(contribution.localNode, contribution.dofOffset, contribution.value, contribution.dofOffset === 0 ? '\\text{kN}' : '\\text{kNm}', lang)}
                   />
                 </div>
               ))}
 
               {loadDerivation.thermal !== null ? (
                 <div>
-                  <h4>Hőteher (κ₀-ból) — q_e = +∫Bᵀ·D·ε₀ dx (ADR-0006 előjel)</h4>
-                  <p className="vem-derivation__note">κ₀ = {loadDerivation.thermal.kappa0.toExponential(3)} 1/m</p>
+                  <h4>{t.thermalLoadHeading}</h4>
+                  <p className="vem-derivation__note">{t.thermalKappa0Note(loadDerivation.thermal.kappa0.toExponential(3))}</p>
                   {loadDerivation.thermal.points.map((gp, gi) => (
-                    <FormulaBlock key={gi} lines={thermalLoadGaussTex(gp, gi, elementDerivation.stiffness.ei, loadDerivation.thermal?.kappa0 ?? 0)} />
+                    <FormulaBlock key={gi} lines={thermalLoadGaussTex(gp, gi, elementDerivation.stiffness.ei, loadDerivation.thermal?.kappa0 ?? 0, lang)} />
                   ))}
                 </div>
               ) : null}
 
-              <h4>Összegzés</h4>
+              <h4>{t.summationHeading}</h4>
               <div className="vem-derivation__matrix">
                 q_e = [{Array.from(loadDerivation.total).map((v) => v.toExponential(3)).join(', ')}]
               </div>
@@ -620,14 +604,8 @@ export function DerivationView(): JSX.Element | null {
 
         {/* 4A. A VÁLASZTOTT ELEM TÖMEGMÁTRIX-LEVEZETÉSE (ADR-0016) */}
         <section className="vem-derivation__section">
-          <h2>4A. A(z) {elementId} elem tömegmátrix-levezetése (ADR-0016)</h2>
-          <p>
-            A tömegmátrix mindkét tagja (transzlációs m', forgási tehetetlenség m'ᵩ) AZONOS, teljes (3 pontos
-            Gauss) kvadratúrával integrálódik — nincs szelektív séma, ellentétben a merevségi mátrixszal (ld.{' '}
-            <code>element/timoshenko3.ts</code> <code>elementMass</code> dokumentációja). Csak VÉGEREDMÉNY: a
-            sajátérték-megoldás (Jacobi-forgatás) NEM kap lépésenkénti animált nézetet (ld. ADR-0016
-            "UI-integráció" szakasz) — ez a pont az elem-szintű tömegmátrix-összeállítás, nem a modális megoldás.
-          </p>
+          <h2>{t.section4ATitle(elementId)}</h2>
+          <p>{t.section4AIntro}</p>
           <FormulaBlock
             lines={[
               `m' = \\gamma\\cdot A / g = ${fmtNum(massDerivation.mass.massPerLength, 4)}\\ \\tfrac{\\text{kN}\\cdot\\text{s}^2}{\\text{m}^2}`,
@@ -635,7 +613,7 @@ export function DerivationView(): JSX.Element | null {
             ]}
           />
 
-          <h3>4A.1 Gauss-pontok — N alakfüggvények és a w/φ DOF-helyekre szórt sorok (nRows)</h3>
+          <h3>{t.section4A_1Title}</h3>
           <table>
             <thead>
               <tr>
@@ -644,8 +622,8 @@ export function DerivationView(): JSX.Element | null {
                 <th>N₁</th>
                 <th>N₂</th>
                 <th>N₃</th>
-                <th>w-sor (N_w)</th>
-                <th>φ-sor (N_φ)</th>
+                <th>{t.wRowLabel}</th>
+                <th>{t.phiRowLabel}</th>
               </tr>
             </thead>
             <tbody>
@@ -665,16 +643,12 @@ export function DerivationView(): JSX.Element | null {
           {massDerivation.points.map((gp, i) => (
             <FormulaBlock
               key={i}
-              lines={massGaussTex(gp, i, massDerivation.mass.massPerLength, massDerivation.mass.rotaryInertiaPerLength)}
+              lines={massGaussTex(gp, i, massDerivation.mass.massPerLength, massDerivation.mass.rotaryInertiaPerLength, lang)}
             />
           ))}
 
-          <h3>4A.2 Mₑ integrálás — konkrét, ellenőrizhető példa két mátrixelemre</h3>
-          <p>
-            A Mₑ w-blokkja és φ-blokkja EGYMÁSTÓL FÜGGETLEN (nincs w–φ kereszttag, ld. <code>nRows()</code>{' '}
-            dokumentációja) — az alábbi példa ezért KÉT KÜLÖN, teljesen kiírt mátrixelemre mutatja be az
-            összegzést, egyet-egyet mindkét tagból:
-          </p>
+          <h3>{t.section4A_2Title}</h3>
+          <p>{t.section4A_2Intro}</p>
           <FormulaBlock
             lines={massDiagonalTex(
               massDerivation.points,
@@ -682,10 +656,11 @@ export function DerivationView(): JSX.Element | null {
               massDerivation.mass.rotaryInertiaPerLength,
               massDerivation.me.get(0, 0),
               massDerivation.me.get(1, 1),
+              lang,
             )}
           />
 
-          <h3>4A.3 A 6×6 Mₑ mátrix végső alakja</h3>
+          <h3>{t.section4A_3Title}</h3>
           <div className="vem-derivation__matrix">
             <table>
               <tbody>
@@ -703,22 +678,19 @@ export function DerivationView(): JSX.Element | null {
 
         {/* 5. KOMPILÁLÁS ÉS MEGOLDÁS */}
         <section className="vem-derivation__section">
-          <h2>5. Kompilálás és megoldás</h2>
+          <h2>{t.section5Title}</h2>
 
-          <h3>5.1 Összeszerelés — hova kerül a(z) {elementId} elem Kₑ-je a globális mátrixban?</h3>
+          <h3>{t.section5_1Title(elementId)}</h3>
           {globalNodeIdx !== undefined ? (
             <>
-              <p>
-                Csomópont-sorszámok a modellben (0-tól): {globalNodeIdx[0]}, {globalNodeIdx[1]}, {globalNodeIdx[2]} — a globális DOF
-                index minden csomópontra 2·i (w) és 2·i+1 (φ), ld. `assembly/dofMap.ts`.
-              </p>
+              <p>{t.assemblyIntro(globalNodeIdx[0], globalNodeIdx[1], globalNodeIdx[2])}</p>
               <table>
                 <thead>
                   <tr>
-                    <th>Lokális DOF</th>
-                    <th>Csomópont</th>
-                    <th>Szerep</th>
-                    <th>Globális DOF</th>
+                    <th>{t.localDofHeader}</th>
+                    <th>{t.nodeShortHeader}</th>
+                    <th>{t.roleHeader}</th>
+                    <th>{t.globalDofHeader}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -733,21 +705,21 @@ export function DerivationView(): JSX.Element | null {
                 </tbody>
               </table>
               <p className="vem-derivation__note">
-                Az összeszerelés szabálya: K_global[I,J] += Kₑ[i,j] minden (i,j) lokális párra, ahol I,J a fenti táblázat szerinti
-                globális DOF. Például a Kₑ[φ₁,φ₁] = {elementDerivation.ke.get(1, 1).toExponential(3)} (ld. 4.5/4.6 pont) a
-                K_global[{2 * (globalNodeIdx[0] ?? 0) + 1}, {2 * (globalNodeIdx[0] ?? 0) + 1}] helyre kerül HOZZÁADVA (nem felülírva —
-                más elemek is adhatnak járulékot ugyanoda, ha osztoznak ezen a csomóponton).
+                {t.assemblyNote(
+                  elementDerivation.ke.get(1, 1).toExponential(3),
+                  `${2 * (globalNodeIdx[0] ?? 0) + 1}, ${2 * (globalNodeIdx[0] ?? 0) + 1}`,
+                )}
               </p>
             </>
           ) : null}
 
-          <h3>5.2 Peremfeltétel-kezelés</h3>
+          <h3>{t.section5_2Title}</h3>
           <table>
             <thead>
               <tr>
-                <th>Csomópont</th>
-                <th>x [m]</th>
-                <th>Előírás</th>
+                <th>{t.nodeShortHeader}</th>
+                <th>{t.xHeader}</th>
+                <th>{t.prescriptionHeader}</th>
               </tr>
             </thead>
             <tbody>
@@ -762,65 +734,56 @@ export function DerivationView(): JSX.Element | null {
           </table>
           <p className="vem-derivation__note">
             {data.linear.strategy === 'elimination'
-              ? `Eliminációs stratégia: a fenti előírt DOF-ok KIMARADNAK a megoldandó rendszerből — a teljes ${data.linear.dofCount} DOF-ból ${data.linear.activeDofCount} marad aktív (ismeretlen).`
-              : 'Penalty stratégia: az előírt DOF-ok egy nagy merevségű "rugóval" kényszerítve maradnak a rendszerben.'}
+              ? t.eliminationNote(data.linear.dofCount, data.linear.activeDofCount)
+              : t.penaltyNote}
           </p>
 
-          <h3>5.3 A megoldott rendszer és a kiválasztott elem elmozdulásai</h3>
+          <h3>{t.section5_3Title}</h3>
           <table>
             <tbody>
               <tr>
-                <th>Globális mátrix mérete</th>
-                <td>
-                  {data.linear.dofCount} × {data.linear.dofCount} (aktív: {data.linear.activeDofCount})
-                </td>
+                <th>{t.globalMatrixSizeLabel}</th>
+                <td>{t.globalMatrixSizeValue(data.linear.dofCount, data.linear.activeDofCount)}</td>
               </tr>
               <tr>
-                <th>Profil (átlagos sávszélesség)</th>
+                <th>{t.bandwidthLabel}</th>
                 <td>{data.linear.meanBandwidth.toFixed(2)}</td>
               </tr>
               <tr>
-                <th>Megoldás módszere</th>
-                <td>K_active·d_active = f_active, Skyline LDLᵀ direkt megoldó (ADR-0002)</td>
+                <th>{t.solverMethodLabel}</th>
+                <td>{t.solverMethodValue}</td>
               </tr>
               <tr>
-                <th>Önellenőrzés (selfCheck)</th>
+                <th>{t.selfCheckLabel}</th>
                 <td>
-                  {data.linear.selfCheck.results.length - data.linear.selfCheck.errorCount}/
-                  {data.linear.selfCheck.results.length} ellenőrzés rendben
-                  {data.linear.selfCheck.warningCount > 0 ? `, ${data.linear.selfCheck.warningCount} figyelmeztetés` : ''}
+                  {t.selfCheckValue(
+                    data.linear.selfCheck.results.length - data.linear.selfCheck.errorCount,
+                    data.linear.selfCheck.results.length,
+                    data.linear.selfCheck.warningCount > 0 ? t.selfCheckWarningSuffix(data.linear.selfCheck.warningCount) : '',
+                  )}
                 </td>
               </tr>
             </tbody>
           </table>
           {internalForceDerivation !== undefined ? (
             <>
-              <p>
-                A megoldásból (d = K⁻¹·f) kiolvasott elmozdulások a(z) {elementId} elem 3 csomópontjára, uₑ = [w₁,φ₁,w₂,φ₂,w₃,φ₃]:
-              </p>
+              <p>{t.displacementsIntro(elementId)}</p>
               <div className="vem-derivation__matrix">
                 uₑ = [{Array.from(internalForceDerivation.ue).map((v) => v.toExponential(3)).join(', ')}]
               </div>
-              <p className="vem-derivation__note">
-                Ez a vektor a 6. pontban κ = B_κ·uₑ és γ = B_γ·uₑ formában adja az igénybevételt — a híd a "megoldás" (ez a pont) és
-                az "eredmény" (6. pont) között.
-              </p>
+              <p className="vem-derivation__note">{t.displacementsNote}</p>
             </>
           ) : null}
         </section>
 
         {/* 6. EREDMÉNYEK ÉS ELLENŐRZÉSEK */}
         <section className="vem-derivation__section">
-          <h2>6. Eredmények és ellenőrzések</h2>
+          <h2>{t.section6Title}</h2>
 
           {internalForceDerivation !== undefined ? (
             <>
-              <h3>6.1 Igénybevétel-visszaszámítás — κ = B_κ·uₑ, γ = B_γ·uₑ, M = EI·(κ−κ₀), T = GAs·γ</h3>
-              <p>
-                A csomóponti elmozdulásokból (5.3 pont, uₑ) az elem BÁRMELY ξ pontjában visszaszámítható a görbület
-                (κ) és nyírási szögtorzulás (γ) — az alábbiakban ugyanabban a 3 pontban (STRESS_POINTS = GAUSS_3),
-                ahol a szelvény ténylegesen M/T-t szolgáltat a diagramhoz.
-              </p>
+              <h3>{t.section6_1Title}</h3>
+              <p>{t.section6_1Intro}</p>
               {internalForceDerivation.points.map((gp, i) => (
                 <FormulaBlock
                   key={i}
@@ -837,30 +800,26 @@ export function DerivationView(): JSX.Element | null {
                     elementDerivation.stiffness.ei,
                     elementDerivation.stiffness.gas,
                     internalForceDerivation.kappa0,
+                    lang,
                   )}
                 />
               ))}
               {internalForceDerivation.kappa0 !== 0 ? (
-                <p className="vem-derivation__note">
-                  κ₀ = {internalForceDerivation.kappa0.toExponential(3)} 1/m (hőteher kezdeti görbülete, ld. 4.7 pont) — ezért M
-                  képlete κ−κ₀-t használ, nem önmagában κ-t.
-                </p>
+                <p className="vem-derivation__note">{t.kappa0Note(internalForceDerivation.kappa0.toExponential(3))}</p>
               ) : null}
             </>
           ) : null}
 
           {elementResult ? (
             <>
-              <h3>
-                6.2 A(z) {elementId} elem Gauss-ponti igénybevétele → csomóponti extrapoláció (Diplomaterv 3.1.7.4)
-              </h3>
+              <h3>{t.section6_2Title(elementId)}</h3>
               <table>
                 <thead>
                   <tr>
-                    <th>Gauss-pont</th>
-                    <th>x [m]</th>
-                    <th>M [kNm]</th>
-                    <th>T [kN]</th>
+                    <th>{t.gaussPointHeader}</th>
+                    <th>{t.xHeader}</th>
+                    <th>{t.momentHeader}</th>
+                    <th>{t.shearHeader}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -874,18 +833,10 @@ export function DerivationView(): JSX.Element | null {
                   ))}
                 </tbody>
               </table>
-              <p className="vem-derivation__note">
-                Elemhatáron a szomszédos elemek extrapolált értékét átlagoljuk, a köztük mért ugrás adja az
-                elemenkénti hibajelzőt (jelenleg {fmt.percent(elementResult.errorEstimate).value}%) — ld.
-                docs/THEORY.md 6. pont.
-              </p>
+              <p className="vem-derivation__note">{t.elementErrorNote(fmt.percent(elementResult.errorEstimate).value)}</p>
 
-              <h3>6.3 Gauss-pont → csomópont extrapoláció — a másodfokú (Lagrange-) képlet behelyettesítve</h3>
-              <p>
-                A 3 Gauss-pont (ξ₁,ξ₂,ξ₃) M-értékén átfektetett másodfokú polinomot kiértékelve ξ=−1-ben és ξ=+1-ben
-                kapjuk az elem SAJÁT (még nem szomszéd-átlagolt) csomóponti extrapolált értékét — ξ=0-ban ez
-                triviálisan a középső Gauss-pont saját értéke (ld. `extrapolation.ts` fejléce).
-              </p>
+              <h3>{t.section6_3Title}</h3>
+              <p>{t.section6_3Intro}</p>
               {(() => {
                 const gp0 = elementResult.gaussPoints[0];
                 const gp1 = elementResult.gaussPoints[1];
@@ -900,8 +851,8 @@ export function DerivationView(): JSX.Element | null {
                 const mValues: readonly [number, number, number] = [gp0.m, gp1.m, gp2.m];
                 return (
                   <>
-                    <FormulaBlock lines={extrapolationTex('M', mValues, xis, -1, '\\xi{=}{-}1\\ (\\text{bal csp.})', '\\text{kNm}')} />
-                    <FormulaBlock lines={extrapolationTex('M', mValues, xis, 1, '\\xi{=}{+}1\\ (\\text{jobb csp.})', '\\text{kNm}')} />
+                    <FormulaBlock lines={extrapolationTex('M', mValues, xis, -1, `\\xi{=}{-}1\\ (\\text{${t.extrapLeftNode}})`, '\\text{kNm}')} />
+                    <FormulaBlock lines={extrapolationTex('M', mValues, xis, 1, `\\xi{=}{+}1\\ (\\text{${t.extrapRightNode}})`, '\\text{kNm}')} />
                   </>
                 );
               })()}
@@ -911,41 +862,36 @@ export function DerivationView(): JSX.Element | null {
           <table style={{ marginTop: 8 }}>
             <tbody>
               <tr>
-                <th>ΣFz (egyensúly)</th>
+                <th>{t.sumFzLabel}</th>
                 <td className={data.linear.equilibrium.satisfied ? '' : 'vem-derivation__note--warn'}>
                   {fmt.force(data.linear.equilibrium.sumFz).value} kN
                 </td>
               </tr>
               <tr>
-                <th>ΣMy (egyensúly)</th>
+                <th>{t.sumMyLabel}</th>
                 <td className={data.linear.equilibrium.satisfied ? '' : 'vem-derivation__note--warn'}>
                   {fmt.moment(data.linear.equilibrium.sumMy).value} kNm
                 </td>
               </tr>
             </tbody>
           </table>
-          <p className="vem-derivation__note">
-            Ehhez az általános (felhasználó által szerkesztett) statikai vázhoz nincs kanonikus zárt alakú
-            analitikus referencia — konkrét, rögzített esetekre (konzol, kéttámaszú, kétnyílású stb.) a zárt alakú
-            összevetést a `fem-validation` csomag V-01…V-12 / P-01…P-16 esetei végzik el (ld. STATUS_REPORT.md 5.
-            pont).
-          </p>
+          <p className="vem-derivation__note">{t.noReferenceNote}</p>
         </section>
 
         {/* 7. KÉPLÉKENY SZÁMÍTÁS */}
         {nonlinearRun !== null ? (
           <section className="vem-derivation__section">
-            <h2>7. Képlékeny számítás</h2>
-            <h3>Teherlépcsőnkénti napló</h3>
+            <h2>{t.section7Title}</h2>
+            <h3>{t.stepLogTitle}</h3>
             <table>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>λ</th>
-                  <th>iterációk</th>
-                  <th>‖ψ‖</th>
-                  <th>‖f‖</th>
-                  <th>végső reziduum [%]</th>
+                  <th>{t.stepHeader}</th>
+                  <th>{t.lambdaHeader}</th>
+                  <th>{t.iterationsHeader}</th>
+                  <th>{t.psiNormHeader}</th>
+                  <th>{t.fNormHeader}</th>
+                  <th>{t.finalResidualHeader}</th>
                 </tr>
               </thead>
               <tbody>
@@ -961,10 +907,8 @@ export function DerivationView(): JSX.Element | null {
                 ))}
               </tbody>
             </table>
-            <h3>A konvergencia-képlet behelyettesítve (Diplomaterv 3.4.2.1/6. lépés, "CONUND")</h3>
-            <p>
-              100·‖ψ‖/‖f‖ ≤ Tolerancia — az utolsó teherlépcső utolsó iterációjára konkrétan kiírva:
-            </p>
+            <h3>{t.convergenceFormulaTitle}</h3>
+            <p>{t.convergenceFormulaIntro}</p>
             {(() => {
               const lastStep = nonlinearRun.loadingSteps.at(-1);
               const lastIter = lastStep?.iterations.at(-1);
@@ -977,25 +921,26 @@ export function DerivationView(): JSX.Element | null {
                     lastIter.residualPercent,
                     nonlinearRun.tolerancePercent,
                     lastIter.residualPercent <= nonlinearRun.tolerancePercent,
+                    lang,
                   )}
                 />
               );
             })()}
 
             {plasticSample !== null ? (
-              <PlasticSampleSection sample={plasticSample} run={nonlinearRun} />
+              <PlasticSampleSection sample={plasticSample} run={nonlinearRun} lang={lang} />
             ) : (
-              <p className="vem-derivation__note">Ebben a futásban sehol nem folyt meg réteg — nincs bemutatható példa.</p>
+              <p className="vem-derivation__note">{t.noPlasticSample}</p>
             )}
 
-            <h3>A képlékeny csuklók kialakulási sorrendje</h3>
+            <h3>{t.hingeSequenceTitle}</h3>
             <table>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Esemény</th>
-                  <th>Elem</th>
-                  <th>x ≈ [m]</th>
+                  <th>{t.hingeIndexHeader}</th>
+                  <th>{t.hingeEventHeader}</th>
+                  <th>{t.hingeElementHeader}</th>
+                  <th>{t.hingeXHeader}</th>
                   <th>λ</th>
                 </tr>
               </thead>
@@ -1003,7 +948,7 @@ export function DerivationView(): JSX.Element | null {
                 {hinges.map((h, i) => (
                   <tr key={i}>
                     <td>{i + 1}</td>
-                    <td>{HINGE_KIND_LABEL[h.kind]}</td>
+                    <td>{REPORT[lang].hingeKindLabel[h.kind]}</td>
                     <td>{h.elementId}</td>
                     <td>{h.xApprox !== null ? h.xApprox.toFixed(2) : '—'}</td>
                     <td>{h.lambda.toFixed(3)}</td>
@@ -1011,7 +956,7 @@ export function DerivationView(): JSX.Element | null {
                 ))}
                 {hinges.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>Nem alakult ki képlékeny zóna.</td>
+                    <td colSpan={5}>{t.noPlasticZone}</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -1019,36 +964,34 @@ export function DerivationView(): JSX.Element | null {
 
             <p className="vem-derivation__note">
               {nonlinearRun.status === 'converged'
-                ? `A futás λ = ${nonlinearRun.peakLambda.toFixed(3)}-ig konvergált — ez a beállított csúcs-teherszorzó, NEM feltétlenül a szerkezet valódi határtehere.`
+                ? t.runConverged(nonlinearRun.peakLambda.toFixed(3))
                 : nonlinearRun.status === 'limit-load-reached'
-                  ? `A futás a numerikus határteher közelébe ért (λ ≈ ${(nonlinearRun.loadingSteps.at(-1)?.lambda ?? 0).toFixed(3)}). Ehhez az általános vázhoz nincs kanonikus zárt alakú képlékeny határteher-képlet — konkrét esetekre ld. fem-validation P-03…P-08.`
-                  : 'A futás megszakadt.'}
+                  ? t.runLimitLoad((nonlinearRun.loadingSteps.at(-1)?.lambda ?? 0).toFixed(3))
+                  : t.runDiverged}
             </p>
           </section>
         ) : (
           <section className="vem-derivation__section">
-            <h2>7. Képlékeny számítás</h2>
-            <p className="vem-derivation__note">
-              Nincs nemlineáris futási eredmény — futtasd a SZÁMÍTÁS gombbal (F5), majd nyisd meg újra a
-              levezetést, hogy ez a pont is megjelenjen.
-            </p>
+            <h2>{t.section7Title}</h2>
+            <p className="vem-derivation__note">{t.noNonlinearRun}</p>
           </section>
         )}
 
-        <footer className="vem-derivation__footer">
-          A számítás eredményét szakmai felelősséggel ellenőrizni kell.
-        </footer>
+        <footer className="vem-derivation__footer">{REPORT[lang].footerNote}</footer>
       </article>
     </div>
   );
 }
 
 /** A 7. pont "egy választott Gauss-pont rétegenkénti feszültségszámítása" táblázata. */
-function plasticSampleTitle(sample: PlasticSample, run: NonlinearRun): string {
+function plasticSampleTitle(sample: PlasticSample, run: NonlinearRun, lang: Lang): string {
+  const t = DERIVATION[lang];
   const x = plasticSampleElementX(sample, run);
-  return (
-    `Egy választott Gauss-pont rétegenkénti feszültségszámítása — ${sample.elementId}, Gauss-pont ` +
-    `${sample.gaussIndex + 1}/3${x !== null ? ` (x ≈ ${x.toFixed(2)} m)` : ''}, lépés #${sample.stepIndex + 1}`
+  return t.plasticSampleTitle(
+    sample.elementId,
+    sample.gaussIndex + 1,
+    x !== null ? t.plasticSampleXSuffix(x.toFixed(2)) : '',
+    sample.stepIndex + 1,
   );
 }
 
@@ -1059,10 +1002,13 @@ export function pickPlasticFormulaSample(rows: readonly PlasticLayerRow[]): Plas
 function PlasticSampleSection({
   sample,
   run,
+  lang,
 }: {
   readonly sample: PlasticSample;
   readonly run: NonlinearRun;
+  readonly lang: Lang;
 }): JSX.Element | null {
+  const t = DERIVATION[lang];
   const rows = computePlasticLayerRows(sample, run);
   if (rows === null) return null;
 
@@ -1070,24 +1016,24 @@ function PlasticSampleSection({
 
   return (
     <>
-      <h3>{plasticSampleTitle(sample, run)}</h3>
+      <h3>{plasticSampleTitle(sample, run, lang)}</h3>
       {extreme !== undefined ? (
         <>
-          <p className="vem-derivation__note">Teljesen kiírt példa — a legnagyobb |σ_trial|-jal:</p>
-          <FormulaBlock lines={plasticLayerTex(extreme)} />
+          <p className="vem-derivation__note">{t.plasticSampleExtreme}</p>
+          <FormulaBlock lines={plasticLayerTex(extreme, lang)} />
         </>
       ) : null}
       <table>
         <thead>
           <tr>
-            <th>réteg</th>
-            <th>z [mm]</th>
-            <th>σ_{'{r-1}'} [kN/cm²]</th>
-            <th>Δε</th>
-            <th>σ_trial [kN/cm²]</th>
-            <th>R</th>
-            <th>σ_új [kN/cm²]</th>
-            <th>folyva?</th>
+            <th>{t.layerHeader}</th>
+            <th>{t.zHeader}</th>
+            <th>{t.prevStressHeader}</th>
+            <th>{t.dEpsHeader}</th>
+            <th>{t.trialStressHeader}</th>
+            <th>{t.rHeader}</th>
+            <th>{t.newStressHeader}</th>
+            <th>{t.yieldedHeader}</th>
           </tr>
         </thead>
         <tbody>
@@ -1100,7 +1046,7 @@ function PlasticSampleSection({
               <td>{(derived.sigmaTrial * 1e-4).toFixed(3)}</td>
               <td>{derived.step.r.toFixed(3)}</td>
               <td>{(derived.step.sigma * 1e-4).toFixed(3)}</td>
-              <td>{derived.step.state.yielded ? 'igen' : 'nem'}</td>
+              <td>{derived.step.state.yielded ? t.yesWord : t.noWord}</td>
             </tr>
           ))}
         </tbody>

@@ -23,6 +23,9 @@ import {
 } from 'docx';
 import type { DerivationExportData, FormulaLine } from './derivationExportData.js';
 import { mathParagraph, mathParagraphs } from './formulaOmml.js';
+import type { Lang } from '../state/appStore.js';
+import { DERIVATION } from '../i18n/derivation.js';
+import { REPORT } from '../i18n/report.js';
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
   return new Paragraph({ text, heading: level, spacing: { before: 240, after: 120 } });
@@ -67,8 +70,10 @@ function table(headerRow: readonly string[], rows: readonly (readonly string[])[
   });
 }
 
-/** A teljes levezetés .docx dokumentummá építése a már kiszámított adatokból. */
-export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
+/** A teljes levezetés .docx dokumentummá építése a már kiszámított adatokból. `lang` alapértelmezése `'hu'` — visszamenőlegesen kompatibilis a nyelvet nem ismerő hívókkal/tesztekkel. */
+export function buildDerivationDocx(data: DerivationExportData, lang: Lang = 'hu'): Promise<Blob> {
+  const t = DERIVATION[lang];
+  const r = REPORT[lang];
   const children: (Paragraph | Table)[] = [];
   const push = (...items: readonly (Paragraph | Table)[]): void => {
     children.push(...items);
@@ -76,29 +81,29 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
 
   // ── 0/1. Fejléc + Feladat ──────────────────────────────────────────────
   push(
-    new Paragraph({ text: 'FEM@ti — Levezetés', heading: HeadingLevel.TITLE }),
-    para(`${data.presetName} (ref. ${data.presetRef}) · ${data.generatedAt} · v${data.appVersion} · mag: ${data.gitCommit}`),
-    heading('1. Feladat', HeadingLevel.HEADING_1),
+    new Paragraph({ text: t.title, heading: HeadingLevel.TITLE }),
+    para(`${data.presetName} (ref. ${data.presetRef}) · ${data.generatedAt} · v${data.appVersion} · ${lang === 'en' ? 'core' : 'mag'}: ${data.gitCommit}`),
+    heading(t.section1Title, HeadingLevel.HEADING_1),
     table(
-      ['Jellemző', 'Érték'],
+      [t.propertyHeader, t.valueGenericHeader],
       [
-        ['Fesztáv L', `${data.span.toFixed(2)} m`],
-        ['Elemszám', String(data.elementCount)],
-        ['Integrálási séma', data.integrationLabel],
-        ['Szelvény', `${data.sectionName} (${data.sectionSource})`],
-        ['Anyag', `${data.materialName}, ${data.materialSummary} (${data.materialSource})`],
+        [t.spanLabel, `${data.span.toFixed(2)} m`],
+        [t.elementCountLabel, String(data.elementCount)],
+        [t.integrationLabel, data.integrationLabel],
+        [t.sectionLabel, `${data.sectionName} (${data.sectionSource})`],
+        [t.materialLabel, `${data.materialName}, ${data.materialSummary} (${data.materialSource})`],
       ],
     ),
     para(' '),
-    table(['Támasz', 'x [m]', 'Típus'], data.supportRows),
+    table([t.supportHeader, t.xHeader, t.typeHeader], data.supportRows),
     para(' '),
-    table(['Teher', 'Jellemző'], data.loadRows),
+    table([t.loadHeader, t.valueHeader], data.loadRows),
   );
 
   // ── 2. Keresztmetszet ───────────────────────────────────────────────────
   push(
-    heading('2. Keresztmetszet', HeadingLevel.HEADING_1),
-    para(`A rétegelt modell ${data.layerRows.length} rétegre osztja a keresztmetszetet (Diplomaterv 3.4.3, (3.54)).`),
+    heading(t.section2Title, HeadingLevel.HEADING_1),
+    para(t.layeredIntro(data.layerRows.length)),
     table(['l', 'b_l [mm]', 't_l [mm]', 'z_l [mm]'], data.layerRows),
     ...mathParagraphs(data.layerSumFormula),
     ...(data.meMpFormula !== null ? mathParagraphs(data.meMpFormula) : [para(data.meMpNote)]),
@@ -106,75 +111,71 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
 
   // ── 3. Végeselem-felosztás ───────────────────────────────────────────────
   push(
-    heading('3. Végeselem-felosztás', HeadingLevel.HEADING_1),
+    heading(t.section3Title, HeadingLevel.HEADING_1),
     table(
-      ['Jellemző', 'Érték'],
+      [t.propertyHeader, t.valueGenericHeader],
       [
-        ['Elemszám', String(data.elementCount)],
-        ['Elemhossz', `${data.elementLength.toFixed(4)} m`],
-        ['Csomópontok száma', String(data.nodeCount)],
-        ['Szabadságfokok', String(data.dofCount)],
+        [t.elementCountLabel, String(data.elementCount)],
+        [t.elementLengthLabel, `${data.elementLength.toFixed(4)} m`],
+        [t.nodeCountLabel, String(data.nodeCount)],
+        [t.dofLabel, String(data.dofCount)],
       ],
     ),
   );
 
   // ── 4. Egy választott elem teljes levezetése ────────────────────────────
   push(
-    heading(`4. A(z) ${data.elementId} elem teljes levezetése`, HeadingLevel.HEADING_1),
+    heading(t.section4Title(data.elementId), HeadingLevel.HEADING_1),
     mono(`x₁=${data.elementNodeX[0]}, x₂=${data.elementNodeX[1]}, x₃=${data.elementNodeX[2]} m, L_e=${data.elementLength.toFixed(3)} m`),
-    heading('4.1 Jacobi', HeadingLevel.HEADING_2),
+    heading(t.section4_1Title, HeadingLevel.HEADING_2),
     ...mathParagraphs(data.jacobianFormula),
-    heading('4.2 Hajlítási Gauss-pontok — táblázat és teljes, behelyettesített levezetés', HeadingLevel.HEADING_2),
+    heading(t.section4_2Title, HeadingLevel.HEADING_2),
     table(['ξ', 'w', 'N₁', 'N₂', 'N₃', 'dN₁/dξ', 'dN₂/dξ', 'dN₃/dξ'], data.bendingRows),
     ...mathParagraphs(data.bendingFormulas),
-    heading('4.3 Nyírási Gauss-pontok — táblázat és teljes levezetés', HeadingLevel.HEADING_2),
+    heading(t.section4_3Title(data.shearRows.length), HeadingLevel.HEADING_2),
     table(['ξ', 'w', 'N₁', 'N₂', 'N₃'], data.shearRows),
     ...mathParagraphs(data.shearFormulas),
-    heading('4.4 D anyagmátrix', HeadingLevel.HEADING_2),
+    heading(t.section4_4Title, HeadingLevel.HEADING_2),
     mono(`EI = ${data.ei} kNm²   GAs = ${data.gas} kN`),
-    heading('4.5 Kₑ integrálás — konkrét példa egy mátrixelemre', HeadingLevel.HEADING_2),
+    heading(t.section4_5Title, HeadingLevel.HEADING_2),
     ...mathParagraphs(data.keDiagonalFormula),
-    heading('4.6 A 6×6 Kₑ mátrix', HeadingLevel.HEADING_2),
+    heading(t.section4_6Title, HeadingLevel.HEADING_2),
     ...data.keRows.map((row) => mono(row)),
-    heading('4.7 Elemi tehervektor (λ=1) — terhenkénti, teljes levezetés', HeadingLevel.HEADING_2),
+    heading(t.section4_7Title, HeadingLevel.HEADING_2),
     ...formulaLineParagraphs(data.loadFormulas),
-    mono(`Összegzés: q_e = ${data.loadVectorRow}`),
+    mono(`${t.summationHeading}: q_e = ${data.loadVectorRow}`),
   );
 
   // ── 4A. A választott elem tömegmátrix-levezetése (ADR-0016) ────────────
   push(
-    heading(`4A. A(z) ${data.elementId} elem tömegmátrix-levezetése (ADR-0016)`, HeadingLevel.HEADING_1),
-    para(
-      'A tömegmátrix mindkét tagja (transzlációs m\', forgási tehetetlenség m\'ᵩ) AZONOS, teljes (3 pontos ' +
-        'Gauss) kvadratúrával integrálódik — nincs szelektív séma, ellentétben a merevségi mátrixszal. Csak ' +
-        'VÉGEREDMÉNY: a sajátérték-megoldás (Jacobi-forgatás) nem kap lépésenkénti levezetést itt.',
-    ),
+    heading(t.section4ATitle(data.elementId), HeadingLevel.HEADING_1),
+    para(t.section4AIntro),
     mono(`m' = γ·A/g = ${data.massPerLength} kN·s²/m²\nm'ᵩ = γ·I/g = ${data.rotaryInertiaPerLength} kN·s²`),
-    heading('4A.1 Gauss-pontok — táblázat és teljes, behelyettesített levezetés', HeadingLevel.HEADING_2),
+    heading(t.section4A_1Title, HeadingLevel.HEADING_2),
     table(['ξ', 'w', 'N₁', 'N₂', 'N₃'], data.massRows),
     ...mathParagraphs(data.massFormulas),
-    heading('4A.2 Mₑ integrálás — konkrét példa két mátrixelemre', HeadingLevel.HEADING_2),
+    heading(t.section4A_2Title, HeadingLevel.HEADING_2),
     ...mathParagraphs(data.massDiagonalFormula),
-    heading('4A.3 A 6×6 Mₑ mátrix', HeadingLevel.HEADING_2),
+    heading(t.section4A_3Title, HeadingLevel.HEADING_2),
     ...data.meRows.map((row) => mono(row)),
   );
 
   // ── 5. Kompilálás és megoldás ─────────────────────────────────────────
   push(
-    heading('5. Kompilálás és megoldás', HeadingLevel.HEADING_1),
-    heading('5.1 Összeszerelés', HeadingLevel.HEADING_2),
-    table(['Lokális DOF', 'Csomópont', 'Szerep', 'Globális DOF'], data.assemblyRows),
+    heading(t.section5Title, HeadingLevel.HEADING_1),
+    heading(t.section5_1Title(data.elementId), HeadingLevel.HEADING_2),
+    table([t.localDofHeader, t.nodeShortHeader, t.roleHeader, t.globalDofHeader], data.assemblyRows),
     ...(data.assemblyNote !== '' ? [mono(data.assemblyNote)] : []),
-    heading('5.2 Peremfeltétel-kezelés', HeadingLevel.HEADING_2),
-    table(['Csomópont', 'x [m]', 'Előírás'], data.boundaryRows),
+    heading(t.section5_2Title, HeadingLevel.HEADING_2),
+    table([t.nodeShortHeader, t.xHeader, t.prescriptionHeader], data.boundaryRows),
     mono(data.boundaryNote),
-    heading('5.3 A megoldott rendszer és a kiválasztott elem elmozdulásai', HeadingLevel.HEADING_2),
+    heading(t.section5_3Title, HeadingLevel.HEADING_2),
     table(
-      ['Jellemző', 'Érték'],
+      [t.propertyHeader, t.valueGenericHeader],
       [
-        ['Globális mátrix mérete', `${data.dofCount} × ${data.dofCount} (aktív: ${data.activeDofCount})`],
-        ['Profil (átlagos sávszélesség)', data.meanBandwidth],
-        ['Megoldás módszere', 'K_active·d_active = f_active, Skyline LDLᵀ direkt megoldó (ADR-0002)'],
+        [t.globalMatrixSizeLabel, t.globalMatrixSizeValue(data.dofCount, data.activeDofCount)],
+        [t.bandwidthLabel, data.meanBandwidth],
+        [t.solverMethodLabel, t.solverMethodValue],
       ],
     ),
     ...(data.ueRow !== '' ? [mono(data.ueRow)] : []),
@@ -182,18 +183,18 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
 
   // ── 6. Eredmények és ellenőrzések ────────────────────────────────────────
   push(
-    heading('6. Eredmények és ellenőrzések', HeadingLevel.HEADING_1),
-    heading('6.1 Igénybevétel-visszaszámítás — κ = B_κ·uₑ, γ = B_γ·uₑ, M = EI·(κ−κ₀), T = GAs·γ', HeadingLevel.HEADING_2),
+    heading(t.section6Title, HeadingLevel.HEADING_1),
+    heading(t.section6_1Title, HeadingLevel.HEADING_2),
     ...mathParagraphs(data.internalForceFormulas),
-    heading('6.2 Gauss-ponti igénybevétel → csomóponti extrapoláció', HeadingLevel.HEADING_2),
-    table(['Gauss-pont', 'x [m]', 'M [kNm]', 'T [kN]'], data.resultGaussRows),
-    heading('6.3 A másodfokú (Lagrange-) extrapolációs képlet behelyettesítve', HeadingLevel.HEADING_2),
+    heading(t.section6_2Title(data.elementId), HeadingLevel.HEADING_2),
+    table([t.gaussPointHeader, t.xHeader, t.momentHeader, t.shearHeader], data.resultGaussRows),
+    heading(t.section6_3Title, HeadingLevel.HEADING_2),
     ...mathParagraphs(data.extrapolationFormulas),
     table(
-      ['Jellemző', 'Érték'],
+      [t.propertyHeader, t.valueGenericHeader],
       [
-        ['ΣFz', `${data.sumFz} kN`],
-        ['ΣMy', `${data.sumMy} kNm`],
+        [t.sumFzLabel, `${data.sumFz} kN`],
+        [t.sumMyLabel, `${data.sumMy} kNm`],
       ],
     ),
   );
@@ -201,22 +202,19 @@ export function buildDerivationDocx(data: DerivationExportData): Promise<Blob> {
   // ── 7. Képlékeny számítás ────────────────────────────────────────────────
   if (data.plastic !== null) {
     push(
-      heading('7. Képlékeny számítás', HeadingLevel.HEADING_1),
-      table(['#', 'λ', 'iterációk', '‖ψ‖', '‖f‖', 'végső reziduum [%]'], data.plastic.stepRows),
-      heading('A konvergencia-képlet behelyettesítve (100·‖ψ‖/‖f‖ ≤ Tolerancia)', HeadingLevel.HEADING_2),
+      heading(t.section7Title, HeadingLevel.HEADING_1),
+      table([t.stepHeader, t.lambdaHeader, t.iterationsHeader, t.psiNormHeader, t.fNormHeader, t.finalResidualHeader], data.plastic.stepRows),
+      heading(t.convergenceFormulaTitle, HeadingLevel.HEADING_2),
       ...(data.plastic.convergenceFormula !== null ? mathParagraphs(data.plastic.convergenceFormula) : []),
       heading(data.plastic.sampleTitle, HeadingLevel.HEADING_2),
       ...(data.plastic.sampleFormula !== null ? mathParagraphs(data.plastic.sampleFormula) : []),
-      table(
-        ['réteg', 'z [mm]', 'σ_{r-1}', 'Δε', 'σ_trial', 'R', 'σ_új', 'folyva?'],
-        data.plastic.layerRows,
-      ),
-      heading('A képlékeny csuklók kialakulási sorrendje', HeadingLevel.HEADING_2),
-      table(['#', 'esemény', 'elem', 'x ≈ [m]', 'λ'], data.plastic.hingeRows),
+      table([t.layerHeader, t.zHeader, t.prevStressHeader, t.dEpsHeader, t.trialStressHeader, t.rHeader, t.newStressHeader, t.yieldedHeader], data.plastic.layerRows),
+      heading(t.hingeSequenceTitle, HeadingLevel.HEADING_2),
+      table([t.hingeIndexHeader, t.hingeEventHeader, t.hingeElementHeader, t.hingeXHeader, 'λ'], data.plastic.hingeRows),
     );
   }
 
-  push(para('A számítás eredményét szakmai felelősséggel ellenőrizni kell.'));
+  push(para(r.footerNote));
 
   const doc = new Document({
     sections: [{ children }],

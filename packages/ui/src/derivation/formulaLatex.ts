@@ -12,6 +12,68 @@
  */
 import type { DistributedLoadGaussDetail, GaussStepDetail, MassGaussStepDetail, ThermalLoadGaussDetail } from '@femati/fem-core';
 import type { PlasticLayerRow } from './derivationData.js';
+import type { Lang } from '../state/appStore.js';
+
+/**
+ * A LaTeX-sorokba ágyazott `\text{...}` szófordulatok szótára — ez a modul
+ * MINDKÉT kimenetet (KaTeX-render `DerivationView.tsx`, Word-export
+ * `formulaOmml.ts`) egyetlen forrásból szolgálja ki (ld. fejléc), ezért a
+ * fordítás is itt, a forrásban történik, nem a hívóknál. `lang`
+ * alapértelmezése `'hu'` — visszamenőlegesen kompatibilis a meglévő
+ * hívásokkal/tesztekkel, amik nem adnak át nyelvet.
+ */
+const W: Record<
+  Lang,
+  {
+    readonly gaussPoint: string;
+    readonly node: string;
+    readonly rowSuffix: string;
+    readonly noIntegration: string;
+    readonly tolerance: string;
+    readonly converged: string;
+    readonly moreIteration: string;
+    readonly layer: (n: number) => string;
+    readonly crossesLimit: string;
+    readonly alreadyYielded: string;
+    readonly staysElastic: string;
+    readonly yielded: string;
+    readonly elastic: string;
+    readonly finalMatrix: string;
+  }
+> = {
+  hu: {
+    gaussPoint: 'Gauss-pont',
+    node: 'Csomópont',
+    rowSuffix: '-sor',
+    noIntegration: '(nincs integrálás, közvetlen elhelyezés)',
+    tolerance: 'Tolerancia',
+    converged: 'KONVERGÁLT',
+    moreIteration: 'további iteráció szükséges',
+    layer: (n) => `${n}. réteg`,
+    crossesLimit: 'Átlépi a folyási határt',
+    alreadyYielded: 'Már megfolyt, terhelés folytatódik',
+    staysElastic: 'Rugalmas marad',
+    yielded: 'folyva',
+    elastic: 'rugalmas',
+    finalMatrix: 'a végső mátrixban',
+  },
+  en: {
+    gaussPoint: 'Gauss point',
+    node: 'Node',
+    rowSuffix: '-row',
+    noIntegration: '(no integration, direct placement)',
+    tolerance: 'Tolerance',
+    converged: 'CONVERGED',
+    moreIteration: 'further iteration needed',
+    layer: (n) => `Layer ${n}`,
+    crossesLimit: 'Crosses the yield limit',
+    alreadyYielded: 'Already yielded, loading continues',
+    staysElastic: 'Stays elastic',
+    yielded: 'yielded',
+    elastic: 'elastic',
+    finalMatrix: 'in the final matrix',
+  },
+};
 
 function f(v: number, digits = 4): string {
   if (!Number.isFinite(v)) return '\\text{---}';
@@ -67,11 +129,11 @@ function dNdxTex(dn: readonly [number, number, number], invJ: number): readonly 
 }
 
 /** A hajlítási (κ-sort adó) Gauss-pont TELJES, behelyettesített levezetése — LaTeX sorok. */
-export function bendingGaussTex(gp: GaussStepDetail, index: number, ei: number): readonly string[] {
+export function bendingGaussTex(gp: GaussStepDetail, index: number, ei: number, lang: Lang = 'hu'): readonly string[] {
   const factor = ei * gp.jacobian.detJ * gp.w;
   const b = gp.bRows.kappa;
   return [
-    `\\text{Gauss-pont } B_{${index + 1}}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
+    `\\text{${W[lang].gaussPoint} } B_{${index + 1}}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
     ...shapeFunctionTex(gp.xi, gp.n),
     ...shapeDerivativeTex(gp.xi, gp.dn),
     ...dNdxTex(gp.dn, gp.jacobian.invJ),
@@ -81,11 +143,11 @@ export function bendingGaussTex(gp: GaussStepDetail, index: number, ei: number):
 }
 
 /** A nyírási (γ-sort adó) Gauss-pont TELJES, behelyettesített levezetése — LaTeX sorok. */
-export function shearGaussTex(gp: GaussStepDetail, index: number, gas: number): readonly string[] {
+export function shearGaussTex(gp: GaussStepDetail, index: number, gas: number, lang: Lang = 'hu'): readonly string[] {
   const factor = gas * gp.jacobian.detJ * gp.w;
   const b = gp.bRows.gamma;
   return [
-    `\\text{Gauss-pont } Ny_{${index + 1}}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
+    `\\text{${W[lang].gaussPoint} } Ny_{${index + 1}}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
     ...shapeFunctionTex(gp.xi, gp.n),
     ...shapeDerivativeTex(gp.xi, gp.dn),
     ...dNdxTex(gp.dn, gp.jacobian.invJ),
@@ -101,6 +163,7 @@ export function keDiagonalTex(
   ei: number,
   gas: number,
   keValue: number,
+  lang: Lang = 'hu',
   dofIndex = 1,
 ): readonly string[] {
   const bendingTerms = bendingPoints.map((gp, i) => {
@@ -119,7 +182,7 @@ export function keDiagonalTex(
     ...[...bendingTerms, ...shearTerms].map(
       (t) => `${t.label}:\\quad ${f(t.factor, 2)}\\cdot(${paren(t.b, 3)})^2 = ${f(t.term, 2)}`,
     ),
-    `\\sum = ${f(total, 2)}\\quad (K_e[1,1]\\text{ a végső mátrixban}: ${f(keValue, 2)})`,
+    `\\sum = ${f(total, 2)}\\quad (K_e[1,1]\\text{ ${W[lang].finalMatrix}}: ${f(keValue, 2)})`,
   ];
 }
 
@@ -134,13 +197,14 @@ export function massGaussTex(
   index: number,
   massPerLength: number,
   rotaryInertiaPerLength: number,
+  lang: Lang = 'hu',
 ): readonly string[] {
   const wFactor = massPerLength * gp.jacobian.detJ * gp.w;
   const phiFactor = rotaryInertiaPerLength * gp.jacobian.detJ * gp.w;
   const nw = gp.nRows.w;
   const nphi = gp.nRows.phi;
   return [
-    `\\text{Gauss-pont } T_{${index + 1}}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
+    `\\text{${W[lang].gaussPoint} } T_{${index + 1}}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
     ...shapeFunctionTex(gp.xi, gp.n),
     `N_w = [N_1,\\ 0,\\ N_2,\\ 0,\\ N_3,\\ 0] = [${f(nw[0] ?? 0, 3)},\\ ${f(nw[1] ?? 0, 3)},\\ ${f(nw[2] ?? 0, 3)},\\ ${f(nw[3] ?? 0, 3)},\\ ${f(nw[4] ?? 0, 3)},\\ ${f(nw[5] ?? 0, 3)}]`,
     `N_\\varphi = [0,\\ N_1,\\ 0,\\ N_2,\\ 0,\\ N_3] = [${f(nphi[0] ?? 0, 3)},\\ ${f(nphi[1] ?? 0, 3)},\\ ${f(nphi[2] ?? 0, 3)},\\ ${f(nphi[3] ?? 0, 3)},\\ ${f(nphi[4] ?? 0, 3)},\\ ${f(nphi[5] ?? 0, 3)}]`,
@@ -162,6 +226,7 @@ export function massDiagonalTex(
   rotaryInertiaPerLength: number,
   meWValue: number,
   mePhiValue: number,
+  lang: Lang = 'hu',
 ): readonly string[] {
   const wTerms = points.map((gp, i) => {
     const n = gp.nRows.w[0] ?? 0;
@@ -178,10 +243,10 @@ export function massDiagonalTex(
   return [
     `M_e[w_1,w_1] = \\sum\\left(m'\\cdot|J|\\cdot w\\cdot N_w[1]^2\\right)`,
     ...wTerms.map((t) => `${t.label}:\\quad ${f(t.factor, 4)}\\cdot(${paren(t.n, 3)})^2 = ${f(t.term, 4)}`),
-    `\\sum = ${f(wTotal, 4)}\\quad (M_e[1,1]\\text{ a végső mátrixban}: ${f(meWValue, 4)})`,
+    `\\sum = ${f(wTotal, 4)}\\quad (M_e[1,1]\\text{ ${W[lang].finalMatrix}}: ${f(meWValue, 4)})`,
     `M_e[\\varphi_1,\\varphi_1] = \\sum\\left(m'_\\varphi\\cdot|J|\\cdot w\\cdot N_\\varphi[2]^2\\right)`,
     ...phiTerms.map((t) => `${t.label}:\\quad ${f(t.factor, 6)}\\cdot(${paren(t.n, 3)})^2 = ${f(t.term, 6)}`),
-    `\\sum = ${f(phiTotal, 6)}\\quad (M_e[2,2]\\text{ a végső mátrixban}: ${f(mePhiValue, 6)})`,
+    `\\sum = ${f(phiTotal, 6)}\\quad (M_e[2,2]\\text{ ${W[lang].finalMatrix}}: ${f(mePhiValue, 6)})`,
   ];
 }
 
@@ -191,10 +256,10 @@ export function massDiagonalTex(
  * a teher intenzitása az adott globális x-ben, majd a hozzájárulás a
  * tehervektorhoz `p(x)·|J|·w·ξ₁/₂·Nᵢ` alakban, minden i-re kiírva.
  */
-export function distributedLoadGaussTex(gp: DistributedLoadGaussDetail, index: number, unit: string): readonly string[] {
+export function distributedLoadGaussTex(gp: DistributedLoadGaussDetail, index: number, unit: string, lang: Lang = 'hu'): readonly string[] {
   const factor = gp.detJ * gp.w * gp.xiHalf;
   return [
-    `\\text{Gauss-pont } ${index + 1}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)},\\ x=${f(gp.x, 3)}\\ \\text{m}`,
+    `\\text{${W[lang].gaussPoint} } ${index + 1}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)},\\ x=${f(gp.x, 3)}\\ \\text{m}`,
     ...shapeFunctionTex(gp.xi, gp.n),
     `p(x) = ${f(gp.value, 3)}\\ ${unit}`,
     `|J|\\cdot w\\cdot \\xi_{1/2} = ${f(gp.detJ, 5)}\\cdot ${f(gp.w, 4)}\\cdot ${f(gp.xiHalf, 4)} = ${f(factor, 5)}`,
@@ -205,9 +270,9 @@ export function distributedLoadGaussTex(gp: DistributedLoadGaussDetail, index: n
 }
 
 /** Egy hőteher-Gauss-pont TELJES, behelyettesített levezetése (4.7 pont). */
-export function thermalLoadGaussTex(gp: ThermalLoadGaussDetail, index: number, ei: number, kappa0: number): readonly string[] {
+export function thermalLoadGaussTex(gp: ThermalLoadGaussDetail, index: number, ei: number, kappa0: number, lang: Lang = 'hu'): readonly string[] {
   return [
-    `\\text{Gauss-pont } ${index + 1}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
+    `\\text{${W[lang].gaussPoint} } ${index + 1}:\\ \\xi=${f(gp.xi)},\\ w=${f(gp.w)}`,
     `EI\\cdot\\kappa_0\\cdot|J|\\cdot w = ${f(ei, 1)}\\cdot ${kappa0.toExponential(3)}\\cdot ${f(gp.detJ, 5)}\\cdot ${f(gp.w, 4)} = ${f(ei * kappa0 * gp.detJ * gp.w, 4)}`,
     `f_e^{(${index + 1})} = [${Array.from(gp.contribution)
       .map((v) => f(v, 4))
@@ -234,9 +299,10 @@ export function internalForceTex(
   ei: number,
   gas: number,
   kappa0: number,
+  lang: Lang = 'hu',
 ): readonly string[] {
   return [
-    `\\text{Gauss-pont } ${index + 1}:\\ \\xi=${f(xi)},\\ x=${f(x, 3)}\\ \\text{m}`,
+    `\\text{${W[lang].gaussPoint} } ${index + 1}:\\ \\xi=${f(xi)},\\ x=${f(x, 3)}\\ \\text{m}`,
     `\\kappa = B_\\kappa\\cdot u_e = [${Array.from(bKappa).map((v) => f(v, 3)).join(',\\ ')}]\\cdot u_e = ${kappa.toExponential(3)}\\ \\tfrac{1}{\\text{m}}`,
     `\\gamma = B_\\gamma\\cdot u_e = [${Array.from(bGamma).map((v) => f(v, 3)).join(',\\ ')}]\\cdot u_e = ${gamma.toExponential(3)}`,
     `M = EI\\cdot(\\kappa-\\kappa_0) = ${f(ei, 1)}\\cdot(${kappa.toExponential(3)}-${kappa0.toExponential(3)}) = ${f(m, 3)}\\ \\text{kNm}`,
@@ -245,11 +311,11 @@ export function internalForceTex(
 }
 
 /** Egy közvetlen csomóponti teher elhelyezése (nincs integrálás) — 4.7 pont. */
-export function nodalLoadTex(localNode: 0 | 1 | 2, dofOffset: 0 | 1, value: number, unit: string): readonly string[] {
+export function nodalLoadTex(localNode: 0 | 1 | 2, dofOffset: 0 | 1, value: number, unit: string, lang: Lang = 'hu'): readonly string[] {
   const dofIndex = 2 * localNode + dofOffset;
   const rowName = dofOffset === 0 ? 'w' : '\\varphi';
   return [
-    `\\text{Csomópont } ${localNode + 1}\\ (${rowName}\\text{-sor}):\\quad f_e[${dofIndex + 1}] = ${f(value, 3)}\\ ${unit}\\quad\\text{(nincs integrálás, közvetlen elhelyezés)}`,
+    `\\text{${W[lang].node} } ${localNode + 1}\\ (${rowName}\\text{${W[lang].rowSuffix}}):\\quad f_e[${dofIndex + 1}] = ${f(value, 3)}\\ ${unit}\\quad\\text{${W[lang].noIntegration}}`,
   ];
 }
 
@@ -295,10 +361,17 @@ export function extrapolationTex(
  * behelyettesítve — a 7. pont teherlépcsőnkénti naplójának egy konkrét
  * sorát bontja ki: 100·‖ψ‖/‖f‖ ≤ Tolerancia.
  */
-export function convergenceTex(psiNorm: number, fNorm: number, residualPercent: number, tolerancePercent: number, converged: boolean): readonly string[] {
+export function convergenceTex(
+  psiNorm: number,
+  fNorm: number,
+  residualPercent: number,
+  tolerancePercent: number,
+  converged: boolean,
+  lang: Lang = 'hu',
+): readonly string[] {
   return [
     `100\\cdot\\frac{\\lVert\\psi\\rVert}{\\lVert f\\rVert} = 100\\cdot\\frac{${psiNorm.toExponential(3)}}{${fNorm.toExponential(3)}} = ${f(residualPercent, 4)}\\%`,
-    `${f(residualPercent, 4)}\\%\\ ${converged ? '\\le' : '>'}\\ ${f(tolerancePercent, 4)}\\%\\ (\\text{Tolerancia})\\quad\\Rightarrow\\quad\\text{${converged ? 'KONVERGÁLT' : 'további iteráció szükséges'}}`,
+    `${f(residualPercent, 4)}\\%\\ ${converged ? '\\le' : '>'}\\ ${f(tolerancePercent, 4)}\\%\\ (\\text{${W[lang].tolerance}})\\quad\\Rightarrow\\quad\\text{${converged ? W[lang].converged : W[lang].moreIteration}}`,
   ];
 }
 
@@ -320,21 +393,21 @@ export function meMpTex(sigmaY: number, we: number, wp: number, me: number, mp: 
 }
 
 /** Egy réteg-visszavetítés (P15/A 7. pont) TELJES, behelyettesített LaTeX-képlete. */
-export function plasticLayerTex(row: PlasticLayerRow): readonly string[] {
+export function plasticLayerTex(row: PlasticLayerRow, lang: Lang = 'hu'): readonly string[] {
   const { layerIndex, zMm, derived } = row;
   const currentLimit = derived.sigmaY + derived.hPrime * derived.prevState.epsPEff;
   const branch =
     derived.step.r > 0 && derived.step.r < 1
-      ? '\\text{Átlépi a folyási határt}'
+      ? `\\text{${W[lang].crossesLimit}}`
       : derived.step.state.yielded
-        ? '\\text{Már megfolyt, terhelés folytatódik}'
-        : '\\text{Rugalmas marad}';
+        ? `\\text{${W[lang].alreadyYielded}}`
+        : `\\text{${W[lang].staysElastic}}`;
   return [
-    `\\text{${layerIndex + 1}. réteg}\\ (z = ${f(zMm, 1)}\\text{ mm})`,
+    `\\text{${W[lang].layer(layerIndex + 1)}}\\ (z = ${f(zMm, 1)}\\text{ mm})`,
     `\\Delta\\varepsilon = \\Delta\\kappa\\cdot z = ${derived.dKappa.toExponential(3)}\\cdot ${f(zMm * 1e-3, 4)} = ${derived.dEps.toExponential(3)}`,
     `\\sigma_{trial} = \\sigma_{r-1}+E\\Delta\\varepsilon = ${f(derived.prevState.sigma * 1e-4, 3)}+${f(derived.e * 1e-4, 0)}\\cdot ${derived.dEps.toExponential(3)} = ${f(derived.sigmaTrial * 1e-4, 3)}\\ \\tfrac{\\text{kN}}{\\text{cm}^2}`,
     `\\sigma_Y+H'\\varepsilon_{p,r-1} = ${f(derived.sigmaY * 1e-4, 3)}+${f(derived.hPrime * 1e-4, 3)}\\cdot ${derived.prevState.epsPEff.toExponential(3)} = ${f(currentLimit * 1e-4, 3)}\\ \\tfrac{\\text{kN}}{\\text{cm}^2}`,
     `${branch} \\Rightarrow R = ${f(derived.step.r, 3)}`,
-    `\\sigma_{new} = \\pm(\\sigma_Y+H'\\varepsilon_p^{new}) = ${f(derived.step.sigma * 1e-4, 3)}\\ \\tfrac{\\text{kN}}{\\text{cm}^2}\\ (${derived.step.state.yielded ? '\\text{folyva}' : '\\text{rugalmas}'})`,
+    `\\sigma_{new} = \\pm(\\sigma_Y+H'\\varepsilon_p^{new}) = ${f(derived.step.sigma * 1e-4, 3)}\\ \\tfrac{\\text{kN}}{\\text{cm}^2}\\ (${derived.step.state.yielded ? `\\text{${W[lang].yielded}}` : `\\text{${W[lang].elastic}}`})`,
   ];
 }
