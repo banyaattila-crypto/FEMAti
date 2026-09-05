@@ -12,30 +12,34 @@ import { DiagramChart, CHART_HEIGHT, type ChartElementSpan } from './DiagramChar
 import { exportSvgElement } from './exportSvg.js';
 import * as fmt from '../format/numbers.js';
 import type { ModalOutcome } from '../model/compile.js';
+import type { Lang } from '../state/appStore.js';
+import { CHARTS } from '../i18n/charts.js';
 
 export interface ModalPanelProps {
   readonly outcome: ModalOutcome;
   readonly activeMode: number;
   readonly onActiveModeChange: (index: number) => void;
   readonly span: number;
+  readonly lang?: Lang;
 }
 
 const MAX_MODES_SHOWN = 8;
 
-export function ModalPanel({ outcome, activeMode, onActiveModeChange, span }: ModalPanelProps): JSX.Element {
+export function ModalPanel({ outcome, activeMode, onActiveModeChange, span, lang = 'hu' }: ModalPanelProps): JSX.Element {
+  const t = CHARTS[lang];
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   if (outcome.error !== null) {
     return (
       <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        A modell jelenleg nem futtatható — nincs mit ábrázolni. ({outcome.error})
+        {t.modelNotRunnable} ({outcome.error})
       </div>
     );
   }
   if (outcome.modal === null || outcome.modal.modes.length === 0) {
     return (
       <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        Nincs modális eredmény.
+        {t.modalNoResult}
       </div>
     );
   }
@@ -46,7 +50,7 @@ export function ModalPanel({ outcome, activeMode, onActiveModeChange, span }: Mo
   if (mode === undefined) {
     return (
       <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        Nincs modális eredmény.
+        {t.modalNoResult}
       </div>
     );
   }
@@ -76,13 +80,13 @@ export function ModalPanel({ outcome, activeMode, onActiveModeChange, span }: Mo
         }}
       >
         <SegmentedControl
-          ariaLabel="Módus kiválasztása"
+          ariaLabel={t.modeSelectAria}
           value={String(modeIndex)}
           onChange={(v) => onActiveModeChange(Number(v))}
           options={modal.modes.slice(0, MAX_MODES_SHOWN).map((m, i) => ({
             value: String(i),
             label: `${i + 1}. — ${fmt.frequencyHz(m.frequencyHz).value} Hz`,
-            title: `${i + 1}. módus`,
+            title: t.modeTitle(i + 1),
           }))}
         />
         <div style={{ flex: 1 }} />
@@ -93,14 +97,14 @@ export function ModalPanel({ outcome, activeMode, onActiveModeChange, span }: Mo
           type="button"
           className="vem-btn vem-btn--sm"
           onClick={() => svgRef.current && exportSvgElement(svgRef.current, `femati-modal-${modeIndex + 1}.svg`)}
-          title="Az aktív módalak-diagram SVG letöltése"
+          title={t.modeDownloadSvgTitle}
         >
           SVG
         </button>
       </div>
       <div style={{ flex: 1, minHeight: 0, height: CHART_HEIGHT }}>
         <DiagramChart
-          title={`${modeIndex + 1}. módalak — f = ${fmt.frequencyHz(mode.frequencyHz).value} Hz`}
+          title={t.modeShapeTitle(modeIndex + 1, fmt.frequencyHz(mode.frequencyHz).value)}
           xs={xs}
           ys={ys}
           span={span}
@@ -111,6 +115,7 @@ export function ModalPanel({ outcome, activeMode, onActiveModeChange, span }: Mo
           svgRef={(el) => {
             svgRef.current = el;
           }}
+          lang={lang}
         />
       </div>
     </div>

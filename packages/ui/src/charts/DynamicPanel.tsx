@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { Button, SegmentedControl } from '../components/Button.js';
 import { Slider } from '../components/Field.js';
 import { useModelStore } from '../state/modelStore.js';
+import { useAppStore } from '../state/appStore.js';
 import { useDynamicStore } from '../state/dynamicStore.js';
 import {
   DEFAULT_DYNAMIC_SETTINGS,
@@ -22,15 +23,12 @@ import {
   type ExcitationKind,
 } from '../model/dynamicRun.js';
 import { TransientChart, TRANSIENT_CHART_HEIGHT, type TransientQuantity } from './TransientChart.js';
-
-const EXCITATION_LABEL: Record<ExcitationKind, string> = {
-  step: 'lépcső',
-  ramp: 'rámpa',
-  harmonic: 'harmonikus',
-  impulse: 'impulzus',
-};
+import { CHARTS } from '../i18n/charts.js';
+import { SHELL } from '../i18n/shell.js';
 
 export function DynamicPanel(): JSX.Element {
+  const lang = useAppStore((s) => s.lang);
+  const t = CHARTS[lang];
   const model = useModelStore((s) => s.model);
   const run = useDynamicStore((s) => s.run);
   const error = useDynamicStore((s) => s.error);
@@ -62,14 +60,14 @@ export function DynamicPanel(): JSX.Element {
         }}
       >
         <SegmentedControl
-          ariaLabel="Gerjesztés típusa"
+          ariaLabel={t.excitationTypeAria}
           value={settings.excitation}
           onChange={(v) => patch({ excitation: v })}
-          options={(Object.keys(EXCITATION_LABEL) as ExcitationKind[]).map((k) => ({ value: k, label: EXCITATION_LABEL[k] }))}
+          options={(Object.keys(t.excitationLabel) as ExcitationKind[]).map((k) => ({ value: k, label: t.excitationLabel[k] }))}
         />
         <div style={{ width: 140 }}>
           <Slider
-            label="amplitúdó [×]"
+            label={t.amplitudeLabel}
             min={0.1}
             max={3}
             step={0.05}
@@ -82,7 +80,7 @@ export function DynamicPanel(): JSX.Element {
         {settings.excitation === 'harmonic' ? (
           <div style={{ width: 140 }}>
             <Slider
-              label="frekvencia [Hz]"
+              label={t.frequencyLabel}
               min={0.1}
               max={100}
               step={0.1}
@@ -96,7 +94,7 @@ export function DynamicPanel(): JSX.Element {
         {settings.excitation === 'ramp' ? (
           <div style={{ width: 140 }}>
             <Slider
-              label="rámpa-idő [s]"
+              label={t.rampTimeLabel}
               min={0.01}
               max={2}
               step={0.01}
@@ -110,7 +108,7 @@ export function DynamicPanel(): JSX.Element {
         {settings.excitation === 'impulse' ? (
           <div style={{ width: 140 }}>
             <Slider
-              label="impulzus-idő [s]"
+              label={t.impulseTimeLabel}
               min={0.001}
               max={0.5}
               step={0.001}
@@ -136,7 +134,7 @@ export function DynamicPanel(): JSX.Element {
       >
         <div style={{ width: 130 }}>
           <Slider
-            label="csillapítás α"
+            label={t.dampingAlphaLabel}
             min={0}
             max={5}
             step={0.05}
@@ -148,7 +146,7 @@ export function DynamicPanel(): JSX.Element {
         </div>
         <div style={{ width: 130 }}>
           <Slider
-            label="csillapítás β"
+            label={t.dampingBetaLabel}
             min={0}
             max={0.05}
             step={0.0005}
@@ -172,7 +170,7 @@ export function DynamicPanel(): JSX.Element {
         </div>
         <div style={{ width: 130 }}>
           <Slider
-            label="lépésszám"
+            label={t.stepCountLabel}
             min={10}
             max={3000}
             step={10}
@@ -183,11 +181,11 @@ export function DynamicPanel(): JSX.Element {
           />
         </div>
         <Button variant="primary" onClick={runIt}>
-          Futtatás
+          {SHELL[lang].analysisRun}
         </Button>
         {run !== null ? (
           <SegmentedControl
-            ariaLabel="Megjelenített mennyiség"
+            ariaLabel={t.displayedQuantityAria}
             value={quantity}
             onChange={setQuantity}
             options={[
@@ -200,15 +198,15 @@ export function DynamicPanel(): JSX.Element {
 
       {error !== null ? (
         <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-          A dinamikai futtatás nem sikerült: {error}
+          {t.dynamicRunFailed(error)}
         </div>
       ) : run === null ? (
         <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
-          Nincs dinamikai eredmény — állítsd be a gerjesztést, majd Futtatás.
+          {t.noDynamicResult}
         </div>
       ) : (
         <div style={{ flex: 1, minHeight: 0, height: TRANSIENT_CHART_HEIGHT }}>
-          <TransientChart run={run} quantity={quantity} />
+          <TransientChart run={run} quantity={quantity} lang={lang} />
         </div>
       )}
     </div>

@@ -11,6 +11,8 @@ import { useMemo } from 'react';
 import { VIEW_WIDTH } from '../canvas/useModelTransform.js';
 import { combinedSteps, nodalDisplacements, type NonlinearRun } from '../model/nonlinear.js';
 import * as fmt from '../format/numbers.js';
+import type { Lang } from '../state/appStore.js';
+import { CHARTS } from '../i18n/charts.js';
 
 export const LD_CHART_HEIGHT = 200;
 const PAD_L = 64;
@@ -21,9 +23,11 @@ const PAD_B = 34;
 export interface LoadDisplacementChartProps {
   readonly run: NonlinearRun;
   readonly activeStep: number;
+  readonly lang?: Lang;
 }
 
-export function LoadDisplacementChart({ run, activeStep }: LoadDisplacementChartProps): JSX.Element {
+export function LoadDisplacementChart({ run, activeStep, lang = 'hu' }: LoadDisplacementChartProps): JSX.Element {
+  const t = CHARTS[lang];
   const steps = combinedSteps(run);
 
   const points = useMemo(
@@ -57,14 +61,14 @@ export function LoadDisplacementChart({ run, activeStep }: LoadDisplacementChart
       viewBox={`0 0 ${VIEW_WIDTH} ${LD_CHART_HEIGHT}`}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label={`Teher–elmozdulás görbe, referencia-csomópont lehajlása, λ_max = ${maxLambda.toFixed(3)}`}
+      aria-label={t.loadDisplacementAriaLabel(maxLambda.toFixed(3))}
       style={{ width: '100%', height: '100%' }}
     >
       {/* tengelyek */}
       <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={PAD_T + innerH} stroke="var(--border-medium)" strokeWidth={1} />
       <line x1={PAD_L} y1={PAD_T + innerH} x2={PAD_L + innerW} y2={PAD_T + innerH} stroke="var(--border-medium)" strokeWidth={1} />
       <text x={PAD_L} y={16} fill="var(--text-secondary)" style={{ font: '600 13px var(--font-ui)' }}>
-        Teher–elmozdulás (λ – w)
+        {t.loadDisplacementTitle}
       </text>
       <text x={PAD_L + innerW} y={LD_CHART_HEIGHT - 6} textAnchor="end" fill="var(--text-muted)" style={{ font: '500 13px var(--font-mono)' }}>
         |w| [mm]

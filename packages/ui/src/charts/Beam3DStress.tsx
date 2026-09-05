@@ -28,6 +28,8 @@
  */
 import { interpolateAt } from './interpolate.js';
 import { JET_LEGEND_STOPS, jetColor } from './colormap.js';
+import type { Lang } from '../state/appStore.js';
+import { CHARTS } from '../i18n/charts.js';
 
 export const STRESS3D_HEIGHT = 320;
 
@@ -40,6 +42,7 @@ export interface Beam3DStressProps {
   readonly yTopMm: number;
   /** A súlypont távolsága az ALSÓ szélső száltól [mm] — szimmetrikus szelvénynél h/2. */
   readonly yBottomMm: number;
+  readonly lang?: Lang;
 }
 
 const SEGMENTS = 36;
@@ -82,7 +85,8 @@ function SignGlyph({ x, y, positive }: { readonly x: number; readonly y: number;
   );
 }
 
-export function Beam3DStress({ xs, ms, inertia, yTopMm, yBottomMm }: Beam3DStressProps): JSX.Element {
+export function Beam3DStress({ xs, ms, inertia, yTopMm, yBottomMm, lang = 'hu' }: Beam3DStressProps): JSX.Element {
+  const t = CHARTS[lang];
   const span = xs.length > 0 ? (xs[xs.length - 1] ?? 1) : 1;
   // z lefelé pozitív (DESIGN-TERV 5.1) — a felső szál z < 0, az alsó z > 0.
   const zTop = -(yTopMm / 1000);
@@ -151,17 +155,17 @@ export function Beam3DStress({ xs, ms, inertia, yTopMm, yBottomMm }: Beam3DStres
   });
 
   return (
-    <svg width="100%" height={STRESS3D_HEIGHT} viewBox="0 0 460 320" role="img" aria-label="Szélső szálak hajlítófeszültsége, előjelesen, izometrikus">
-      <title>Felső és alsó szélső szál hajlítófeszültsége (σ = M·z/I), előjelesen — izometrikus, sematikus geometria</title>
+    <svg width="100%" height={STRESS3D_HEIGHT} viewBox="0 0 460 320" role="img" aria-label={t.stress3dAriaLabel}>
+      <title>{t.stress3dTitle}</title>
       {frontFaces}
       {topFaces}
       {bottomGlyphs}
       {topGlyphs}
       <text x={4} y={P0.y - WIDTH_VEC.y / 2 - 6} fontFamily="var(--font-mono)" fontSize={10} fill="var(--text-faint)">
-        felső szál
+        {t.topFiberLabel}
       </text>
       <text x={4} y={P0.y + HEIGHT_VEC.y / 2 + 3} fontFamily="var(--font-mono)" fontSize={10} fill="var(--text-faint)">
-        alsó szál
+        {t.bottomFiberLabel}
       </text>
       <defs>
         <linearGradient id="vem-stress-legend" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -178,13 +182,13 @@ export function Beam3DStress({ xs, ms, inertia, yTopMm, yBottomMm }: Beam3DStres
         {sigmaMax.toFixed(1)} MPa
       </text>
       <text x="180" y="282" fontFamily="var(--font-mono)" fontSize="11" fill="var(--text-muted)" textAnchor="middle">
-        |σ| (szín) — nagyság
+        {t.magnitudeLegend}
       </text>
       <text x="30" y="302" fontFamily="var(--font-mono)" fontSize="11" fill="var(--sem-plastic)">
-        + húzás
+        {t.tensionLegend}
       </text>
       <text x="330" y="302" fontFamily="var(--font-mono)" fontSize="11" fill="var(--sem-load)" textAnchor="end">
-        − nyomás
+        {t.compressionLegend}
       </text>
     </svg>
   );

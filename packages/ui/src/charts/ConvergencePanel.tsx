@@ -12,6 +12,8 @@
 import { VIEW_WIDTH } from '../canvas/useModelTransform.js';
 import { combinedSteps, type NonlinearRun } from '../model/nonlinear.js';
 import * as fmt from '../format/numbers.js';
+import type { Lang } from '../state/appStore.js';
+import { CHARTS } from '../i18n/charts.js';
 
 export const CONVERGENCE_HEIGHT = 200;
 const PAD_L = 58;
@@ -24,9 +26,11 @@ const MAX_LOG = 3; // 1000 % — durván divergens
 export interface ConvergencePanelProps {
   readonly run: NonlinearRun;
   readonly activeStep: number;
+  readonly lang?: Lang;
 }
 
-export function ConvergencePanel({ run, activeStep }: ConvergencePanelProps): JSX.Element {
+export function ConvergencePanel({ run, activeStep, lang = 'hu' }: ConvergencePanelProps): JSX.Element {
+  const t = CHARTS[lang];
   const steps = combinedSteps(run);
   const innerW = VIEW_WIDTH - PAD_L - PAD_R;
   const innerH = CONVERGENCE_HEIGHT - PAD_T - PAD_B;
@@ -44,13 +48,13 @@ export function ConvergencePanel({ run, activeStep }: ConvergencePanelProps): JS
         viewBox={`0 0 ${VIEW_WIDTH} ${CONVERGENCE_HEIGHT}`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label="Konvergencia-panel: iterációnkénti reziduum, lépésenként csoportosítva, log-skálán"
+        aria-label={t.convergenceAriaLabel}
         style={{ width: '100%', height: '100%' }}
       >
         <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={PAD_T + innerH} stroke="var(--border-medium)" strokeWidth={1} />
         <line x1={PAD_L} y1={PAD_T + innerH} x2={PAD_L + innerW} y2={PAD_T + innerH} stroke="var(--border-medium)" strokeWidth={1} />
         <text x={PAD_L} y={16} fill="var(--text-secondary)" style={{ font: '600 13px var(--font-ui)' }}>
-          Konvergencia (reziduum %, log-skála)
+          {t.convergenceTitle}
         </text>
 
         {/* y-tengely rácsvonalak, tízhatványonként */}
@@ -107,12 +111,9 @@ export function ConvergencePanel({ run, activeStep }: ConvergencePanelProps): JS
 
       <div style={{ padding: '0 var(--space-6) var(--space-4)', fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
         {run.rejectedAttempts.length > 0 ? (
-          <span>
-            {fmt.count(run.rejectedAttempts.length).value} elvetett próbálkozás (Δλ felezve) a terhelési szakaszban —
-            legutóbb λ ≈ {run.rejectedAttempts.at(-1)?.lambda.toFixed(4)}-nél.
-          </span>
+          <span>{t.rejectedAttempts(fmt.count(run.rejectedAttempts.length).value, run.rejectedAttempts.at(-1)?.lambda.toFixed(4) ?? '—')}</span>
         ) : (
-          <span>Nem volt Δλ-felezés — minden teherlépcső elsőre konvergált.</span>
+          <span>{t.noHalving}</span>
         )}
       </div>
     </div>

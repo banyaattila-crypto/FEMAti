@@ -11,6 +11,8 @@ import { SegmentedControl } from '../components/Button.js';
 import { VIEW_WIDTH } from '../canvas/useModelTransform.js';
 import type { EnvelopeResult } from '../model/envelope.js';
 import * as fmt from '../format/numbers.js';
+import type { Lang } from '../state/appStore.js';
+import { CHARTS } from '../i18n/charts.js';
 
 export const ENVELOPE_CHART_HEIGHT = 200;
 const PAD_L = 64;
@@ -21,9 +23,11 @@ const PAD_B = 34;
 export interface EnvelopeChartProps {
   readonly result: EnvelopeResult;
   readonly span: number;
+  readonly lang?: Lang;
 }
 
-export function EnvelopeChart({ result, span }: EnvelopeChartProps): JSX.Element {
+export function EnvelopeChart({ result, span, lang = 'hu' }: EnvelopeChartProps): JSX.Element {
+  const t = CHARTS[lang];
   const [field, setField] = useState<'M' | 'T'>('M');
   const ys = field === 'M' ? { max: result.mMax, min: result.mMin } : { max: result.tMax, min: result.tMin };
   const formatValue = field === 'M' ? fmt.moment : fmt.shear;
@@ -50,7 +54,7 @@ export function EnvelopeChart({ result, span }: EnvelopeChartProps): JSX.Element
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
       <div style={{ padding: '2px var(--space-6)', flex: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
         <SegmentedControl
-          ariaLabel="Burkolóábra mezője"
+          ariaLabel={t.envelopeFieldAria}
           value={field}
           onChange={setField}
           options={[
@@ -66,7 +70,7 @@ export function EnvelopeChart({ result, span }: EnvelopeChartProps): JSX.Element
         viewBox={`0 0 ${VIEW_WIDTH} ${ENVELOPE_CHART_HEIGHT}`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={`${field} burkolóábra a mozgó teherre`}
+        aria-label={t.envelopeChartAria(field)}
         style={{ width: '100%', flex: '1 1 auto' }}
       >
         <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={PAD_T + innerH} stroke="var(--border-medium)" strokeWidth={1} />

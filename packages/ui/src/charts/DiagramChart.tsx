@@ -15,6 +15,8 @@ import { AXIS_X0, AXIS_X1, VIEW_WIDTH } from '../canvas/useModelTransform.js';
 import { findExtreme, interpolateAt } from './interpolate.js';
 import { jetColor } from './colormap.js';
 import type { Formatted } from '../format/numbers.js';
+import type { Lang } from '../state/appStore.js';
+import { CHARTS } from '../i18n/charts.js';
 
 export const CHART_HEIGHT = 132;
 const BASELINE = 58;
@@ -41,6 +43,7 @@ export interface DiagramChartProps {
   readonly hoverX: number | null;
   readonly onHoverX: (x: number | null) => void;
   readonly svgRef?: (el: SVGSVGElement | null) => void;
+  readonly lang?: Lang;
 }
 
 function errorColor(pct: number): string {
@@ -69,7 +72,9 @@ export function DiagramChart({
   hoverX,
   onHoverX,
   svgRef,
+  lang = 'hu',
 }: DiagramChartProps): JSX.Element {
+  const t = CHARTS[lang];
   const localRef = useRef<SVGSVGElement | null>(null);
   const gradientId = `vem-heat-${useId()}`;
 
@@ -137,7 +142,7 @@ export function DiagramChart({
         viewBox={`0 0 ${VIEW_WIDTH} ${CHART_HEIGHT}`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={`${title} diagram, szélsőérték ${extreme ? format(extreme.value).value + ' ' + format(extreme.value).unit : '—'}`}
+        aria-label={t.diagramAriaLabel(title, extreme ? format(extreme.value).value + ' ' + format(extreme.value).unit : '—')}
         style={{ width: '100%', height: '100%', cursor: 'crosshair' }}
         onPointerMove={onMove}
         onPointerLeave={() => onHoverX(null)}
@@ -216,7 +221,7 @@ export function DiagramChart({
         {/* cím + tükrözés-jelzés */}
         <text x={AXIS_X0} y={17} fill="var(--text-secondary)" style={{ font: '600 13px var(--font-ui)' }}>
           {title}
-          {flip ? ' ▼ húzott oldal' : ''}
+          {flip ? t.tensionSideSuffix : ''}
         </text>
       </svg>
     </div>

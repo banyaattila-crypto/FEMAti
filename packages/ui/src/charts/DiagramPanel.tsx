@@ -27,6 +27,8 @@ import { interpolateAt } from './interpolate.js';
 import { exportSvgElement } from './exportSvg.js';
 import * as fmt from '../format/numbers.js';
 import type { DiagramTab } from '../state/appStore.js';
+import { CHARTS } from '../i18n/charts.js';
+import { REPORT } from '../i18n/report.js';
 
 export interface DiagramPanelProps {
   readonly activeDiagram: DiagramTab;
@@ -34,6 +36,8 @@ export interface DiagramPanelProps {
 }
 
 export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): JSX.Element {
+  const lang = useAppStore((s) => s.lang);
+  const t = CHARTS[lang];
   const model = useModelStore((s) => s.model);
   const { result, error } = useLiveResult(model);
   const modalOutcome = useModalResult(model, activeDiagram === 'modal');
@@ -47,7 +51,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   if (activeDiagram === 'modal') {
-    return <ModalPanel outcome={modalOutcome} activeMode={activeMode} onActiveModeChange={setActiveMode} span={model.span} />;
+    return <ModalPanel outcome={modalOutcome} activeMode={activeMode} onActiveModeChange={setActiveMode} span={model.span} lang={lang} />;
   }
 
   if (activeDiagram === 'dynamic') {
@@ -58,23 +62,23 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
     if (nonlinearError !== null) {
       return (
         <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-          A nemlineáris futtatás nem sikerült: {nonlinearError}
+          {t.nonlinearRunFailed(nonlinearError)}
         </div>
       );
     }
     if (nonlinearRun === null) {
       return (
         <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
-          Nincs nemlineáris eredmény — futtasd a SZÁMÍTÁS gombbal (F5).
+          {t.noNonlinearResult}
         </div>
       );
     }
     return (
       <div style={{ width: '100%', height: activeDiagram === 'load-displacement' ? LD_CHART_HEIGHT : CONVERGENCE_HEIGHT }}>
         {activeDiagram === 'load-displacement' ? (
-          <LoadDisplacementChart run={nonlinearRun} activeStep={activeStep} />
+          <LoadDisplacementChart run={nonlinearRun} activeStep={activeStep} lang={lang} />
         ) : (
-          <ConvergencePanel run={nonlinearRun} activeStep={activeStep} />
+          <ConvergencePanel run={nonlinearRun} activeStep={activeStep} lang={lang} />
         )}
       </div>
     );
@@ -84,20 +88,20 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
     if (!model.movingLoad.enabled) {
       return (
         <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
-          Kapcsold be a mozgó terhet a bal panelen ("mozgó teher — burkolóábra") ehhez a fülhöz.
+          {t.enableMovingLoadHint}
         </div>
       );
     }
     if (envelope === null) {
       return (
         <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-          A burkolóábra nem számítható — a modell jelenlegi állapotában nem futtatható.
+          {t.envelopeNotComputable}
         </div>
       );
     }
     return (
       <div style={{ width: '100%', height: ENVELOPE_CHART_HEIGHT }}>
-        <EnvelopeChart result={envelope} span={model.span} />
+        <EnvelopeChart result={envelope} span={model.span} lang={lang} />
       </div>
     );
   }
@@ -105,14 +109,14 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
   if (error !== null) {
     return (
       <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        A modell jelenleg nem futtatható — nincs mit ábrázolni.
+        {t.modelNotRunnable}
       </div>
     );
   }
   if (result === null) {
     return (
       <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        Nincs számítási eredmény.
+        {t.noComputationResult}
       </div>
     );
   }
@@ -130,8 +134,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
     if (mp === null || vpl === null) {
       return (
         <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
-          A kihasználtsági térképhez folyáshatárral (σY) rendelkező anyag szükséges — a jelenlegi anyagnak nincs
-          megadva képlékeny teherbírása.
+          {t.utilizationNeedsYield}
         </div>
       );
     }
@@ -161,12 +164,11 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
             flex: 'none',
           }}
         >
-          M-V kihasználtság (EN 1993-1-1 6.2.8) a gerenda mentén — 100% fölött a keresztmetszet túllépi a redukált
-          teherbírást (200%-nál a skála levágva)
+          {t.utilizationCaption}
         </div>
         <div style={{ flex: 1, minHeight: 0, height: CHART_HEIGHT }}>
           <DiagramChart
-            title="M-V kihasználtság"
+            title={t.utilizationChartTitle}
             xs={uXs}
             ys={uYs}
             span={model.span}
@@ -177,6 +179,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
             svgRef={(el) => {
               svgRef.current = el;
             }}
+            lang={lang}
           />
         </div>
       </div>
@@ -194,6 +197,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
           inertia={result.props.inertia}
           yTopMm={(secProps.yTop ?? secProps.yMax) * 1000}
           yBottomMm={(secProps.yBottom ?? secProps.yMax) * 1000}
+          lang={lang}
         />
       </div>
     );
@@ -206,11 +210,12 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
     errorEstimate: el.errorEstimate,
   }));
 
+  const diagramTitle = REPORT[lang].diagramTitle;
   const fields: Record<'M' | 'T' | 'w' | 'phi', { readonly ys: readonly number[]; readonly format: typeof fmt.moment; readonly title: string }> = {
-    M: { ys: result.nodes.map((n) => n.m), format: fmt.moment, title: 'M — hajlítónyomaték' },
-    T: { ys: result.nodes.map((n) => n.t), format: fmt.shear, title: 'T — nyíróerő' },
-    w: { ys: result.nodes.map((n) => n.w), format: fmt.deflection, title: 'w — lehajlás' },
-    phi: { ys: result.nodes.map((n) => n.phi), format: fmt.rotation, title: 'φ — elfordulás' },
+    M: { ys: result.nodes.map((n) => n.m), format: fmt.moment, title: diagramTitle.M },
+    T: { ys: result.nodes.map((n) => n.t), format: fmt.shear, title: diagramTitle.T },
+    w: { ys: result.nodes.map((n) => n.w), format: fmt.deflection, title: diagramTitle.w },
+    phi: { ys: result.nodes.map((n) => n.phi), format: fmt.rotation, title: diagramTitle.phi },
   };
   const active = fields[activeDiagram as 'M' | 'T' | 'w' | 'phi'];
 
@@ -235,7 +240,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
           flex: 'none',
         }}
       >
-        <span>{hoverX !== null ? `x = ${hoverX.toFixed(2)} m` : 'metszet: mozgasd az egeret a diagramon'}</span>
+        <span>{hoverX !== null ? `x = ${hoverX.toFixed(2)} m` : t.sectionHoverHint}</span>
         {readouts.map((r) => (
           <span key={r.label}>
             {r.label} = {r.value !== null ? `${r.format(r.value).value} ${r.format(r.value).unit}` : '—'}
@@ -246,7 +251,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
           type="button"
           className="vem-btn vem-btn--sm"
           onClick={() => svgRef.current && exportSvgElement(svgRef.current, `femati-${activeDiagram}.svg`)}
-          title="Az aktív diagram SVG letöltése"
+          title={t.downloadSvgTitle}
         >
           SVG
         </button>
@@ -265,6 +270,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
           svgRef={(el) => {
             svgRef.current = el;
           }}
+          lang={lang}
         />
       </div>
     </div>
