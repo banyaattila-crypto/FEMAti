@@ -20,6 +20,7 @@ import type { SolverStatus } from '../components/Feedback.js';
 import type { CanvasTool } from '../canvas/ToolPalette.js';
 
 const WELCOME_SEEN_KEY = 'femati:welcome-seen';
+const LANG_STORAGE_KEY = 'femati:lang';
 
 /**
  * Igaz, ha a felhasználó már látta a "Kezdő lépések" üdvözlő kártyát —
@@ -33,6 +34,17 @@ function hasSeenWelcome(): boolean {
     return localStorage.getItem(WELCOME_SEEN_KEY) === '1';
   } catch {
     return true;
+  }
+}
+
+/** A teljes felület nyelve (2026-09-05, i18n-bevezetés) — globális, `localStorage`-perzisztált. */
+export type Lang = 'hu' | 'en';
+
+function readStoredLang(): Lang {
+  try {
+    return localStorage.getItem(LANG_STORAGE_KEY) === 'en' ? 'en' : 'hu';
+  } catch {
+    return 'hu';
   }
 }
 
@@ -84,6 +96,8 @@ export interface AppState {
    * vászon-feliratok) MINDIG SI marad, ld. `format/numbers.ts` fejléce.
    */
   unitSystem: UnitSystem;
+  /** A teljes felület nyelve (2026-09-05, i18n-bevezetés) — `localStorage`-perzisztált. */
+  lang: Lang;
   /** A keresztmetszet-inspektor (P13 #4) nyitott panelje; `null` = zárva. */
   inspector: InspectorSelection | null;
   /** A számítási jegyzőkönyv (P15) nyitva van-e. */
@@ -125,6 +139,7 @@ export interface AppState {
   setMomentTensionSide: (v: boolean) => void;
   setShowReactions: (v: boolean) => void;
   setUnitSystem: (v: UnitSystem) => void;
+  setLang: (v: Lang) => void;
   setStatus: (status: SolverStatus, detail?: string) => void;
   openInspector: (selection: InspectorSelection) => void;
   closeInspector: () => void;
@@ -160,6 +175,7 @@ export const useAppStore = create<AppState>()((set) => ({
   momentTensionSide: true,
   showReactions: true,
   unitSystem: 'si',
+  lang: readStoredLang(),
   inspector: null,
   reportOpen: false,
   derivationOpen: false,
@@ -188,6 +204,14 @@ export const useAppStore = create<AppState>()((set) => ({
   setMomentTensionSide: (v) => set({ momentTensionSide: v }),
   setShowReactions: (v) => set({ showReactions: v }),
   setUnitSystem: (v) => set({ unitSystem: v }),
+  setLang: (v) => {
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, v);
+    } catch {
+      // localStorage nem elérhető (pl. privát böngészés) — a váltó akkor is működik, csak nem marad meg.
+    }
+    set({ lang: v });
+  },
   setStatus: (status, detail = '') => set({ status, statusDetail: detail }),
   openInspector: (selection) => set({ inspector: selection }),
   closeInspector: () => set({ inspector: null }),

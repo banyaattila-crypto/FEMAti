@@ -11,20 +11,17 @@
  *
  * HU/EN nyelvváltó (2026-09-04, felhasználói kérés): a publikus GitHub-repó
  * nem magyar látogatói ne csak a README-marketingszöveget kapják, hanem az
- * elméleti tartalmat is — ÉLŐ váltó, csak ehhez az 5 fülhöz, nem az egész
- * app i18n-je (az szándékosan el van halasztva, ld. memória). A `CONTENT`
- * ezért nyelvenként külön rekord; a képletek (`Formula tex=...`) nyelv-
- * függetlenek, nem duplikáltak.
+ * elméleti tartalmat is. Kezdetben ez egy elszigetelt, csak-erre-az-5-fülre
+ * szóló váltó volt; 2026-09-05-től a nyelv globális (`appStore.ts` `lang`
+ * mező), a header (`App.tsx`) mindig látható HU/EN váltóján keresztül —
+ * ez a nézet már csak OLVASSA az `s.lang`-ot, saját váltót nem mutat. A
+ * `CONTENT` ezért nyelvenként külön rekord; a képletek (`Formula tex=...`)
+ * nyelvfüggetlenek, nem duplikáltak.
  */
-import { useState } from 'react';
 import './theory.css';
 import { Formula } from '../derivation/Formula.js';
 import { Logo } from '../components/Logo.js';
-import { useAppStore, type TheoryTopic } from '../state/appStore.js';
-
-type Lang = 'hu' | 'en';
-
-const LANG_STORAGE_KEY = 'femati-theory-lang';
+import { useAppStore, type Lang, type TheoryTopic } from '../state/appStore.js';
 
 interface TopicContent {
   readonly title: string;
@@ -1141,33 +1138,16 @@ const CONTENT_EN: Record<TheoryTopic, TopicContent> = {
 
 const CONTENT: Record<Lang, Record<TheoryTopic, TopicContent>> = { hu: CONTENT_HU, en: CONTENT_EN };
 
-function readStoredLang(): Lang {
-  try {
-    const stored = localStorage.getItem(LANG_STORAGE_KEY);
-    return stored === 'en' ? 'en' : 'hu';
-  } catch {
-    return 'hu';
-  }
-}
-
 export function TheoryView(): JSX.Element | null {
   const theoryOpen = useAppStore((s) => s.theoryOpen);
   const theoryTopic = useAppStore((s) => s.theoryTopic);
   const setTheoryOpen = useAppStore((s) => s.setTheoryOpen);
   const openTheory = useAppStore((s) => s.openTheory);
-  const [lang, setLang] = useState<Lang>(readStoredLang);
+  const lang = useAppStore((s) => s.lang);
 
   if (!theoryOpen) return null;
 
   const close = (): void => setTheoryOpen(false);
-  const selectLang = (next: Lang): void => {
-    setLang(next);
-    try {
-      localStorage.setItem(LANG_STORAGE_KEY, next);
-    } catch {
-      /* privát böngészés / letiltott storage — a váltó akkor is működik, csak nem marad meg */
-    }
-  };
   const content = CONTENT[lang][theoryTopic];
   const strings = STRINGS[lang];
 
@@ -1177,24 +1157,6 @@ export function TheoryView(): JSX.Element | null {
         <nav className="vem-theory__nav" aria-label={strings.navAria}>
           <div className="vem-theory__nav-head">
             <h1>{strings.nav}</h1>
-            <div className="vem-theory__lang" role="group" aria-label="Nyelv / Language">
-              <button
-                type="button"
-                className="vem-theory__lang-btn"
-                aria-pressed={lang === 'hu'}
-                onClick={() => selectLang('hu')}
-              >
-                HU
-              </button>
-              <button
-                type="button"
-                className="vem-theory__lang-btn"
-                aria-pressed={lang === 'en'}
-                onClick={() => selectLang('en')}
-              >
-                EN
-              </button>
-            </div>
           </div>
           {TOPICS.map((id) => (
             <button

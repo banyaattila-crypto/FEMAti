@@ -47,32 +47,6 @@
   margin: 0;
 }
 
-/* HU/EN élő váltó, csak az Elméletek nézethez (2026-09-04, felhasználói
-   kérés) — nem az egész app i18n-je, ld. TheoryView.tsx header-komment. */
-.vem-theory__lang {
-  display: flex;
-  gap: 2px;
-}
-
-.vem-theory__lang-btn {
-  border: 1px solid var(--border-subtle);
-  background: none;
-  color: var(--text-muted);
-  font-size: 10.5px;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.vem-theory__lang-btn[aria-pressed='true'] {
-  background: var(--accent-soft, var(--sem-elastic));
-  color: var(--text-primary);
-  border-color: transparent;
-}
-
 .vem-theory__nav-item {
   display: block;
   width: 100%;

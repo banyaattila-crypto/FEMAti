@@ -81,6 +81,32 @@
   border-color: var(--sem-error);
 }
 
+/* Globális HU/EN nyelvváltó (2026-09-05, i18n-bevezetés) — eredetileg a
+   Theory nézetbe elszigetelve, innentől a fejlécben, mindig látható. */
+.vem-lang-switch {
+  display: flex;
+  gap: 2px;
+}
+
+.vem-lang-switch-btn {
+  border: 1px solid var(--border-subtle);
+  background: none;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.vem-lang-switch-btn[aria-pressed='true'] {
+  background: var(--accent-soft, var(--sem-elastic));
+  color: var(--text-primary);
+  border-color: transparent;
+}
+
 .vem-spinner {
   width: 11px;
   height: 11px;

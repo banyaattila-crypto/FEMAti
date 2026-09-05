@@ -20,6 +20,7 @@ import { WelcomeDialog } from './shell/WelcomeDialog.js';
 import { DatabaseView } from './catalog/DatabaseView.js';
 import { findPreset } from './data/catalog.js';
 import { useAppStore, type DiagramTab, type MobileTab } from './state/appStore.js';
+import { SHELL } from './i18n/shell.js';
 import { useModelStore } from './state/modelStore.js';
 import { useNonlinearStore } from './state/nonlinearStore.js';
 import { useDynamicStore } from './state/dynamicStore.js';
@@ -67,6 +68,7 @@ const LEGEND = [
 
 export function App(): JSX.Element {
   const s = useAppStore();
+  const t = SHELL[s.lang];
   const model = useModelStore((st) => st.model);
   const undo = useModelStore((st) => st.undo);
   const redo = useModelStore((st) => st.redo);
@@ -365,19 +367,37 @@ export function App(): JSX.Element {
         <div className="vem-chrome__brand">
           <Logo variant="mark" theme="dark" size={20} />
           <div className="vem-chrome__name">FEM@ti</div>
-          <div className="vem-chrome__subtitle">Timoshenko gerenda · rugalmas–képlékeny végeselemes analízis</div>
+          <div className="vem-chrome__subtitle">{t.subtitle}</div>
         </div>
         <MenuBar menus={menus} />
         <div className="vem-chrome__spacer" />
+        <div className="vem-lang-switch" role="group" aria-label="Nyelv / Language">
+          <button
+            type="button"
+            className="vem-lang-switch-btn"
+            aria-pressed={s.lang === 'hu'}
+            onClick={() => s.setLang('hu')}
+          >
+            HU
+          </button>
+          <button
+            type="button"
+            className="vem-lang-switch-btn"
+            aria-pressed={s.lang === 'en'}
+            onClick={() => s.setLang('en')}
+          >
+            EN
+          </button>
+        </div>
         <div className="vem-chrome__actions">
-          <Button onClick={undo} disabled={!canUndo} title="Visszavonás (Ctrl+Z)" ariaLabel="Visszavonás">
+          <Button onClick={undo} disabled={!canUndo} title={t.undoTitle} ariaLabel={t.undoAria}>
             ↶
           </Button>
-          <Button onClick={redo} disabled={!canRedo} title="Újra (Ctrl+Y)" ariaLabel="Újra">
+          <Button onClick={redo} disabled={!canRedo} title={t.redoTitle} ariaLabel={t.redoAria}>
             ↷
           </Button>
           <Button size="sm" variant="primary" onClick={run} loading={s.status === 'running'}>
-            SZÁMÍTÁS
+            {t.compute}
           </Button>
         </div>
         <div className="vem-chrome__file">{preset.id}.femati.json</div>
