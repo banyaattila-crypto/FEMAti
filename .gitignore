@@ -7,7 +7,6 @@ coverage/
 .idea/
 .vscode/
 *.local
-docs/VALIDATION.md
 .tmp/
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
