@@ -22,6 +22,8 @@ minden implementált képletet a diplomaterv adott oldalszámának és
 egyenletszámának (ld. [`docs/THEORY.md`](docs/THEORY.md)), és minden
 mechanikai állítást validációs teszttel bizonyít, zárt alakú vagy
 kézzel-számolt referenciaértékek ellen (ld. [`docs/VALIDATION.md`](docs/VALIDATION.md)).
+Egy egyenes válasz arra, "honnan tudjuk, hogy a mögöttes mechanika helyes, és
+mit *nem* állítunk" — ld. [`docs/VALIDATION-SCOPE.hu.md`](docs/VALIDATION-SCOPE.hu.md).
 
 Ahol a mai szoftver-mérnöki gyakorlat és az 1996-os megoldás eltér (pl. a
 frontális egyenletmegoldó helyett skyline-tárolás a produkciós útvonalon),
@@ -96,6 +98,7 @@ pnpm workspace, 4 csomag:
 | [`docs/THEORY.md`](docs/THEORY.md) | Minden implementált képlet: kód helye ÉS diplomaterv-oldalszám. |
 | [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) | Rögzített mérnöki/kódolási konvenciók (előjelek, DOF-sorrend, egységek). |
 | [`docs/VALIDATION.md`](docs/VALIDATION.md) | Generált validációs jegyzőkönyv. |
+| [`docs/VALIDATION-SCOPE.hu.md`](docs/VALIDATION-SCOPE.hu.md) | Mit validáltunk, milyen módszerrel, és mit NEM állítunk — bírálóknak/kollégáknak szánt összefoglaló. |
 | [`docs/HIBATURESI-POLITIKA.md`](docs/HIBATURESI-POLITIKA.md) | A hibakezelési/kockázati politika (K1–K8). |
 | [`docs/ADR/`](docs/ADR) | Architektúra-döntési feljegyzések. |
 | [`MASTER-PROMPT-TERV.md`](MASTER-PROMPT-TERV.md) | A projekt teljes, fázisokra bontott terve. |

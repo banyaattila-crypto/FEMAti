@@ -5,13 +5,17 @@
 **Elastic–plastic Timoshenko-beam finite element analysis** — a modern,
 TypeScript-based, validated FEA program.
 
-> **Note on language:** the application UI, source comments, and the deeper
-> documentation (`docs/`, ADRs) are in Hungarian — this is a personal project
-> built around a Hungarian engineering thesis. This README exists so an
-> English-speaking visitor can understand what the project does and judge
-> its engineering/software quality without reading Hungarian. If you want to
-> actually run it, the on-screen labels will be Hungarian; the physics
-> notation (M, T, w, φ, E, G, I, A) is standard and language-independent.
+> **Note on language:** the source comments and the deeper documentation
+> (`docs/`, ADRs) are in Hungarian — this is a personal project built around
+> a Hungarian engineering thesis. This README exists so an English-speaking
+> visitor can understand what the project does and judge its engineering/
+> software quality without reading Hungarian. The application's own user
+> interface has a full HU/EN switch (header, top right, as of 2026-09-05) —
+> if you run it, you can work entirely in English; the physics notation
+> (M, T, w, φ, E, G, I, A) was always standard and language-independent
+> regardless. Catalog data (material/section names and sources) and a few
+> secondary chart/diagram panels remain Hungarian-only in both UI languages
+> for now.
 
 ---
 
@@ -29,7 +33,9 @@ thesis, but **line-by-line traceable** to it: every implemented formula is
 matched to the thesis's exact page and equation number (see
 [`docs/THEORY.md`](docs/THEORY.md)), and every mechanical claim is proven by
 a validation test against closed-form or hand-calculated reference values
-(see [`docs/VALIDATION.md`](docs/VALIDATION.md)).
+(see [`docs/VALIDATION.md`](docs/VALIDATION.md)). For a direct answer to
+"how do you know the underlying mechanics is correct, and what are you
+*not* claiming," see [`docs/VALIDATION-SCOPE.md`](docs/VALIDATION-SCOPE.md).
 
 Wherever current software-engineering practice diverges from the 1996
 solution (e.g. skyline storage instead of the frontal solver on the
@@ -104,6 +110,7 @@ pnpm workspace, 4 packages:
 | [`docs/THEORY.md`](docs/THEORY.md) | Every implemented formula: code location AND thesis page number. (Hungarian) |
 | [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) | Fixed engineering/coding conventions (sign conventions, DOF order, units). (Hungarian) |
 | [`docs/VALIDATION.md`](docs/VALIDATION.md) | Generated validation report. (Hungarian) |
+| [`docs/VALIDATION-SCOPE.md`](docs/VALIDATION-SCOPE.md) | What was validated, how, and what is *not* claimed — a summary for reviewers/colleagues. |
 | [`docs/HIBATURESI-POLITIKA.md`](docs/HIBATURESI-POLITIKA.md) | Error-handling/risk policy (K1–K8). (Hungarian) |
 | [`docs/ADR/`](docs/ADR) | Architecture decision records. (Hungarian) |
 | [`MASTER-PROMPT-TERV.md`](MASTER-PROMPT-TERV.md) | The project's full, phase-by-phase plan. (Hungarian) |
