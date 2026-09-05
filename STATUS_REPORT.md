@@ -1,8 +1,12 @@
 # FEMAti — Állapotjelentés
 
-**Utolsó frissítés:** 2026-09-04
+**Utolsó frissítés:** 2026-09-05
 **Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
-**Utolsó commit:** `d92526a` — no-tension (felemelkedésre képes) Winkler-ágyazat (ADR-0022)
+**Utolsó commit:** `595acd8` — i18n: panelek és vászon fordítása (2. fázis) — push-olva
+
+> **Folyamatban lévő munka:** teljes UI i18n (HU→EN), fázisonként. Állapot
+> és folytatási pont: ld. a 78. pont. **Nem várt megszakítás esetén** (pl.
+> gép-újraindítás) a session nélkül is folytatható innen.
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -83,8 +87,10 @@ pnpm check   → typecheck + lint + test, mindhárom csomagra, TISZTA
 | `fem-core` | 35 (32 fut, 3 `PROFILE=1` mögé zárt profilozó teszt mindig skip) | 504 (+3 skip) | küszöb: ≥90% (a P16 óta nem mérve újra ezen a frissítésen) |
 | `fem-validation` | 2 | 30 | — (validációs esetek, nem klasszikus unit teszt) |
 | `fem-db` | 2 | 25 | — (adatkonzisztencia: Ecm-képlet visszaellenőrzés, katalógus-geometria ±6%-os egyezés a fem-core zárt alakjával, forrás/verified-mező kötelező jelenléte) |
-| `ui` | 20 | 107 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, a mértékegység-váltó SI/US mindkét iránya, a LaTeX→OOXML képlet-konverter, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
-| **Összesen** | **59** | **666** (+3 skip) | |
+| `ui` | 18 | 108 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, a mértékegység-váltó SI/US mindkét iránya, a LaTeX→OOXML képlet-konverter, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
+| **Összesen** | **57** | **674** (+3 skip) | |
+
+(2026-09-05-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 76–77. pont i18n-commitjai óta is. A tesztszám maga nem nőtt, mert ez a munka UI-szöveg-kivonatolás/áthuzalozás, nem új logika.)
 
 (2026-09-04-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 68–72. pont commitjai óta is, beleértve a Word-export valódi képletobjektumait.)
 
@@ -2190,6 +2196,67 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     ellenőrizve. Élőben ellenőrizve böngészőben (jelölőnégyzet létrehoz/
     töröl, nem omlik össze). `pnpm check` (mind a 4 csomag, 674 teszt)
     teljes zöld.
+
+76. **Teljes UI i18n (HU→EN) — 0. fázis: alapinfrastruktúra** (`b495789`,
+    2026-09-05): a korábban tudatosan elhalasztott roadmap-pontot (ld. 74.
+    pont, ill. a roadmap-memória) a felhasználó explicit elindította, azzal
+    a kifejezett kéréssel, hogy "inkább tartson tovább, de legyen
+    szakmailag nagyon jó" — fázisonként, ellenőrzéssel haladunk, nem egy
+    nagy commitban. Architektúra: nincs új függőség (nincs react-i18next
+    stb.) — a `TheoryView.tsx`-ben már bevált `Record<Lang, T>`-minta
+    globálissá és modulárissá válik. `lang: 'hu'|'en'` mező az `appStore
+    .ts`-ben, `'femati:lang'` localStorage-kulccsal (a `WELCOME_SEEN_KEY`
+    mintáját követve), mindig látható HU/EN váltó a fejlécben. A
+    `TheoryView.tsx` saját, elszigetelt `useState`+localStorage nyelv-
+    kezelése migrálva a globális state-re, a panelen belüli redundáns
+    gombpár törölve. Új `packages/ui/src/i18n/` könyvtár, első szótár
+    (`i18n/shell.ts`) mintaként a fejléc-feliratokhoz.
+
+77. **Teljes UI i18n — 1. fázis: shell/chrome** (`6840129`, 2026-09-05): az
+    `App.tsx` teljes menürendszere (File/Szerkesztés/Nézet/Számítás/
+    Elméletek/Súgó, statikus és dinamikus váltó-címkék), a diagram-fülek,
+    mobil-fülek, jelmagyarázat, a `Toolbar.tsx` (cellák, combo/slider/
+    segmented feliratok — helyes "elem"/"element(s)" többesszám-kezeléssel
+    angolul), a `ToolRibbon.tsx` (Terhek/Támaszok fülek + 9 eszköz címke/
+    tooltip — a `LOAD_TOOL_DEFS`/`SUPPORT_TOOL_DEFS` mostantól nyelv-
+    független ikon-metaadatot hordoz, a szöveg külön szótárból jön), a
+    `WelcomeDialog`, `AboutDialog` és `ErrorBoundary` (utóbbi osztály-
+    komponens, `useAppStore.getState()`-tel render-időben) mind az
+    `i18n/shell.ts`-t használják.
+
+78. **Teljes UI i18n — 2. fázis: panelek és vászon** (`595acd8`,
+    2026-09-05): a `LeftPanel` (Modellfa/Támaszok/Ágyazások/Terhek listák,
+    kijelölt elem szerkesztő lapja, Keresztmetszet + Megoldó kártya), a
+    `RightPanel` (Eredmények/Reakciók/Határteher-ellenőrzés, verdiktek) és
+    a `CrossSectionInspector` (rétegprofil, M–κ görbe, maradó feszültségek)
+    az új `i18n/panels.ts` szótárat használja; a `ModelCanvas`+
+    `ToolPalette` a külön `i18n/canvas.ts`-t (a vászonra RAJZOLT szám-
+    feliratok — pl. `q = 30 kN/m` — szándékosan nem fordítottak, mert nem
+    tartalmaznak magyar szót és mindig SI-ben maradnak; csak az aria-
+    labelek/tooltipek/gombfeliratok váltak nyelvfüggővé). Melléktermékként
+    egy pre-existing hiba is javítva: a támasz-elemek aria-labelje eddig a
+    nyers TS-enumot írta ki (pl. "fixed támasz"), most a helyesen
+    lefordított típuscímkét használja mindkét nyelven. Strukturális
+    mellékhatás: a `format/utilization.ts` `UtilizationVerdict` mostantól
+    nyelv-semleges `code`-ot ad `label` string helyett (a `format/` réteg
+    nem tudhat UI-nyelvet) — a `RightPanel` az új `VERDICT_LABEL`
+    szótárral fordítja, a még nem lefordított `ReportView.tsx` (5a. fázis)
+    egy ideiglenes, kizárólag ott használt HU-only helperrel
+    (`verdictLabelHu`) hidalja át, változatlan magyar kimenettel.
+
+    **Hátralévő fázisok** (terv: `piped-stirring-tulip.md`, ld. a
+    `project-femati-i18n-progress` memóriát): 0.5. `model/fileIO.ts`
+    `ModelFileError` → strukturált kód; 3. `App.tsx` státusz-üzenetek; 4.
+    `data/catalog.ts` UI-feliratok (ez zárja a szelvény-optimalizáló
+    `kindLabel`-jét is, ami jelenleg még magyar EN nézetben is); 5a.
+    `ReportView.tsx`; 5b. levezetés-hármas (a ~25 duplikált szakaszcím
+    egységes forrásba vonásával — a legkockázatosabb fázis); 5c.
+    `HistoricalView.tsx` + 1996-os idézet-kezelés. Két korábbi, lezárt
+    scope-döntés: az export-dokumentumok kövessék a UI nyelvét (bekerülnek
+    a körbe); a `fem-db` katalógus-adattartalom (anyag-/szelvénynevek,
+    forrás-idézetek) NEM kerül be (külön, későbbi feladat). Újonnan
+    azonosított, egyik fázisban sem szereplő apró rés: a diagram-sáv "SVG
+    letöltése" gombja továbbra is magyar EN nézetben is.
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
