@@ -38,6 +38,8 @@ import {
   createModelTransform,
 } from './useModelTransform.js';
 import * as fmt from '../format/numbers.js';
+import { CANVAS } from '../i18n/canvas.js';
+import { SUPPORT_TYPE_LABEL } from '../i18n/panels.js';
 
 /** A GAUSS_3 (STRESS_POINTS) lokális koordinátái — `element/quadrature.ts`-sel egyező sorrendben. */
 const GAUSS_XI: readonly [number, number, number] = [-Math.sqrt(0.6), 0, Math.sqrt(0.6)];
@@ -95,6 +97,8 @@ export function ModelCanvas(): JSX.Element {
 
   const tool = useAppStore((s) => s.canvasTool);
   const setTool = useAppStore((s) => s.setCanvasTool);
+  const lang = useAppStore((s) => s.lang);
+  const t18 = CANVAS[lang];
   const [camera, setCamera] = useState<Camera>(IDLE_CAMERA);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [previewX, setPreviewX] = useState<number | null>(null);
@@ -429,11 +433,15 @@ export function ModelCanvas(): JSX.Element {
           return { elementId: e.id, x1, x2, stops };
         });
 
-  const ariaLabel =
-    `${model.span.toFixed(2)} m fesztáv, ${section.name} keresztmetszet, ${model.elementCount} végeselem, ` +
-    `${model.supports.length} támasz, ${model.loads.length} teher. ` +
-    (result ? 'Van érvényes számítási eredmény.' : error ? `Hiba: ${error}` : 'Számítási eredmény még nincs.') +
-    ` Vászon-eszköz: ${tool}.`;
+  const ariaLabel = t18.canvasAriaLabel({
+    span: model.span.toFixed(2),
+    sectionName: section.name,
+    elementCount: model.elementCount,
+    supportCount: model.supports.length,
+    loadCount: model.loads.length,
+    status: result ? t18.hasResult : error ? t18.hasError(error) : t18.noResultYet,
+    tool,
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
@@ -447,32 +455,32 @@ export function ModelCanvas(): JSX.Element {
         }}
       >
         <ToolPalette tool={tool} onChange={setTool} />
-        <button type="button" className="vem-btn vem-btn--sm" onClick={() => zoomBy(1 / 1.3)} title="Kicsinyítés" aria-label="Kicsinyítés">
+        <button type="button" className="vem-btn vem-btn--sm" onClick={() => zoomBy(1 / 1.3)} title={t18.zoomOut} aria-label={t18.zoomOut}>
           −
         </button>
-        <button type="button" className="vem-btn vem-btn--sm" onClick={() => zoomBy(1.3)} title="Nagyítás" aria-label="Nagyítás">
+        <button type="button" className="vem-btn vem-btn--sm" onClick={() => zoomBy(1.3)} title={t18.zoomIn} aria-label={t18.zoomIn}>
           +
         </button>
-        <button type="button" className="vem-btn vem-btn--sm" onClick={resetView} title="Nézet visszaállítása (Ctrl+0)">
-          Nézet visszaáll.
+        <button type="button" className="vem-btn vem-btn--sm" onClick={resetView} title={t18.resetViewTitle}>
+          {t18.resetViewLabel}
         </button>
         <button
           type="button"
           className="vem-btn vem-btn--sm"
           onClick={removeSelected}
           disabled={selection === null}
-          title="A kijelölt elem törlése (Delete)"
+          title={t18.deleteTitle}
         >
-          Törlés
+          {t18.deleteLabel}
         </button>
         <button
           type="button"
           className="vem-btn vem-btn--sm"
           aria-pressed={showReactions}
           onClick={() => setShowReactions(!showReactions)}
-          title="Reakcióerők ki/be kapcsolása a vásznon"
+          title={t18.reactionsToggleTitle}
         >
-          Reakciók
+          {t18.reactionsToggleLabel}
         </button>
       </div>
       {/* Koordináta-tengely jelző (2026-09-04, felhasználói kérés) — KÜLÖN,
@@ -592,7 +600,7 @@ export function ModelCanvas(): JSX.Element {
               magnitude={g.magnitude}
               selected={inspector?.elementId === g.elementId && inspector.gaussIndex === g.gaussIndex}
               onClick={() => openInspector({ elementId: g.elementId, gaussIndex: g.gaussIndex })}
-              label={`Gauss-pont, ${g.elementId}, x ≈ ${g.xMeters.toFixed(2)} m${g.yielded ? ' (folyva)' : ''}`}
+              label={t18.gaussPointLabel(g.elementId, g.xMeters.toFixed(2), g.yielded)}
             />
           ))}
 
@@ -606,7 +614,7 @@ export function ModelCanvas(): JSX.Element {
                 key={sup.id}
                 tabIndex={0}
                 role="button"
-                aria-label={`${sup.type} támasz, x = ${sup.x.toFixed(2)} m`}
+                aria-label={t18.supportAria(SUPPORT_TYPE_LABEL[lang][sup.type], sup.x.toFixed(2))}
                 aria-pressed={selected}
                 onPointerDown={(e) => startSupportDrag(e, sup.id)}
                 onKeyDown={(e) => {
@@ -687,7 +695,7 @@ export function ModelCanvas(): JSX.Element {
                   key={load.id}
                   tabIndex={0}
                   role="button"
-                  aria-label={`megoszló teher, ${qLabel}, ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`}
+                  aria-label={t18.distributedLoadAria(qLabel, load.x1.toFixed(2), load.x2.toFixed(2))}
                   aria-pressed={selected}
                   onPointerDown={(e) => startLoadDrag(e, load.id, load.x1)}
                   onKeyDown={(e) => {
@@ -720,7 +728,7 @@ export function ModelCanvas(): JSX.Element {
                   key={load.id}
                   tabIndex={0}
                   role="button"
-                  aria-label={`megoszló nyomatékteher, ${mLabel}, ${load.x1.toFixed(2)}–${load.x2.toFixed(2)} m`}
+                  aria-label={t18.distributedMomentAria(mLabel, load.x1.toFixed(2), load.x2.toFixed(2))}
                   aria-pressed={selected}
                   onPointerDown={(e) => startLoadDrag(e, load.id, load.x1)}
                   onKeyDown={(e) => {
@@ -747,7 +755,7 @@ export function ModelCanvas(): JSX.Element {
                   key={load.id}
                   tabIndex={0}
                   role="button"
-                  aria-label={`nyomatékteher, ${load.m.toFixed(1)} kNm, x = ${load.x.toFixed(2)} m`}
+                  aria-label={t18.momentLoadAria(load.m.toFixed(1), load.x.toFixed(2))}
                   aria-pressed={selected}
                   onPointerDown={(e) => startLoadDrag(e, load.id, load.x)}
                   onKeyDown={(e) => {
@@ -769,7 +777,7 @@ export function ModelCanvas(): JSX.Element {
                 key={load.id}
                 tabIndex={0}
                 role="button"
-                aria-label={`pontteher, ${load.p.toFixed(1)} kN, x = ${load.x.toFixed(2)} m`}
+                aria-label={t18.pointLoadAria(load.p.toFixed(1), load.x.toFixed(2))}
                 aria-pressed={selected}
                 onPointerDown={(e) => startLoadDrag(e, load.id, load.x)}
                 onKeyDown={(e) => {
@@ -799,7 +807,7 @@ export function ModelCanvas(): JSX.Element {
                 key={f.id}
                 tabIndex={0}
                 role="button"
-                aria-label={`Winkler-ágyazat, c = ${f.c.toFixed(0)} kN/m², ${f.x1.toFixed(2)}–${f.x2.toFixed(2)} m`}
+                aria-label={t18.foundationAria(f.c.toFixed(0), f.x1.toFixed(2), f.x2.toFixed(2))}
                 aria-pressed={selected}
                 onPointerDown={(e) => startFoundationDrag(e, f.id, f.x1)}
                 onKeyDown={(e) => {
@@ -827,7 +835,7 @@ export function ModelCanvas(): JSX.Element {
               y={axisY}
               q1={DEFAULT_DISTRIBUTED_LOAD}
               q2={DEFAULT_DISTRIBUTED_LOAD}
-              label={`q = ${DEFAULT_DISTRIBUTED_LOAD.toFixed(1)} kN/m (előnézet)`}
+              label={`q = ${DEFAULT_DISTRIBUTED_LOAD.toFixed(1)} kN/m${t18.previewSuffix}`}
             />
           ) : null}
           {drag?.kind === 'draw-distributed-moment' ? (
@@ -835,7 +843,7 @@ export function ModelCanvas(): JSX.Element {
               x1={t.sx(Math.min(drag.x1, drag.x2))}
               x2={t.sx(Math.max(drag.x1, drag.x2))}
               y={axisY}
-              label={`m = ${DEFAULT_DISTRIBUTED_MOMENT.toFixed(1)} kNm/m (előnézet)`}
+              label={`m = ${DEFAULT_DISTRIBUTED_MOMENT.toFixed(1)} kNm/m${t18.previewSuffix}`}
             />
           ) : null}
           {drag?.kind === 'draw-foundation' ? (
@@ -843,7 +851,7 @@ export function ModelCanvas(): JSX.Element {
               x1={t.sx(Math.min(drag.x1, drag.x2))}
               x2={t.sx(Math.max(drag.x1, drag.x2))}
               y={axisY}
-              label={`c = ${DEFAULT_FOUNDATION_STIFFNESS.toFixed(0)} kN/m² (előnézet)`}
+              label={`c = ${DEFAULT_FOUNDATION_STIFFNESS.toFixed(0)} kN/m²${t18.previewSuffix}`}
             />
           ) : null}
 

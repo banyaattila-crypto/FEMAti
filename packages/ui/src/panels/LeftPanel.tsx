@@ -11,29 +11,25 @@ import { compositeSectionStiffness, toShape } from '../model/compile.js';
 import { findSmallestSuitableSection, type OptimizeResult } from '../model/optimize.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
-import { DEFAULT_SPRING_STIFFNESS, type EditableFoundation, type EditableLoad, type EditableSupport, type SupportType } from '../model/editable.js';
+import { DEFAULT_SPRING_STIFFNESS, type EditableFoundation, type EditableLoad, type EditableSupport } from '../model/editable.js';
 import { LoadIcon, SupportIcon } from './icons.js';
 import * as fmt from '../format/numbers.js';
-
-const SUPPORT_TYPE_LABEL: Record<SupportType, string> = {
-  fixed: 'befogás',
-  pinned: 'csuklós',
-  roller: 'görgős',
-  spring: 'rugós',
-};
+import { PANELS, SUPPORT_TYPE_LABEL } from '../i18n/panels.js';
 
 /** Támaszok itemlistája — mindegyik sor kattintható, kiválasztja a kapcsolódó vászon-elemet. */
 function SupportsList({ supports }: { readonly supports: readonly EditableSupport[] }): JSX.Element {
   const selection = useModelStore((s) => s.selection);
   const select = useModelStore((s) => s.select);
+  const lang = useAppStore((s) => s.lang);
+  const t = PANELS[lang];
   const L = fmt.editableLength();
   const K = fmt.editableLinearLoad();
 
   return (
-    <Card title="Támaszok" accent="support">
+    <Card title={t.supportsCardTitle} accent="support">
       <div className="vem-item-list">
         {supports.length === 0 ? (
-          <div className="vem-item-empty">Nincs támasz.</div>
+          <div className="vem-item-empty">{t.noSupports}</div>
         ) : (
           supports.map((sup) => (
             <button
@@ -48,7 +44,7 @@ function SupportsList({ supports }: { readonly supports: readonly EditableSuppor
               <span className="vem-item-value">
                 {sup.type === 'spring'
                   ? `k = ${K.toDisplay(sup.k ?? DEFAULT_SPRING_STIFFNESS).toFixed(0)} ${K.unit}`
-                  : SUPPORT_TYPE_LABEL[sup.type]}
+                  : SUPPORT_TYPE_LABEL[lang][sup.type]}
               </span>
             </button>
           ))
@@ -62,12 +58,13 @@ function SupportsList({ supports }: { readonly supports: readonly EditableSuppor
 function FoundationsList({ foundations }: { readonly foundations: readonly EditableFoundation[] }): JSX.Element | null {
   const selection = useModelStore((s) => s.selection);
   const select = useModelStore((s) => s.select);
+  const t = PANELS[useAppStore((s) => s.lang)];
   const L = fmt.editableLength();
   const C = fmt.editableFoundationModulus();
   if (foundations.length === 0) return null;
 
   return (
-    <Card title="Ágyazások" accent="foundation">
+    <Card title={t.foundationsCardTitle} accent="foundation">
       <div className="vem-item-list">
         {foundations.map((f) => (
           <button
@@ -93,6 +90,7 @@ function FoundationsList({ foundations }: { readonly foundations: readonly Edita
 function LoadsList({ loads }: { readonly loads: readonly EditableLoad[] }): JSX.Element {
   const selection = useModelStore((s) => s.selection);
   const select = useModelStore((s) => s.select);
+  const t = PANELS[useAppStore((s) => s.lang)];
   const L = fmt.editableLength();
   const F = fmt.editableForce();
   const M = fmt.editableMoment();
@@ -119,10 +117,10 @@ function LoadsList({ loads }: { readonly loads: readonly EditableLoad[] }): JSX.
   };
 
   return (
-    <Card title="Terhek" accent="load">
+    <Card title={t.loadsCardTitle} accent="load">
       <div className="vem-item-list">
         {loads.length === 0 ? (
-          <div className="vem-item-empty">Nincs teher.</div>
+          <div className="vem-item-empty">{t.noLoads}</div>
         ) : (
           loads.map((load) => {
             const { label, value } = rowText(load);
@@ -148,6 +146,8 @@ function LoadsList({ loads }: { readonly loads: readonly EditableLoad[] }): JSX.
 
 /** A vászonon kijelölt támasz/teher/ágyazat szerkeszthető adatlapja. */
 function SelectionSheet(): JSX.Element | null {
+  const lang = useAppStore((s) => s.lang);
+  const t = PANELS[lang];
   const selection = useModelStore((s) => s.selection);
   const model = useModelStore((s) => s.model);
   const setSupportType = useModelStore((s) => s.setSupportType);
@@ -180,7 +180,7 @@ function SelectionSheet(): JSX.Element | null {
     const dzEnabled = support.dz !== undefined;
     const dPhiEnabled = support.dPhi !== undefined;
     return (
-      <Card title="Kijelölt támasz" accent="support">
+      <Card title={t.selectedSupportCardTitle} accent="support">
         <div className="vem-panel__body--padded">
           <Slider
             label={`x [${L.unit}]`}
@@ -193,14 +193,14 @@ function SelectionSheet(): JSX.Element | null {
             editable
           />
           <SegmentedControl
-            ariaLabel="Támasz típusa"
+            ariaLabel={t.supportTypeAria}
             value={support.type}
             onChange={(v) => setSupportType(support.id, v)}
             options={[
-              { value: 'pinned', label: 'csuklós' },
-              { value: 'roller', label: 'görgős' },
-              { value: 'fixed', label: 'befogás' },
-              { value: 'spring', label: 'rugós' },
+              { value: 'pinned', label: SUPPORT_TYPE_LABEL[lang].pinned },
+              { value: 'roller', label: SUPPORT_TYPE_LABEL[lang].roller },
+              { value: 'fixed', label: SUPPORT_TYPE_LABEL[lang].fixed },
+              { value: 'spring', label: SUPPORT_TYPE_LABEL[lang].spring },
             ]}
           />
           {support.type === 'spring' ? (
@@ -222,13 +222,13 @@ function SelectionSheet(): JSX.Element | null {
               olyan csuklós/görgős támasznál is, ahol a φ szabadságfok EDDIG
               szabad volt — ez hallgatólagosan befogássá alakítaná a támaszt. */}
           <Checkbox
-            label="előírt süllyedés (dz)"
+            label={t.dzCheckbox}
             checked={dzEnabled}
             onChange={(v) => setSupportDisplacement(support.id, v ? 0 : undefined, support.dPhi)}
           />
           {dzEnabled ? (
             <Slider
-              label={`dz (süllyedés) [${SL.unit}]`}
+              label={t.dzLabel(SL.unit)}
               min={SL.toDisplay(-0.05)}
               max={SL.toDisplay(0.05)}
               step={SL.toDisplay(0.0005)}
@@ -239,13 +239,13 @@ function SelectionSheet(): JSX.Element | null {
             />
           ) : null}
           <Checkbox
-            label="előírt elfordulás (dφ)"
+            label={t.dPhiCheckbox}
             checked={dPhiEnabled}
             onChange={(v) => setSupportDisplacement(support.id, support.dz, v ? 0 : undefined)}
           />
           {dPhiEnabled ? (
             <Slider
-              label="dφ (elfordulás) [mrad]"
+              label={t.dPhiMradLabel}
               min={-20}
               max={20}
               step={0.1}
@@ -256,7 +256,7 @@ function SelectionSheet(): JSX.Element | null {
             />
           ) : null}
           <button type="button" className="vem-btn vem-btn--sm" style={{ marginTop: 8 }} onClick={removeSelected}>
-            Támasz törlése
+            {t.deleteSupportBtn}
           </button>
         </div>
       </Card>
@@ -267,10 +267,10 @@ function SelectionSheet(): JSX.Element | null {
     const foundation = model.foundations.find((f) => f.id === selection.id);
     if (foundation === undefined) return null;
     return (
-      <Card title="Kijelölt ágyazat" accent="foundation">
+      <Card title={t.selectedFoundationCardTitle} accent="foundation">
         <div className="vem-panel__body--padded">
           <Slider
-            label={`x₁ (kezdet) [${L.unit}]`}
+            label={t.rangeStart('x₁', L.unit)}
             min={L.toDisplay(0)}
             max={L.toDisplay(model.span)}
             step={L.toDisplay(0.01)}
@@ -280,7 +280,7 @@ function SelectionSheet(): JSX.Element | null {
             editable
           />
           <Slider
-            label={`x₂ (vég) [${L.unit}]`}
+            label={t.rangeEnd('x₂', L.unit)}
             min={L.toDisplay(0)}
             max={L.toDisplay(model.span)}
             step={L.toDisplay(0.01)}
@@ -300,12 +300,12 @@ function SelectionSheet(): JSX.Element | null {
             editable
           />
           <Checkbox
-            label="no-tension (csak nyomásra dolgozik)"
+            label={t.foundationNoTensionCheckbox}
             checked={foundation.noTension ?? false}
             onChange={(v) => setFoundationNoTension(foundation.id, v)}
           />
           <button type="button" className="vem-btn vem-btn--sm" style={{ marginTop: 8 }} onClick={removeSelected}>
-            Ágyazat törlése
+            {t.deleteFoundationBtn}
           </button>
         </div>
       </Card>
@@ -315,22 +315,22 @@ function SelectionSheet(): JSX.Element | null {
   const load = model.loads.find((l) => l.id === selection.id);
   if (load === undefined) return null;
   return (
-    <Card title="Kijelölt teher" accent="load">
+    <Card title={t.selectedLoadCardTitle} accent="load">
       <div className="vem-panel__body--padded">
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-          {load.kind === 'point' ? 'pontteher' : load.kind === 'moment' ? 'nyomatékteher' : load.kind === 'distributed' ? 'megoszló teher' : 'megoszló nyomatékteher'}
+          {t.loadKindLabel[load.kind]}
         </div>
         {/* Teherkategória (2026-09-04, EN 1990 teherkombináció) — ULS-nél
             γG=1,35 (állandó) vagy γQ=1,5 (esetleges), ld. `model/
             combinations.ts`. Az önsúlynak NINCS ilyen választója, mert az
             szerkezetileg mindig állandó. */}
         <SegmentedControl
-          ariaLabel="Teher kategóriája"
+          ariaLabel={t.loadCategoryAria}
           value={load.category}
           onChange={(v) => setLoadCategory(load.id, v)}
           options={[
-            { value: 'permanent', label: 'állandó (G)', title: 'ULS-nél γG = 1,35-tel szorozva' },
-            { value: 'variable', label: 'esetleges (Q)', title: 'ULS-nél γQ = 1,5-tel szorozva' },
+            { value: 'permanent', label: t.loadCategoryPermanent, title: t.loadCategoryPermanentTitle },
+            { value: 'variable', label: t.loadCategoryVariable, title: t.loadCategoryVariableTitle },
           ]}
         />
         {load.kind === 'point' ? (
@@ -382,7 +382,7 @@ function SelectionSheet(): JSX.Element | null {
         ) : load.kind === 'distributed' ? (
           <>
             <Slider
-              label={`x₁ (kezdet) [${L.unit}]`}
+              label={t.rangeStart('x₁', L.unit)}
               min={L.toDisplay(0)}
               max={L.toDisplay(model.span)}
               step={L.toDisplay(0.01)}
@@ -392,7 +392,7 @@ function SelectionSheet(): JSX.Element | null {
               editable
             />
             <Slider
-              label={`x₂ (vég) [${L.unit}]`}
+              label={t.rangeEnd('x₂', L.unit)}
               min={L.toDisplay(0)}
               max={L.toDisplay(model.span)}
               step={L.toDisplay(0.01)}
@@ -402,7 +402,7 @@ function SelectionSheet(): JSX.Element | null {
               editable
             />
             <Slider
-              label={`q₁ (kezdet) [${Q.unit}]`}
+              label={t.rangeStart('q₁', Q.unit)}
               min={Q.toDisplay(1)}
               max={Q.toDisplay(100)}
               step={Q.toDisplay(0.01)}
@@ -412,7 +412,7 @@ function SelectionSheet(): JSX.Element | null {
               editable
             />
             <Slider
-              label={`q₂ (vég) [${Q.unit}]`}
+              label={t.rangeEnd('q₂', Q.unit)}
               min={Q.toDisplay(1)}
               max={Q.toDisplay(100)}
               step={Q.toDisplay(0.01)}
@@ -425,7 +425,7 @@ function SelectionSheet(): JSX.Element | null {
         ) : (
           <>
             <Slider
-              label={`x₁ (kezdet) [${L.unit}]`}
+              label={t.rangeStart('x₁', L.unit)}
               min={L.toDisplay(0)}
               max={L.toDisplay(model.span)}
               step={L.toDisplay(0.01)}
@@ -435,7 +435,7 @@ function SelectionSheet(): JSX.Element | null {
               editable
             />
             <Slider
-              label={`x₂ (vég) [${L.unit}]`}
+              label={t.rangeEnd('x₂', L.unit)}
               min={L.toDisplay(0)}
               max={L.toDisplay(model.span)}
               step={L.toDisplay(0.01)}
@@ -445,7 +445,7 @@ function SelectionSheet(): JSX.Element | null {
               editable
             />
             <Slider
-              label={`m₁ (kezdet) [${MPL.unit}]`}
+              label={t.rangeStart('m₁', MPL.unit)}
               min={MPL.toDisplay(0.1)}
               max={MPL.toDisplay(50)}
               step={MPL.toDisplay(0.01)}
@@ -455,7 +455,7 @@ function SelectionSheet(): JSX.Element | null {
               editable
             />
             <Slider
-              label={`m₂ (vég) [${MPL.unit}]`}
+              label={t.rangeEnd('m₂', MPL.unit)}
               min={MPL.toDisplay(0.1)}
               max={MPL.toDisplay(50)}
               step={MPL.toDisplay(0.01)}
@@ -467,7 +467,7 @@ function SelectionSheet(): JSX.Element | null {
           </>
         )}
         <button type="button" className="vem-btn vem-btn--sm" style={{ marginTop: 8 }} onClick={removeSelected}>
-          Teher törlése
+          {t.deleteLoadBtn}
         </button>
       </div>
     </Card>
@@ -476,6 +476,7 @@ function SelectionSheet(): JSX.Element | null {
 
 export function LeftPanel(): JSX.Element {
   const s = useAppStore();
+  const t = PANELS[s.lang];
   const model = useModelStore((state) => state.model);
   const setSelfWeight = useModelStore((state) => state.setSelfWeight);
   const setThermalLoad = useModelStore((state) => state.setThermalLoad);
@@ -497,19 +498,19 @@ export function LeftPanel(): JSX.Element {
   const [optimizeResult, setOptimizeResult] = useState<OptimizeResult | null>(null);
 
   const tree: readonly { label: string; value: string }[] = [
-    { label: 'Geometria', value: `${fmt.length(model.span).value} ${fmt.length(model.span).unit}` },
-    { label: 'Anyag', value: material.id },
-    { label: 'Szelvény', value: section.name },
-    { label: 'Háló', value: `${model.elementCount} elem` },
-    { label: 'Megoldó', value: s.algorithm === 'newton' ? 'Newton' : 'mód. Newton' },
+    { label: t.treeGeometryLabel, value: `${fmt.length(model.span).value} ${fmt.length(model.span).unit}` },
+    { label: t.treeMaterialLabel, value: material.id },
+    { label: t.treeSectionLabel, value: section.name },
+    { label: t.treeMeshLabel, value: t.elementsValue(model.elementCount) },
+    { label: t.treeSolverLabel, value: s.algorithm === 'newton' ? t.newtonLabel : t.modNewtonLabel },
   ];
 
   const dofCount = 2 * (2 * model.elementCount + 1);
 
   return (
-    <aside className="vem-panel vem-panel--left" aria-label="Modell és megoldó">
+    <aside className="vem-panel vem-panel--left" aria-label={t.panelAria}>
       <div className="vem-panel__stack">
-        <Card title="Modellfa">
+        <Card title={t.modelTreeCardTitle}>
           <div className="vem-tree">
             <div className="vem-tree__root">
               <span className="vem-tree__caret" aria-hidden="true">
@@ -533,7 +534,7 @@ export function LeftPanel(): JSX.Element {
 
         <SelectionSheet />
 
-        <Card title="Keresztmetszet" accent="section">
+        <Card title={t.sectionCardTitle} accent="section">
           <div className="vem-section-preview">
             <SectionShapeDiagram section={section} />
             <div className="vem-section-preview__figures">
@@ -555,18 +556,16 @@ export function LeftPanel(): JSX.Element {
           </div>
           <div style={{ padding: '0 var(--space-5)' }}>
             <NoteBox tone={material.verified && section.verified ? 'info' : 'warn'}>
-              {section.aCat !== undefined
-                ? 'A rétegelt modell A és I értéke a valós kontúrból számítódik, ezért kis mértékben eltér a szelvénytáblázat lekerekítéseket is tartalmazó adataitól.'
-                : 'Parametrikus keresztmetszet: A és I a megadott méretekből számítódik.'}
+              {section.aCat !== undefined ? t.layeredNote : t.parametricNote}
               {!material.verified || !section.verified ? ` ${UNVERIFIED_WARNING}` : ''}
-              {material.verified ? '' : ` Anyag (${material.name}): ${material.source}.`}
-              {section.verified ? '' : ` Szelvény (${section.name}): ${section.source}.`}
+              {material.verified ? '' : t.materialSourceNote(material.name, material.source)}
+              {section.verified ? '' : t.sectionSourceNote(section.name, section.source)}
             </NoteBox>
           </div>
           {material.family === 'concrete' && section.kind === 'rect' ? (
             <div style={{ padding: '0 var(--space-5) var(--space-2)' }}>
               <Checkbox
-                label="vasalás (ULS teherbírás-ellenőrzéshez)"
+                label={t.rebarCheckbox}
                 checked={model.rebar.enabled}
                 onChange={(v) => {
                   setRebar({ ...model.rebar, enabled: v });
@@ -576,7 +575,7 @@ export function LeftPanel(): JSX.Element {
               {model.rebar.enabled ? (
                 <>
                   <Slider
-                    label={`alsó vasalás Aₛ [${A.unit}]`}
+                    label={t.rebarBottomLabel(A.unit)}
                     min={A.toDisplay(0)}
                     max={A.toDisplay(0.004)}
                     step={A.toDisplay(0.00001)}
@@ -586,7 +585,7 @@ export function LeftPanel(): JSX.Element {
                     editable
                   />
                   <Slider
-                    label={`felső vasalás Aₛ' [${A.unit}]`}
+                    label={t.rebarTopLabel(A.unit)}
                     min={A.toDisplay(0)}
                     max={A.toDisplay(0.004)}
                     step={A.toDisplay(0.00001)}
@@ -596,7 +595,7 @@ export function LeftPanel(): JSX.Element {
                     editable
                   />
                   <Slider
-                    label={`fedés c [${SL.unit}]`}
+                    label={t.coverLabel(SL.unit)}
                     min={SL.toDisplay(0.015)}
                     max={SL.toDisplay(0.08)}
                     step={SL.toDisplay(0.001)}
@@ -606,8 +605,7 @@ export function LeftPanel(): JSX.Element {
                     editable
                   />
                   <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
-                    ULS-teherbírás: egyszerűsített téglalap feszültségblokk (EC2 3.1.7(3)), B500B betonacél, γ=1.0
-                    (jellemző érték) — ld. jobb panel "Vasbeton ULS" sor.
+                    {t.rebarUlsNote}
                   </div>
                 </>
               ) : null}
@@ -617,7 +615,7 @@ export function LeftPanel(): JSX.Element {
           {material.family === 'steel' ? (
             <div style={{ padding: '0 var(--space-5) var(--space-2)' }}>
               <Checkbox
-                label="kompozit keresztmetszet (acél + betonlemez)"
+                label={t.compositeCheckbox}
                 checked={model.composite.enabled}
                 onChange={(v) => {
                   setComposite({ ...model.composite, enabled: v });
@@ -627,7 +625,7 @@ export function LeftPanel(): JSX.Element {
               {model.composite.enabled ? (
                 <>
                   <Slider
-                    label={`lemez szélesség b [${SL.unit}]`}
+                    label={t.slabWidthLabel(SL.unit)}
                     min={SL.toDisplay(0.1)}
                     max={SL.toDisplay(3)}
                     step={SL.toDisplay(0.01)}
@@ -637,7 +635,7 @@ export function LeftPanel(): JSX.Element {
                     editable
                   />
                   <Slider
-                    label={`lemez vastagság t [${SL.unit}]`}
+                    label={t.slabThicknessLabel(SL.unit)}
                     min={SL.toDisplay(0.04)}
                     max={SL.toDisplay(0.4)}
                     step={SL.toDisplay(0.005)}
@@ -648,7 +646,7 @@ export function LeftPanel(): JSX.Element {
                   />
                   <div style={{ marginBottom: 'var(--space-2)' }}>
                     <Combobox
-                      ariaLabel="Betonlemez anyaga"
+                      ariaLabel={t.slabMaterialAria}
                       value={model.composite.slabMaterialId}
                       onChange={(id) => setComposite({ ...model.composite, slabMaterialId: id })}
                       options={materialComboOptions('concrete')}
@@ -656,14 +654,13 @@ export function LeftPanel(): JSX.Element {
                   </div>
                   {compositeStiffness ? (
                     <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>
-                      Kompozit EI = {(compositeStiffness.ei * 1e-3).toFixed(0)} MNm² (acél alapszelvény önmagában:{' '}
-                      {(material.e * 1e4 * sectionProps.inertia * 1e-3).toFixed(0)} MNm²)
+                      {t.compositeEiNote(
+                        (compositeStiffness.ei * 1e-3).toFixed(0),
+                        (material.e * 1e4 * sectionProps.inertia * 1e-3).toFixed(0),
+                      )}
                     </div>
                   ) : null}
-                  <NoteBox tone="warn">
-                    Csak rugalmas (SLS) viselkedésre érvényes — teljes nyírt kapcsolat feltételezve. ULS-
-                    teherbírás-ellenőrzés és nemlineáris (F5) elemzés kompozit szelvényre még nem elérhető.
-                  </NoteBox>
+                  <NoteBox tone="warn">{t.compositeWarnNote}</NoteBox>
                 </>
               ) : null}
             </div>
@@ -682,15 +679,19 @@ export function LeftPanel(): JSX.Element {
               className="vem-btn vem-btn--sm"
               onClick={() => setOptimizeResult(findSmallestSuitableSection(model))}
             >
-              Legkisebb megfelelő szelvény keresése
+              {t.optimizeButton}
             </button>
             {optimizeResult ? (
               <div style={{ marginTop: 'var(--space-3)' }}>
                 {optimizeResult.best ? (
                   <>
                     <NoteBox tone="info">
-                      Javaslat: {optimizeResult.best.name} (A = {fmt.area(optimizeResult.best.area).value} {fmt.area(optimizeResult.best.area).unit}, kihasználtság{' '}
-                      {optimizeResult.best.governing !== null ? `${(optimizeResult.best.governing * 100).toFixed(0)}%` : '—'})
+                      {t.optimizeProposal(
+                        optimizeResult.best.name,
+                        fmt.area(optimizeResult.best.area).value,
+                        fmt.area(optimizeResult.best.area).unit,
+                        optimizeResult.best.governing !== null ? `${(optimizeResult.best.governing * 100).toFixed(0)}%` : '—',
+                      )}
                     </NoteBox>
                     <button
                       type="button"
@@ -701,18 +702,15 @@ export function LeftPanel(): JSX.Element {
                         setOptimizeResult(null);
                       }}
                     >
-                      Alkalmaz
+                      {t.optimizeApplyButton}
                     </button>
                   </>
                 ) : (
-                  <NoteBox tone="warn">
-                    Nincs megfelelő szelvény ebben a családban ({optimizeResult.kindLabel}, {optimizeResult.candidates.length} jelölt
-                    megvizsgálva).
-                  </NoteBox>
+                  <NoteBox tone="warn">{t.optimizeNoneFound(optimizeResult.kindLabel, optimizeResult.candidates.length)}</NoteBox>
                 )}
                 {model.rebar.enabled ? (
                   <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-2)' }}>
-                    A vasalás mennyisége minden jelöltnél változatlan maradt — Alkalmazás után érdemes ellenőrizni/finomítani.
+                    {t.optimizeRebarNote}
                   </div>
                 ) : null}
               </div>
@@ -720,23 +718,23 @@ export function LeftPanel(): JSX.Element {
           </div>
         </Card>
 
-        <Card title="Megoldó" accent="solver">
+        <Card title={t.solverCardTitle} accent="solver">
           <div className="vem-panel__body--padded">
             <SegmentedControl
-              ariaLabel="Megoldó algoritmus"
+              ariaLabel={t.solverAlgorithmAria}
               value={s.algorithm}
               onChange={s.setAlgorithm}
               options={[
-                { value: 'newton', label: 'Newton', title: 'KT minden iterációban újraszámolva' },
+                { value: 'newton', label: t.newtonLabel, title: t.newtonTitle },
                 {
                   value: 'modified-newton',
-                  label: 'mód. Newton',
-                  title: 'KT teherlépcsőnként egyszer — a diplomaterv 10. oldalának lábjegyzete',
+                  label: t.modNewtonLabel,
+                  title: t.modNewtonTitle,
                 },
               ]}
             />
             <Slider
-              label={`Teherlépcső Δλ = ${s.loadStep.toFixed(2)}`}
+              label={t.loadStepLabel(s.loadStep.toFixed(2))}
               min={0.02}
               max={0.25}
               step={0.01}
@@ -745,7 +743,7 @@ export function LeftPanel(): JSX.Element {
               display={s.loadStep.toFixed(2)}
             />
             <Slider
-              label={`Tolerancia ${s.tolerance.toFixed(2)} %`}
+              label={t.toleranceLabel(s.tolerance.toFixed(2))}
               min={0.05}
               max={2}
               step={0.05}
@@ -754,7 +752,7 @@ export function LeftPanel(): JSX.Element {
               display={s.tolerance.toFixed(2)}
             />
             <Slider
-              label={`Csúcs-teherszorzó λ_cél = ${s.peakLambda.toFixed(2)}`}
+              label={t.peakLambdaLabel(s.peakLambda.toFixed(2))}
               min={0.5}
               max={3}
               step={0.05}
@@ -762,16 +760,16 @@ export function LeftPanel(): JSX.Element {
               onChange={s.setPeakLambda}
               display={s.peakLambda.toFixed(2)}
             />
-            <Checkbox label="önsúly figyelembevétele" checked={model.selfWeight} onChange={setSelfWeight} />
+            <Checkbox label={t.selfWeightCheckbox} checked={model.selfWeight} onChange={setSelfWeight} />
             <Checkbox
-              label="hőteher figyelembevétele"
+              label={t.thermalCheckbox}
               checked={model.thermalLoad.enabled}
               onChange={(v) => setThermalLoad({ ...model.thermalLoad, enabled: v })}
             />
             {model.thermalLoad.enabled ? (
               <>
                 <Slider
-                  label={`tRef (feszültségmentes hőmérséklet) [${T.unit}]`}
+                  label={t.tRefLabel(T.unit)}
                   min={T.toDisplay(-20)}
                   max={T.toDisplay(40)}
                   step={1}
@@ -781,7 +779,7 @@ export function LeftPanel(): JSX.Element {
                   editable
                 />
                 <Slider
-                  label={`tTop (felső szél) [${T.unit}]`}
+                  label={t.tTopLabel(T.unit)}
                   min={T.toDisplay(-30)}
                   max={T.toDisplay(60)}
                   step={1}
@@ -791,7 +789,7 @@ export function LeftPanel(): JSX.Element {
                   editable
                 />
                 <Slider
-                  label={`tBottom (alsó szél) [${T.unit}]`}
+                  label={t.tBottomLabel(T.unit)}
                   min={T.toDisplay(-30)}
                   max={T.toDisplay(60)}
                   step={1}
@@ -803,7 +801,7 @@ export function LeftPanel(): JSX.Element {
               </>
             ) : null}
             <Slider
-              label={`axiális erő N = ${F.toDisplay(model.axialForce).toFixed(0)} ${F.unit} (P-Δ)`}
+              label={t.axialForceLabel(F.toDisplay(model.axialForce).toFixed(0), F.unit)}
               min={F.toDisplay(-1000)}
               max={F.toDisplay(1000)}
               step={F.toDisplay(10)}
@@ -813,21 +811,17 @@ export function LeftPanel(): JSX.Element {
               editable
             />
             {model.axialForce !== 0 ? (
-              <NoteBox tone="warn">
-                Másodrendű (P-Δ) hatás: {model.axialForce > 0 ? 'nyomóerő' : 'húzóerő'} — csak a fő M/T/w/φ
-                diagramokra és az SLS lehajlásra hat. Kihajlási/kritikus teher ellenőrzés és nemlineáris
-                (F5) elemzés N≠0 mellett még nem elérhető.
-              </NoteBox>
+              <NoteBox tone="warn">{t.pDeltaNote(model.axialForce > 0)}</NoteBox>
             ) : null}
             <Checkbox
-              label="mozgó teher (burkolóábra)"
+              label={t.movingLoadCheckbox}
               checked={model.movingLoad.enabled}
               onChange={(v) => setMovingLoad({ ...model.movingLoad, enabled: v })}
             />
             {model.movingLoad.enabled ? (
               <>
                 <Slider
-                  label={`mozgó pontteher P [${F.unit}]`}
+                  label={t.movingLoadMagnitudeLabel(F.unit)}
                   min={F.toDisplay(1)}
                   max={F.toDisplay(200)}
                   step={F.toDisplay(1)}
@@ -836,21 +830,15 @@ export function LeftPanel(): JSX.Element {
                   display={`${F.toDisplay(model.movingLoad.magnitude).toFixed(0)} ${F.unit}`}
                   editable
                 />
-                <NoteBox tone="info">
-                  A "burkolóábra" diagram-fülön látható a lehetséges legnagyobb/legkisebb M/T minden
-                  keresztmetszetre, ahogy ez a teher végigsétál a tartón (a meglévő állandó terhekkel
-                  együtt). Jellemző (nem faktorozott) teherre — több egyidejű tengelyteher
-                  (tengelycsoport) nincs ebben a körben.
-                </NoteBox>
+                <NoteBox tone="info">{t.movingLoadNote}</NoteBox>
               </>
             ) : null}
-            <Checkbox label="Gauss-pontok megjelenítése" checked={s.showGaussPoints} onChange={s.setShowGaussPoints} />
+            <Checkbox label={t.showGaussCheckbox} checked={s.showGaussPoints} onChange={s.setShowGaussPoints} />
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-              {dofCount} szabadságfok
+              {t.dofCountText(dofCount)}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>
-              A nemlineáris futtatás (SZÁMÍTÁS / F5) mindig a rétegelt keresztmetszeti modellel fut —
-              ez adja a keresztmetszet-inspektor rétegenkénti adatait.
+              {t.nonlinearAlwaysLayeredNote}
             </div>
           </div>
         </Card>

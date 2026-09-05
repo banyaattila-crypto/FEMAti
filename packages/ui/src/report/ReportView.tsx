@@ -31,9 +31,19 @@ import { combinedSteps } from '../model/nonlinear.js';
 import { buildHingeReport } from './reportData.js';
 import { BeamFigure, BEAM_FIGURE_HEIGHT } from './BeamFigure.js';
 import * as fmt from '../format/numbers.js';
-import { utilizationVerdict } from '../format/utilization.js';
+import { utilizationVerdict, type UtilizationVerdict } from '../format/utilization.js';
 
 const noop = (): void => {};
+
+/**
+ * Ideiglenes, kizárólag itt használt HU-felirat a `UtilizationVerdict.code`-hoz
+ * — a jegyzőkönyv-export teljes i18n-je külön fázis (5a), ez a hívóhely csak
+ * a `format/utilization.ts` nyelv-semlegesítése (2026-09-05, RightPanel-fázis)
+ * miatt vált `code`-ra, a KIMENET egyelőre változatlanul magyar marad.
+ */
+function verdictLabelHu(v: UtilizationVerdict): string {
+  return v.code === 'ok' ? 'megfelel a határértéknek' : v.code === 'exceeded' ? 'túllépi a határt' : '—';
+}
 
 function formatDateTime(d: Date): string {
   return new Intl.DateTimeFormat('hu-HU', {
@@ -371,7 +381,7 @@ export function ReportView(): JSX.Element | null {
                         {fmt.percent(interaction.utilization * 100).value}%
                       </td>
                       <td className={mvVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
-                        {mvVerdict.label}
+                        {verdictLabelHu(mvVerdict)}
                       </td>
                     </tr>
                   ) : null}
@@ -383,7 +393,7 @@ export function ReportView(): JSX.Element | null {
                         : fmt.MISSING}
                     </td>
                     <td className={deflectionVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
-                      {deflectionVerdict.label}
+                      {verdictLabelHu(deflectionVerdict)}
                     </td>
                   </tr>
                   {mcr !== null ? (
@@ -395,7 +405,7 @@ export function ReportView(): JSX.Element | null {
                           : fmt.MISSING}
                       </td>
                       <td className={crackingVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
-                        {crackingVerdict.label}
+                        {verdictLabelHu(crackingVerdict)}
                       </td>
                     </tr>
                   ) : null}

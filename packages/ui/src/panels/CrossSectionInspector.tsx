@@ -17,6 +17,7 @@ import { combinedSteps, findPreparedElement } from '../model/nonlinear.js';
 import { Legend } from '../components/Feedback.js';
 import { jetColor } from '../charts/colormap.js';
 import * as fmt from '../format/numbers.js';
+import { PANELS } from '../i18n/panels.js';
 
 const PANEL_W = 460;
 /* 2026-09-03 újratervezés (felhasználói kérés: "túl egyszerűen néznek ki"):
@@ -38,6 +39,7 @@ export function CrossSectionInspector(): JSX.Element | null {
   const inspector = useAppStore((s) => s.inspector);
   const closeInspector = useAppStore((s) => s.closeInspector);
   const activeStep = useAppStore((s) => s.activeStep);
+  const t = PANELS[useAppStore((s) => s.lang)];
   const run = useNonlinearStore((s) => s.run);
 
   if (inspector === null || run === null) return null;
@@ -56,14 +58,12 @@ export function CrossSectionInspector(): JSX.Element | null {
       <div className="vem-inspector-overlay" onPointerDown={closeInspector}>
         <div className="vem-inspector" onPointerDown={(e) => e.stopPropagation()}>
           <div className="vem-inspector__header">
-            <span>Keresztmetszet-inspektor</span>
-            <button type="button" className="vem-btn vem-btn--sm" onClick={closeInspector} aria-label="Keresztmetszet-inspektor bezárása">
+            <span>{t.inspectorTitleNoData}</span>
+            <button type="button" className="vem-btn vem-btn--sm" onClick={closeInspector} aria-label={t.inspectorCloseAria}>
               ✕
             </button>
           </div>
-          <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-            Nincs réteg-adat ehhez a Gauss-ponthoz.
-          </div>
+          <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>{t.noLayerData}</div>
         </div>
       </div>
     );
@@ -123,10 +123,9 @@ export function CrossSectionInspector(): JSX.Element | null {
       <div className="vem-inspector" style={{ width: PANEL_W }} onPointerDown={(e) => e.stopPropagation()}>
         <div className="vem-inspector__header">
           <span>
-            Keresztmetszet-inspektor — {elementId}, Gauss-pont {gaussIndex + 1}/3
-            {preparedElement ? ` (x ≈ ${preparedElement.nodeX[1].toFixed(2)} m)` : ''}
+            {t.inspectorTitle(elementId, gaussIndex + 1, preparedElement ? preparedElement.nodeX[1].toFixed(2) : null)}
           </span>
-          <button type="button" className="vem-btn vem-btn--sm" onClick={closeInspector} title="Bezárás (Esc)" aria-label="Keresztmetszet-inspektor bezárása">
+          <button type="button" className="vem-btn vem-btn--sm" onClick={closeInspector} title={t.inspectorCloseTitle} aria-label={t.inspectorCloseAria}>
             ✕
           </button>
         </div>
@@ -136,17 +135,17 @@ export function CrossSectionInspector(): JSX.Element | null {
             <span>λ = {currentStep ? fmt.lambda(currentStep.lambda).value : '—'}</span>
             <span>M = {fmt.moment(currentGp.m).value} kNm</span>
             <span>κ = {currentGp.kappa.toExponential(3)} 1/m</span>
-            {inUnload ? <span className="vem-inspector__unload-tag">tehermentesítés</span> : null}
+            {inUnload ? <span className="vem-inspector__unload-tag">{t.unloadingTag}</span> : null}
           </div>
 
           <div>
-            <div className="vem-section-label-sm">Rétegenkénti σ-profil (a keresztmetszet magassága mentén)</div>
+            <div className="vem-section-label-sm">{t.layerProfileSectionTitle}</div>
             <svg
               viewBox={`0 0 ${svgW} ${svgH}`}
               width={svgW}
               height={svgH}
               role="img"
-              aria-label="Rétegenkénti feszültségprofil, hőtérkép-kitöltéssel"
+              aria-label={t.layerProfileSvgAria}
             >
               {/* σ-tengely: skála-vonal + 3 jelölő (bal: max nyomás, közép: 0, jobb: max húzás). */}
               <line x1={barCx - barHalfW} y1={TOP_MARGIN - 10} x2={barCx + barHalfW} y2={TOP_MARGIN - 10} stroke="var(--border-medium)" strokeWidth={1} />
@@ -211,24 +210,22 @@ export function CrossSectionInspector(): JSX.Element | null {
               ) : null}
             </svg>
             <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
-              {neutralZ !== null
-                ? `semleges tengely: z ≈ ${(neutralZ * 1e3).toFixed(1)} mm`
-                : 'semleges tengely a szélső rétegen kívül esik (a teljes szelvény egy előjelű feszültségű)'}
+              {neutralZ !== null ? t.neutralAxisText((neutralZ * 1e3).toFixed(1)) : t.neutralAxisOutsideText}
             </div>
             <div style={{ marginTop: 6 }}>
               <Legend
                 items={[
-                  { label: 'rugalmas', fill: 'transparent', stroke: 'var(--sem-elastic-edge)' },
-                  { label: 'részben képlékeny', fill: 'transparent', stroke: 'var(--sem-partial-edge)' },
-                  { label: 'képlékeny', fill: 'transparent', stroke: 'var(--sem-plastic-edge)' },
+                  { label: t.layerLegendElastic, fill: 'transparent', stroke: 'var(--sem-elastic-edge)' },
+                  { label: t.layerLegendPartial, fill: 'transparent', stroke: 'var(--sem-partial-edge)' },
+                  { label: t.layerLegendPlastic, fill: 'transparent', stroke: 'var(--sem-plastic-edge)' },
                 ]}
               />
             </div>
           </div>
 
           <div>
-            <div className="vem-section-label-sm">M–κ görbe (a teljes tehertörténetre)</div>
-            <svg viewBox={`0 0 ${MK_W} ${MK_H}`} width={MK_W} height={MK_H} role="img" aria-label="M-kappa görbe">
+            <div className="vem-section-label-sm">{t.mkCurveSectionTitle}</div>
+            <svg viewBox={`0 0 ${MK_W} ${MK_H}`} width={MK_W} height={MK_H} role="img" aria-label={t.mkCurveSvgAria}>
               {/* Halvány rács a jobb olvashatóságért. */}
               {[0.25, 0.75].map((f) => (
                 <g key={f}>
@@ -251,9 +248,9 @@ export function CrossSectionInspector(): JSX.Element | null {
 
           {inUnload ? (
             <div className="vem-inspector__equilibrium">
-              <div className="vem-section-label-sm">Maradó (saját)feszültségek egyensúlya</div>
-              <div>Σ σ·b·Δz (axiális erő) = {(netAxial).toExponential(2)} kN — elvileg 0</div>
-              <div>Σ σ·z·b·Δz (nyomaték) = {netMoment.toFixed(3)} kNm — egyezik a fent kiírt M-mel</div>
+              <div className="vem-section-label-sm">{t.residualSectionTitle}</div>
+              <div>{t.residualAxialText(netAxial.toExponential(2))}</div>
+              <div>{t.residualMomentText(netMoment.toFixed(3))}</div>
             </div>
           ) : null}
         </div>

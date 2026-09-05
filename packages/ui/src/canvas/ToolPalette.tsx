@@ -1,4 +1,6 @@
 import { SegmentedControl } from '../components/Button.js';
+import { useAppStore } from '../state/appStore.js';
+import { CANVAS } from '../i18n/canvas.js';
 
 export type CanvasTool =
   | 'select'
@@ -33,12 +35,13 @@ export interface ToolPaletteProps {
  * az Axis3D-mintájú fül+ikonsor elrendezés alapján.
  */
 export function ToolPalette({ tool, onChange }: ToolPaletteProps): JSX.Element {
+  const t = CANVAS[useAppStore((s) => s.lang)];
   return (
     <SegmentedControl
-      ariaLabel="Kijelölés / vászon mód"
+      ariaLabel={t.selectModeAria}
       value={SUPPORT_TOOLS.includes(tool) || LOAD_TOOLS.includes(tool) ? ('' as CanvasTool) : tool}
       onChange={onChange}
-      options={[{ value: 'select', label: 'Kijelölés', title: 'Kattintás: kijelölés · húzás: áthelyezés' }]}
+      options={[{ value: 'select', label: t.selectToolLabel, title: t.selectToolTitle }]}
     />
   );
 }

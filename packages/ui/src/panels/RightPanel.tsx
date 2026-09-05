@@ -3,6 +3,7 @@ import { crackingMomentUtilization } from '@femati/fem-core';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { ResultRow } from '../components/Value.js';
 import { findMaterial } from '../data/catalog.js';
+import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
@@ -11,6 +12,7 @@ import { scaleModelForSls, scaleModelForUls } from '../model/combinations.js';
 import { computeUtilizations } from '../model/designChecks.js';
 import * as fmt from '../format/numbers.js';
 import { utilizationVerdict } from '../format/utilization.js';
+import { PANELS, VERDICT_LABEL } from '../i18n/panels.js';
 
 /**
  * Eredménypanel — a DESIGN-TERV.md 8. fejezetének adatszerződése szerint.
@@ -21,6 +23,8 @@ import { utilizationVerdict } from '../format/utilization.js';
  * (DESIGN-TERV 1.7 és 6.3).
  */
 export function RightPanel(): JSX.Element {
+  const lang = useAppStore((s) => s.lang);
+  const t = PANELS[lang];
   const model = useModelStore((s) => s.model);
   const { result, error } = useLiveResult(model);
   const nonlinearRun = useNonlinearStore((s) => s.run);
@@ -66,41 +70,38 @@ export function RightPanel(): JSX.Element {
   const loadsMy = result && reactionsMy !== null ? result.equilibrium.sumMy - reactionsMy : null;
   const sumFzTitle =
     result && reactionsFz !== null && loadsFz !== null
-      ? `ΣFz = Σreakciók + Σterhek = ${fmt.force(reactionsFz).value} + ${fmt.force(loadsFz).value} = ${fmt.force(result.equilibrium.sumFz).value} kN (elvileg 0)`
+      ? t.sumFzTitle(fmt.force(reactionsFz).value, fmt.force(loadsFz).value, fmt.force(result.equilibrium.sumFz).value)
       : undefined;
   const sumMyTitle =
     result && reactionsMy !== null && loadsMy !== null
-      ? `ΣMy (az x=0 origóra) = Σreakciók nyomatéka + Σterhek nyomatéka = ${fmt.moment(reactionsMy).value} + ${fmt.moment(loadsMy).value} = ${fmt.moment(result.equilibrium.sumMy).value} kNm (elvileg 0)`
+      ? t.sumMyTitle(fmt.moment(reactionsMy).value, fmt.moment(loadsMy).value, fmt.moment(result.equilibrium.sumMy).value)
       : undefined;
 
   return (
-    <aside className="vem-panel vem-panel--right" aria-label="Eredmények">
+    <aside className="vem-panel vem-panel--right" aria-label={t.resultsCardTitle}>
       <div className="vem-panel__stack">
-        <Card title="Eredmények" accent="results">
+        <Card title={t.resultsCardTitle} accent="results">
           {/* A négy fő eredmény (a szerkezet válaszának lényege) nagyobb
               súllyal jelenik meg, mint a részletadatok alatta — a korábbi
               minta minden sort azonos vizuális súllyal mutatott. */}
-          <ResultRow label="w max (lehajlás)" formatted={fmt.deflection(result?.extremes.w.value ?? null)} emphasis="hero" />
+          <ResultRow label={t.wMaxLabel} formatted={fmt.deflection(result?.extremes.w.value ?? null)} emphasis="hero" />
           <ResultRow label="φ max" formatted={fmt.rotation(result?.extremes.phi.value ?? null)} emphasis="hero" />
           <ResultRow label="M max" formatted={fmt.moment(result?.extremes.m.value ?? null)} emphasis="hero" />
           <ResultRow label="T max" formatted={fmt.shear(result?.extremes.t.value ?? null)} emphasis="hero" />
           <ResultRow label="EI" formatted={fmt.bendingStiffness(result?.props.ei ?? null)} />
           <ResultRow label="GAs" formatted={fmt.shearStiffness(result?.props.gas ?? null)} />
-          <ResultRow label="szabadságfokok" formatted={fmt.count(result?.dofCount ?? null, 'DOF')} />
+          <ResultRow label={t.dofLabel} formatted={fmt.count(result?.dofCount ?? null, 'DOF')} />
           <ResultRow
-            label="hibabecslő (legrosszabb elem)"
+            label={t.errorEstimateLabel}
             formatted={fmt.percent(result?.errorEstimate ?? null)}
-            title="Az elemhatárokon az átlagolás előtti igénybevétel-ugrás, a mező szélsőértékére normálva (Diplomaterv 3.1.7.4)"
+            title={t.errorEstimateTitle}
           />
         </Card>
 
-        <Card title="Reakciók · egyensúly" accent="results">
+        <Card title={t.reactionsCardTitle} accent="results">
           {result && result.foundationLiftOff.length > 0 ? (
             <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
-              <NoteBox tone="info">
-                {result.foundationLiftOff.length} elem felemelkedett a no-tension ágyazatról (ADR-0022) — ott az
-                ágyazat pillanatnyilag nem fejt ki erőt.
-              </NoteBox>
+              <NoteBox tone="info">{t.liftOffNote(result.foundationLiftOff.length)}</NoteBox>
             </div>
           ) : null}
           {/* Az "Rz{n}" sorszámozás UGYANAZ a `result.reactions` tömb-sorrend,
@@ -113,111 +114,108 @@ export function RightPanel(): JSX.Element {
               ))
             : model.supports.map((s, i) => <ResultRow key={s.id} label={`Rz${i + 1} (x = ${s.x.toFixed(2)} m)`} formatted={fmt.force(null)} />)}
           <ResultRow
-            label="ΣFz ellenőrzés"
+            label={t.sumFzCheckLabel}
             formatted={fmt.force(result?.equilibrium.sumFz ?? null)}
             tone={result ? (result.equilibrium.satisfied ? 'ok' : 'error') : 'neutral'}
             title={sumFzTitle ?? ''}
           />
           <ResultRow
-            label="ΣMy ellenőrzés"
+            label={t.sumMyCheckLabel}
             formatted={fmt.moment(result?.equilibrium.sumMy ?? null)}
             tone={result ? (result.equilibrium.satisfied ? 'ok' : 'error') : 'neutral'}
             title={sumMyTitle ?? ''}
           />
         </Card>
 
-        <Card title="Határteher-ellenőrzés" accent="results">
+        <Card title={t.ultimateCardTitle} accent="results">
           <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
-            <NoteBox tone="info">
-              Az ellenőrzések ULS (1,35·G+1,5·Q) / SLS (G+Q) kombinációra futnak (EN 1990) — a fenti "Eredmények" kártya
-              w/φ/M/T max sorai ettől függetlenül a jellemző (nem faktorozott) terhet mutatják.
-            </NoteBox>
+            <NoteBox tone="info">{t.ulsSlsNote}</NoteBox>
           </div>
           <ResultRow
-            label="rugalmas teherbírás Mₑ"
+            label={t.elasticCapacityLabel}
             formatted={fmt.moment(result?.props.me ?? null)}
-            title="σY · Kₑ — csak akkor számítható, ha az anyagnak van folyáshatára"
+            title={t.elasticCapacityTitle}
           />
           <ResultRow
-            label="képlékeny teherbírás Mₚ"
+            label={t.plasticCapacityLabel}
             formatted={fmt.moment(result?.props.mp ?? null)}
-            title="σY · Kₚ — elméleti, keresztmetszet-szintű teherbírás"
+            title={t.plasticCapacityTitle}
           />
-          <ResultRow label="alaki tényező c = Mₚ/Mₑ" formatted={fmt.shapeFactor(result?.props.shapeFactor ?? null)} />
+          <ResultRow label={t.shapeFactorLabel} formatted={fmt.shapeFactor(result?.props.shapeFactor ?? null)} />
           <ResultRow
-            label="képlékeny nyíróerő-teherbírás Vpl"
+            label={t.shearCapacityLabel}
             formatted={fmt.shear(result?.props.vpl ?? null)}
-            title="Vpl = κs·A·σY/√3 — az effektív nyírási területből (κs·A), NEM a szabvány Av-jéből (ADR-0018)"
+            title={t.shearCapacityTitle}
           />
           <ResultRow
-            label="M-V kihasználtság (EN 1993-1-1)"
+            label={t.mvUtilLabel}
             formatted={fmt.percent(utils?.mv !== null && utils?.mv !== undefined ? utils.mv * 100 : null)}
             tone={mvVerdict.tone}
             emphasis="large"
-            title="EN 1993-1-1 6.2.8 stílusú, UTÓLAGOS ellenőrzés a globális M-max és T-max értékekből, γM0 = 1.00 (ajánlott érték) — ha nem azonos keresztmetszeti helyen lépnek fel, ez egy KONZERVATÍV (biztonság felé téves) becslés, nem pontos helyi érték (ADR-0018, ADR-0021)"
+            title={t.mvUtilTitle}
           />
           <ResultRow
-            label="verdikt"
-            formatted={{ value: mvVerdict.label, unit: '' }}
+            label={t.verdictLabel}
+            formatted={{ value: VERDICT_LABEL[lang][mvVerdict.code], unit: '' }}
             tone={mvVerdict.tone}
           />
           <ResultRow
-            label="lehajlás-ellenőrzés (SLS, L/250)"
+            label={t.deflectionUtilLabel}
             formatted={fmt.percent(utils?.deflection !== null && utils?.deflection !== undefined && Number.isFinite(utils.deflection) ? utils.deflection * 100 : null)}
             tone={deflectionVerdict.tone}
             emphasis="large"
-            title="w max / L a megengedett L/250 arányhoz viszonyítva — anyagfüggetlen, a felhasználó saját ökölszabálya szerinti SLS-ellenőrzés"
+            title={t.deflectionUtilTitle}
           />
           <ResultRow
-            label="verdikt"
-            formatted={{ value: deflectionVerdict.label, unit: '' }}
+            label={t.verdictLabel}
+            formatted={{ value: VERDICT_LABEL[lang][deflectionVerdict.code], unit: '' }}
             tone={deflectionVerdict.tone}
           />
           {result && mcr !== null ? (
             <>
               <ResultRow
-                label="repedési nyomaték Mcr kihasználtsága (EC2, tájékoztató)"
+                label={t.crackingUtilLabel}
                 formatted={fmt.percent(crackingUtil !== null && Number.isFinite(crackingUtil) ? crackingUtil * 100 : null)}
                 tone={crackingVerdict.tone}
                 emphasis="large"
-                title="M_cr = fctm·Kₑ — TÁJÉKOZTATÓ, SLS-jellegű jelzés arról, mikor lép túl a modell a rugalmas (repedésmentes) tartományon. Ez ÖNMAGÁBAN nem vasbeton ULS teherbírás-ellenőrzés — az a lenti 'Vasbeton ULS' sorban jelenik meg, ha a vasalás be van kapcsolva (ADR-0019, ADR-0021)"
+                title={t.crackingUtilTitle}
               />
               <ResultRow
-                label="verdikt"
-                formatted={{ value: crackingVerdict.label, unit: '' }}
+                label={t.verdictLabel}
+                formatted={{ value: VERDICT_LABEL[lang][crackingVerdict.code], unit: '' }}
                 tone={crackingVerdict.tone}
-                title="'túllépi a határt' itt azt jelenti: a keresztmetszet elméletileg berepedt — a rugalmas merevségi feltevés innentől nem érvényes, NEM azt, hogy a tartó tönkremegy"
+                title={t.crackingVerdictTitle}
               />
             </>
           ) : null}
           {utils?.rcMu !== null && utils?.rcMu !== undefined ? (
             <>
               <ResultRow
-                label="vasbeton ULS teherbírás MRd"
+                label={t.rcUlsCapacityLabel}
                 formatted={fmt.moment(utils.rcMu)}
-                title="Egyszerűsített téglalap feszültségblokk (EC2 3.1.7(3)), jellemző (γ=1.0) érték, B500B betonacél — a húzott oldal a globális M előjelétől függ"
+                title={t.rcUlsCapacityTitle}
               />
               <ResultRow
-                label="Vasbeton ULS kihasználtság"
+                label={t.rcUlsUtilLabel}
                 formatted={fmt.percent(utils.rc !== null && Number.isFinite(utils.rc) ? utils.rc * 100 : null)}
                 tone={rcVerdict.tone}
                 emphasis="large"
-                title="|M-max| / MRd — a globális M-max/M-min szélsőértékre, NEM feltétlenül a legkritikusabb keresztmetszetre (konzervatív becslés, mint a többi ULS-ellenőrzésnél)"
+                title={t.rcUlsUtilTitle}
               />
-              <ResultRow label="verdikt" formatted={{ value: rcVerdict.label, unit: '' }} tone={rcVerdict.tone} />
+              <ResultRow label={t.verdictLabel} formatted={{ value: VERDICT_LABEL[lang][rcVerdict.code], unit: '' }} tone={rcVerdict.tone} />
             </>
           ) : null}
           <ResultRow
-            label="számított teherszorzó (nemlineáris)"
+            label={t.computedLoadFactorLabel}
             formatted={fmt.lambda(lastLoadingStep?.lambda ?? null)}
             tone={nonlinearRun?.status === 'limit-load-reached' ? 'warn' : nonlinearRun?.status === 'converged' ? 'ok' : 'neutral'}
-            title="A runLoadStepper által ténylegesen elért λ — 'limit-load-reached' esetén a numerikus határteher közelítése"
+            title={t.computedLoadFactorTitle}
           />
         </Card>
 
-        {error !== null ? <NoteBox tone="error">A modell jelenleg nem futtatható: {error}</NoteBox> : null}
+        {error !== null ? <NoteBox tone="error">{t.notRunnablePrefix(error)}</NoteBox> : null}
         {result === null && error === null ? (
-          <NoteBox tone="warn">Nincs számítható modell (nincsenek elemek vagy támaszok).</NoteBox>
+          <NoteBox tone="warn">{t.noComputableModel}</NoteBox>
         ) : null}
       </div>
     </aside>
