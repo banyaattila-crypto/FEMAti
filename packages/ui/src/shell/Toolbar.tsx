@@ -14,12 +14,18 @@ interface CellProps {
    *  prop-átadás (`hint={cond ? x : undefined}`) különben típushibát ad. */
   readonly hint?: string | undefined;
   readonly minWidth: number;
+  /** Csak akkor kell, ha a cella tartalma változó hosszúságú szöveget mutathat
+   *  (pl. a Szerkezet-kombobox preset-neve) — enélkül egy hosszú szöveg
+   *  korlátlanul megnövelné a cella "kívánt" szélességét, ami az egész
+   *  eszközsort tördelésre kényszerítené, mielőtt a combobox saját ellipszis-
+   *  csonkolása érvénybe léphetne (2026-09-05, felhasználó jelentette hiba). */
+  readonly maxWidth?: number | undefined;
   readonly children: React.ReactNode;
 }
 
-function Cell({ caption, hint, minWidth, children }: CellProps): JSX.Element {
+function Cell({ caption, hint, minWidth, maxWidth, children }: CellProps): JSX.Element {
   return (
-    <div className="vem-toolbar__cell" style={{ minWidth }}>
+    <div className="vem-toolbar__cell" style={{ minWidth, maxWidth }}>
       <div className="vem-toolbar__caption">
         <span>{caption}</span>
         {hint ? <span className="vem-num">{hint}</span> : null}
@@ -48,7 +54,7 @@ export function Toolbar(): JSX.Element {
 
   return (
     <div className="vem-toolbar">
-      <Cell caption={t.toolbarStructure} hint={`ref. ${preset.ref}`} minWidth={236}>
+      <Cell caption={t.toolbarStructure} hint={`ref. ${preset.ref}`} minWidth={236} maxWidth={236}>
         <Combobox ariaLabel={t.staticSchemeAria} value={model.presetId} onChange={loadPreset} options={presetComboOptions(s.lang)} />
       </Cell>
 
