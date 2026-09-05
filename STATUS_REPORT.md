@@ -2,12 +2,12 @@
 
 **Utolsó frissítés:** 2026-09-05
 **Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
-**Utolsó commit:** `c6ac961` — i18n: Történelmi mód teljes fordítása (5c. fázis) — push-olva
+**Utolsó commit:** `4d43d89` — i18n: charts/ mappa teljes fordítása — push-olva
 
-> **A teljes UI i18n terv (0–5c fázis) 2026-09-05-én lezárult.** Két
-> dokumentált, nyitva maradt rés maradt (ld. a 84. pont): a `charts/`
-> mappa és a `catalog/DatabaseView.tsx` — egyik fázisban sem szerepeltek,
-> külön egyeztetendők, ha aktuálissá válnak.
+> **A teljes UI i18n terv (0–5c fázis + a `charts/` mappa) 2026-09-05-én
+> lezárult.** Egyetlen dokumentált, nyitva maradt rés maradt (ld. a 88.
+> pont): a `catalog/DatabaseView.tsx` — nem szerepelt egyik fázisban sem,
+> nem sürgős, külön egyeztetendő, ha aktuálissá válik.
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -90,6 +90,8 @@ pnpm check   → typecheck + lint + test, mindhárom csomagra, TISZTA
 | `fem-db` | 2 | 25 | — (adatkonzisztencia: Ecm-képlet visszaellenőrzés, katalógus-geometria ±6%-os egyezés a fem-core zárt alakjával, forrás/verified-mező kötelező jelenléte) |
 | `ui` | 18 | 108 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, a mértékegység-váltó SI/US mindkét iránya, a LaTeX→OOXML képlet-konverter, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
 | **Összesen** | **57** | **674** (+3 skip) | |
+
+(2026-09-05-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 85–88. pont commitjai (eszközsor-tördelés javítása, VALIDATION-SCOPE dokumentumok, VALIDATION.md link-javítás, charts/ mappa i18n-lezárása) óta is.)
 
 (2026-09-05-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 79–84. pont i18n-commitjai (0.5., 3., 4., 5a., 5b., 5c. fázis, a teljes i18n-terv lezárása) óta is. A tesztszám maga nem nőtt, mert ez a munka UI-szöveg-kivonatolás/áthuzalozás, nem új logika.)
 
@@ -2357,6 +2359,86 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
       szó-előfordulás mérve a 9 fájlban.
     - **`catalog/DatabaseView.tsx`** (Szelvény/Anyag adatbázis dialógus,
       Edit menü) — teljes egészében magyar marad EN nézetben is.
+
+85. **VALÓDI hiba javítva (kétszer) — az eszközsor tördelése hosszú
+    preset-névnél/EN szövegnél:** a felhasználó jelezte, hogy a "Szerkezet"
+    dropdown-ban egy hosszabb statikai váz kiválasztásakor a teljes
+    eszközsor tördelésre kényszerül, és a "Tehertörténet" cella lecsúszik
+    a következő sorba. **Első próbálkozás** (`92a8ee8`): a "Szerkezet"
+    cella `minWidth` mellé `maxWidth`-et is kapott (fix 236px, a hosszú
+    név ellipszisre csonkolódik) — ez HU-ban megoldotta a konkrét
+    esetet, de a felhasználó jelezte, hogy EN nézetben (pl. "16 elements"
+    a HU "16 elem" helyett — hosszabb szó, más cella) a hiba továbbra is
+    fennáll. **Rossz második próbálkozás, VISSZAVONVA** (`c67b3d1`): a
+    `.vem-toolbar` `flex-wrap: wrap` helyett `flex-wrap: nowrap` +
+    `overflow-x: auto` — ez a CSS Overflow specifikáció egy kevéssé
+    ismert szabálya miatt ("ha `overflow-x` nem `visible`, de
+    `overflow-y` az marad, a böngésző az `overflow-y`-t is `auto`-ra
+    kényszeríti") levágta a lenyíló Combobox-panelt, és görgetéskor az
+    egész felület elcsúszott — a felhasználó azonnal jelezte
+    ("egyáltalán nem jó, használhatatlan"). **Helyes végleges javítás**
+    (`f4822cc`): visszaállítva `flex-wrap: wrap`-re (a HU-ban már
+    bevált, működő viselkedés), a tényleges helyhiányt pedig a
+    `.vem-toolbar__cell` vízszintes paddingjének szűkítésével
+    (`--space-6`→`--space-5`) és a "Szerkezet" cella `maxWidth`-jének
+    236→200-ra csökkentésével oldva meg — ez annyi tartalék helyet
+    szabadít fel, hogy az EN nézet hosszabb szövegei se törjék meg a
+    sort. Böngészőben alaposan ellenőrizve: EN nézetben 100 elemmel és a
+    leghosszabb preset-névvel is egy sorban marad minden cella (a
+    Combobox lenyíló panelje is teljes egészében látszik), HU-ban
+    változatlanul működik. **Tanulság a saját hibából:** egy `overflow`
+    tulajdonság módosítása előtt mindig ellenőrizni kell a CSS Overflow
+    spec "automatic minimum size" és páros `overflow-x`/`overflow-y`
+    szabályait, ne csak a látszólagos, izolált hatást.
+
+86. **`docs/VALIDATION-SCOPE.md` + `.hu.md` — kétnyelvű, kifejezetten
+    tudományos kollégáknak/bírálóknak szánt összefoglaló** (`a401d1c`):
+    a felhasználó explicit megkérdezte, mennyire megbízható a projekt
+    matematikai/mechanikai alapja, és mennyire kell tartani attól, hogy
+    "tudományos kollégák... férc munkának" minősítik. A válasz (ami
+    ebbe a két dokumentumba lett formalizálva) a `docs/THEORY.md`
+    soronkénti visszavezethetőségére, a `HIBATURESI-POLITIKA.md`
+    explicit hibataxonómiájára, a friss validációs futás (29 eset, 195
+    ellenőrzés) tényleges számaira, a mutációs tesztek módszerére, a
+    fejlesztés során talált és javított VALÓDI hibákra (R-faktor,
+    frontális pivot-tűrés, fiber-réteg szélesség — mindhárom ADR-rel és
+    regressziós teszttel lezárva), a külső forrásokkal (MathWorks,
+    Ahmed & Rifai 2021, Cowper 1966) való egyeztetésre, és egy explicit,
+    kilenc pontos listára épül arról, amit a projekt KIFEJEZETTEN NEM
+    állít (nincs hivatalos szakmai lektorálás, a nyírás mindig rugalmas
+    a képlékeny modellben, nincs NAFEMS-szintű benchmark stb.).
+    Belinkelve mindkét README-ből. Mellékesen javítva egy elavult
+    megjegyzés a README.md tetején, ami még azt állította, hogy a UI
+    csak magyarul érhető el — a mai i18n-lezárás óta ez már nem igaz.
+
+87. **VALÓDI hiba javítva — `docs/VALIDATION.md` törött GitHub-link**
+    (`ab79439`): a generált validációs jegyzőkönyv eddig a
+    `.gitignore`-ban volt (sosem lett commitolva), noha mindkét README és
+    a most elkészült VALIDATION-SCOPE dokumentumok is rá hivatkoznak —
+    GitHub-on ez három helyen is 404-et adott volna. Kivéve a
+    `.gitignore`-ból, a friss (29 eset, 195 ellenőrzés, mind zöld)
+    állapot commitolva. Utólag, a GitHub API-n keresztül (nem csak a
+    helyi git állapotra hagyatkozva) megerősítve `gh api
+    repos/.../contents/...`-tal, hogy mindhárom fájl (`VALIDATION.md`,
+    `VALIDATION-SCOPE.md`, `VALIDATION-SCOPE.hu.md`) ténylegesen létezik
+    a `main` ágon a megadott méretekkel.
+
+88. **Teljes UI i18n — a `charts/` mappa is lezárva** (`4d43d89`): a 78.
+    pontban (és a fenti, i18n-terv-lezáró bekezdésben) már jelzett,
+    nyitva hagyott rés bezárva. Új `i18n/charts.ts` fordítja mind a 9
+    fájlt: `DiagramChart`/`DiagramPanel` (a fő diagram-sáv — M/T/w/φ,
+    kihasználtsági térkép, "SVG letöltése" gomb), `ConvergencePanel`,
+    `LoadDisplacementChart`, `EnvelopeChart`, `ModalPanel`,
+    `TransientChart`, `DynamicPanel`, `Beam3DStress`. Az M/T/w/φ
+    diagram-címeket és a "Futtatás"/"Run" gombot szándékosan
+    ÚJRAHASZNÁLJA a már meglévő `i18n/report.ts`/`i18n/shell.ts`
+    szótárból, hogy a munkaasztal és a jegyzőkönyv/export ugyanazt
+    mondja. Böngészőben mind a 9 diagram-fülön végigellenőrizve EN
+    nézetben (M/T/w/φ, kihasználtság, burkolóábra, 3D feszültség,
+    teher–elmozdulás, konvergencia, modális, dinamika/tranziens), majd
+    HU-ban visszaváltva. **Ezzel az egyetlen érdemi, nyitva maradt
+    i18n-rés a `catalog/DatabaseView.tsx` marad** (nem sürgős, korábban
+    külön egyeztetve).
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
