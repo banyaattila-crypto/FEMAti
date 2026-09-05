@@ -37,9 +37,22 @@ function Cell({ caption, hint, minWidth, maxWidth, children }: CellProps): JSX.E
 
 /**
  * Eszközsor — DESIGN-TERV 3.1. Cellákra osztott, minden cella alján
- * UPPERCASE kategória-címkével. SOSEM törik új sorba (`shell.css`
- * `.vem-toolbar` — `flex-wrap: nowrap` + `overflow-x: auto`, 2026-09-05) —
- * ha nem fér ki minden cella, a sor vízszintesen görgethető.
+ * UPPERCASE kategória-címkével. Tördelhető (`flex-wrap`).
+ *
+ * FONTOS (2026-09-05, felhasználó jelentette hiba): egy `Cell`, aminek a
+ * tartalma változó hosszúságú szöveget mutathat (preset-név, elemszám-
+ * kijelzés stb.), `minWidth` MELLETT `maxWidth`-et is kell kapjon — enélkül
+ * egy hosszabb szöveg (akár nyelvváltás miatt, pl. EN "16 elements" a HU
+ * "16 elem" helyett) korlátlanul megnövelheti a cella szélességét, ami az
+ * egész sort idő előtt tördelésre kényszeríti, és az utolsó cellát
+ * (Tehertörténet) kiszámíthatatlanul a következő sorba dobja. Egy
+ * `overflow-x: auto`-s, nem-tördelhető sáv NEM megoldás: a CSS Overflow
+ * spec szerint, ha `overflow-x` nem `visible`, de `overflow-y` az marad, a
+ * böngésző az `overflow-y`-t is `auto`-ra kényszeríti — ez levágta a
+ * lenyíló Combobox-panelt, és görgetéskor az egész felület elcsúszott
+ * (kipróbálva, visszavonva). A helyes megoldás: minden változó hosszúságú
+ * cella kapjon reális `maxWidth`-et (ld. lent), a tördelés pedig maradjon
+ * bekapcsolva, keskeny ablaknál tartalék útként.
  */
 export function Toolbar(): JSX.Element {
   const s = useAppStore();
@@ -56,7 +69,7 @@ export function Toolbar(): JSX.Element {
 
   return (
     <div className="vem-toolbar">
-      <Cell caption={t.toolbarStructure} hint={`ref. ${preset.ref}`} minWidth={236} maxWidth={236}>
+      <Cell caption={t.toolbarStructure} hint={`ref. ${preset.ref}`} minWidth={200} maxWidth={200}>
         <Combobox ariaLabel={t.staticSchemeAria} value={model.presetId} onChange={loadPreset} options={presetComboOptions(s.lang)} />
       </Cell>
 
@@ -80,7 +93,7 @@ export function Toolbar(): JSX.Element {
         </div>
       </Cell>
 
-      <Cell caption={t.toolbarMesh} minWidth={216}>
+      <Cell caption={t.toolbarMesh} minWidth={216} maxWidth={250}>
         <Slider
           label={t.elementCountLabel}
           min={4}

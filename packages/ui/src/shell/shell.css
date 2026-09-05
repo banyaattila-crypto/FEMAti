@@ -176,18 +176,16 @@
   background: var(--surface-toolbar);
   border-bottom: 1px solid var(--border-strong);
   flex: none;
-  /* NEM tördelhető (2026-09-05, felhasználó jelentette hiba): a tördelés
-     egy hosszabb cella-tartalomnál (preset-név, EN "elements" a HU "elem"
-     helyett stb.) a teljes sort megtörte, és az utolsó cellát (Tehertörténet)
-     kiszámíthatatlanul a következő sorba dobta. Ehelyett a cellák a saját
-     `minWidth`-jükig zsugorodnak, majd — ha még mindig nem fér ki minden —
-     a sor vízszintesen görgethető, de SOSEM törik új sorba. */
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-wrap: wrap;
 }
 
 .vem-toolbar__cell {
-  padding: var(--space-4) var(--space-6);
+  /* Vízszintesen `--space-5` (korábban `--space-6` volt) — 2026-09-05,
+     felhasználó jelentette tördelési hiba: az EN nézet néhány cellája
+     (pl. "Mesh": "16 elements" a HU "16 elem" helyett) pár tíz pixellel
+     szélesebb a HU-nál, ez a szűkítés adja vissza azt a tartalék helyet,
+     ami korábban csak a HU szövegek melletti "véletlen" ráhagyás volt. */
+  padding: var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
