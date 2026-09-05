@@ -6,6 +6,7 @@ import { materialComboOptions, presetComboOptions, sectionComboOptions } from '.
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import * as fmt from '../format/numbers.js';
+import { SHELL } from '../i18n/shell.js';
 
 interface CellProps {
   readonly caption: string;
@@ -34,6 +35,7 @@ function Cell({ caption, hint, minWidth, children }: CellProps): JSX.Element {
  */
 export function Toolbar(): JSX.Element {
   const s = useAppStore();
+  const t = SHELL[s.lang];
   const model = useModelStore((st) => st.model);
   const loadPreset = useModelStore((st) => st.loadPreset);
   const setSpan = useModelStore((st) => st.setSpan);
@@ -46,13 +48,13 @@ export function Toolbar(): JSX.Element {
 
   return (
     <div className="vem-toolbar">
-      <Cell caption="Szerkezet" hint={`ref. ${preset.ref}`} minWidth={236}>
-        <Combobox ariaLabel="Statikai váz" value={model.presetId} onChange={loadPreset} options={presetComboOptions()} />
+      <Cell caption={t.toolbarStructure} hint={`ref. ${preset.ref}`} minWidth={236}>
+        <Combobox ariaLabel={t.staticSchemeAria} value={model.presetId} onChange={loadPreset} options={presetComboOptions()} />
       </Cell>
 
-      <Cell caption="Geometria" minWidth={206}>
+      <Cell caption={t.toolbarGeometry} minWidth={206}>
         <Slider
-          label={`Fesztáv L [${spanUnit.unit}]`}
+          label={t.spanLabel(spanUnit.unit)}
           min={spanUnit.toDisplay(2)}
           max={spanUnit.toDisplay(16)}
           step={spanUnit.toDisplay(0.5)}
@@ -63,56 +65,56 @@ export function Toolbar(): JSX.Element {
         />
       </Cell>
 
-      <Cell caption="Szelvény · anyag" minWidth={252}>
+      <Cell caption={t.toolbarSectionMaterial} minWidth={252}>
         <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-          <Combobox ariaLabel="Keresztmetszet" value={model.sectionId} onChange={setSectionId} options={sectionComboOptions()} />
-          <Combobox ariaLabel="Anyag" value={model.materialId} onChange={setMaterialId} options={materialComboOptions()} />
+          <Combobox ariaLabel={t.crossSectionAria} value={model.sectionId} onChange={setSectionId} options={sectionComboOptions()} />
+          <Combobox ariaLabel={t.materialAria} value={model.materialId} onChange={setMaterialId} options={materialComboOptions()} />
         </div>
       </Cell>
 
-      <Cell caption="Háló" minWidth={216}>
+      <Cell caption={t.toolbarMesh} minWidth={216}>
         <Slider
-          label="Elemszám"
+          label={t.elementCountLabel}
           min={4}
           max={100}
           step={2}
           value={model.elementCount}
           onChange={setElementCount}
-          display={`${model.elementCount} elem`}
+          display={t.elementCountDisplay(model.elementCount)}
         />
       </Cell>
 
-      <Cell caption="Integrálás (záródás)" minWidth={196}>
+      <Cell caption={t.toolbarIntegration} minWidth={196}>
         <SegmentedControl
-          ariaLabel="Integrálási séma"
+          ariaLabel={t.integrationAria}
           value={model.integration}
           onChange={setIntegration}
           options={[
             {
               value: 'selective',
-              label: 'szelektív',
-              title: 'Hajlítás 3 pont, nyírás 2 pont — a záródás (shear locking) ellen',
+              label: t.integrationSelective,
+              title: t.integrationSelectiveTitle,
             },
-            { value: 'full', label: 'teljes', title: 'Mindkét tag 3 pontos integrálással' },
+            { value: 'full', label: t.integrationFull, title: t.integrationFullTitle },
           ]}
         />
       </Cell>
 
       <Cell
-        caption="Tehertörténet"
+        caption={t.toolbarLoadHistory}
         hint={s.loadHistory === 'unloading' ? `λ→${s.peakLambda.toFixed(2)}→0` : undefined}
         minWidth={205}
       >
         <SegmentedControl
-          ariaLabel="Tehertörténet"
+          ariaLabel={t.loadHistoryAria}
           value={s.loadHistory}
           onChange={s.setLoadHistory}
           options={[
-            { value: 'monotonic', label: 'monoton' },
+            { value: 'monotonic', label: t.loadHistoryMonotonic },
             {
               value: 'unloading',
-              label: 'tehermentesítés',
-              title: 'Terhelés a csúcsig, majd tehermentesítés — sajátfeszültségek és beállás',
+              label: t.loadHistoryUnloading,
+              title: t.loadHistoryUnloadingTitle,
             },
           ]}
         />

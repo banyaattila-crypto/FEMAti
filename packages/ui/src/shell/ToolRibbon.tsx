@@ -13,13 +13,12 @@ import { useState, type CSSProperties, type ReactNode } from 'react';
 import { FOUNDATION_COLOR, LOAD_COLOR, SUPPORT_COLOR } from '../canvas/marks.js';
 import type { CanvasTool } from '../canvas/ToolPalette.js';
 import { useAppStore } from '../state/appStore.js';
+import { SHELL } from '../i18n/shell.js';
 
 type RibbonTab = 'loads' | 'supports';
 
 interface ToolDef {
-  readonly tool: CanvasTool;
-  readonly label: string;
-  readonly title: string;
+  readonly tool: Exclude<CanvasTool, 'select'>;
   readonly icon: JSX.Element;
   /** A gomb "kijelölve" (aria-pressed) állapotának színe — ugyanaz, mint magáé az ikoné. */
   readonly accentColor: string;
@@ -36,8 +35,6 @@ function Icon({ color, children }: { readonly color: string; readonly children: 
 const LOAD_TOOL_DEFS: readonly ToolDef[] = [
   {
     tool: 'add-point-load',
-    label: 'Pontteher',
-    title: 'Koncentrált erő elhelyezése kattintással',
     accentColor: LOAD_COLOR.point,
     icon: (
       <Icon color={LOAD_COLOR.point}>
@@ -48,8 +45,6 @@ const LOAD_TOOL_DEFS: readonly ToolDef[] = [
   },
   {
     tool: 'add-moment-load',
-    label: 'Nyomatékteher',
-    title: 'Koncentrált nyomaték elhelyezése kattintással',
     accentColor: LOAD_COLOR.moment,
     icon: (
       <Icon color={LOAD_COLOR.moment}>
@@ -60,8 +55,6 @@ const LOAD_TOOL_DEFS: readonly ToolDef[] = [
   },
   {
     tool: 'add-distributed-load',
-    label: 'Megoszló teher',
-    title: 'Megoszló teher rajzolása húzással (trapéz alakra a kijelölt teher panelén szerkeszthető)',
     accentColor: LOAD_COLOR.distributed,
     icon: (
       <Icon color={LOAD_COLOR.distributed}>
@@ -77,8 +70,6 @@ const LOAD_TOOL_DEFS: readonly ToolDef[] = [
   },
   {
     tool: 'add-distributed-moment-load',
-    label: 'Megoszló nyomaték',
-    title: 'Megoszló nyomatékteher rajzolása húzással',
     accentColor: LOAD_COLOR['distributed-moment'],
     icon: (
       <Icon color={LOAD_COLOR['distributed-moment']}>
@@ -93,8 +84,6 @@ const LOAD_TOOL_DEFS: readonly ToolDef[] = [
 const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
   {
     tool: 'add-pinned',
-    label: 'Csuklós',
-    title: 'Csuklós támasz elhelyezése kattintással',
     accentColor: SUPPORT_COLOR.pinned,
     icon: (
       <Icon color={SUPPORT_COLOR.pinned}>
@@ -105,8 +94,6 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
   },
   {
     tool: 'add-roller',
-    label: 'Görgős',
-    title: 'Görgős támasz elhelyezése kattintással',
     accentColor: SUPPORT_COLOR.roller,
     icon: (
       <Icon color={SUPPORT_COLOR.roller}>
@@ -118,8 +105,6 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
   },
   {
     tool: 'add-fixed',
-    label: 'Befogás',
-    title: 'Befogás elhelyezése kattintással',
     accentColor: SUPPORT_COLOR.fixed,
     icon: (
       <Icon color={SUPPORT_COLOR.fixed}>
@@ -132,8 +117,6 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
   },
   {
     tool: 'add-spring',
-    label: 'Rugós',
-    title: 'Rugós támasz elhelyezése kattintással',
     accentColor: SUPPORT_COLOR.spring,
     icon: (
       <Icon color={SUPPORT_COLOR.spring}>
@@ -143,8 +126,6 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
   },
   {
     tool: 'add-foundation',
-    label: 'Ágyazás',
-    title: 'Winkler-féle rugalmas ágyazat rajzolása húzással',
     accentColor: FOUNDATION_COLOR,
     icon: (
       <Icon color={FOUNDATION_COLOR}>
@@ -157,12 +138,24 @@ const SUPPORT_TOOL_DEFS: readonly ToolDef[] = [
   },
 ];
 
-function RibbonButton({ def, active, onClick }: { readonly def: ToolDef; readonly active: boolean; readonly onClick: () => void }): JSX.Element {
+function RibbonButton({
+  def,
+  label,
+  title,
+  active,
+  onClick,
+}: {
+  readonly def: ToolDef;
+  readonly label: string;
+  readonly title: string;
+  readonly active: boolean;
+  readonly onClick: () => void;
+}): JSX.Element {
   const style = { '--tool-accent': def.accentColor } as CSSProperties & Record<string, string>;
   return (
-    <button type="button" className="vem-ribbon__btn" aria-pressed={active} onClick={onClick} title={def.title} style={style}>
+    <button type="button" className="vem-ribbon__btn" aria-pressed={active} onClick={onClick} title={title} style={style}>
       {def.icon}
-      <span className="vem-ribbon__btn-label">{def.label}</span>
+      <span className="vem-ribbon__btn-label">{label}</span>
     </button>
   );
 }
@@ -171,6 +164,8 @@ function RibbonButton({ def, active, onClick }: { readonly def: ToolDef; readonl
 export function ToolRibbon(): JSX.Element {
   const tool = useAppStore((s) => s.canvasTool);
   const setTool = useAppStore((s) => s.setCanvasTool);
+  const lang = useAppStore((s) => s.lang);
+  const t = SHELL[lang];
   const activeIsLoad = LOAD_TOOL_DEFS.some((d) => d.tool === tool);
   const activeIsSupport = SUPPORT_TOOL_DEFS.some((d) => d.tool === tool);
   const [manualTab, setManualTab] = useState<RibbonTab>('loads');
@@ -180,7 +175,7 @@ export function ToolRibbon(): JSX.Element {
 
   return (
     <div className="vem-ribbon">
-      <div className="vem-ribbon__tabs" role="tablist" aria-label="Terhek / Támaszok">
+      <div className="vem-ribbon__tabs" role="tablist" aria-label={t.ribbonTabsAria}>
         <button
           type="button"
           role="tab"
@@ -188,7 +183,7 @@ export function ToolRibbon(): JSX.Element {
           aria-selected={activeTab === 'loads'}
           onClick={() => setManualTab('loads')}
         >
-          Terhek
+          {t.ribbonLoadsTab}
         </button>
         <button
           type="button"
@@ -197,12 +192,19 @@ export function ToolRibbon(): JSX.Element {
           aria-selected={activeTab === 'supports'}
           onClick={() => setManualTab('supports')}
         >
-          Támaszok
+          {t.ribbonSupportsTab}
         </button>
       </div>
-      <div className="vem-ribbon__tools" role="group" aria-label={activeTab === 'loads' ? 'Teher-eszközök' : 'Támasz-eszközök'}>
+      <div className="vem-ribbon__tools" role="group" aria-label={activeTab === 'loads' ? t.ribbonLoadToolsAria : t.ribbonSupportToolsAria}>
         {defs.map((def) => (
-          <RibbonButton key={def.tool} def={def} active={tool === def.tool} onClick={() => setTool(tool === def.tool ? 'select' : def.tool)} />
+          <RibbonButton
+            key={def.tool}
+            def={def}
+            label={t.toolLabels[def.tool].label}
+            title={t.toolLabels[def.tool].title}
+            active={tool === def.tool}
+            onClick={() => setTool(tool === def.tool ? 'select' : def.tool)}
+          />
         ))}
       </div>
     </div>

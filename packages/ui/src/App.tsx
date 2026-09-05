@@ -28,47 +28,47 @@ import { combinedSteps, runNonlinearEditableModel } from './model/nonlinear.js';
 import { ModelFileError, parseEditableModelFile, serializeEditableModel, type SolverSettingsFile } from './model/fileIO.js';
 import { DiagramPanel } from './charts/DiagramPanel.js';
 
-/** `accent` — a `--tab-*` tokenek neve (`tokens.css`), fülenként eltérő, de koherens tónus. */
-const DIAGRAM_TABS: readonly { id: DiagramTab; label: string; accent: string }[] = [
-  { id: 'M', label: 'M', accent: '--tab-m' },
-  { id: 'T', label: 'T', accent: '--tab-t' },
-  { id: 'w', label: 'w', accent: '--tab-w' },
-  { id: 'phi', label: 'φ', accent: '--tab-phi' },
-  { id: 'utilization', label: 'kihasználtság', accent: '--tab-utilization' },
-  { id: 'envelope', label: 'burkolóábra', accent: '--tab-envelope' },
-  { id: 'stress3d', label: '3D feszültség', accent: '--tab-stress3d' },
-  { id: 'load-displacement', label: 'teher–elmozdulás', accent: '--tab-load-displacement' },
-  { id: 'convergence', label: 'konvergencia', accent: '--tab-convergence' },
-  { id: 'modal', label: 'modális', accent: '--tab-modal' },
-  { id: 'dynamic', label: 'dinamika', accent: '--tab-dynamic' },
-];
-
-/** <768px-nél a fejezet-fülek — DESIGN-TERV 3.3 "egy oszlop, fülekkel". */
-const MOBILE_TABS: readonly { id: MobileTab; label: string }[] = [
-  { id: 'model', label: 'Modell' },
-  { id: 'canvas', label: 'Vászon' },
-  { id: 'results', label: 'Eredmény' },
-];
-
-const LEGEND = [
-  { label: 'rugalmas', fill: 'var(--sem-elastic)', stroke: 'var(--sem-elastic-edge)', pattern: 'solid' as const },
-  {
-    label: 'részben képlékeny',
-    fill: 'var(--sem-partial)',
-    stroke: 'var(--sem-partial-edge)',
-    pattern: 'hatch' as const,
-  },
-  {
-    label: 'képlékeny csukló',
-    fill: 'var(--sem-plastic)',
-    stroke: 'var(--sem-plastic-edge)',
-    pattern: 'cross' as const,
-  },
-];
-
 export function App(): JSX.Element {
   const s = useAppStore();
   const t = SHELL[s.lang];
+
+  /** `accent` — a `--tab-*` tokenek neve (`tokens.css`), fülenként eltérő, de koherens tónus. */
+  const diagramTabs: readonly { id: DiagramTab; label: string; accent: string }[] = [
+    { id: 'M', label: 'M', accent: '--tab-m' },
+    { id: 'T', label: 'T', accent: '--tab-t' },
+    { id: 'w', label: 'w', accent: '--tab-w' },
+    { id: 'phi', label: 'φ', accent: '--tab-phi' },
+    { id: 'utilization', label: t.tabUtilization, accent: '--tab-utilization' },
+    { id: 'envelope', label: t.tabEnvelope, accent: '--tab-envelope' },
+    { id: 'stress3d', label: t.tabStress3d, accent: '--tab-stress3d' },
+    { id: 'load-displacement', label: t.tabLoadDisplacement, accent: '--tab-load-displacement' },
+    { id: 'convergence', label: t.tabConvergence, accent: '--tab-convergence' },
+    { id: 'modal', label: t.tabModal, accent: '--tab-modal' },
+    { id: 'dynamic', label: t.tabDynamic, accent: '--tab-dynamic' },
+  ];
+
+  /** <768px-nél a fejezet-fülek — DESIGN-TERV 3.3 "egy oszlop, fülekkel". */
+  const mobileTabs: readonly { id: MobileTab; label: string }[] = [
+    { id: 'model', label: t.mobileModel },
+    { id: 'canvas', label: t.mobileCanvas },
+    { id: 'results', label: t.mobileResults },
+  ];
+
+  const legend = [
+    { label: t.legendElastic, fill: 'var(--sem-elastic)', stroke: 'var(--sem-elastic-edge)', pattern: 'solid' as const },
+    {
+      label: t.legendPartial,
+      fill: 'var(--sem-partial)',
+      stroke: 'var(--sem-partial-edge)',
+      pattern: 'hatch' as const,
+    },
+    {
+      label: t.legendPlastic,
+      fill: 'var(--sem-plastic)',
+      stroke: 'var(--sem-plastic-edge)',
+      pattern: 'cross' as const,
+    },
+  ];
   const model = useModelStore((st) => st.model);
   const undo = useModelStore((st) => st.undo);
   const redo = useModelStore((st) => st.redo);
@@ -284,70 +284,70 @@ export function App(): JSX.Element {
 
   const menus: readonly Menu[] = [
     {
-      label: 'File',
+      label: t.menuFile,
       items: [
-        { label: 'Jegyzőkönyv megnyitása', onSelect: openReport, separatorAfter: true },
-        { label: 'Mentés (.femati.json)', onSelect: saveModel },
-        { label: 'Betöltés (.femati.json)', onSelect: openLoadDialog, separatorAfter: true },
-        { label: 'Export: Word (.docx)', disabled: true },
-        { label: 'Export: PDF', onSelect: exportReportPdf },
+        { label: t.fileOpenReport, onSelect: openReport, separatorAfter: true },
+        { label: t.fileSave, onSelect: saveModel },
+        { label: t.fileLoad, onSelect: openLoadDialog, separatorAfter: true },
+        { label: t.fileExportWord, disabled: true },
+        { label: t.fileExportPdf, onSelect: exportReportPdf },
       ],
     },
     {
-      label: 'Szerkesztés',
+      label: t.menuEdit,
       items: [
-        { label: 'Visszavonás', shortcut: 'Ctrl+Z', onSelect: undo, disabled: !canUndo },
-        { label: 'Újra', shortcut: 'Ctrl+Y', onSelect: redo, disabled: !canRedo },
-        { label: 'Kijelölt elem törlése', shortcut: 'Del', onSelect: removeSelected, disabled: selection === null, separatorAfter: true },
-        { label: 'Szelvény adatbázis', onSelect: () => s.setSectionDbOpen(true) },
-        { label: 'Anyag adatbázis', onSelect: () => s.setMaterialDbOpen(true) },
+        { label: t.editUndo, shortcut: 'Ctrl+Z', onSelect: undo, disabled: !canUndo },
+        { label: t.editRedo, shortcut: 'Ctrl+Y', onSelect: redo, disabled: !canRedo },
+        { label: t.editDeleteSelected, shortcut: 'Del', onSelect: removeSelected, disabled: selection === null, separatorAfter: true },
+        { label: t.editSectionDb, onSelect: () => s.setSectionDbOpen(true) },
+        { label: t.editMaterialDb, onSelect: () => s.setMaterialDbOpen(true) },
       ],
     },
     {
-      label: 'Nézet',
+      label: t.menuView,
       items: [
         {
-          label: s.showGaussPoints ? 'Gauss-pontok elrejtése' : 'Gauss-pontok megjelenítése',
+          label: t.viewGaussToggle(s.showGaussPoints),
           onSelect: () => s.setShowGaussPoints(!s.showGaussPoints),
         },
         {
-          label: s.momentTensionSide ? 'M ábra: normál oldal' : 'M ábra: húzott oldal',
+          label: t.viewMomentSide(s.momentTensionSide),
           onSelect: () => s.setMomentTensionSide(!s.momentTensionSide),
         },
         {
-          label: s.showReactions ? 'Reakciók elrejtése' : 'Reakciók megjelenítése',
+          label: t.viewReactionsToggle(s.showReactions),
           onSelect: () => s.setShowReactions(!s.showReactions),
         },
         {
-          label: s.unitSystem === 'si' ? 'Mértékegység: US customary' : 'Mértékegység: SI',
+          label: t.viewUnitToggle(s.unitSystem),
           onSelect: () => s.setUnitSystem(s.unitSystem === 'si' ? 'imperial' : 'si'),
         },
       ],
     },
     {
-      label: 'Számítás',
+      label: t.menuAnalysis,
       items: [
-        { label: 'Futtatás', shortcut: 'F5', onSelect: run },
-        { label: 'Megszakítás', disabled: true, separatorAfter: true },
-        { label: 'Levezetés megtekintése', onSelect: openDerivation },
-        { label: 'Hálófüggetlenségi vizsgálat', onSelect: () => s.setMeshConvergenceOpen(true) },
+        { label: t.analysisRun, shortcut: 'F5', onSelect: run },
+        { label: t.analysisAbort, disabled: true, separatorAfter: true },
+        { label: t.analysisViewDerivation, onSelect: openDerivation },
+        { label: t.analysisMeshConvergence, onSelect: () => s.setMeshConvergenceOpen(true) },
       ],
     },
     {
-      label: 'Elméletek',
+      label: t.menuTheory,
       items: [
-        { label: 'Matematikai összefoglaló', onSelect: () => s.openTheory('thesis96'), separatorAfter: true },
-        { label: 'Timoshenko gerendaelem', onSelect: () => s.openTheory('timoshenko') },
-        { label: 'Szelektív redukált integrálás', onSelect: () => s.openTheory('integration') },
-        { label: 'Reziduális erők (REFORB)', onSelect: () => s.openTheory('reforb'), separatorAfter: true },
-        { label: 'Történelmi mód: frontális megoldó', onSelect: openHistorical, separatorAfter: true },
+        { label: t.theoryMathSummary, onSelect: () => s.openTheory('thesis96'), separatorAfter: true },
+        { label: t.theoryTimoshenko, onSelect: () => s.openTheory('timoshenko') },
+        { label: t.theoryIntegration, onSelect: () => s.openTheory('integration') },
+        { label: t.theoryReforb, onSelect: () => s.openTheory('reforb'), separatorAfter: true },
+        { label: t.theoryHistorical, onSelect: openHistorical, separatorAfter: true },
       ],
     },
     {
-      label: 'Súgó',
+      label: t.menuHelp,
       items: [
-        { label: 'Kezdő lépések', onSelect: () => s.setWelcomeOpen(true) },
-        { label: 'Névjegy', onSelect: () => s.setAboutOpen(true) },
+        { label: t.helpGettingStarted, onSelect: () => s.setWelcomeOpen(true) },
+        { label: t.helpAbout, onSelect: () => s.setAboutOpen(true) },
       ],
     },
   ];
@@ -407,8 +407,8 @@ export function App(): JSX.Element {
       <Toolbar />
       <ToolRibbon />
 
-      <nav className="vem-mobile-tabs" role="tablist" aria-label="Nézet (mobil)">
-        {MOBILE_TABS.map((t) => (
+      <nav className="vem-mobile-tabs" role="tablist" aria-label={t.mobileNavAria}>
+        {mobileTabs.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -427,18 +427,18 @@ export function App(): JSX.Element {
           type="button"
           className="vem-tablet-toggle"
           aria-expanded={s.tabletModelOpen}
-          aria-label="Modell panel"
+          aria-label={t.modelPanelAria}
           onClick={() => s.setTabletModelOpen(!s.tabletModelOpen)}
         >
-          Modell
+          {t.mobileModel}
         </button>
 
         <LeftPanel />
 
-        <section className="vem-center" aria-label="Modellvászon">
+        <section className="vem-center" aria-label={t.canvasAria}>
           <div className="vem-canvas-bar">
-            <span className="vem-canvas-bar__title">MODELL</span>
-            <Legend items={LEGEND} />
+            <span className="vem-canvas-bar__title">{t.modelBarTitle}</span>
+            <Legend items={legend} />
           </div>
 
           <div className="vem-canvas-host">
@@ -446,8 +446,8 @@ export function App(): JSX.Element {
           </div>
 
           <div className="vem-diagram-bar">
-            <div className="vem-diagram-bar__tabs" role="tablist" aria-label="Diagramok">
-              {DIAGRAM_TABS.map((t) => (
+            <div className="vem-diagram-bar__tabs" role="tablist" aria-label={t.diagramsAria}>
+              {diagramTabs.map((t) => (
                 <button
                   key={t.id}
                   type="button"

@@ -1,4 +1,5 @@
 import { useAppStore } from '../state/appStore.js';
+import { SHELL } from '../i18n/shell.js';
 
 /**
  * "Kezdő lépések" üdvözlő kártya — első látogatáskor automatikusan
@@ -22,42 +23,29 @@ import { useAppStore } from '../state/appStore.js';
 export function WelcomeDialog(): JSX.Element | null {
   const open = useAppStore((s) => s.welcomeOpen);
   const setOpen = useAppStore((s) => s.setWelcomeOpen);
+  const t = SHELL[useAppStore((s) => s.lang)];
   if (!open) return null;
 
   return (
     <div className="vem-inspector-overlay" onPointerDown={() => setOpen(false)}>
       <div className="vem-inspector" style={{ width: 400 }} onPointerDown={(e) => e.stopPropagation()}>
         <div className="vem-inspector__header">
-          <span>Kezdő lépések</span>
-          <button type="button" className="vem-btn vem-btn--sm" onClick={() => setOpen(false)} aria-label="Kezdő lépések bezárása">
+          <span>{t.welcomeTitle}</span>
+          <button type="button" className="vem-btn vem-btn--sm" onClick={() => setOpen(false)} aria-label={t.welcomeCloseAria}>
             ✕
           </button>
         </div>
         <div style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
-            A FEMAti egy Timoshenko-gerenda rugalmas–képlékeny végeselemes analízis szoftver. Első ránézésre sok
-            mindent mutat egyszerre — íme, mi hol van:
-          </p>
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)' }}>{t.welcomeIntro}</p>
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <li style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Bal panel</strong> — itt épül a modell: támaszok,
-              terhek, keresztmetszet, anyag.
-            </li>
-            <li style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Középen a vászon</strong> — kattintással és
-              húzással szerkesztheted a szerkezetet.
-            </li>
-            <li style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Jobb panel</strong> — az eredmények (lehajlás,
-              nyomaték, teherbírás) élőben frissülnek.
-            </li>
-            <li style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Fent, a "Szerkezet" legördülőben</strong> kész
-              mintafeladatok is vannak — onnan is el lehet indulni.
-            </li>
+            {t.welcomeBullets.map((b) => (
+              <li key={b.strong} style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>{b.strong}</strong> — {b.text}
+              </li>
+            ))}
           </ul>
           <button type="button" className="vem-btn vem-btn--primary" onClick={() => setOpen(false)}>
-            Kezdjük
+            {t.welcomeCta}
           </button>
         </div>
       </div>

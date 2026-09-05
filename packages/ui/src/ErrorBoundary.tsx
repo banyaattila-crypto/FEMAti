@@ -1,5 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import './errorBoundary.css';
+import { useAppStore } from './state/appStore.js';
+import { SHELL } from './i18n/shell.js';
 
 interface ErrorBoundaryProps {
   readonly children: ReactNode;
@@ -35,21 +37,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   override render(): ReactNode {
     const { error } = this.state;
     if (error === null) return this.props.children;
+    const t = SHELL[useAppStore.getState().lang];
     return (
       <div className="vem-error-boundary">
         <div className="vem-error-boundary__box">
-          <h1>Váratlan hiba történt</h1>
-          <p>
-            A felület egy nem kezelt hibába ütközött, ezért nem tud tovább biztonságosan működni. A
-            jelenlegi modell-állapot ELVESZHETETT az újratöltéskor — ha fontos beállítást szerkesztettél,
-            jegyezd fel, mielőtt újratöltöd.
-          </p>
+          <h1>{t.errorTitle}</h1>
+          <p>{t.errorBody}</p>
           <details className="vem-error-boundary__details">
-            <summary>Technikai részletek</summary>
+            <summary>{t.errorDetailsSummary}</summary>
             <pre>{error.message}</pre>
           </details>
           <button type="button" className="vem-btn vem-btn--primary" onClick={() => window.location.reload()}>
-            Oldal újratöltése
+            {t.errorReload}
           </button>
         </div>
       </div>
