@@ -176,7 +176,14 @@
   background: var(--surface-toolbar);
   border-bottom: 1px solid var(--border-strong);
   flex: none;
-  flex-wrap: wrap;
+  /* NEM tördelhető (2026-09-05, felhasználó jelentette hiba): a tördelés
+     egy hosszabb cella-tartalomnál (preset-név, EN "elements" a HU "elem"
+     helyett stb.) a teljes sort megtörte, és az utolsó cellát (Tehertörténet)
+     kiszámíthatatlanul a következő sorba dobta. Ehelyett a cellák a saját
+     `minWidth`-jükig zsugorodnak, majd — ha még mindig nem fér ki minden —
+     a sor vízszintesen görgethető, de SOSEM törik új sorba. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
 .vem-toolbar__cell {

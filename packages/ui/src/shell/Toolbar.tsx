@@ -37,7 +37,9 @@ function Cell({ caption, hint, minWidth, maxWidth, children }: CellProps): JSX.E
 
 /**
  * Eszközsor — DESIGN-TERV 3.1. Cellákra osztott, minden cella alján
- * UPPERCASE kategória-címkével. Tördelhető (`flex-wrap`).
+ * UPPERCASE kategória-címkével. SOSEM törik új sorba (`shell.css`
+ * `.vem-toolbar` — `flex-wrap: nowrap` + `overflow-x: auto`, 2026-09-05) —
+ * ha nem fér ki minden cella, a sor vízszintesen görgethető.
  */
 export function Toolbar(): JSX.Element {
   const s = useAppStore();
