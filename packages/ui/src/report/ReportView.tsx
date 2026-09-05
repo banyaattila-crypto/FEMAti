@@ -20,6 +20,7 @@
 import './report.css';
 import { crackingMomentUtilization, deflectionUtilization, shearMomentInteraction } from '@femati/fem-core';
 import { findMaterial, findPreset, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
+import { presetDisplayName } from '../i18n/catalog.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
@@ -31,33 +32,15 @@ import { combinedSteps } from '../model/nonlinear.js';
 import { buildHingeReport } from './reportData.js';
 import { BeamFigure, BEAM_FIGURE_HEIGHT } from './BeamFigure.js';
 import * as fmt from '../format/numbers.js';
-import { utilizationVerdict, type UtilizationVerdict } from '../format/utilization.js';
+import { utilizationVerdict } from '../format/utilization.js';
+import { SUPPORT_TYPE_LABEL, VERDICT_LABEL } from '../i18n/panels.js';
+import { REPORT, formatReportDateTime } from '../i18n/report.js';
 
 const noop = (): void => {};
 
-/**
- * Ideiglenes, kizárólag itt használt HU-felirat a `UtilizationVerdict.code`-hoz
- * — a jegyzőkönyv-export teljes i18n-je külön fázis (5a), ez a hívóhely csak
- * a `format/utilization.ts` nyelv-semlegesítése (2026-09-05, RightPanel-fázis)
- * miatt vált `code`-ra, a KIMENET egyelőre változatlanul magyar marad.
- */
-function verdictLabelHu(v: UtilizationVerdict): string {
-  return v.code === 'ok' ? 'megfelel a határértéknek' : v.code === 'exceeded' ? 'túllépi a határt' : '—';
-}
-
-function formatDateTime(d: Date): string {
-  return new Intl.DateTimeFormat('hu-HU', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  }).format(d);
-}
-
-const HINGE_KIND_LABEL: Record<'first-yield' | 'full-hinge', string> = {
-  'first-yield': 'első megfolyás',
-  'full-hinge': 'képlékeny csukló (teljes keresztmetszet)',
-};
-
 export function ReportView(): JSX.Element | null {
+  const lang = useAppStore((s) => s.lang);
+  const t = REPORT[lang];
   const reportOpen = useAppStore((s) => s.reportOpen);
   const setReportOpen = useAppStore((s) => s.setReportOpen);
   const algorithm = useAppStore((s) => s.algorithm);
@@ -89,10 +72,10 @@ export function ReportView(): JSX.Element | null {
 
   const diagramFields = result
     ? ([
-        { key: 'M', title: 'M — hajlítónyomaték', ys: result.nodes.map((n) => n.m), format: fmt.moment, flip: momentTensionSide },
-        { key: 'T', title: 'T — nyíróerő', ys: result.nodes.map((n) => n.t), format: fmt.shear, flip: false },
-        { key: 'w', title: 'w — lehajlás', ys: result.nodes.map((n) => n.w), format: fmt.deflection, flip: false },
-        { key: 'phi', title: 'φ — elfordulás', ys: result.nodes.map((n) => n.phi), format: fmt.rotation, flip: false },
+        { key: 'M', title: t.diagramTitle.M, ys: result.nodes.map((n) => n.m), format: fmt.moment, flip: momentTensionSide },
+        { key: 'T', title: t.diagramTitle.T, ys: result.nodes.map((n) => n.t), format: fmt.shear, flip: false },
+        { key: 'w', title: t.diagramTitle.w, ys: result.nodes.map((n) => n.w), format: fmt.deflection, flip: false },
+        { key: 'phi', title: t.diagramTitle.phi, ys: result.nodes.map((n) => n.phi), format: fmt.rotation, flip: false },
       ] as const)
     : [];
 
@@ -117,10 +100,10 @@ export function ReportView(): JSX.Element | null {
       <div className="vem-report-toolbar">
         <div className="vem-report-toolbar__inner" onPointerDown={(e) => e.stopPropagation()}>
           <button type="button" className="vem-btn vem-btn--sm" onClick={() => setReportOpen(false)}>
-            Bezárás
+            {t.close}
           </button>
           <button type="button" className="vem-btn vem-btn--primary vem-btn--sm" onClick={() => window.print()}>
-            Nyomtatás / PDF mentése
+            {t.printSave}
           </button>
         </div>
       </div>
@@ -129,47 +112,47 @@ export function ReportView(): JSX.Element | null {
         {/* 1. Fejléc */}
         <header className="vem-report__header">
           <div>
-            <h1>FEM@ti — Számítási jegyzőkönyv</h1>
+            <h1>{t.reportTitle}</h1>
             <p className="vem-report__subtitle">
-              {preset.name} (ref. {preset.ref})
+              {presetDisplayName(preset.id, lang)} (ref. {preset.ref})
             </p>
           </div>
           <div className="vem-report__header-meta">
-            <div>{formatDateTime(generatedAt)}</div>
-            <div>v{__APP_VERSION__} · mag: {__GIT_COMMIT__}</div>
+            <div>{formatReportDateTime(generatedAt, lang)}</div>
+            <div>{t.versionLabel(__APP_VERSION__, __GIT_COMMIT__)}</div>
           </div>
         </header>
 
         {/* 2. Modell */}
         <section className="vem-report__section">
-          <h2>2. Modell</h2>
+          <h2>{t.section2Title}</h2>
           <div className="vem-report__grid">
             <table>
               <tbody>
                 <tr>
-                  <th>Fesztáv L</th>
+                  <th>{t.spanLabel}</th>
                   <td>{fmt.length(model.span).value} m</td>
                 </tr>
                 <tr>
-                  <th>Szelvény</th>
+                  <th>{t.sectionLabel}</th>
                   <td>{section.name}</td>
                 </tr>
                 <tr>
-                  <th>Anyag</th>
+                  <th>{t.materialLabel}</th>
                   <td>{material.name}</td>
                 </tr>
                 <tr>
-                  <th>Önsúly</th>
-                  <td>{model.selfWeight ? 'figyelembe véve' : 'nincs figyelembe véve'}</td>
+                  <th>{t.selfWeightLabel}</th>
+                  <td>{model.selfWeight ? t.selfWeightYes : t.selfWeightNo}</td>
                 </tr>
               </tbody>
             </table>
             <table>
               <thead>
                 <tr>
-                  <th>Támasz</th>
-                  <th>x [m]</th>
-                  <th>Típus</th>
+                  <th>{t.supportHeader}</th>
+                  <th>{t.xHeader}</th>
+                  <th>{t.typeHeader}</th>
                 </tr>
               </thead>
               <tbody>
@@ -177,7 +160,7 @@ export function ReportView(): JSX.Element | null {
                   <tr key={s.id}>
                     <td>{s.id}</td>
                     <td>{s.x.toFixed(2)}</td>
-                    <td>{s.type === 'fixed' ? 'befogás' : s.type === 'pinned' ? 'csuklós' : 'görgős'}</td>
+                    <td>{SUPPORT_TYPE_LABEL[lang][s.type]}</td>
                   </tr>
                 ))}
               </tbody>
@@ -187,24 +170,16 @@ export function ReportView(): JSX.Element | null {
           <table style={{ marginTop: 8 }}>
             <thead>
               <tr>
-                <th>Teher</th>
-                <th>Típus</th>
-                <th>Jellemző</th>
+                <th>{t.loadHeader}</th>
+                <th>{t.typeHeader}</th>
+                <th>{t.valueHeader}</th>
               </tr>
             </thead>
             <tbody>
               {model.loads.map((l) => (
                 <tr key={l.id}>
                   <td>{l.id}</td>
-                  <td>
-                    {l.kind === 'point'
-                      ? 'koncentrált erő'
-                      : l.kind === 'moment'
-                        ? 'koncentrált nyomaték'
-                        : l.kind === 'distributed'
-                          ? 'megoszló teher'
-                          : 'megoszló nyomatékteher'}
-                  </td>
+                  <td>{t.loadKindLabel[l.kind]}</td>
                   <td>
                     {l.kind === 'point'
                       ? `P = ${l.p.toFixed(1)} kN, x = ${l.x.toFixed(2)} m`
@@ -230,36 +205,32 @@ export function ReportView(): JSX.Element | null {
           {catalogUnverified ? (
             <div className="vem-report__note vem-report__note--warn">
               {UNVERIFIED_WARNING}
-              {!material.verified ? ` Anyag (${material.name}): ${material.source}.` : ''}
-              {!section.verified ? ` Szelvény (${section.name}): ${section.source}.` : ''}
+              {!material.verified ? t.materialSourceNote(material.name, material.source) : ''}
+              {!section.verified ? t.sectionSourceNote(section.name, section.source) : ''}
             </div>
           ) : null}
         </section>
 
         {/* 3. Háló */}
         <section className="vem-report__section">
-          <h2>3. Háló</h2>
+          <h2>{t.section3Title}</h2>
           <table>
             <tbody>
               <tr>
-                <th>Elemszám</th>
+                <th>{t.elementCountLabel}</th>
                 <td>{model.elementCount}</td>
               </tr>
               <tr>
-                <th>Elemhossz</th>
+                <th>{t.elementLengthLabel}</th>
                 <td>{(model.span / model.elementCount).toFixed(3)} m</td>
               </tr>
               <tr>
-                <th>Szabadságfokok</th>
+                <th>{t.dofLabel}</th>
                 <td>{result ? fmt.count(result.dofCount, 'DOF').value : '—'}</td>
               </tr>
               <tr>
-                <th>Integrálási séma</th>
-                <td>
-                  {model.integration === 'selective'
-                    ? 'szelektív redukált (hajlítás 3 pont, nyírás 2 pont)'
-                    : 'teljes (mindkét tag 3 pontos)'}
-                </td>
+                <th>{t.integrationLabel}</th>
+                <td>{model.integration === 'selective' ? t.integrationSelective : t.integrationFull}</td>
               </tr>
             </tbody>
           </table>
@@ -267,28 +238,28 @@ export function ReportView(): JSX.Element | null {
 
         {/* 4. Megoldó beállításai */}
         <section className="vem-report__section">
-          <h2>4. Megoldó beállításai</h2>
+          <h2>{t.section4Title}</h2>
           <table>
             <tbody>
               <tr>
-                <th>Algoritmus</th>
-                <td>{algorithm === 'newton' ? 'Newton-Raphson (teljes)' : 'módosított Newton'}</td>
+                <th>{t.algorithmLabel}</th>
+                <td>{algorithm === 'newton' ? t.algorithmNewton : t.algorithmModified}</td>
               </tr>
               <tr>
-                <th>Teherlépcső Δλ</th>
+                <th>{t.loadStepLabel}</th>
                 <td>{loadStep.toFixed(2)}</td>
               </tr>
               <tr>
-                <th>Tolerancia</th>
+                <th>{t.toleranceLabel}</th>
                 <td>{tolerance.toFixed(2)} %</td>
               </tr>
               <tr>
-                <th>Csúcs-teherszorzó λ_cél</th>
+                <th>{t.peakLambdaLabel}</th>
                 <td>{peakLambda.toFixed(2)}</td>
               </tr>
               <tr>
-                <th>Tehertörténet</th>
-                <td>{loadHistory === 'unloading' ? 'terhelés a csúcsig, majd tehermentesítés' : 'monoton'}</td>
+                <th>{t.loadHistoryLabel}</th>
+                <td>{loadHistory === 'unloading' ? t.loadHistoryUnloading : t.loadHistoryMonotonic}</td>
               </tr>
             </tbody>
           </table>
@@ -296,11 +267,11 @@ export function ReportView(): JSX.Element | null {
 
         {/* 5. Eredmények (lineáris) */}
         <section className="vem-report__section">
-          <h2>5. Eredmények</h2>
+          <h2>{t.section5Title}</h2>
           {error !== null ? (
-            <div className="vem-report__note vem-report__note--warn">A modell jelenleg nem futtatható: {error}</div>
+            <div className="vem-report__note vem-report__note--warn">{t.modelNotRunnable(error)}</div>
           ) : result === null ? (
-            <div className="vem-report__note">Nincs számítható modell.</div>
+            <div className="vem-report__note">{t.noComputableModel}</div>
           ) : (
             <>
               <div className="vem-report__grid">
@@ -339,7 +310,7 @@ export function ReportView(): JSX.Element | null {
                 <table>
                   <thead>
                     <tr>
-                      <th>Reakció</th>
+                      <th>{t.reactionHeader}</th>
                       <th>Fz [kN]</th>
                       <th>My [kNm]</th>
                     </tr>
@@ -353,7 +324,7 @@ export function ReportView(): JSX.Element | null {
                       </tr>
                     ))}
                     <tr>
-                      <th>ΣFz / ΣMy ellenőrzés</th>
+                      <th>{t.equilibriumCheckLabel}</th>
                       <td className={result.equilibrium.satisfied ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
                         {fmt.force(result.equilibrium.sumFz).value}
                       </td>
@@ -368,55 +339,50 @@ export function ReportView(): JSX.Element | null {
               <table>
                 <thead>
                   <tr>
-                    <th>Szabványossági ellenőrzés</th>
-                    <th>Kihasználtság</th>
-                    <th>Verdikt</th>
+                    <th>{t.standardsCheckHeader}</th>
+                    <th>{t.utilizationHeader}</th>
+                    <th>{t.verdictHeader}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {interaction !== null ? (
                     <tr>
-                      <th>M-V kihasználtság (EN 1993-1-1 6.2.8, γM0 = 1.00)</th>
+                      <th>{t.mvCheckLabel}</th>
                       <td className={mvVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
                         {fmt.percent(interaction.utilization * 100).value}%
                       </td>
                       <td className={mvVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
-                        {verdictLabelHu(mvVerdict)}
+                        {VERDICT_LABEL[lang][mvVerdict.code]}
                       </td>
                     </tr>
                   ) : null}
                   <tr>
-                    <th>Lehajlás-ellenőrzés (SLS, L/250)</th>
+                    <th>{t.deflectionCheckLabel}</th>
                     <td className={deflectionVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
                       {deflectionUtil !== null && Number.isFinite(deflectionUtil)
                         ? `${fmt.percent(deflectionUtil * 100).value}%`
                         : fmt.MISSING}
                     </td>
                     <td className={deflectionVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
-                      {verdictLabelHu(deflectionVerdict)}
+                      {VERDICT_LABEL[lang][deflectionVerdict.code]}
                     </td>
                   </tr>
                   {mcr !== null ? (
                     <tr>
-                      <th>Repedési nyomaték Mcr kihasználtsága (EC2, tájékoztató)</th>
+                      <th>{t.crackingCheckLabel}</th>
                       <td className={crackingVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
                         {crackingUtil !== null && Number.isFinite(crackingUtil)
                           ? `${fmt.percent(crackingUtil * 100).value}%`
                           : fmt.MISSING}
                       </td>
                       <td className={crackingVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
-                        {verdictLabelHu(crackingVerdict)}
+                        {VERDICT_LABEL[lang][crackingVerdict.code]}
                       </td>
                     </tr>
                   ) : null}
                 </tbody>
               </table>
-              {mcr !== null ? (
-                <div className="vem-report__note">
-                  A repedési nyomaték ellenőrzés TÁJÉKOZTATÓ, SLS-jellegű jelzés — NEM vasbeton ULS teherbírás-ellenőrzés
-                  (nincs vasalás-modellezés a motorban, ld. ADR-0019, ADR-0021).
-                </div>
-              ) : null}
+              {mcr !== null ? <div className="vem-report__note">{t.crackingNote}</div> : null}
 
               {diagramFields.map((f) => (
                 <div key={f.key} className="vem-report__chart" style={{ height: CHART_HEIGHT }}>
@@ -440,21 +406,21 @@ export function ReportView(): JSX.Element | null {
         {/* 6. Nemlineáris futás */}
         {nonlinearRun ? (
           <section className="vem-report__section">
-            <h2>6. Nemlineáris (rugalmas–képlékeny) futás</h2>
+            <h2>{t.section6Title}</h2>
             <table>
               <tbody>
                 <tr>
-                  <th>Állapot</th>
+                  <th>{t.stateLabel}</th>
                   <td>
                     {nonlinearRun.status === 'converged'
-                      ? `konvergált λ = ${nonlinearRun.peakLambda.toFixed(3)}-ig`
+                      ? t.convergedText(nonlinearRun.peakLambda.toFixed(3))
                       : nonlinearRun.status === 'limit-load-reached'
-                        ? `a szerkezet a határteher közelébe ért (λ ≈ ${(nonlinearRun.loadingSteps.at(-1)?.lambda ?? 0).toFixed(3)})`
-                        : 'a futás megszakadt'}
+                        ? t.limitLoadText((nonlinearRun.loadingSteps.at(-1)?.lambda ?? 0).toFixed(3))
+                        : t.divergedText}
                   </td>
                 </tr>
                 <tr>
-                  <th>Elvetett próbálkozások (Δλ-felezés)</th>
+                  <th>{t.rejectedAttemptsLabel}</th>
                   <td>{nonlinearRun.rejectedAttempts.length}</td>
                 </tr>
               </tbody>
@@ -467,10 +433,10 @@ export function ReportView(): JSX.Element | null {
             <table style={{ marginTop: 8 }}>
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Esemény</th>
-                  <th>Elem</th>
-                  <th>x ≈ [m]</th>
+                  <th>{t.hingeIndexHeader}</th>
+                  <th>{t.hingeEventHeader}</th>
+                  <th>{t.hingeElementHeader}</th>
+                  <th>{t.hingeXHeader}</th>
                   <th>λ</th>
                 </tr>
               </thead>
@@ -478,7 +444,7 @@ export function ReportView(): JSX.Element | null {
                 {hinges.map((h, i) => (
                   <tr key={`${h.elementId}-${h.kind}-${h.stepIndex}-${i}`}>
                     <td>{i + 1}</td>
-                    <td>{HINGE_KIND_LABEL[h.kind]}</td>
+                    <td>{t.hingeKindLabel[h.kind]}</td>
                     <td>{h.elementId}</td>
                     <td>{h.xApprox !== null ? h.xApprox.toFixed(2) : '—'}</td>
                     <td>{h.lambda.toFixed(3)}</td>
@@ -486,7 +452,7 @@ export function ReportView(): JSX.Element | null {
                 ))}
                 {hinges.length === 0 ? (
                   <tr>
-                    <td colSpan={5}>Nem alakult ki képlékeny zóna ebben a futásban.</td>
+                    <td colSpan={5}>{t.noPlasticZone}</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -500,21 +466,17 @@ export function ReportView(): JSX.Element | null {
 
         {/* 7. Hibabecslés */}
         <section className="vem-report__section">
-          <h2>7. Hibabecslés és hálófüggetlenség</h2>
+          <h2>{t.section7Title}</h2>
           {result ? (
             <p>
-              A legrosszabb elemenkénti hibajelző (az elemhatáron mért, átlagolás előtti igénybevétel-ugrás a mező
-              szélsőértékéhez viszonyítva): <strong>{fmt.percent(result.errorEstimate).value}%</strong>. A jelző a
-              hálósűrűség növelésével csökken (h-konvergencia) — ld. docs/THEORY.md 6. és 12. pont. A jelen
-              jegyzőkönyv NEM helyettesíti a hálófüggetlenségi vizsgálatot: eltérő elemszámmal újrafuttatva
-              ellenőrizendő, hogy az eredmény érdemben nem változik.
+              {t.errorEstimateBefore}
+              <strong>{fmt.percent(result.errorEstimate).value}%</strong>
+              {t.errorEstimateAfter}
             </p>
           ) : null}
         </section>
 
-        <footer className="vem-report__footer">
-          A számítás eredményét szakmai felelősséggel ellenőrizni kell.
-        </footer>
+        <footer className="vem-report__footer">{t.footerNote}</footer>
       </article>
     </div>
   );
