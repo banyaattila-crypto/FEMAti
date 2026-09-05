@@ -2,11 +2,12 @@
 
 **Utolsó frissítés:** 2026-09-05
 **Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
-**Utolsó commit:** `595acd8` — i18n: panelek és vászon fordítása (2. fázis) — push-olva
+**Utolsó commit:** `c6ac961` — i18n: Történelmi mód teljes fordítása (5c. fázis) — push-olva
 
-> **Folyamatban lévő munka:** teljes UI i18n (HU→EN), fázisonként. Állapot
-> és folytatási pont: ld. a 78. pont. **Nem várt megszakítás esetén** (pl.
-> gép-újraindítás) a session nélkül is folytatható innen.
+> **A teljes UI i18n terv (0–5c fázis) 2026-09-05-én lezárult.** Két
+> dokumentált, nyitva maradt rés maradt (ld. a 84. pont): a `charts/`
+> mappa és a `catalog/DatabaseView.tsx` — egyik fázisban sem szerepeltek,
+> külön egyeztetendők, ha aktuálissá válnak.
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -89,6 +90,8 @@ pnpm check   → typecheck + lint + test, mindhárom csomagra, TISZTA
 | `fem-db` | 2 | 25 | — (adatkonzisztencia: Ecm-képlet visszaellenőrzés, katalógus-geometria ±6%-os egyezés a fem-core zárt alakjával, forrás/verified-mező kötelező jelenléte) |
 | `ui` | 18 | 108 | — (nincs formális küszöb, de a nemlineáris/dinamikai logika, a jegyzőkönyv és a levezetés adat-előállítása, a vasbeton ULS zárt alak, a mértékegység-váltó SI/US mindkét iránya, a LaTeX→OOXML képlet-konverter, valamint minden generált LaTeX-sor KaTeX-szintaxisa unit tesztelt) |
 | **Összesen** | **57** | **674** (+3 skip) | |
+
+(2026-09-05-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 79–84. pont i18n-commitjai (0.5., 3., 4., 5a., 5b., 5c. fázis, a teljes i18n-terv lezárása) óta is. A tesztszám maga nem nőtt, mert ez a munka UI-szöveg-kivonatolás/áthuzalozás, nem új logika.)
 
 (2026-09-05-i `pnpm check` futással ellenőrizve: typecheck + lint + teszt mind a 4 csomagra TISZTA — a 76–77. pont i18n-commitjai óta is. A tesztszám maga nem nőtt, mert ez a munka UI-szöveg-kivonatolás/áthuzalozás, nem új logika.)
 
@@ -2257,6 +2260,103 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     forrás-idézetek) NEM kerül be (külön, későbbi feladat). Újonnan
     azonosított, egyik fázisban sem szereplő apró rés: a diagram-sáv "SVG
     letöltése" gombja továbbra is magyar EN nézetben is.
+
+79. **Teljes UI i18n — 0.5. fázis: `ModelFileError` strukturált kódra
+    váltása** (`afc0bbc`, 2026-09-05): a `.femati.json` beolvasáskor dobott
+    hiba mostantól egy nyelv-semleges `ModelFileErrorInfo` (`{code,
+    ...paraméterek}`) struktúrát hordoz a korábbi, kész magyar szöveg
+    helyett — az adatréteg (`model/fileIO.ts`) nem tudhat UI-nyelvet. A
+    `.message` visszamenőlegesen bit-azonos maradt (a 14 `fileIO.test.ts`
+    eset egyike sem `.message`-re, csak a hibatípusra vizsgál), így ez a
+    fázis önmagában NEM változtatott látható viselkedésen — csak
+    előkészítette a 3. fázist.
+
+80. **Teljes UI i18n — 3. fázis: `fileIO` hibamegjelenítés és `App.tsx`
+    státuszüzenetek** (`001880d`, 2026-09-05): új `i18n/errors.ts` a
+    `ModelFileErrorInfo` mind a 13 kódjához teljes HU+EN formázóval;
+    `App.tsx` összes `setStatus(...)` szövege és a `StatusPill`
+    (`components/Feedback.tsx`, korábban a komponensbe zárt magyar
+    `STATUS_TEXT`) állapot-felirata is az `i18n/shell.ts`-ből jön.
+    Böngészőben élesben igazolva mindkét nyelven (pl. "hiba · Modell
+    betöltése sikertelen — A fájl nem érvényes JSON." ↔ "error · Failed to
+    load model — The file is not valid JSON."; "konvergált"/"converged"
+    állapot-váltás). Két dokumentált, felhasználói döntéssel elfogadott
+    rés: (1) egy már lezajlott futás `statusDetail`-je nem fordítódik újra
+    utólagos nyelvváltáskor, csak a következő eseménynél; (2) a
+    nemlineáris futás hibája (`model/nonlinear.ts`/`fem-core`
+    `NonlinearModelError`) egyelőre magyar marad EN nézetben is — ez már a
+    `fem-core` réteget érintené, nem része ennek a fázisnak.
+
+81. **Teljes UI i18n — 4. fázis: `data/catalog.ts` UI-feliratok**
+    (`7b92aa9`, 2026-09-05): új `i18n/catalog.ts` fordítja a
+    `SECTION_KIND_GROUP`/`MATERIAL_FAMILY_GROUP` csoport-címkéket és a
+    `PRESETS` mintafeladat-neveket (a `data/catalog.ts` saját konstansai
+    maradnak a magyar kanonikus forrás — nem törölve, mert a még
+    leforditatlan `catalog/DatabaseView.tsx` is ezeket használja
+    közvetlenül). Az `OptimizeResult.kindLabel` (`model/optimize.ts`, a 78.
+    pontban már jelzett rés) nyelv-semleges `kind` mezőre váltott, ugyanaz
+    a minta, mint a `UtilizationVerdictCode`-nál. Böngészőben mindkét
+    nyelven ellenőrizve (a "Structure" legördülő, a Szelvény/Anyag
+    combobox csoport-címkéi helyesen váltanak; a katalógus-adattartalom,
+    pl. anyagnevek, tudatosan magyar marad). Újonnan azonosított,
+    egyik fázisban sem szereplő rés: a `catalog/DatabaseView.tsx`
+    (Szelvény/Anyag adatbázis dialógus, Edit menü) teljes egészében
+    magyar marad EN nézetben is.
+
+82. **Teljes UI i18n — 5a. fázis: számítási jegyzőkönyv teljes fordítása**
+    (`3234c0a`, 2026-09-05): új `i18n/report.ts` fordítja a jegyzőkönyv
+    mind a 8 pontját; a dátumformázás nyelv szerint hu-HU/en-GB-re vált; a
+    támasztípus- és verdikt-feliratokat a már meglévő `i18n/panels.ts`
+    `SUPPORT_TYPE_LABEL`/`VERDICT_LABEL` szótárából veszi át (egy
+    jelentés ne mondjon mást, mint a munkaasztal). Mellékesen javított
+    VALÓDI, nyelvfüggetlen hiba: a támasz-táblázat korábban egy három-ágú
+    ternárissal a rugós támaszt is "görgős"-ként mutatta — a
+    `SUPPORT_TYPE_LABEL` használatával ez is helyesen jelenik meg.
+    Böngészőben mindkét nyelven a teljes jegyzőkönyvet végigolvasva
+    ellenőrizve. Jelentős, újonnan azonosított rés: a jegyzőkönyvbe (és a
+    fő appba) ágyazott megosztott diagram-komponensek (`charts/`
+    mappa — lásd lent) teljesen magyarok maradnak EN nézetben is.
+
+83. **Teljes UI i18n — 5b. fázis: levezetés-hármas teljes fordítása,
+    legkockázatosabb lépés** (`c0fe73a`, 2026-09-05): új `i18n/derivation.ts`
+    egyesíti a `DerivationView.tsx` (képernyő) és a
+    `docxExport.ts`/`derivationExportData.ts` (Word-export) korábban
+    EGYMÁSTÓL FÜGGETLENÜL, kétszer tartalmazott ~25 szakaszcímét és a
+    körülöttük lévő prózát egyetlen forrásba (ADR-0005 szelleme: a két
+    kimenet ne csússzon el egymástól). A `formulaLatex.ts` saját, a
+    LaTeX-sorokba ágyazott `\text{...}` szótára (Gauss-pont, Csomópont,
+    réteg, KONVERGÁLT stb.) `lang` paraméterrel mindkét kimenet számára
+    fordítódik — ugyanazok a függvények szolgálják ki a KaTeX-renderelést
+    ÉS a Word-képletobjektumokat. Mellékesen javított VALÓDI,
+    nyelvfüggetlen hiba: a Feladat táblázat támasz-típus ternárisa
+    (mindkét fájlban, egymástól függetlenül) a rugós támaszt itt is
+    "görgős"-ként mutatta. Ellenőrzés: böngészőben mindkét nyelven
+    végigolvasva a teljes levezetést (0 KaTeX-hiba mindkét nyelven), majd
+    a tényleges `.docx` export XML-tartalma is közvetlenül igazolva
+    angolul (egy ideiglenes, a `docxExport.test.ts` mintáját követő
+    scratch-teszttel, amit ellenőrzés után törölve).
+
+84. **Teljes UI i18n — 5c., záró fázis: "Történelmi mód" teljes fordítása**
+    (`c6ac961`, 2026-09-05): új `i18n/historical.ts` fordítja a
+    `HistoricalView.tsx` összes feliratát. A magyarázó szöveg két, az
+    1996-os diplomatervet szó szerint idéző mondata le van fordítva, de az
+    EN nézetben egy külön jegyzet (`quoteNote`, HU-ban üres, nem jelenik
+    meg) jelzi, hogy az eredeti magyar szöveg marad a hiteles forrás —
+    korábbi felhasználói döntés szerint nem csendben mutatjuk be
+    fordításként az eredetit. Böngészőben mindkét nyelven ellenőrizve.
+
+    **Ezzel a teljes UI i18n terv (0–5c fázis) 2026-09-05-én lezárult.**
+    Két dokumentált, nyitva maradt rés maradt, egyik fázis fájl-listájában
+    sem szerepeltek — külön egyeztetendő, ha aktuálissá válnak:
+    - **`charts/` mappa** (9 fájl: `DiagramChart`, `DiagramPanel`,
+      `ConvergencePanel`, `LoadDisplacementChart`, `EnvelopeChart`,
+      `ModalPanel`, `TransientChart`, `DynamicPanel`, `Beam3DStress`) —
+      tengelyfeliratok, tooltipek, állapotszövegek, a diagram-sáv "SVG
+      letöltése" gombja (a 78. pontban már jelzett rés) mind teljesen
+      magyarok maradnak EN nézetben is, összesen ~760 ékezetes
+      szó-előfordulás mérve a 9 fájlban.
+    - **`catalog/DatabaseView.tsx`** (Szelvény/Anyag adatbázis dialógus,
+      Edit menü) — teljes egészében magyar marad EN nézetben is.
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
