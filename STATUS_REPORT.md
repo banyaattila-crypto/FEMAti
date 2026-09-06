@@ -2798,6 +2798,37 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     Böngészőben ellenőrizve: a Névjegy dialógus ténylegesen `v1.0.0 · mag:
     c9ce727`-et mutat, és a földrengés-sor megjelenik a listában.
 
+99. **Alapértelmezett nyelv HU → EN** (publikálás-előkészítés folytatása):
+    a felhasználó explicit kérése — "telepítés után az App mindig angol
+    nyelvvel kezdjen, vagyis az elsődleges nyelv az angol legyen" —
+    nemzetközi közönségnek szánt publikus repo/élő demó miatt.
+    `appStore.ts` `readStoredLang()`: üres/hiányzó `localStorage` esetén
+    mostantól `'en'`-t ad vissza (korábban `'hu'` volt); egy már explicit
+    elmentett `'hu'` preferencia továbbra is megmarad — csak az ELSŐ
+    látogatás alapértelmezése változott.
+
+    Menet közben talált és javított VALÓDI, korábban észrevétlen rés: a
+    böngésző-fül címe (`<title>`) és a `<html lang>` attribútum STATIKUS
+    volt (`index.html`-ből, build-időben rögzítve) — nyelvváltáskor SOHA
+    nem váltott át, még a HU/EN toggle-lal sem. Új `App.tsx` `useEffect`
+    szinkronizálja mindkettőt (`document.title`/`document.documentElement.
+    lang`) a store `lang`/`SHELL[lang].subtitle` alapján. `index.html`
+    statikus fallback címe/`lang`-ja is EN-re állítva, összhangban az új
+    alapértelmezéssel.
+
+    Mellékesen javított, elavult README-állítás: a "Note on language"
+    bekezdés egy HAMISSÁ vált mondatot tartalmazott ("catalog data and a
+    few secondary chart/diagram panels remain Hungarian-only") — ez a 96–
+    97. pontban elvégzett katalógus/name-fordítás és a korábbi charts/
+    fordítás után már nem igaz, eltávolítva, helyette az új alapértelmezés
+    (EN) megemlítve.
+
+    Ellenőrizve: `pnpm --filter @femati/ui exec tsc --noEmit`, `vitest
+    run` (121 teszt), `pnpm lint` zöld. Böngészőben, friss (üres)
+    `localStorage`-dzsal ellenőrizve: EN cím + `lang="en"` alapból; HU-ra
+    váltva a cím és a `<html lang>` is azonnal HU-ra vált, és a
+    preferencia el is mentődik (`localStorage['femati:lang'] === 'hu'`).
+
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
 kicsi, egymásra épülő felhasználói kérés sorozata volt.
