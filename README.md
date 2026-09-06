@@ -44,6 +44,10 @@ decision record (ADR) — including the ORIGINAL frontal algorithm itself,
 which remains available, animated, in the app's "Historical mode" view for
 teaching purposes (see [ADR-0002](docs/ADR/0002-skyline-vs-frontalis.md)).
 
+![FEM@ti workspace — model tree, live M-diagram, ULS/SLS design checks](docs/img/quickstart-overview.jpg)
+
+<sub>Two-span continuous beam (IPE 300, S235) — the model tree, the internal-force diagram, and the design-check results, all live.</sub>
+
 ### Why it's worth a look
 
 - **Interactive model canvas** — click/drag-editable beam model (supports,
@@ -102,6 +106,17 @@ pnpm workspace, 4 packages:
 | [`packages/fem-db`](packages/fem-db) | Material and cross-section catalog, with source attribution (every record requires a `source`/`verified` field). |
 | [`packages/fem-validation`](packages/fem-validation) | The validation cases that GENERATE `docs/VALIDATION.md` (against closed-form/hand-calculated references). |
 | [`packages/ui`](packages/ui) | React + Vite client-side UI — computation runs in the browser, no backend. |
+
+See [`docs/architecture.html`](docs/architecture.html) for an interactive
+diagram of how these four packages actually depend on each other (open it
+in a browser) — including the distinction between what runs live in the
+browser and what only runs in dev/CI (`fem-validation`, and `fem-db`'s own
+test suite, which checks its catalog data against `fem-core`'s computed
+properties).
+
+![Section catalog browser — shape diagram, dimensions, computed properties and the closed-form formulas behind them](docs/img/readme-section.jpg)
+
+<sub>The `fem-db` catalog browser (`docs/QUICKSTART.md` walks through it) — every entry ties its computed properties back to the formula that produced them.</sub>
 
 ## Documentation
 

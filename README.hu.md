@@ -32,6 +32,10 @@ magát az EREDETI, frontális algoritmust is, ami a felület "Történelmi
 mód" nézetében animálva, didaktikus célból elérhető marad (ld.
 [ADR-0002](docs/ADR/0002-skyline-vs-frontalis.md)).
 
+![FEM@ti munkaasztal — modellfa, élő M-diagram, ULS/SLS ellenőrzések](docs/img/quickstart-overview.jpg)
+
+<sub>Kétnyílású folytatólagos gerenda (IPE 300, S235) — a modellfa, az igénybevételi ábra és a teherbírás-ellenőrzés eredményei, élőben.</sub>
+
 ### Miért érdemes megnézni?
 
 - **Interaktív modellvászon**: kattintással/húzással szerkeszthető
@@ -90,6 +94,16 @@ pnpm workspace, 4 csomag:
 | [`packages/fem-db`](packages/fem-db) | Anyag- és szelvénykatalógus, forrás-megjelöléssel (minden rekordon kötelező `source`/`verified` mező). |
 | [`packages/fem-validation`](packages/fem-validation) | A `docs/VALIDATION.md`-t GENERÁLÓ validációs esetek (zárt alakú/kézi referenciák ellen). |
 | [`packages/ui`](packages/ui) | React + Vite alapú, kliens-oldali felület — a számítás a böngészőben fut, nincs backend. |
+
+A négy csomag tényleges függőségeiről interaktív diagram:
+[`docs/architecture.html`](docs/architecture.html) (böngészőben nyitandó) —
+azt is megkülönbözteti, mi fut élesben a böngészőben, és mi csak fejlesztői/
+CI ellenőrzésként (`fem-validation`, illetve a `fem-db` saját tesztje, ami a
+katalógus-adatot a `fem-core` számított jellemzői ellen ellenőrzi).
+
+![Szelvény-adatbázis böngésző — keresztmetszeti ábra, méretek, számított jellemzők és a mögöttük álló zárt alakú képletek](docs/img/readme-section.jpg)
+
+<sub>A `fem-db` katalógus böngészője (a `docs/QUICKSTART.hu.md` végigvezet rajta) — minden rekord számított jellemzője visszavezethető a mögötte álló képletre.</sub>
 
 ## Dokumentáció
 
