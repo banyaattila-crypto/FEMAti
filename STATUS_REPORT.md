@@ -2829,6 +2829,71 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     váltva a cím és a `<html lang>` is azonnal HU-ra vált, és a
     preferencia el is mentődik (`localStorage['femati:lang'] === 'hu'`).
 
+100. **Publikálás előtti teljes körű audit + a talált hibák javítása**: a
+    felhasználó egy részletes audit-mesterprompt alapján kért teljes
+    átvizsgálást a publikálás előtt (kód, szemantika, algoritmus, biztonság,
+    titok/PII, ellátási lánc, teszt, teljesítmény, licenc, GitHub-felkészültség).
+    Az audit **bizonyíték-alapon** futott: `pnpm check` (exit 0), tiszta
+    `pnpm build` (exit 0), `pnpm audit`, `pnpm format:check`, frozen-lockfile
+    telepítés, `gh run list`, teljes Git-előzmény-vizsgálat mind a **96 commit**
+    fáján, `pdftotext` a diplomaterv-PDF-en, kép-metaadat scan, és **saját írt
+    reprodukciós teszt** a gyanús viselkedés bizonyítására.
+
+    **Eredmény: 0 BLOCKER, 0 CRITICAL, 3 HIGH, 6 MEDIUM, 5 LOW.** Titok és
+    személyes adat sehol (sem munkafában, sem az előzményben), licenc tiszta
+    (minden produkciós függőség MIT), build reprodukálható. Az auditanyag a
+    `.gitignore`-olt `audit/` mappában maradt — tudatos döntés: a *lényege*
+    bekerült a nyilvános dokumentumokba, de egy időponthoz kötött
+    pontszám-táblázat gyorsan félrevezetővé válna.
+
+    **A három publikálás előtti tétel javítva:**
+    - **LOG-001 (VALÓDI HELYESSÉGI HIBA)**: ha egy betöltött `.femati.json`
+      nem létező szelvény-/anyagazonosítót hivatkozott, a program NÉMÁN a
+      katalógus ELSŐ elemével (IPE 100 / S235) számolt tovább, és az eredményt
+      érvényesként mutatta — miközben az IPE 100 a katalógus legkisebb
+      I-szelvénye. Ez pontosan az, amit a projekt saját elve tilt
+      (`fem-core/src/model/validate.ts`: "a néma hibás eredmény rosszabb, mint
+      a futás megtagadása"). Javítás: új `catalogId()` létezés-ellenőrzés a
+      `fileIO.ts`-ben (`sectionId`, `materialId`, `composite.slabMaterialId`),
+      új `unknown-catalog-id` hibakód a `ModelFileErrorInfo` unióban, HU+EN
+      üzenettel (`i18n/errors.ts`). A szigorítás visszamenőlegesen
+      biztonságos: az előzmény alapján a katalógus-azonosítók SOSEM változtak
+      (125 valaha létezett = 125 jelenlegi), tehát régi mentést nem utasít el.
+      **4 új regressziós teszt**, amiből 3 a javítás ELŐTT bizonyítottan bukott.
+    - **LEG-001**: sehol nem volt felelősség-kizáró nyilatkozat az exportált
+      jegyzőkönyv láblécén kívül — aki csak a képernyőn olvasta le az
+      eredményt, sosem látta. Pótolva: kiemelt blokk mindkét README tetején +
+      a Névjegy dialógusban.
+    - **DOC-001**: a `VALIDATION-SCOPE.md` (a projekt "mit állítunk / mit nem"
+      dokumentuma) 2026-09-05-i állapotot rögzített, és egyetlen szóval sem
+      említette a később hozzáadott EC2/EC8/dinamika/kompozit/Winkler/mozgóteher
+      funkciókat — az olvasó jogosan hihette, hogy azok is a gerenda-maggal
+      azonos, zárt alakú validáción estek át. A §8 mindkét nyelven kiegészítve
+      a tételes listával és az ezeket fedő tesztek helyével.
+
+    **Az ellenőrzés közben előkerült két további hiba, szintén javítva:**
+    - **UI-001**: a Névjegy dialógus MÁR KORÁBBAN IS túlcsordult (666 px
+      tartalom a `height: 460`-as keretben) — a © sor és a GitHub-linkek a
+      látható terület alá kerültek. Javítás: fix magasság helyett tartalomhoz
+      igazodó méret `max-height: 90vh`-val; a nyilatkozat SZÁNDÉKOSAN a hosszú
+      funkciólista ELÉ került, mert egy nyilatkozat, amiért görgetni kell,
+      pont a célját veszti el.
+    - **I18N-001**: a `shell/Timeline.tsx` TELJES EGÉSZÉBEN lefordítatlan
+      maradt a korábbi i18n-munkából (9 szöveg, köztük az indításkor a
+      képernyő alján látható mondat), plusz két magyar `aria-label`
+      (`InfoTooltip.tsx`, `SeismicSpectrumChart.tsx`). Angol alapértelmezés
+      mellett (99. pont) ez lett az elsőként látott magyar szöveg. Mind
+      bekötve a `SHELL` szótárba, HU+EN.
+
+    **NYITVA MARADT, döntést igénylő:** a `meshconvergence/MeshConvergenceView.tsx`
+    teljes panelje lefordítatlan (~15 szöveg, hosszú magyarázó bekezdésekkel) —
+    ez már önálló feladat, nem fért a publikálás előtti körbe.
+
+    Záró ellenőrzés: `pnpm check` **exit 0**, **705 teszt zöld** (a UI-tesztek
+    121 → 125), böngészőben végponttól végpontig igazolva: a rontott
+    azonosítójú fájl elutasításra kerül látható hibaüzenettel, a Névjegy
+    nyilatkozata görgetés nélkül látszik, a Timeline angolul jelenik meg.
+
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
 kicsi, egymásra épülő felhasználói kérés sorozata volt.
