@@ -107,6 +107,7 @@ pnpm workspace, 4 packages:
 
 | Document | Contents |
 |---|---|
+| [`docs/QUICKSTART.md`](docs/QUICKSTART.md) | Quick start — how to carry a model through the workspace (build → load → results → section suggestion), with screenshots. |
 | [`docs/THEORY.md`](docs/THEORY.md) | Every implemented formula: code location AND thesis page number. (Hungarian) |
 | [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) | Fixed engineering/coding conventions (sign conventions, DOF order, units). (Hungarian) |
 | [`docs/VALIDATION.md`](docs/VALIDATION.md) | Generated validation report. (Hungarian) |

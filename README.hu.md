@@ -95,6 +95,7 @@ pnpm workspace, 4 csomag:
 
 | Dokumentum | Tartalom |
 |---|---|
+| [`docs/QUICKSTART.hu.md`](docs/QUICKSTART.hu.md) | Gyors kezdés — hogyan viszel végig egy modellt a munkaasztalon (modell → teher → eredmény → szelvény-javaslat), képernyőképekkel. |
 | [`docs/THEORY.md`](docs/THEORY.md) | Minden implementált képlet: kód helye ÉS diplomaterv-oldalszám. |
 | [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) | Rögzített mérnöki/kódolási konvenciók (előjelek, DOF-sorrend, egységek). |
 | [`docs/VALIDATION.md`](docs/VALIDATION.md) | Generált validációs jegyzőkönyv. |
