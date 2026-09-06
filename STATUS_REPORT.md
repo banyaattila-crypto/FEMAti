@@ -2584,6 +2584,32 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     README "Dokumentáció" táblázatába, első helyen. `pnpm lint` (eslint +
     design-token + halott CSS ellenőrzés) tiszta.
 
+    Ugyanebben a beszélgetésben ÚJ, önálló README-képek is bekerültek: a
+    munkaasztal-áttekintés (a Quick Start meglévő képének újrahasznosítva)
+    és a Szelvény-adatbázis böngésző (`docs/img/readme-section.jpg`, ÚJ,
+    IPE 300 keresztmetszeti ábrával, méretekkel, számított jellemzőkkel és
+    a mögöttük álló zárt alakú képletekkel) — mindkettő a Monorepo-
+    táblázat után, mindkét README-ben.
+
+94. **ÚJ, interaktív architektúra-diagram** (`docs/architecture.html`, az
+    `archify` skill-lel készítve): a 4 pnpm-workspace csomag (`fem-core`,
+    `fem-db`, `fem-validation`, `ui`) TÉNYLEGES, `package.json`-okból
+    ellenőrzött függőségi gráfja, két régió-határral szemléltetve az
+    élesben futó böngésző-alkalmazást (`ui`→`fem-core`, `ui`→`fem-db`)
+    szemben a fejlesztői/CI-only ellenőrzéssel (`fem-validation`→
+    `fem-core`, és a `fem-db` SAJÁT teszt-suite-ja, ami — de NEM a runtime
+    kódja — szintén importál a `fem-core`-ból a katalógus-adat kereszt-
+    ellenőrzéséhez; ez utóbbi ÚJ, korábban dokumentálatlan felismerés).
+    `validate --quality showcase`: 9/9 ellenőrzés zöld; `deliver`: 5
+    forráshivatkozás (`sources`) ellenőrizve a repó ellen (`--repo-root`,
+    HEAD `ca1f7e4`); `visual-check`: automatizált böngésző-ellenőrzés
+    mind a 4 asztali méretnél (1440×900 … 2048×1320) zöld; a világos ÉS
+    sötét téma screenshotja perceptuálisan is átnézve. **ŐSZINTE
+    KORLÁT:** a diagram tartalma magyar, de a Viewer-kezelőfelület
+    (Light/Dark, Export stb.) és a `<html lang>` angol marad — az
+    `archify` `meta.locale` csak `en`/`zh-CN`-t támogat. Belinkelve
+    mindkét README-be, a Monorepo-táblázat után.
+
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
 kicsi, egymásra épülő felhasználói kérés sorozata volt.
