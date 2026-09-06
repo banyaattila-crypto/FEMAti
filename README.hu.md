@@ -13,6 +13,12 @@ TypeScript alapú, validált végeselemes program.
 
 **[Próbáld ki élőben →](https://femati.vercel.app)** — nincs telepítés, teljesen a böngészőben fut.
 
+> ⚠️ **Nem hitelesített tervezőprogram.** A FEM@ti kutatási és oktatási célú végeselemes eszköz.
+> A numerikus magja zárt alakú megoldásokkal validált (hogy pontosan mi tartozik ide és mi nem,
+> ld. [`docs/VALIDATION-SCOPE.hu.md`](docs/VALIDATION-SCOPE.hu.md)), de **minden eredményt
+> független módszerrel, szakmai felelősséggel ellenőrizni kell**, mielőtt bármilyen tartószerkezeti
+> tervezési döntés alapjául szolgálna.
+
 ---
 
 ## Mi ez?

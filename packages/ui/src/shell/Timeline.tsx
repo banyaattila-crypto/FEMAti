@@ -9,6 +9,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useAppStore } from '../state/appStore.js';
+import { SHELL } from '../i18n/shell.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { combinedSteps, computeHingeMarkers } from '../model/nonlinear.js';
 import * as fmt from '../format/numbers.js';
@@ -17,6 +18,7 @@ const SPEEDS = [0.5, 1, 2, 4] as const;
 const FRAME_MS = 220;
 
 export function Timeline(): JSX.Element {
+  const t = SHELL[useAppStore((s) => s.lang)];
   const activeStep = useAppStore((s) => s.activeStep);
   const setActiveStep = useAppStore((s) => s.setActiveStep);
   const run = useNonlinearStore((s) => s.run);
@@ -49,23 +51,23 @@ export function Timeline(): JSX.Element {
 
   if (run === null || total === 0) {
     return (
-      <div className="vem-timeline" aria-label="Teherlépcső-idővonal">
+      <div className="vem-timeline" aria-label={t.timelineAria}>
         <span className="vem-timeline__empty">
-          Nincs nemlineáris eredmény — futtasd a SZÁMÍTÁS gombbal (F5) a teherlépcső-idővonal megjelenítéséhez.
+          {t.timelineEmpty}
         </span>
       </div>
     );
   }
 
   return (
-    <div className="vem-timeline" aria-label="Teherlépcső-idővonal">
+    <div className="vem-timeline" aria-label={t.timelineAria}>
       <button
         type="button"
         className="vem-btn vem-btn--sm"
         onClick={() => setActiveStep(Math.max(0, activeStep - 1))}
         disabled={activeStep <= 0}
-        title="Előző lépés"
-        aria-label="Előző lépés"
+        title={t.timelinePrevStep}
+        aria-label={t.timelinePrevStep}
       >
         ◀
       </button>
@@ -73,9 +75,9 @@ export function Timeline(): JSX.Element {
         type="button"
         className="vem-btn vem-btn--sm"
         onClick={() => setPlaying((p) => !p)}
-        title={playing ? 'Szünet' : 'Lejátszás'}
+        title={playing ? t.timelinePause : t.timelinePlay}
         aria-pressed={playing}
-        aria-label={playing ? 'Szünet' : 'Lejátszás'}
+        aria-label={playing ? t.timelinePause : t.timelinePlay}
       >
         {playing ? '⏸' : '▶'}
       </button>
@@ -84,13 +86,13 @@ export function Timeline(): JSX.Element {
         className="vem-btn vem-btn--sm"
         onClick={() => setActiveStep(Math.min(total - 1, activeStep + 1))}
         disabled={activeStep >= total - 1}
-        title="Következő lépés"
-        aria-label="Következő lépés"
+        title={t.timelineNextStep}
+        aria-label={t.timelineNextStep}
       >
         ▶|
       </button>
 
-      <div className="vem-timeline__track" role="group" aria-label="Lépések">
+      <div className="vem-timeline__track" role="group" aria-label={t.timelineStepsAria}>
         <input
           type="range"
           className="vem-timeline__range"
@@ -99,7 +101,7 @@ export function Timeline(): JSX.Element {
           step={1}
           value={activeStep}
           onChange={(e) => setActiveStep(Number(e.target.value))}
-          aria-label="Aktuális teherlépcső"
+          aria-label={t.timelineCurrentStepAria}
         />
         <div className="vem-timeline__marks" aria-hidden="true">
           {markers.map((m, i) => (
@@ -109,8 +111,8 @@ export function Timeline(): JSX.Element {
               style={{ left: `${(m.stepIndex / Math.max(1, total - 1)) * 100}%` }}
               title={
                 m.kind === 'first-yield'
-                  ? `${m.elementId}: első folyás`
-                  : `${m.elementId}: teljes képlékeny csukló`
+                  ? t.timelineFirstYield(m.elementId)
+                  : t.timelineFullHinge(m.elementId)
               }
             />
           ))}
@@ -119,10 +121,10 @@ export function Timeline(): JSX.Element {
 
       <span className="vem-timeline__lambda">
         λ = {current ? fmt.lambda(current.lambda).value : '—'}
-        {inUnload ? ' (tehermentesítés)' : ''}
+        {inUnload ? t.timelineUnloadSuffix : ''}
       </span>
 
-      <div className="vem-segmented" role="group" aria-label="Lejátszási sebesség">
+      <div className="vem-segmented" role="group" aria-label={t.timelineSpeedAria}>
         {SPEEDS.map((v) => (
           <button
             key={v}

@@ -719,6 +719,23 @@
    inspektor) — azokat szándékosan nem érinti. */
 .vem-inspector--about {
   border-radius: 16px;
+  height: auto;
+  max-height: 90vh;
+}
+
+/* Felelősség-kizáró nyilatkozat a Névjegyben (publikálás előtti audit,
+   2026-09-06, LEG-001): korábban ez a mondat KIZÁRÓLAG az exportált
+   jegyzőkönyv láblécében szerepelt, így aki csak a képernyőn olvasta le az
+   eredményt, sosem találkozott vele. */
+.vem-about__disclaimer {
+  padding: var(--space-3);
+  border: 1px solid var(--border-divider);
+  border-radius: 8px;
+  background: var(--surface-note);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .vem-inspector__header {

@@ -166,6 +166,23 @@ elérhetők a projekt saját változásnaplójában (`STATUS_REPORT.md`, 11., 12
   kereskedelmi FEM-szoftvergyártó futtatna.
 - **A tesztlefedettségi célszám (a mag csomagra ≥90%) nincs újramérve**
   a P16 teljesítmény-profilozási fázis óta.
+- **A zárt alakú validációs készlet KIZÁRÓLAG a gerenda-magra vonatkozik.**
+  A [`VALIDATION.md`](VALIDATION.md) 29 esete (V-01…V-13 lineáris, P-01…P-16
+  képlékeny) a Timoshenko-elemet, a megoldókat és a rétegelt képlékeny modellt
+  igazolja zárt alakú referenciákkal. Az alábbi funkciók ezen a készleten
+  KÍVÜL esnek — unit és integrációs tesztek fedik őket (jelenleg mind zöld),
+  de NINCS hozzájuk publikált zárt alakú vagy kézikönyvi referenciaeset, és
+  ennek megfelelően kezelendők: vasbeton ULS teherbírás (EC2), vertikális
+  földrengési komponens (EC8 / EN 1998-1), hajlítás–nyírás (M-V) kihasználtság
+  (EN 1993-1-1), kompozit acél–beton keresztmetszet, dinamika (sajátfrekvencia,
+  módalakok, Newmark-β tranziens), felemelkedésre képes Winkler-ágyazat,
+  mozgó teher burkolóábra, EN 1990 tehercsoportosítás, használhatósági (SLS)
+  ellenőrzések, szelvény-optimalizálás és mértékegység-váltás.
+  Az ezeket fedő tesztek helye: `packages/fem-core/test/` (pl. `concreteEC2.test.ts`,
+  `verticalSeismicSpectrum.test.ts`, `shearMomentInteraction.test.ts`,
+  `contactFoundation.test.ts`, `modal.test.ts`, `transient.test.ts`) és
+  `packages/ui/src/model/` (pl. `rcCapacity.test.ts`, `designChecks.test.ts`,
+  `combinations.test.ts`, `envelope.test.ts`).
 - A fentiek MINDEGYIKE explicit ki van mondva a kódban és a
   `docs/THEORY.md`-ben/az ADR-naplóban — egyik sem rejtett hiányosság;
   a forráskód figyelmes olvasója mindegyiket megtalálja jelölve, pontosan

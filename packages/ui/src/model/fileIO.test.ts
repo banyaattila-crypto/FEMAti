@@ -72,6 +72,44 @@ describe('serializeEditableModel / parseEditableModelFile', () => {
     expect(() => parseEditableModelFile(JSON.stringify(file))).toThrow(ModelFileError);
   });
 
+  // Publikálás előtti audit (2026-09-06, LOG-001): korábban egy NEM LÉTEZŐ
+  // katalógus-azonosító némán a katalógus ELSŐ elemére (IPE 100 / S235) esett
+  // vissza, figyelmeztetés nélkül — a program a kértnél lényegesen kisebb
+  // szelvénnyel számolt, és az eredményt érvényesként mutatta. Ez ellentmond a
+  // projekt saját elvének (`fem-core/src/model/validate.ts`: "a néma hibás
+  // eredmény rosszabb, mint a futás megtagadása"). A szigorítás biztonságos:
+  // a katalógus-azonosítók az előzményben SOSEM változtak (125 valaha
+  // létezett = 125 jelenlegi), tehát régi, érvényes mentést nem utasít el.
+  it('NEM LÉTEZŐ sectionId esetén ModelFileError-t dob (nem esik némán másik szelvényre)', () => {
+    const model = fullModel();
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: Record<string, unknown> };
+    file.model.sectionId = 'NEM-LETEZO-SZELVENY-9999';
+    expect(() => parseEditableModelFile(JSON.stringify(file))).toThrow(ModelFileError);
+  });
+
+  it('NEM LÉTEZŐ materialId esetén ModelFileError-t dob (nem esik némán másik anyagra)', () => {
+    const model = fullModel();
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: Record<string, unknown> };
+    file.model.materialId = 'NEM-LETEZO-ANYAG-9999';
+    expect(() => parseEditableModelFile(JSON.stringify(file))).toThrow(ModelFileError);
+  });
+
+  it('NEM LÉTEZŐ composite.slabMaterialId esetén ModelFileError-t dob', () => {
+    const model = fullModel();
+    const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: { composite: Record<string, unknown> } };
+    file.model.composite.slabMaterialId = 'NEM-LETEZO-BETON-9999';
+    expect(() => parseEditableModelFile(JSON.stringify(file))).toThrow(ModelFileError);
+  });
+
+  it('a JELENLEG ÉRVÉNYES katalógus-azonosítókat továbbra is elfogadja', () => {
+    const model = fullModel();
+    const json = serializeEditableModel(model, fullSolverSettings);
+    const restored = parseEditableModelFile(json);
+    expect(restored.model.sectionId).toBe('IPE300');
+    expect(restored.model.materialId).toBe('S235');
+    expect(restored.model.composite.slabMaterialId).toBe('C3037');
+  });
+
   it('hiányzó foundations mezőnél üres tömbre esik vissza (visszamenőleges kompatibilitás)', () => {
     const model = fullModel();
     const file = JSON.parse(serializeEditableModel(model, fullSolverSettings)) as { model: Record<string, unknown> };

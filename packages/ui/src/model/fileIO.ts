@@ -47,6 +47,12 @@ import {
   type SupportType,
 } from './editable.js';
 import type { DiagramTab, LoadHistoryMode, SolverAlgorithm, UnitSystem } from '../state/appStore.js';
+// Közvetlenül az adatcsomagból (nem a `data/catalog.ts` UI-rétegen át), hogy az
+// adatréteg ne függjön a megjelenítési rétegtől — ld. `catalogId()`.
+import { MATERIALS, SECTIONS } from '@femati/fem-db';
+
+const MATERIAL_IDS: ReadonlySet<string> = new Set(MATERIALS.map((m) => m.id));
+const SECTION_IDS: ReadonlySet<string> = new Set(SECTIONS.map((s) => s.id));
 
 export const EDITOR_FILE_FORMAT_VERSION = 2 as const;
 
@@ -114,7 +120,8 @@ export type ModelFileErrorInfo =
   | { readonly code: 'invalid-enum-value'; readonly where: string; readonly key: string; readonly value: string }
   | { readonly code: 'unknown-support-type'; readonly where: string; readonly value: string }
   | { readonly code: 'unknown-load-category'; readonly where: string; readonly value: string }
-  | { readonly code: 'unknown-load-kind'; readonly where: string; readonly value: string };
+  | { readonly code: 'unknown-load-kind'; readonly where: string; readonly value: string }
+  | { readonly code: 'unknown-catalog-id'; readonly where: string; readonly key: string; readonly value: string };
 
 /** A korábbi, kizárólag magyar hibaszövegekkel megegyező alapértelmezés — az `Error.message` erre esik vissza, amíg a hívó (App.tsx) nem az `info` mezőt formázza a saját nyelvén (i18n 3. fázis). */
 function formatModelFileErrorHu(info: ModelFileErrorInfo): string {
@@ -148,6 +155,12 @@ function formatModelFileErrorHu(info: ModelFileErrorInfo): string {
       return `${info.where}: ismeretlen teherkategória "${info.value}".`;
     case 'unknown-load-kind':
       return `${info.where}: ismeretlen tehertípus "${info.value}".`;
+    case 'unknown-catalog-id':
+      return (
+        `${info.where}.${info.key}: a "${info.value}" azonosító nem szerepel a katalógusban. ` +
+        'A fájl betöltése megtagadva — a program NEM helyettesíti csendben egy másik szelvénnyel/anyaggal, ' +
+        'mert az téves eredményt adna.'
+      );
   }
 }
 
@@ -201,6 +214,28 @@ function bool(obj: Record<string, unknown>, key: string, where: string): boolean
 function record(v: unknown, where: string): Record<string, unknown> {
   assert(typeof v === 'object' && v !== null, { code: 'missing-or-not-object', where });
   return v as Record<string, unknown>;
+}
+
+/**
+ * Katalógus-azonosító (szelvény/anyag) beolvasása LÉTEZÉS-ELLENŐRZÉSSEL.
+ *
+ * Publikálás előtti audit, 2026-09-06 (LOG-001): korábban ez sima `str()` volt,
+ * és egy ismeretlen azonosító a megjelenítéskor (`data/catalog.ts`
+ * `findSection`/`findMaterial` `?? firstOr(...)`) NÉMÁN a katalógus ELSŐ
+ * elemére esett vissza — a felhasználó a kért helyett IPE 100-zal / S235-tel
+ * kapott eredményt, mindenféle jelzés nélkül. Statikai programban ez a
+ * legrosszabb hibaosztály, ld. `fem-core/src/model/validate.ts` fejléce:
+ * "a néma hibás eredmény rosszabb, mint a futás megtagadása".
+ *
+ * A szigorítás visszamenőlegesen biztonságos: a katalógus-azonosítók a repó
+ * teljes előzményében CSAK bővültek, egy sem szűnt meg (auditban ellenőrizve:
+ * 125 valaha létezett = 125 jelenlegi), tehát korábban mentett érvényes fájlt
+ * nem utasít el.
+ */
+function catalogId(valid: ReadonlySet<string>, obj: Record<string, unknown>, key: string, where: string): string {
+  const v = str(obj, key, where);
+  assert(valid.has(v), { code: 'unknown-catalog-id', where, key, value: v });
+  return v;
 }
 
 function array(v: unknown, where: string): readonly unknown[] {
@@ -390,7 +425,7 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
             enabled: bool(c, 'enabled', 'model.composite'),
             slabWidth: num(c, 'slabWidth', 'model.composite'),
             slabThickness: num(c, 'slabThickness', 'model.composite'),
-            slabMaterialId: str(c, 'slabMaterialId', 'model.composite'),
+            slabMaterialId: catalogId(MATERIAL_IDS, c, 'slabMaterialId', 'model.composite'),
           };
         })();
 
@@ -437,8 +472,8 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
       presetId: str(model, 'presetId', 'model'),
       span: num(model, 'span', 'model'),
       elementCount: num(model, 'elementCount', 'model'),
-      sectionId: str(model, 'sectionId', 'model'),
-      materialId: str(model, 'materialId', 'model'),
+      sectionId: catalogId(SECTION_IDS, model, 'sectionId', 'model'),
+      materialId: catalogId(MATERIAL_IDS, model, 'materialId', 'model'),
       selfWeight: bool(model, 'selfWeight', 'model'),
       // 2026-09-04: ÚJ mező (másodrendű P-Δ hatás) — hiányzó mezőnél 0-ra
       // (kikapcsolt állapot) esik vissza, ugyanaz a visszamenőleges

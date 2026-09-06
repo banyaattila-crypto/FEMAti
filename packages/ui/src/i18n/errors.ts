@@ -24,6 +24,7 @@ interface ErrorStrings {
   readonly unknownSupportType: (where: string, value: string) => string;
   readonly unknownLoadCategory: (where: string, value: string) => string;
   readonly unknownLoadKind: (where: string, value: string) => string;
+  readonly unknownCatalogId: (where: string, key: string, value: string) => string;
 }
 
 const ERRORS: Record<Lang, ErrorStrings> = {
@@ -43,6 +44,8 @@ const ERRORS: Record<Lang, ErrorStrings> = {
     unknownSupportType: (where, value) => `${where}: ismeretlen támasztípus "${value}".`,
     unknownLoadCategory: (where, value) => `${where}: ismeretlen teherkategória "${value}".`,
     unknownLoadKind: (where, value) => `${where}: ismeretlen tehertípus "${value}".`,
+    unknownCatalogId: (where, key, value) =>
+      `${where}.${key}: a "${value}" azonosító nem szerepel a katalógusban. A betöltés megtagadva — a program NEM helyettesíti csendben másik szelvénnyel/anyaggal, mert az téves eredményt adna.`,
   },
   en: {
     invalidJson: 'The file is not valid JSON.',
@@ -60,6 +63,8 @@ const ERRORS: Record<Lang, ErrorStrings> = {
     unknownSupportType: (where, value) => `${where}: unknown support type "${value}".`,
     unknownLoadCategory: (where, value) => `${where}: unknown load category "${value}".`,
     unknownLoadKind: (where, value) => `${where}: unknown load kind "${value}".`,
+    unknownCatalogId: (where, key, value) =>
+      `${where}.${key}: the id "${value}" is not in the catalog. The file was rejected — the program does NOT silently substitute a different section/material, because that would produce a wrong result.`,
   },
 };
 
@@ -93,5 +98,7 @@ export function formatModelFileError(info: ModelFileErrorInfo, lang: Lang): stri
       return t.unknownLoadCategory(info.where, info.value);
     case 'unknown-load-kind':
       return t.unknownLoadKind(info.where, info.value);
+    case 'unknown-catalog-id':
+      return t.unknownCatalogId(info.where, info.key, info.value);
   }
 }

@@ -132,6 +132,25 @@ export interface ShellStrings {
   readonly aboutClose: string;
   readonly aboutIntro: string;
   readonly aboutFeatures: readonly string[];
+  readonly aboutDisclaimer: string;
+
+  // ── Timeline (teherlépcső-idővonal) ────────────────────────────────
+  readonly timelineAria: string;
+  readonly timelineEmpty: string;
+  readonly timelinePrevStep: string;
+  readonly timelineNextStep: string;
+  readonly timelinePlay: string;
+  readonly timelinePause: string;
+  readonly timelineStepsAria: string;
+  readonly timelineCurrentStepAria: string;
+  readonly timelineFirstYield: (elementId: string) => string;
+  readonly timelineFullHinge: (elementId: string) => string;
+  readonly timelineUnloadSuffix: string;
+  readonly timelineSpeedAria: string;
+
+  // ── Egyeb komponens-aria (kepernyoolvaso) ─────────────────────────
+  readonly infoTooltipAria: string;
+  readonly seismicSpectrumAria: string;
   readonly aboutReportIssue: string;
   readonly aboutGithubProfile: string;
 
@@ -301,6 +320,23 @@ export const SHELL: Record<Lang, ShellStrings> = {
       'szelvény- és anyagadatbázis, jegyzőkönyv-export (Word/PDF)',
       'magyar/angol felület (HU/EN nyelvváltás)',
     ],
+    aboutDisclaimer:
+      'Kutatási és oktatási célú eszköz, nem hitelesített tervezőprogram. Az eredményeket szakmai felelősséggel, független módszerrel ellenőrizni kell.',
+
+    timelineAria: 'Teherlépcső-idővonal',
+    timelineEmpty: 'Nincs nemlineáris eredmény — futtasd a SZÁMÍTÁS gombbal (F5) a teherlépcső-idővonal megjelenítéséhez.',
+    timelinePrevStep: 'Előző lépés',
+    timelineNextStep: 'Következő lépés',
+    timelinePlay: 'Lejátszás',
+    timelinePause: 'Szünet',
+    timelineStepsAria: 'Lépések',
+    timelineCurrentStepAria: 'Aktuális teherlépcső',
+    timelineFirstYield: (elementId) => `${elementId}: első folyás`,
+    timelineFullHinge: (elementId) => `${elementId}: teljes képlékeny csukló`,
+    timelineUnloadSuffix: ' (tehermentesítés)',
+    timelineSpeedAria: 'Lejátszási sebesség',
+    infoTooltipAria: 'Magyarázat megjelenítése',
+    seismicSpectrumAria: 'Svd(T) függőleges tervezési válaszspektrum, T1 megjelölve',
     aboutReportIssue: 'Hibajelentés / kérdés',
     aboutGithubProfile: 'GitHub-profil',
 
@@ -475,6 +511,23 @@ export const SHELL: Record<Lang, ShellStrings> = {
       'section and material database, report export (Word/PDF)',
       'Hungarian/English interface (HU/EN switch)',
     ],
+    aboutDisclaimer:
+      'A research and educational tool, not certified design software. All results must be verified independently, under professional engineering responsibility.',
+
+    timelineAria: 'Load-step timeline',
+    timelineEmpty: 'No nonlinear result yet — run the analysis (COMPUTE / F5) to see the load-step timeline.',
+    timelinePrevStep: 'Previous step',
+    timelineNextStep: 'Next step',
+    timelinePlay: 'Play',
+    timelinePause: 'Pause',
+    timelineStepsAria: 'Steps',
+    timelineCurrentStepAria: 'Current load step',
+    timelineFirstYield: (elementId) => `${elementId}: first yield`,
+    timelineFullHinge: (elementId) => `${elementId}: full plastic hinge`,
+    timelineUnloadSuffix: ' (unloading)',
+    timelineSpeedAria: 'Playback speed',
+    infoTooltipAria: 'Show explanation',
+    seismicSpectrumAria: 'Svd(T) vertical design response spectrum, with T1 marked',
     aboutReportIssue: 'Report an issue / ask a question',
     aboutGithubProfile: 'GitHub profile',
 

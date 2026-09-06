@@ -9,7 +9,14 @@ coverage/
 *.local
 .tmp/
 .claude/settings.local.json
+.claude/settings.json
 .claude/scheduled_tasks.lock
+
+# Publikálás előtti belső audit (2026-09-06) — a megállapítások LÉNYEGE a
+# nyilvános dokumentumokba került (VALIDATION-SCOPE.md 8. pont, README-k
+# felelősség-kizáró blokkja); maga az auditanyag szándékosan lokális marad,
+# mert egy időponthoz kötött pontszám-táblázat gyorsan félrevezetővé válna.
+audit/
 
 # Az eredeti 1996-os diplomaterv szövegét tartalmazó munkafájlok — szándékosan
 # nincsenek a publikus repóban (ld. memória: github-publish-readiness).

@@ -13,6 +13,12 @@ TypeScript-based, validated FEA program.
 
 **[Try it live →](https://femati.vercel.app)** — no install needed, runs entirely in the browser.
 
+> ⚠️ **Not certified design software.** FEM@ti is a research and educational finite element tool.
+> Its numerical core is validated against closed-form solutions (see
+> [`docs/VALIDATION-SCOPE.md`](docs/VALIDATION-SCOPE.md) for exactly what is and is not covered),
+> but **all results must be verified independently, under professional engineering responsibility**,
+> before being used for any structural design decision.
+
 > **Note on language:** the source comments and the deeper documentation
 > (`docs/`, ADRs) are in Hungarian — this is a personal project built around
 > a Hungarian engineering thesis. This README exists so an English-speaking

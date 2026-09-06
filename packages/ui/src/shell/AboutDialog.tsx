@@ -20,7 +20,11 @@ export function AboutDialog(): JSX.Element | null {
 
   return (
     <div className="vem-inspector-overlay" onPointerDown={() => setOpen(false)}>
-      <div className="vem-inspector vem-inspector--about" style={{ width: 380, height: 460 }} onPointerDown={(e) => e.stopPropagation()}>
+      {/* Nincs FIX magasság: a funkciólista idővel nőtt, és a korábbi `height: 460`
+          mellett a tartalom (~666 px) túlcsordult — a © sor és a linkek a látható
+          terület alá kerültek. Most a tartalomhoz igazodik, a képernyőre korlátozva
+          (`.vem-inspector--about` `max-height`), és csak szükség esetén görget. */}
+      <div className="vem-inspector vem-inspector--about" style={{ width: 380 }} onPointerDown={(e) => e.stopPropagation()}>
         <div className="vem-inspector__header">
           <span>{t.aboutTitle}</span>
           <button type="button" className="vem-btn vem-btn--sm" onClick={() => setOpen(false)}>
@@ -37,6 +41,12 @@ export function AboutDialog(): JSX.Element | null {
               v{__APP_VERSION__} · mag: {__GIT_COMMIT__}
             </div>
           </div>
+
+          {/* A nyilatkozat SZÁNDÉKOSAN a (hosszú) funkciólista ELŐTT áll: kis
+              képernyőn a lista alatti tartalom görgetés mögé kerülne, egy
+              felelősség-kizáró nyilatkozat pedig pont akkor ér semmit, ha
+              görgetni kell érte. */}
+          <div className="vem-about__disclaimer">{t.aboutDisclaimer}</div>
 
           <div style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--text-secondary)' }}>
             <p style={{ margin: 0 }}>{t.aboutIntro}</p>

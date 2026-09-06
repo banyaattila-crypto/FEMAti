@@ -159,6 +159,22 @@ public record in the project's own change log
   vendor would run.
 - **Test-coverage target (≥90% for the core package) has not been
   re-measured** since the P16 performance-profiling phase.
+- **The closed-form validation suite covers the beam core only.** The 29 cases
+  in [`VALIDATION.md`](VALIDATION.md) (V-01…V-13 linear, P-01…P-16 plastic) validate the
+  Timoshenko element, the solvers and the layered plastic model against closed-form
+  references. The following features are **outside that suite** — they are covered by
+  unit and integration tests (all currently passing), but **not** by a published
+  closed-form or handbook reference case, and should be treated accordingly:
+  reinforced-concrete ULS capacity (EC2), vertical seismic component (EC8 / EN 1998-1),
+  moment–shear (M–V) utilization check (EN 1993-1-1), composite steel–concrete
+  cross-section, dynamics (natural frequencies, mode shapes, Newmark-β transient),
+  Winkler foundation with uplift (no-tension), moving-load envelope, EN 1990 load
+  combinations, serviceability (SLS) checks, section optimization and unit conversion.
+  The tests that do cover them are in `packages/fem-core/test/` (e.g. `concreteEC2.test.ts`,
+  `verticalSeismicSpectrum.test.ts`, `shearMomentInteraction.test.ts`,
+  `contactFoundation.test.ts`, `modal.test.ts`, `transient.test.ts`) and
+  `packages/ui/src/model/` (e.g. `rcCapacity.test.ts`, `designChecks.test.ts`,
+  `combinations.test.ts`, `envelope.test.ts`).
 - Every one of the above is stated explicitly in the code and in
   `docs/THEORY.md` / the ADR log — none of it is a hidden gap; a careful
   reader of the source will find each one flagged at the point where it

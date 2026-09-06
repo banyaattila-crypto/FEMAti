@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAppStore } from '../state/appStore.js';
+import { SHELL } from '../i18n/shell.js';
 
 export interface InfoTooltipProps {
   /** A magyarázó szöveg — a korábbi natív `title` attribútum tartalma. */
@@ -53,6 +55,7 @@ function computePosition(iconRect: DOMRect): BubblePosition {
  * jött ki egy érték.
  */
 export function InfoTooltip({ text }: InfoTooltipProps): JSX.Element {
+  const lang = useAppStore((s) => s.lang);
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<BubblePosition | null>(null);
   const iconRef = useRef<HTMLButtonElement>(null);
@@ -107,7 +110,7 @@ export function InfoTooltip({ text }: InfoTooltipProps): JSX.Element {
         ref={iconRef}
         type="button"
         className="vem-info-tooltip__icon"
-        aria-label="Magyarázat megjelenítése"
+        aria-label={SHELL[lang].infoTooltipAria}
         aria-expanded={open}
         onClick={(e) => {
           e.stopPropagation();

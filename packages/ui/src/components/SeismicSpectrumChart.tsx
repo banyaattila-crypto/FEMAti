@@ -1,4 +1,6 @@
 import { useId, useMemo } from 'react';
+import { useAppStore } from '../state/appStore.js';
+import { SHELL } from '../i18n/shell.js';
 import { verticalDesignSpectrum, type VerticalSpectrumInput } from '@femati/fem-core';
 
 export interface SeismicSpectrumChartProps {
@@ -32,6 +34,7 @@ const AXIS_TEXT = 'var(--text-secondary)';
  * plain-SVG, CSS-token-alapú rajzoló-stílus, mint `SectionShapeDiagram.tsx`.
  */
 export function SeismicSpectrumChart({ input, behaviorFactor, t1, width, height }: SeismicSpectrumChartProps): JSX.Element {
+  const lang = useAppStore((s) => s.lang);
   const areaGradientId = `seismic-spectrum-${useId()}`;
 
   const samples = useMemo(() => {
@@ -58,7 +61,7 @@ export function SeismicSpectrumChart({ input, behaviorFactor, t1, width, height 
   const h = height ?? H;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: w, height: h, flex: 'none' }} role="img" aria-label="Svd(T) függőleges tervezési válaszspektrum, T1 megjelölve">
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: w, height: h, flex: 'none' }} role="img" aria-label={SHELL[lang].seismicSpectrumAria}>
       <defs>
         <linearGradient id={areaGradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="var(--accent)" stopOpacity="0.35" />
