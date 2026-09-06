@@ -4,8 +4,14 @@
 
 *[Read this in English](README.md)*
 
+[![CI](https://github.com/banyaattila-crypto/FEMAti/actions/workflows/ci.yml/badge.svg)](https://github.com/banyaattila-crypto/FEMAti/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://femati.vercel.app)
+
 **Rugalmas–képlékeny Timoshenko-gerenda végeselemes analízis** — modern,
 TypeScript alapú, validált végeselemes program.
+
+**[Próbáld ki élőben →](https://femati.vercel.app)** — nincs telepítés, teljesen a böngészőben fut.
 
 ---
 
@@ -48,7 +54,7 @@ mód" nézetében animálva, didaktikus célból elérhető marad (ld.
 - **Számítási jegyzőkönyv** és **"Történelmi mód"** (az eredeti 1996-os
   frontális algoritmus animált bemutatása, összevetve a mai skyline
   megoldóval).
-- **~660 automatizált teszt**, ezen belül egy 10 000-elemes fuzz-teszt
+- **~700 automatizált teszt**, ezen belül egy 10 000-elemes fuzz-teszt
   (`fast-check`), amely véletlen szerkezeteken bizonyítja, hogy a megoldó
   sosem dob kezeletlen kivételt, és mindig egyensúlyban lévő eredményt ad.
 

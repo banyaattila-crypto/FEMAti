@@ -4,8 +4,14 @@
 
 *[Magyarul](README.hu.md)*
 
+[![CI](https://github.com/banyaattila-crypto/FEMAti/actions/workflows/ci.yml/badge.svg)](https://github.com/banyaattila-crypto/FEMAti/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://femati.vercel.app)
+
 **Elastic–plastic Timoshenko-beam finite element analysis** — a modern,
 TypeScript-based, validated FEA program.
+
+**[Try it live →](https://femati.vercel.app)** — no install needed, runs entirely in the browser.
 
 > **Note on language:** the source comments and the deeper documentation
 > (`docs/`, ADRs) are in Hungarian — this is a personal project built around
@@ -60,7 +66,7 @@ teaching purposes (see [ADR-0002](docs/ADR/0002-skyline-vs-frontalis.md)).
 - **Calculation report** and a **"Historical mode"** (an animated replay of
   the original 1996 frontal algorithm, side by side with today's skyline
   solver).
-- **~660 automated tests**, including a 10,000-element fuzz test
+- **~700 automated tests**, including a 10,000-element fuzz test
   (`fast-check`) proving the solver never throws an unhandled exception and
   always returns an equilibrated result on random structures.
 
