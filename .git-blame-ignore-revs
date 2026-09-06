@@ -1,0 +1,9 @@
+# Tömeges, tisztán formázási commitok — a `git blame` ezeket ugorja át, hogy a
+# sorok VALÓDI szerzője/indoka maradjon látható.
+#
+# Helyi bekapcsolás (egyszer, repónként):
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# A GitHub webes blame-nézete automatikusan figyelembe veszi ezt a fájlt.
+
+# style: egyszeri Prettier-formázás a teljes kódbázison (FMT-001), 2026-09-06
+f03a5f6d881093008a01db048f075f168779dd13

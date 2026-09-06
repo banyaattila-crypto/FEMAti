@@ -24,7 +24,12 @@ export function generateValidationReport(cases: readonly ValidationCase[], gener
   lines.push('> **EZ A DOKUMENTUM GENERÁLT** (`pnpm --filter @femati/fem-validation test`),');
   lines.push('> ne szerkeszd kézzel. Forrás: `packages/fem-validation/src/cases/*.ts`.');
   lines.push('');
-  lines.push(`Generálva: ${generatedAt.toISOString()}`);
+  // SZÁNDÉKOSAN csak dátum, nem teljes időbélyeg (publikálás előtti audit,
+  // 2026-09-06, REL-001): a fájl commitolva van (a README hivatkozik rá), és a
+  // másodperc-pontos időbélyeg miatt MINDEN tesztfutás "módosítottnak" mutatta,
+  // állandóan piszkos munkafát és tartalom nélküli commitokat okozva. A dátum
+  // megtartja a tájékoztató értéket, de egy napon belül stabil marad.
+  lines.push(`Generálva: ${generatedAt.toISOString().slice(0, 10)}`);
   lines.push('');
   lines.push(
     `**Összesítés:** ${cases.length} eset, ${total} ellenőrzés, ` + `${allGreen ? 'MIND ZÖLD ✅' : `${failedCases.length} eset ELBUKOTT ❌`}.`,

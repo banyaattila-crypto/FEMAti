@@ -3,7 +3,7 @@
 > **EZ A DOKUMENTUM GENERÁLT** (`pnpm --filter @femati/fem-validation test`),
 > ne szerkeszd kézzel. Forrás: `packages/fem-validation/src/cases/*.ts`.
 
-Generálva: 2026-09-06T20:26:03.392Z
+Generálva: 2026-09-06
 
 **Összesítés:** 29 eset, 195 ellenőrzés, MIND ZÖLD ✅.
 

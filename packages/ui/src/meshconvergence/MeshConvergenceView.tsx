@@ -11,6 +11,7 @@ import './meshconvergence.css';
 import * as fmt from '../format/numbers.js';
 import { DEFAULT_MESH_CONVERGENCE_COUNTS, runMeshConvergence, type MeshConvergencePoint } from '../model/meshConvergence.js';
 import { useAppStore } from '../state/appStore.js';
+import { MESH_CONVERGENCE } from '../i18n/meshconvergence.js';
 import { useModelStore } from '../state/modelStore.js';
 
 /** A relatív eltérés akkor számít "gyakorlatilag konvergáltnak", ha ez alatt van. */
@@ -52,6 +53,7 @@ function Row({ point, elementCount }: { readonly point: MeshConvergencePoint; re
 }
 
 export function MeshConvergenceView(): JSX.Element | null {
+  const t = MESH_CONVERGENCE[useAppStore((s) => s.lang)];
   const meshConvergenceOpen = useAppStore((s) => s.meshConvergenceOpen);
   const setMeshConvergenceOpen = useAppStore((s) => s.setMeshConvergenceOpen);
   const model = useModelStore((s) => s.model);
@@ -71,26 +73,29 @@ export function MeshConvergenceView(): JSX.Element | null {
       <div className="vem-meshconv" onPointerDown={(e) => e.stopPropagation()}>
         <header className="vem-meshconv__header">
           <div>
-            <h1>Hálófüggetlenségi vizsgálat</h1>
-            <p className="vem-meshconv__subtitle">Az aktuális modell újrafuttatása {DEFAULT_MESH_CONVERGENCE_COUNTS.length} elemszámmal</p>
+            <h1>{t.title}</h1>
+            <p className="vem-meshconv__subtitle">{t.subtitle(DEFAULT_MESH_CONVERGENCE_COUNTS.length)}</p>
           </div>
           <button type="button" className="vem-btn vem-btn--sm" onClick={close}>
-            Bezárás
+            {t.close}
           </button>
         </header>
 
         <p className="vem-meshconv__intro">
-          A táblázat az aktuális modellt ({model.span.toFixed(1)} m, {model.sectionId} / {model.materialId}) a Toolbar Elemszám-csúszkájának
-          beállításától FÜGGETLENÜL, egy rögzített {DEFAULT_MESH_CONVERGENCE_COUNTS[0]}–
-          {DEFAULT_MESH_CONVERGENCE_COUNTS[DEFAULT_MESH_CONVERGENCE_COUNTS.length - 1]} elemes sorozaton futtatja le (mindig a lineáris megoldóval). A
-          relatív eltérés oszlop az ELŐZŐ (durvább) hálóhoz képesti változást mutatja — ha ez tartósan {CONVERGED_THRESHOLD_PERCENT} % alá esik
-          (kiemelve), a háló gyakorlatilag függetlenné vált az eredménytől.
+          {t.intro(
+            model.span.toFixed(1),
+            model.sectionId,
+            model.materialId,
+            DEFAULT_MESH_CONVERGENCE_COUNTS[0] as number,
+            DEFAULT_MESH_CONVERGENCE_COUNTS[DEFAULT_MESH_CONVERGENCE_COUNTS.length - 1] as number,
+            CONVERGED_THRESHOLD_PERCENT,
+          )}
         </p>
 
         <table>
           <thead>
             <tr>
-              <th>Elemszám</th>
+              <th>{t.colElementCount}</th>
               <th>DOF</th>
               <th>w max</th>
               <th>Δw</th>
@@ -106,18 +111,15 @@ export function MeshConvergenceView(): JSX.Element | null {
         </table>
 
         <p className="vem-meshconv__note">
-          Ez a vizsgálat a globális szélsőértékek (w max, M max) TELJES hálón át vett stabilitását mutatja — nem helyettesíti az Eredmények panel
-          elemenkénti hibabecslőjét (`errorEstimate`), ami egyetlen hálón belül jelzi, hol érdemes sűríteni. Mindig a lineáris megoldón fut, mert a
-          hálófüggetlenség kérdése az anyagmodelltől független, geometriai kérdés (ld. THEORY.md 6. és 12. pont) — a nemlineáris (Newton-Raphson)
-          futás minden elemszámnál a teljes teherlépcső-történetet újrafuttatná, ami interaktív panelhez feleslegesen drága lenne.
+          {t.note}
           {lastValid !== undefined && (notConverged(lastValid.wRelChangePercent) || notConverged(lastValid.mRelChangePercent)) ? (
             <>
               {' '}
-              A legfinomabb két háló közötti eltérés még{' '}
-              {notConverged(lastValid.wRelChangePercent) ? `w max-nál ${fmt.percent(lastValid.wRelChangePercent).value} %` : null}
+              {t.notConvergedLead}{' '}
+              {notConverged(lastValid.wRelChangePercent) ? t.notConvergedW(String(fmt.percent(lastValid.wRelChangePercent).value)) : null}
               {notConverged(lastValid.wRelChangePercent) && notConverged(lastValid.mRelChangePercent) ? ', ' : null}
-              {notConverged(lastValid.mRelChangePercent) ? `M max-nál ${fmt.percent(lastValid.mRelChangePercent).value} %` : null} — érdemes lehet a
-              modellben is nagyobb elemszámot beállítani.
+              {notConverged(lastValid.mRelChangePercent) ? t.notConvergedM(String(fmt.percent(lastValid.mRelChangePercent).value)) : null}{' '}
+              {t.notConvergedTail}
             </>
           ) : null}
         </p>

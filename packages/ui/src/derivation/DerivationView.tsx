@@ -45,7 +45,7 @@ import {
   type PlasticSample,
 } from './derivationData.js';
 import { buildDerivationExportData } from './derivationExportData.js';
-import { buildDerivationDocx, downloadBlob } from './docxExport.js';
+import { downloadBlob } from './downloadBlob.js';
 import { FormulaBlock } from './Formula.js';
 import {
   bendingGaussTex,
@@ -148,7 +148,11 @@ export function DerivationView(): JSX.Element | null {
       plasticLayerDerivations: plasticLayerRows ?? [],
       lang,
     });
-    buildDerivationDocx(exportData, lang)
+    // A `docx` csomag (+ jszip) a bundle egyik legnagyobb darabja, de KIZÁRÓLAG
+    // erre az egy gombnyomásra kell — ezért dinamikusan töltjük be, hogy ne
+    // terhelje a kezdeti betöltést (publikálás előtti audit, PERF-001).
+    void import('./docxExport.js')
+      .then(({ buildDerivationDocx }) => buildDerivationDocx(exportData, lang))
       .then((blob) => downloadBlob(blob, `femati-levezetes-${model.presetId}.docx`))
       .catch((error: unknown) => {
         console.error('A .docx export sikertelen:', error);

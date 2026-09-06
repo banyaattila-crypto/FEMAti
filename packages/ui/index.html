@@ -5,12 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>FEM@ti — Timoshenko beam · elastic–plastic finite element analysis</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Spectral:wght@600;700&family=Cormorant+Garamond:wght@600;700&display=swap"
-      rel="stylesheet"
-    />
+    <!-- A betűtípusok ÖNÁLLÓAN, a saját build-ünkből töltődnek (`src/main.tsx`,
+         @fontsource) — szándékosan NINCS Google Fonts CDN-hívás, hogy a látogató
+         IP-címe ne kerüljön harmadik félhez. Ld. audit PRIV-001, 2026-09-06. -->
   </head>
   <body>
     <div id="root"></div>

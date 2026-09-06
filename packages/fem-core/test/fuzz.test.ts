@@ -182,86 +182,103 @@ function assertAllFinite(values: readonly number[], label: string): void {
   }
 }
 
-describe('P16 fuzz-teszt — lineáris megoldó (10 000 véletlen érvényes modell)', () => {
-  it('sosem dob kivételt, mindig véges eredményt ad, és a globális egyensúly mindig teljesül', () => {
-    resetLoadIds();
-    fc.assert(
-      fc.property(fuzzModelArb, (input) => {
-        const model = buildFuzzModel(input);
-        const result = solveLinear(model);
+/**
+ * A fuzz-tesztek szándékosan HOSSZÚ futásúak (több ezer véletlen modell), a
+ * Vitest alapértelmezett 5 mp-es kerete alá nem férnek be. A Vitest 2-ben ez
+ * észrevétlen maradt (a szinkron `fc.assert` futását nem szakította meg), a
+ * Vitest 5-ben viszont a teszt elbukna. Ez futásidő-korlát, NEM numerikus
+ * tolerancia — a `docs/HIBATURESI-POLITIKA.md` tolerancia-tilalmát nem érinti.
+ */
+const FUZZ_TIMEOUT_MS = 120_000;
 
-        assertAllFinite(Array.from(result.displacements), 'elmozdulásvektor');
-        assertAllFinite(
-          result.nodes.flatMap((n) => [n.w, n.phi, n.m, n.t]),
-          'csomóponti mezők',
-        );
-        assertAllFinite(
-          result.reactions.flatMap((r) => [r.fz, r.my]),
-          'reakciók',
-        );
-        expect(result.equilibrium.satisfied, `ΣFz=${result.equilibrium.sumFz}, ΣMy=${result.equilibrium.sumMy}`).toBe(true);
-      }),
-      { numRuns: 10_000 },
-    );
-  });
+describe('P16 fuzz-teszt — lineáris megoldó (10 000 véletlen érvényes modell)', () => {
+  it(
+    'sosem dob kivételt, mindig véges eredményt ad, és a globális egyensúly mindig teljesül',
+    () => {
+      resetLoadIds();
+      fc.assert(
+        fc.property(fuzzModelArb, (input) => {
+          const model = buildFuzzModel(input);
+          const result = solveLinear(model);
+
+          assertAllFinite(Array.from(result.displacements), 'elmozdulásvektor');
+          assertAllFinite(
+            result.nodes.flatMap((n) => [n.w, n.phi, n.m, n.t]),
+            'csomóponti mezők',
+          );
+          assertAllFinite(
+            result.reactions.flatMap((r) => [r.fz, r.my]),
+            'reakciók',
+          );
+          expect(result.equilibrium.satisfied, `ΣFz=${result.equilibrium.sumFz}, ΣMy=${result.equilibrium.sumMy}`).toBe(true);
+        }),
+        { numRuns: 10_000 },
+      );
+    },
+    FUZZ_TIMEOUT_MS,
+  );
 });
 
 describe('P16 fuzz-teszt — nemlineáris megoldó (500 véletlen érvényes modell)', () => {
-  it('sosem dob KEZELETLEN kivételt, és minden befejezett lépésnél véges marad az állapot', () => {
-    resetLoadIds();
-    fc.assert(
-      fc.property(
-        fuzzModelArb,
-        fc.double({ min: 5e4, max: 5e5, noNaN: true }), // σY — mindig plasztikus anyag
-        fc.double({ min: 0.3, max: 2, noNaN: true }), // λ_cél
-        (input, sigmaY, targetLambda) => {
-          const material = makeMaterial('M', 'Fuzz anyag', {
-            e: input.e,
-            nu: input.nu,
-            density: input.density,
-            sigmaY,
-          });
-          const section = makeSection('S', 'Fuzz szelvény', input.shape);
-          const mesh = uniformMesh(input.span, input.elementCount, { sectionId: 'S', materialId: 'M' });
-          const boundaries = boundariesFor(input.pattern, input.elementCount);
-          // A nemlineáris megoldó (P11 hatóköre) csak elosztott/csomóponti
-          // erőt és önsúlyt kezel plasztikus anyaggal együtt — ugyanaz a
-          // teherkészlet, mint a lineáris fuzz-tesztben.
-          const midNode = `N${input.elementCount}`;
-          const loads =
-            input.loadKind === 'distributed'
-              ? [distributedForce(0, input.span, input.loadMagnitude, input.loadMagnitude, 'Q1')]
-              : input.loadKind === 'nodal'
-                ? [nodalForce(midNode, input.loadMagnitude, 'F1')]
-                : input.loadKind === 'self-weight'
-                  ? [selfWeight(1, 'G1')]
-                  : [distributedForce(0, input.span, input.loadMagnitude, input.loadMagnitude, 'Q1'), selfWeight(1, 'G1')];
+  it(
+    'sosem dob KEZELETLEN kivételt, és minden befejezett lépésnél véges marad az állapot',
+    () => {
+      resetLoadIds();
+      fc.assert(
+        fc.property(
+          fuzzModelArb,
+          fc.double({ min: 5e4, max: 5e5, noNaN: true }), // σY — mindig plasztikus anyag
+          fc.double({ min: 0.3, max: 2, noNaN: true }), // λ_cél
+          (input, sigmaY, targetLambda) => {
+            const material = makeMaterial('M', 'Fuzz anyag', {
+              e: input.e,
+              nu: input.nu,
+              density: input.density,
+              sigmaY,
+            });
+            const section = makeSection('S', 'Fuzz szelvény', input.shape);
+            const mesh = uniformMesh(input.span, input.elementCount, { sectionId: 'S', materialId: 'M' });
+            const boundaries = boundariesFor(input.pattern, input.elementCount);
+            // A nemlineáris megoldó (P11 hatóköre) csak elosztott/csomóponti
+            // erőt és önsúlyt kezel plasztikus anyaggal együtt — ugyanaz a
+            // teherkészlet, mint a lineáris fuzz-tesztben.
+            const midNode = `N${input.elementCount}`;
+            const loads =
+              input.loadKind === 'distributed'
+                ? [distributedForce(0, input.span, input.loadMagnitude, input.loadMagnitude, 'Q1')]
+                : input.loadKind === 'nodal'
+                  ? [nodalForce(midNode, input.loadMagnitude, 'F1')]
+                  : input.loadKind === 'self-weight'
+                    ? [selfWeight(1, 'G1')]
+                    : [distributedForce(0, input.span, input.loadMagnitude, input.loadMagnitude, 'Q1'), selfWeight(1, 'G1')];
 
-          const model = buildModel({
-            nodes: mesh.nodes,
-            elements: mesh.elements,
-            materials: [material],
-            sections: [section],
-            boundaries,
-            loads,
-          });
+            const model = buildModel({
+              nodes: mesh.nodes,
+              elements: mesh.elements,
+              materials: [material],
+              sections: [section],
+              boundaries,
+              loads,
+            });
 
-          const result = runLoadStepper(model, {
-            algorithm: 'newton',
-            iterMax: 20,
-            iterMin: 2,
-            tolerancePercent: 1,
-            initialSteps: 10,
-            targetLambda,
-          });
+            const result = runLoadStepper(model, {
+              algorithm: 'newton',
+              iterMax: 20,
+              iterMin: 2,
+              tolerancePercent: 1,
+              initialSteps: 10,
+              targetLambda,
+            });
 
-          expect(['converged', 'limit-load-reached', 'aborted']).toContain(result.status);
-          for (const step of result.steps) {
-            assertAllFinite(Array.from(step.u), 'nemlineáris lépés elmozdulásvektora');
-          }
-        },
-      ),
-      { numRuns: 500 },
-    );
-  });
+            expect(['converged', 'limit-load-reached', 'aborted']).toContain(result.status);
+            for (const step of result.steps) {
+              assertAllFinite(Array.from(step.u), 'nemlineáris lépés elmozdulásvektora');
+            }
+          },
+        ),
+        { numRuns: 500 },
+      );
+    },
+    FUZZ_TIMEOUT_MS,
+  );
 });
