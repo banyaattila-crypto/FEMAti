@@ -1,3 +1,5 @@
+![FEM@ti — model tree, live M-diagram, converged nonlinear run with a plastic hinge, ULS/SLS checks](docs/img/readme-hero-en.jpg)
+
 # FEM@ti
 
 *[Magyarul](README.hu.md)*
@@ -43,10 +45,6 @@ production path), that divergence is recorded in a dedicated architecture
 decision record (ADR) — including the ORIGINAL frontal algorithm itself,
 which remains available, animated, in the app's "Historical mode" view for
 teaching purposes (see [ADR-0002](docs/ADR/0002-skyline-vs-frontalis.md)).
-
-![FEM@ti workspace — model tree, live M-diagram, ULS/SLS design checks](docs/img/quickstart-overview.jpg)
-
-<sub>Two-span continuous beam (IPE 300, S235) — the model tree, the internal-force diagram, and the design-check results, all live.</sub>
 
 ### Why it's worth a look
 

@@ -1,3 +1,5 @@
+![FEM@ti — modellfa, élő M-diagram, ULS/SLS ellenőrzések](docs/img/quickstart-overview.jpg)
+
 # FEM@ti
 
 *[Read this in English](README.md)*
@@ -31,10 +33,6 @@ azt egy külön architektúra-döntési feljegyzés (ADR) rögzíti — beleért
 magát az EREDETI, frontális algoritmust is, ami a felület "Történelmi
 mód" nézetében animálva, didaktikus célból elérhető marad (ld.
 [ADR-0002](docs/ADR/0002-skyline-vs-frontalis.md)).
-
-![FEM@ti munkaasztal — modellfa, élő M-diagram, ULS/SLS ellenőrzések](docs/img/quickstart-overview.jpg)
-
-<sub>Kétnyílású folytatólagos gerenda (IPE 300, S235) — a modellfa, az igénybevételi ábra és a teherbírás-ellenőrzés eredményei, élőben.</sub>
 
 ### Miért érdemes megnézni?
 
