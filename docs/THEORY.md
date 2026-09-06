@@ -2,8 +2,8 @@
 
 **Cél:** egy kívülálló mérnök ebből a dokumentumból állapítsa meg, melyik
 diplomaterv-képlet hol van implementálva, és mi bizonyítja a helyességét.
-Az oldalszámok a [`Diplomaterv (BME).pdf`](../Diplomaterv%20(BME).pdf) tényleges
-lapszámozására mutatnak (nem a nyomtatott fejlécre) — a projekt gyökerében lévő
+Az oldalszámok a [`Diplomaterv (BME).pdf`](../packages/ui/public/theory/femati-timoshenko-beam-2026.pdf)
+tényleges lapszámozására mutatnak (nem a nyomtatott fejlécre) — a repóban lévő
 PDF `pdftotext`/PyMuPDF-fel ellenőrizve, egyenletszámonként.
 
 **Fázis-lefedettség:** P0–P6 (alapozás, domain-modell, lineáris algebra, elem,
