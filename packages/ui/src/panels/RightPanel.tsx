@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
-import { crackingMomentUtilization } from '@femati/fem-core';
+import { crackingMomentUtilization, verticalDesignSpectrum, VERTICAL_BEHAVIOR_FACTOR_MAX, type VerticalSpectrumInput } from '@femati/fem-core';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { ResultRow } from '../components/Value.js';
+import { SeismicSpectrumChart } from '../components/SeismicSpectrumChart.js';
 import { findMaterial } from '../data/catalog.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
-import { solveEditableModel } from '../model/compile.js';
-import { scaleModelForSls, scaleModelForUlsVariants, ulsVariantLeadingLoadIds } from '../model/combinations.js';
-import { computeUtilizationsEnveloped } from '../model/designChecks.js';
+import { solveEditableModel, solveModalModel } from '../model/compile.js';
+import { scaleModelForSeismicVariants, scaleModelForSls, scaleModelForUlsVariants, ulsVariantLeadingLoadIds } from '../model/combinations.js';
+import { computeSeismicUtilization, computeUtilizationsEnveloped } from '../model/designChecks.js';
 import { loadRowLabel } from '../model/loadLabel.js';
 import * as fmt from '../format/numbers.js';
 import { utilizationVerdict } from '../format/utilization.js';
@@ -65,6 +66,30 @@ export function RightPanel(): JSX.Element {
   const leadingLoadId = utils ? (ulsVariantLeadingLoadIds(model)[utils.ulsGoverningIndex] ?? null) : null;
   const leadingLoad = leadingLoadId !== null ? model.loads.find((l) => l.id === leadingLoadId) : undefined;
   const leadingLoadLabel = leadingLoad ? loadRowLabel(leadingLoad).label : null;
+
+  // Földrengés — EN 1998-1 FÜGGŐLEGES komponens (2026-09-06, ld. `docs/ADR/
+  // 0023-fuggoleges-foldrenges-kombinacio.md`). T₁ a meglévő modális
+  // megoldóból (ADR-0016) — CSAK a szerkezet saját tömegéből, dokumentált
+  // MVP-egyszerűsítés (a G+ψ₂Q teljes szeizmikus tömeg helyett).
+  const seismicModal = useMemo(() => (model.seismic.enabled ? solveModalModel(model) : null), [model]);
+  const t1 = seismicModal?.modal && seismicModal.modal.modes.length > 0 ? 1 / seismicModal.modal.modes[0].frequencyHz : null;
+  const seismicSpectrumInput: VerticalSpectrumInput = {
+    agOverG: model.seismic.agOverG,
+    gammaI: model.seismic.gammaI,
+    spectrumType: model.seismic.spectrumType,
+  };
+  const svd = t1 !== null ? verticalDesignSpectrum(t1, seismicSpectrumInput, VERTICAL_BEHAVIOR_FACTOR_MAX) : null;
+  const seismicResults = useMemo(
+    () =>
+      model.seismic.enabled && svd !== null
+        ? scaleModelForSeismicVariants(model, svd)
+            .map((variant) => solveEditableModel(variant).result)
+            .filter((r): r is NonNullable<typeof r> => r !== null)
+        : [],
+    [model, svd],
+  );
+  const seismicUtil = seismicResults.length > 0 ? computeSeismicUtilization(model, seismicResults) : null;
+  const seismicVerdict = utilizationVerdict(seismicUtil?.governing ?? null);
 
   const materialEntry = findMaterial(model.materialId);
   // fctm a katalógusban kN/cm² (ld. compile.ts `mat.e * 1e4` mintája) — kN/m²-re váltva, hogy Kₑ-vel (m³) szorozva kNm-et adjon.
@@ -238,6 +263,35 @@ export function RightPanel(): JSX.Element {
             title={t.computedLoadFactorTitle}
           />
         </Card>
+
+        {model.seismic.enabled ? (
+          <Card title={t.seismicCardTitle} accent="results">
+            <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
+              <NoteBox tone="info">{t.seismicCardIntro}</NoteBox>
+            </div>
+            {t1 !== null ? (
+              <>
+                <ResultRow label={t.seismicT1Label} formatted={fmt.period(t1)} title={t.seismicT1Title} />
+                <div style={{ padding: 'var(--space-2) var(--space-5)' }}>
+                  <SeismicSpectrumChart input={seismicSpectrumInput} behaviorFactor={VERTICAL_BEHAVIOR_FACTOR_MAX} t1={t1} />
+                </div>
+                <ResultRow label={t.seismicSvdLabel} formatted={fmt.spectralValue(svd)} title={t.seismicSvdTitle} />
+                <ResultRow
+                  label={t.seismicUtilLabel}
+                  formatted={fmt.percent(seismicUtil?.governing !== null && seismicUtil?.governing !== undefined ? seismicUtil.governing * 100 : null)}
+                  tone={seismicVerdict.tone}
+                  emphasis="large"
+                  title={t.seismicUtilTitle}
+                />
+                <ResultRow label={t.verdictLabel} formatted={{ value: VERDICT_LABEL[lang][seismicVerdict.code], unit: '' }} tone={seismicVerdict.tone} />
+              </>
+            ) : (
+              <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
+                <NoteBox tone="warn">{t.seismicNoModalNote}</NoteBox>
+              </div>
+            )}
+          </Card>
+        ) : null}
 
         {error !== null ? <NoteBox tone="error">{t.notRunnablePrefix(error)}</NoteBox> : null}
         {result === null && error === null ? (

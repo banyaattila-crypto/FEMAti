@@ -171,6 +171,12 @@ export const lambda = make(3, '');
 /** Alaki tényező c = Mp/Me, 3 tizedes. */
 export const shapeFactor = make(3, '');
 
+/** Sajátperiódus T₁ [s], 3 tizedes (földrengés — EN 1998-1). */
+export const period = make(3, 's');
+
+/** Tervezési spektrumérték Svd/g, dimenziótlan (a g többszöröse), 3 tizedes. */
+export const spectralValue = make(3, 'g');
+
 /** Százalékos eltérés, 2 tizedes. */
 export const percent = make(2, '%');
 

@@ -165,6 +165,26 @@ export interface MovingLoadState {
   readonly magnitude: number;
 }
 
+/**
+ * Földrengés — EN 1998-1 FÜGGŐLEGES komponens (2026-09-06). CSAK a
+ * függőleges komponens (nagy fesztávú/konzolos/rideg elemet alátámasztó
+ * gerendáknál előírt, EC8 4.3.3.5.2) — nincs vízszintes/keret-hatás, ld.
+ * `docs/ADR/0023-fuggoleges-foldrenges-kombinacio.md`. A talajosztály a
+ * függőleges spektrumot NEM befolyásolja (EC8 3.4. táblázat), ezért itt
+ * nincs talajosztály-mező. A viselkedési tényező (qv≤1.5) és a ψ₂ (MVP:
+ * egy közös 0.3-as érték) fix konstansok (`model/combinations.ts`), nem
+ * felhasználói bemenet — a UI csak azt kéri, amit ténylegesen a régió/
+ * épület határoz meg.
+ */
+export interface SeismicState {
+  readonly enabled: boolean;
+  /** ag/g — referencia csúcsgyorsulás a gravitációs gyorsulás többszöröseként (pl. 0.15 = "0.15g"). */
+  readonly agOverG: number;
+  /** Fontossági tényező γI (EN 1998-1 4.2.5). */
+  readonly gammaI: number;
+  readonly spectrumType: 1 | 2;
+}
+
 export interface EditableModel {
   readonly presetId: string;
   /** Fesztáv [m] */
@@ -191,6 +211,7 @@ export interface EditableModel {
   readonly rebar: RebarState;
   readonly composite: CompositeState;
   readonly movingLoad: MovingLoadState;
+  readonly seismic: SeismicState;
   readonly integration: IntegrationScheme;
   readonly supports: readonly EditableSupport[];
   readonly loads: readonly EditableLoad[];
@@ -201,6 +222,7 @@ export const DEFAULT_THERMAL_LOAD: ThermalLoadState = { enabled: false, tRef: 0,
 export const DEFAULT_REBAR: RebarState = { enabled: false, asBottom: 0, asTop: 0, cover: 0.03 };
 export const DEFAULT_COMPOSITE: CompositeState = { enabled: false, slabWidth: 1.0, slabThickness: 0.1, slabMaterialId: 'C25' };
 export const DEFAULT_MOVING_LOAD: MovingLoadState = { enabled: false, magnitude: 10 };
+export const DEFAULT_SEISMIC: SeismicState = { enabled: false, agOverG: 0.15, gammaI: 1.0, spectrumType: 1 };
 /** Alapértelmezett rugóállandó [kN/m] új rugós támasz elhelyezésekor. */
 export const DEFAULT_SPRING_STIFFNESS = 5000;
 /** Alapértelmezett ágyazási tényező [kN/m²] új Winkler-ágyazat elhelyezésekor. */
@@ -269,6 +291,7 @@ export function presetToEditable(
     rebar: DEFAULT_REBAR,
     composite: DEFAULT_COMPOSITE,
     movingLoad: DEFAULT_MOVING_LOAD,
+    seismic: DEFAULT_SEISMIC,
     integration,
     supports,
     loads,

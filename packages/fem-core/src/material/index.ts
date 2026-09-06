@@ -4,3 +4,4 @@ export * from './elastoPlastic1D.js';
 export * from './shearMomentInteraction.js';
 export * from './concreteEC2.js';
 export * from './serviceabilityCheck.js';
+export * from './verticalSeismicSpectrum.js';

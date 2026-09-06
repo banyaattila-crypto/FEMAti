@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from './editable.js';
-import { scaleModelForSls, scaleModelForUls, scaleModelForUlsVariants, ULS_GAMMA_G, ULS_GAMMA_Q, ULS_PSI0 } from './combinations.js';
+import {
+  scaleModelForSeismicVariants,
+  scaleModelForSls,
+  scaleModelForUls,
+  scaleModelForUlsVariants,
+  SEISMIC_PSI2,
+  ULS_GAMMA_G,
+  ULS_GAMMA_Q,
+  ULS_PSI0,
+} from './combinations.js';
 
 beforeEach(() => resetEntityIds());
 
@@ -75,6 +84,37 @@ describe('scaleModelForUlsVariants', () => {
       expect(scaledByFullGammaQ).toHaveLength(1);
       expect(scaledByPsi0).toHaveLength(1);
     }
+  });
+});
+
+describe('scaleModelForSeismicVariants', () => {
+  it('2 elemet ad vissza: (1+svd) és (1-svd) szorzóval, G-re és ψ₂·Q-ra egyaránt', () => {
+    const model = baseModel();
+    const svd = 0.2;
+    const [up, down] = scaleModelForSeismicVariants(model, svd);
+
+    const permanentBefore = model.loads[0];
+    const permanentUp = up.loads[0];
+    const permanentDown = down.loads[0];
+    if (permanentBefore?.kind !== 'distributed' || permanentUp?.kind !== 'distributed' || permanentDown?.kind !== 'distributed') {
+      throw new Error('az első tehernek megoszló terhernek kell lennie');
+    }
+    expect(permanentUp.q1).toBeCloseTo(permanentBefore.q1 * (1 + svd), 9);
+    expect(permanentDown.q1).toBeCloseTo(permanentBefore.q1 * (1 - svd), 9);
+
+    const variableBefore = model.loads[1];
+    const variableUp = up.loads[1];
+    if (variableBefore?.kind !== 'point' || variableUp?.kind !== 'point') {
+      throw new Error('a második tehernek pontteherének kell lennie');
+    }
+    expect(variableUp.p).toBeCloseTo(variableBefore.p * SEISMIC_PSI2 * (1 + svd), 9);
+  });
+
+  it('svd=0 esetén mindkét változat megegyezik a jellemző (G+ψ₂Q) kombinációval', () => {
+    const model = baseModel();
+    const [up, down] = scaleModelForSeismicVariants(model, 0);
+    expect(up).toEqual(down);
+    expect(up.selfWeightFactor).toBe(1);
   });
 });
 

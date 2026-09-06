@@ -111,6 +111,15 @@ export interface PanelsStrings {
   readonly movingLoadCheckbox: string;
   readonly movingLoadMagnitudeLabel: (unit: string) => string;
   readonly movingLoadNote: string;
+  readonly seismicCheckbox: string;
+  readonly seismicAgLabel: (value: string) => string;
+  readonly seismicGammaILabel: (value: string) => string;
+  readonly seismicSpectrumTypeAria: string;
+  readonly seismicSpectrumType1Label: string;
+  readonly seismicSpectrumType1Title: string;
+  readonly seismicSpectrumType2Label: string;
+  readonly seismicSpectrumType2Title: string;
+  readonly seismicNote: string;
   readonly showGaussCheckbox: string;
   readonly dofCountText: (n: number) => string;
   readonly nonlinearAlwaysLayeredNote: string;
@@ -156,6 +165,15 @@ export interface PanelsStrings {
   readonly computedLoadFactorTitle: string;
   readonly notRunnablePrefix: (message: string) => string;
   readonly noComputableModel: string;
+  readonly seismicCardTitle: string;
+  readonly seismicCardIntro: string;
+  readonly seismicT1Label: string;
+  readonly seismicT1Title: string;
+  readonly seismicNoModalNote: string;
+  readonly seismicSvdLabel: string;
+  readonly seismicSvdTitle: string;
+  readonly seismicUtilLabel: string;
+  readonly seismicUtilTitle: string;
 
   // ── CrossSectionInspector ───────────────────────────────────────────
   readonly inspectorTitleNoData: string;
@@ -267,6 +285,16 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     movingLoadMagnitudeLabel: (unit) => `mozgó pontteher P [${unit}]`,
     movingLoadNote:
       'A "burkolóábra" diagram-fülön látható a lehetséges legnagyobb/legkisebb M/T minden keresztmetszetre, ahogy ez a teher végigsétál a tartón (a meglévő állandó terhekkel együtt). Jellemző (nem faktorozott) teherre — több egyidejű tengelyteher (tengelycsoport) nincs ebben a körben.',
+    seismicCheckbox: 'földrengés — függőleges komponens (EC8)',
+    seismicAgLabel: (value) => `ag/g = ${value}`,
+    seismicGammaILabel: (value) => `fontossági tényező γI = ${value}`,
+    seismicSpectrumTypeAria: 'válaszspektrum típusa',
+    seismicSpectrumType1Label: '1. típus',
+    seismicSpectrumType1Title: 'EN 1998-1 — nagyobb szeizmicitású régió (Ms ≥ 5.5)',
+    seismicSpectrumType2Label: '2. típus',
+    seismicSpectrumType2Title: 'EN 1998-1 — kisebb szeizmicitású régió (Ms < 5.5)',
+    seismicNote:
+      'CSAK a függőleges komponens (EC8 4.3.3.5.2 — nagy fesztávú/konzolos/rideg elemet alátámasztó gerendáknál előírt), nincs vízszintes/keret-hatás. A talajosztály a függőleges spektrumot nem befolyásolja (EC8 3.4. táblázat). A viselkedési tényező (qv=1.5, EC8-max) és a ψ₂ (0.3, MVP-érték) fix konstansok, nem szerkeszthetők.',
     showGaussCheckbox: 'Gauss-pontok megjelenítése',
     dofCountText: (n) => `${n} szabadságfok`,
     nonlinearAlwaysLayeredNote:
@@ -320,6 +348,17 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     computedLoadFactorTitle: "A runLoadStepper által ténylegesen elért λ — 'limit-load-reached' esetén a numerikus határteher közelítése",
     notRunnablePrefix: (message) => `A modell jelenleg nem futtatható: ${message}`,
     noComputableModel: 'Nincs számítható modell (nincsenek elemek vagy támaszok).',
+    seismicCardTitle: 'Földrengési (vertikális) ellenőrzés',
+    seismicCardIntro:
+      'EN 1998-1 4.3.3.5.2 — a FÜGGŐLEGES szeizmikus komponens, G+ψ₂Q±Ev kombinációra (ψ₂=0.3, qv=1.5). Ev a modell tényleges T₁ sajátperiódusán számolt Svd(T₁) tervezési spektrumértékből adódik — NINCS vízszintes/keret-hatás.',
+    seismicT1Label: 'T₁ (számított sajátperiódus)',
+    seismicT1Title:
+      'A modális megoldóból (ADR-0016) — CSAK a szerkezet saját tömegéből, a G+ψ₂Q teljes szeizmikus tömeg helyett (a modell nem kezel teher-eredetű tömeget) — dokumentált MVP-egyszerűsítés',
+    seismicNoModalNote: 'A modális analízis erre a modellre nem futtatható (pl. mechanizmus) — a földrengési ellenőrzés nem számítható.',
+    seismicSvdLabel: 'Svd(T₁) tervezési spektrumérték',
+    seismicSvdTitle: 'A T₁ pontban leolvasott tervezési spektrumérték (a g többszöröseként) — ez az Ev/(G+ψ₂Q) arány',
+    seismicUtilLabel: 'M-V kihasználtság (G+ψ₂Q±Ev)',
+    seismicUtilTitle: 'A kedvezőtlenebb (Ev felfelé/lefelé) változat M-V kihasználtsága — EN 1993-1-1 6.2.8',
 
     inspectorTitleNoData: 'Keresztmetszet-inspektor',
     inspectorCloseAria: 'Keresztmetszet-inspektor bezárása',
@@ -430,6 +469,16 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     movingLoadMagnitudeLabel: (unit) => `moving point load P [${unit}]`,
     movingLoadNote:
       'The "envelope" diagram tab shows the largest/smallest possible M/T at every cross-section as this load travels along the beam (together with the existing permanent loads). For a characteristic (unfactored) load — several simultaneous axle loads (an axle group) are not covered in this round.',
+    seismicCheckbox: 'seismic — vertical component (EC8)',
+    seismicAgLabel: (value) => `ag/g = ${value}`,
+    seismicGammaILabel: (value) => `importance factor γI = ${value}`,
+    seismicSpectrumTypeAria: 'response spectrum type',
+    seismicSpectrumType1Label: 'Type 1',
+    seismicSpectrumType1Title: 'EN 1998-1 — higher-seismicity region (Ms ≥ 5.5)',
+    seismicSpectrumType2Label: 'Type 2',
+    seismicSpectrumType2Title: 'EN 1998-1 — lower-seismicity region (Ms < 5.5)',
+    seismicNote:
+      'ONLY the vertical component (EC8 4.3.3.5.2 — required for large-span/cantilever beams or beams supporting brittle elements), no horizontal/frame effect. Ground type does not affect the vertical spectrum (EC8 Table 3.4). The behaviour factor (qv=1.5, the EC8 max) and ψ₂ (0.3, an MVP value) are fixed constants, not editable.',
     showGaussCheckbox: 'Show Gauss points',
     dofCountText: (n) => `${n} degree${n === 1 ? '' : 's'} of freedom`,
     nonlinearAlwaysLayeredNote:
@@ -483,6 +532,17 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     computedLoadFactorTitle: "The λ actually reached by runLoadStepper — for 'limit-load-reached', the numerical approximation of the ultimate load",
     notRunnablePrefix: (message) => `The model cannot currently be run: ${message}`,
     noComputableModel: 'No computable model (no elements or supports).',
+    seismicCardTitle: 'Seismic (vertical) check',
+    seismicCardIntro:
+      'EN 1998-1 4.3.3.5.2 — the VERTICAL seismic component, on the G+ψ₂Q±Ev combination (ψ₂=0.3, qv=1.5). Ev comes from the design spectral value Svd(T₁) at the model\'s actual T₁ natural period — there is NO horizontal/frame effect.',
+    seismicT1Label: 'T₁ (computed natural period)',
+    seismicT1Title:
+      "From the modal solver (ADR-0016) — from the structure's OWN mass only, instead of the full G+ψ₂Q seismic mass (the model does not handle load-derived mass) — a documented MVP simplification",
+    seismicNoModalNote: 'Modal analysis cannot be run for this model (e.g. a mechanism) — the seismic check cannot be computed.',
+    seismicSvdLabel: 'Svd(T₁) design spectral value',
+    seismicSvdTitle: 'The design spectral value read at T₁ (as a multiple of g) — this is the Ev/(G+ψ₂Q) ratio',
+    seismicUtilLabel: 'M-V utilization (G+ψ₂Q±Ev)',
+    seismicUtilTitle: 'The worse (Ev up/down) variant\'s M-V utilization — EN 1993-1-1 6.2.8',
 
     inspectorTitleNoData: 'Cross-section inspector',
     inspectorCloseAria: 'Close cross-section inspector',

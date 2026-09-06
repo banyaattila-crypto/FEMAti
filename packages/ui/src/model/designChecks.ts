@@ -132,3 +132,76 @@ export function computeUtilizationsEnveloped(
     ulsGoverningIndex,
   };
 }
+
+export interface SeismicUtilization {
+  /** M-V interakció (EN 1993-1-1 6.2.8), a G+ψ₂Q±Ev kombinációra — null, ha az anyagnak nincs folyáshatára. */
+  readonly mv: number | null;
+  /** Vasbeton ULS hajlítási teherbírás — null, ha nincs bekapcsolt vasalás vagy nem téglalap szelvény. */
+  readonly rc: number | null;
+  readonly rcMu: number | null;
+  /** A legnagyobb ALKALMAZHATÓ kihasználtság a fentiek közül — null csak akkor, ha egyik sem alkalmazható. */
+  readonly governing: number | null;
+  /** Melyik változat (0 = Ev felfelé, 1 = Ev lefelé) adta a mértékadó értéket. */
+  readonly governingIndex: number;
+}
+
+/**
+ * EN 1998-1 4.3.3.5.2 — a FÜGGŐLEGES földrengési komponens M-V/vasbeton ULS
+ * ellenőrzése, a `combinations.ts` `scaleModelForSeismicVariants` KÉT
+ * változatára (Ev felfelé/lefelé) envelope-olva. SZÁNDÉKOSAN NINCS
+ * lehajlás-ellenőrzés itt — az EC8 4.3.3.5.2 egy ULS-jellegű (teherbírási),
+ * nem SLS-ellenőrzés, ld. `docs/ADR/0023-fuggoleges-foldrenges-kombinacio.md`.
+ */
+export function computeSeismicUtilization(model: EditableModel, seismicResults: readonly LinearResult[]): SeismicUtilization {
+  const isComposite = isCompositeActive(model);
+  const materialEntry = findMaterial(model.materialId);
+  const sectionEntry = findSection(model.sectionId);
+
+  const perCombo = seismicResults.map((result) => {
+    const interaction =
+      !isComposite && result.props.mp !== null && result.props.vpl !== null
+        ? shearMomentInteraction(result.extremes.m.value, result.extremes.t.value, result.props.mp, result.props.vpl)
+        : null;
+    const mv = interaction?.utilization ?? null;
+
+    const rcCapacity =
+      !isComposite && model.rebar.enabled && sectionEntry.kind === 'rect' && materialEntry.fck !== undefined
+        ? rcMomentCapacity(
+            { b: sectionEntry.b / 1000, h: sectionEntry.h / 1000 },
+            materialEntry.fck * 1e4,
+            result.extremes.m.value >= 0 ? model.rebar.asBottom : model.rebar.asTop,
+            result.extremes.m.value >= 0 ? model.rebar.asTop : model.rebar.asBottom,
+            model.rebar.cover,
+          )
+        : null;
+    const rcMu = rcCapacity?.mu ?? null;
+    const rc = rcCapacity ? Math.abs(result.extremes.m.value) / rcCapacity.mu : null;
+
+    const applicable = [mv, rc].filter((v): v is number => v !== null && Number.isFinite(v));
+    const governing = applicable.length > 0 ? Math.max(...applicable) : null;
+    return { mv, rc, rcMu, governing };
+  });
+
+  let governingIndex = 0;
+  let best = -Infinity;
+  perCombo.forEach((u, i) => {
+    const score = u.governing ?? -Infinity;
+    if (score > best) {
+      best = score;
+      governingIndex = i;
+    }
+  });
+
+  const worstOf = (get: (u: (typeof perCombo)[number]) => number | null): number | null => {
+    const values = perCombo.map(get).filter((v): v is number => v !== null && Number.isFinite(v));
+    return values.length > 0 ? Math.max(...values) : null;
+  };
+
+  return {
+    mv: worstOf((u) => u.mv),
+    rc: worstOf((u) => u.rc),
+    rcMu: worstOf((u) => u.rcMu),
+    governing: worstOf((u) => u.governing),
+    governingIndex,
+  };
+}

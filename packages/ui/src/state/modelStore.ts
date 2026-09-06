@@ -18,6 +18,7 @@ import {
   type IntegrationScheme,
   type LoadCategory,
   type MovingLoadState,
+  type SeismicState,
   type RebarState,
   type SupportType,
   type ThermalLoadState,
@@ -49,6 +50,7 @@ export interface ModelState {
   readonly setRebar: (v: RebarState) => void;
   readonly setComposite: (v: CompositeState) => void;
   readonly setMovingLoad: (v: MovingLoadState) => void;
+  readonly setSeismic: (v: SeismicState) => void;
   readonly setIntegration: (v: IntegrationScheme) => void;
 
   readonly select: (selection: Selection | null) => void;
@@ -185,6 +187,7 @@ export const useModelStore = create<ModelState>()((set, get) => {
     setRebar: (v) => edit((d) => void (d.rebar = v)),
     setComposite: (v) => edit((d) => void (d.composite = v)),
     setMovingLoad: (v) => edit((d) => void (d.movingLoad = v)),
+    setSeismic: (v) => edit((d) => void (d.seismic = v)),
     setIntegration: (v) => edit((d) => void (d.integration = v)),
 
     select: (selection) => set({ selection }),

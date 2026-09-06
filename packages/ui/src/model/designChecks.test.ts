@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from './editable.js';
 import { solveEditableModel } from './compile.js';
-import { scaleModelForSls, scaleModelForUls, scaleModelForUlsVariants, ULS_GAMMA_Q } from './combinations.js';
-import { computeUtilizations, computeUtilizationsEnveloped } from './designChecks.js';
+import { scaleModelForSeismicVariants, scaleModelForSls, scaleModelForUls, scaleModelForUlsVariants, ULS_GAMMA_Q } from './combinations.js';
+import { computeSeismicUtilization, computeUtilizations, computeUtilizationsEnveloped } from './designChecks.js';
 
 beforeEach(() => resetEntityIds());
 
@@ -109,5 +109,60 @@ describe('computeUtilizationsEnveloped', () => {
     for (const single of perVariant) {
       expect(enveloped.governing).not.toBeLessThan(single.governing as number);
     }
+  });
+});
+
+describe('computeSeismicUtilization', () => {
+  it('acél gerendán számítható M-V kihasználtságot ad, nincs lehajlás-mező', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = presetToEditable(preset, 'simple', 6, 8, 'IPE300', 'S235', false, 'selective');
+
+    const variants = scaleModelForSeismicVariants(editable, 0.1);
+    expect(variants).toHaveLength(2);
+    const results = variants.map((v) => {
+      const r = solveEditableModel(v).result;
+      if (r === null) throw new Error('mindkét változatnak meg kellett volna oldódnia');
+      return r;
+    });
+
+    const util = computeSeismicUtilization(editable, results);
+    expect(util.mv).not.toBeNull();
+    expect(util.governing).toBe(util.mv);
+    expect(util.governingIndex === 0 || util.governingIndex === 1).toBe(true);
+    expect('deflection' in util).toBe(false);
+  });
+
+  it('svd=0-nál a két változat azonos eredményt ad, a governingIndex az első (0)', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = presetToEditable(preset, 'simple', 6, 8, 'IPE300', 'S235', false, 'selective');
+
+    const variants = scaleModelForSeismicVariants(editable, 0);
+    const results = variants.map((v) => {
+      const r = solveEditableModel(v).result;
+      if (r === null) throw new Error('mindkét változatnak meg kellett volna oldódnia');
+      return r;
+    });
+
+    const util = computeSeismicUtilization(editable, results);
+    expect(util.governingIndex).toBe(0);
+  });
+
+  it('nagyobb svd nagyobb (vagy egyenlő) kihasználtságot ad, mint svd=0', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = presetToEditable(preset, 'simple', 6, 8, 'IPE300', 'S235', false, 'selective');
+
+    const solveFor = (svd: number) => {
+      const results = scaleModelForSeismicVariants(editable, svd).map((v) => {
+        const r = solveEditableModel(v).result;
+        if (r === null) throw new Error('meg kellett volna oldódnia');
+        return r;
+      });
+      return computeSeismicUtilization(editable, results).governing as number;
+    };
+
+    expect(solveFor(0.3)).toBeGreaterThan(solveFor(0));
   });
 });

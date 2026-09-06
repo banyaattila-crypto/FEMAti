@@ -715,3 +715,48 @@ vpl` mező helyes számítása/`null`-ja a kimenetben.
 elérhető, de a UI-ban MÉG NINCS megjelenítve, és a nemlineáris megoldó
 folyási feltétele/tangens merevsége VÁLTOZATLANUL csak M-alapú (ld.
 ADR-0018 "MI MARADT NYITVA" szakasza).
+
+---
+
+## 20. Földrengés — EN 1998-1 FÜGGŐLEGES válaszspektrum — `material/verticalSeismicSpectrum.ts`
+
+**NEM a diplomaterv része** — ADR-0023, ugyanabba a "profi App" irányba
+mutató bővítés-sorozatba tartozik, mint az ADR-0018/0019/0022. CSAK a
+FÜGGŐLEGES szeizmikus komponens (EN 1998-1 4.3.3.5.2) — a hatókör-döntés és
+az MVP-egyszerűsítések teljes listája: `docs/ADR/
+0023-fuggoleges-foldrenges-kombinacio.md`.
+
+| Képlet | Forrás | Kód |
+|---|---|---|
+| `Sve(T) = avg·(1+(T/TB)·(η·3.0−1))`, 0≤T≤TB | EN 1998-1 (a képletet ld. lent) | `verticalElasticSpectrum()` |
+| `Sve(T) = avg·η·3.0`, TB≤T≤TC | ua. | ua. |
+| `Sve(T) = avg·η·3.0·(TC/T)`, TC≤T≤TD | ua. | ua. |
+| `Sve(T) = avg·η·3.0·(TC·TD/T²)`, TD≤T≤4s | ua. | ua. |
+| `η = max(√(10/(5+ξ)), 0.55)` | EN 1998-1 (3.6) | `verticalDampingCorrection()` |
+| `avg/ag`: Típus 1 = 0.90, Típus 2 = 0.45; `TB=0.05s, TC=0.15s, TD=1.0s` (mindkét típus) | EN 1998-1 3.4. táblázat | `VERTICAL_SPECTRUM_TABLE` |
+| `Svd(T) = Sve(T)/qv`, `qv≤1.5` | EN 1998-1 4.3.3.5.2(1) | `verticalDesignSpectrum()` |
+
+**Forrás — ŐSZINTÉN:** az eredeti EN 1998-1:2004 szöveg nem volt közvetlenül
+elérhető — a fenti képleteket és táblázatértékeket Carvalho, E. (2011),
+["EUROCODE 8 — Background and Applications"](https://eurocodes.jrc.ec.europa.eu/sites/default/files/2022-06/S2_EC8-Lisbon_E%20CARVALHO.pdf)
+(JRC/Lisbon, 2011.02.10-11, hivatalos EU JRC oktatási anyag) 23-24. diái
+alapján vettük át, ugyanazzal a módszerrel, mint a Cowper I-szelvény
+formulánál (ld. 10.1 pont) — elsődleges forrás hiányában egy hiteles,
+hivatalos másodlagos forrás, explicit megjelölve.
+
+**A talajosztály (S) a függőleges spektrumot NEM befolyásolja** — EC8
+explicit állítása (Carvalho 2011, 24. dia) —, ezért a UI-ban nincs
+talajosztály-bemenet a földrengési panelen.
+
+**A tervezési kombináció** (`ui/model/combinations.ts`
+`scaleModelForSeismicVariants`): G+ψ₂Q±Ev, ahol Ev=Svd(T₁)·(G+ψ₂Q) — mivel
+Ev arányos (G+ψ₂Q)-val, ez egyetlen (1±Svd(T₁)) közös szorzóval fejezhető
+ki. T₁ a MEGLÉVŐ modális megoldóból (16. pont, ADR-0016) — CSAK a
+szerkezet saját tömegéből, nem a teljes G+ψ₂Q szeizmikus tömegből (ld. az
+ADR "Hatókör-korlátok" szakaszát).
+
+**Teszt:** `verticalSeismicSpectrum.test.ts` (13 teszt) — a 3.4. táblázat
+értékei, η határesetek (ξ=5%→η=1, ξ=0%→η=√2, nagy ξ→0.55-ös alsó korlát),
+folytonosság a TB/TC/TD töréspontokon, monoton csökkenés a leszálló ágban,
+qv-osztás. `combinations.test.ts`/`designChecks.test.ts`: a ± változatok
+skálázása és az envelope.

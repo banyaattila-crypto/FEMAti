@@ -461,6 +461,7 @@ export function LeftPanel(): JSX.Element {
   const setThermalLoad = useModelStore((state) => state.setThermalLoad);
   const setAxialForce = useModelStore((state) => state.setAxialForce);
   const setMovingLoad = useModelStore((state) => state.setMovingLoad);
+  const setSeismic = useModelStore((state) => state.setSeismic);
   const setRebar = useModelStore((state) => state.setRebar);
   const setComposite = useModelStore((state) => state.setComposite);
   const setSectionId = useModelStore((state) => state.setSectionId);
@@ -810,6 +811,43 @@ export function LeftPanel(): JSX.Element {
                   editable
                 />
                 <NoteBox tone="info">{t.movingLoadNote}</NoteBox>
+              </>
+            ) : null}
+            <Checkbox
+              label={t.seismicCheckbox}
+              checked={model.seismic.enabled}
+              onChange={(v) => setSeismic({ ...model.seismic, enabled: v })}
+            />
+            {model.seismic.enabled ? (
+              <>
+                <Slider
+                  label={t.seismicAgLabel(model.seismic.agOverG.toFixed(2))}
+                  min={0.02}
+                  max={0.4}
+                  step={0.01}
+                  value={model.seismic.agOverG}
+                  onChange={(v) => setSeismic({ ...model.seismic, agOverG: v })}
+                  display={`${model.seismic.agOverG.toFixed(2)}·g`}
+                />
+                <Slider
+                  label={t.seismicGammaILabel(model.seismic.gammaI.toFixed(1))}
+                  min={0.8}
+                  max={1.5}
+                  step={0.1}
+                  value={model.seismic.gammaI}
+                  onChange={(v) => setSeismic({ ...model.seismic, gammaI: v })}
+                  display={model.seismic.gammaI.toFixed(1)}
+                />
+                <SegmentedControl
+                  ariaLabel={t.seismicSpectrumTypeAria}
+                  value={String(model.seismic.spectrumType)}
+                  onChange={(v) => setSeismic({ ...model.seismic, spectrumType: v === '2' ? 2 : 1 })}
+                  options={[
+                    { value: '1', label: t.seismicSpectrumType1Label, title: t.seismicSpectrumType1Title },
+                    { value: '2', label: t.seismicSpectrumType2Label, title: t.seismicSpectrumType2Title },
+                  ]}
+                />
+                <NoteBox tone="info">{t.seismicNote}</NoteBox>
               </>
             ) : null}
             <Checkbox label={t.showGaussCheckbox} checked={s.showGaussPoints} onChange={s.setShowGaussPoints} />

@@ -36,6 +36,7 @@ import {
   DEFAULT_COMPOSITE,
   DEFAULT_MOVING_LOAD,
   DEFAULT_REBAR,
+  DEFAULT_SEISMIC,
   DEFAULT_THERMAL_LOAD,
   type EditableFoundation,
   type EditableLoad,
@@ -407,6 +408,30 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
           };
         })();
 
+  // 2026-09-06: ÚJ mező (EN 1998-1 függőleges földrengési komponens) —
+  // ugyanaz a visszamenőleges kompatibilitási minta, mint a `rebar`/
+  // `composite`/`movingLoad`-nál.
+  const seismicRaw = model.seismic;
+  const seismic =
+    seismicRaw === undefined
+      ? DEFAULT_SEISMIC
+      : (() => {
+          const s = record(seismicRaw, 'model.seismic');
+          const spectrumType = num(s, 'spectrumType', 'model.seismic');
+          assert(spectrumType === 1 || spectrumType === 2, {
+            code: 'invalid-enum-value',
+            where: 'model.seismic',
+            key: 'spectrumType',
+            value: String(spectrumType),
+          });
+          return {
+            enabled: bool(s, 'enabled', 'model.seismic'),
+            agOverG: num(s, 'agOverG', 'model.seismic'),
+            gammaI: num(s, 'gammaI', 'model.seismic'),
+            spectrumType: spectrumType as 1 | 2,
+          };
+        })();
+
   return {
     model: {
       presetId: str(model, 'presetId', 'model'),
@@ -423,6 +448,7 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
       rebar,
       composite,
       movingLoad,
+      seismic,
       integration: integration as IntegrationScheme,
       supports: array(model.supports, 'model.supports').map(parseSupport),
       loads: array(model.loads, 'model.loads').map(parseLoad),

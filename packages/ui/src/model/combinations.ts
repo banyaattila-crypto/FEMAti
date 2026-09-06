@@ -113,6 +113,38 @@ export function ulsVariantLeadingLoadIds(model: EditableModel): readonly (string
 }
 
 /**
+ * EN 1998-1 6.4.3.4 / EN 1990 6.12a-b — földrengési tervezési szituáció
+ * kombinációs (ψ₂, kvázi-állandó) tényezője. MVP: EGY közös érték minden
+ * `'variable'` teherre (EN 1990 A1.1 melléklet, A/B kategória — lakó-/
+ * irodaépület hasznos terhe, a leggyakoribb eset), ugyanaz az egyszerűsítés,
+ * mint `ULS_PSI0`-nál.
+ */
+export const SEISMIC_PSI2 = 0.3;
+
+/**
+ * Földrengés — EN 1998-1 FÜGGŐLEGES komponense (2026-09-06, ld.
+ * `docs/ADR/0023-fuggoleges-foldrenges-kombinacio.md`): a teljes függőleges
+ * tervezési hatás G + ψ₂·Q ± Ev, ahol Ev = Svd(T₁)·(G+ψ₂·Q) — mivel Ev
+ * ARÁNYOS (G+ψ₂·Q)-val, ez EGYSZERŰEN egy (1±Svd(T₁)) közös szorzóval
+ * fejezhető ki G-re ÉS ψ₂·Q-ra egyaránt. A hívónak (`RightPanel.tsx`) kell
+ * kiszámítania Svd(T₁)-et (`@femati/fem-core` `verticalDesignSpectrum` +
+ * a modell tényleges első sajátperiódusa a modális megoldóból,
+ * `model/compile.ts` `solveModalModel`).
+ *
+ * Két változatot ad vissza (Ev felfelé/lefelé hat) — a hívónak mindkettőt
+ * le kell futtatnia és a legkedvezőtlenebbet kell vennie (ugyanaz az
+ * envelope-minta, mint `scaleModelForUlsVariants`-nál).
+ */
+export function scaleModelForSeismicVariants(model: EditableModel, svd: number): readonly EditableModel[] {
+  const scale = (verticalFactor: number): EditableModel => ({
+    ...model,
+    loads: model.loads.map((l) => scaleLoad(l, verticalFactor, SEISMIC_PSI2 * verticalFactor)),
+    selfWeightFactor: verticalFactor,
+  });
+  return [scale(1 + svd), scale(1 - svd)];
+}
+
+/**
  * SLS = 1.0·G + 1.0·Q — jellemző kombináció. A γ=1 miatt ez a jellemző
  * modellel EGYENÉRTÉKŰ (identitás), de külön függvényként exportálva, hogy
  * a hívó oldal (`RightPanel.tsx`, `optimize.ts`) egységesen "kombinációként"
