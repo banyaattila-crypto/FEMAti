@@ -2486,6 +2486,104 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     panel, C25/30 beton EC2-panel teljes mezőkészlete). `pnpm check`
     (mind a 4 csomag) teljes zöld.
 
+91. **Teherkombináció — EN 1990 6.10 ψ₀-tényező 2+ egyidejű változó
+    teherre**: korábbi gyakorlati-használhatósági áttekintés a legnagyobb
+    valós hiányosságként azonosította, hogy a "Határteher-ellenőrzés" kártya
+    (`model/combinations.ts` `scaleModelForUls`) minden `'variable'` terhet
+    EGYÜTT, egyetlen közös γQ=1,5-tel skálázott — ez 2+ egyidejű változó
+    teher esetén az EN 1990 6.10-nél szigorúbb (biztonság oldali, de
+    túltervező) eredményt adott. ÚJ `scaleModelForUlsVariants`: minden
+    `'variable'` terhet sorban "vezetőnek" (teljes γQ) tekint, a többit
+    ψ₀=0,7-tel csökkentett γQ-val (MVP: egy közös ψ₀-érték, nincs
+    teherfajta szerinti A1.1-tábla) — 0/1 db változó teherre visszaadja a
+    régi, egykombinációs eredményt. A hívónak (`RightPanel.tsx`,
+    `optimize.ts`) mindegyik változatot le kell futtatnia és a
+    legkedvezőtlenebbet kell vennie: ÚJ `designChecks.ts`
+    `computeUtilizationsEnveloped` mezőnként (M-V, vasbeton ULS)
+    envelope-ol a változatok között, és megjegyzi, melyik változat adta a
+    mértékadó értéket (`ulsGoverningIndex`). A Határteher-kártyán ÚJ "M max
+    (mértékadó ULS-kombináció)" és "vezető teher (ULS)" sor jelzi, melyik
+    teher volt a vezető — ehhez a teher-címke logika (`categoryTag`/
+    `rowText`) kiemelve a `panels/LeftPanel.tsx`-ből egy megosztott
+    `model/loadLabel.ts` `loadRowLabel()`-be, hogy a "Terhek" lista és a
+    Határteher-kártya ne csúszhasson szét egymástól. Böngészőben
+    ellenőrizve (kétnyílású tartó, q=30 kN/m + új P=20 kN pontteher, mindkét
+    'variable'): jellemző M=143,03 kNm → mértékadó ULS M=196,84 kNm, vezető
+    teher a megoszló, M-V kihasználtság 171,05% ("túllépi a határt") —
+    konzisztens eredmény, konzolhiba nélkül. Új tesztek
+    (`combinations.test.ts`, `designChecks.test.ts`): a variánsok száma/
+    skálázása, és hogy az envelope ≥ bármelyik önmagában futtatott
+    változat. `pnpm --filter @femati/ui exec tsc --noEmit` és a teljes UI
+    tesztsuite (112 teszt) zöld.
+
+    **ŐSZINTE KORLÁTOK, tudatosan NEM ebben a lépésben:** teherfajta
+    szerinti ψ₀-tábla (hasznos/hó/szél külön értékkel — EN 1990 A1.1
+    melléklet), a teljes 6.10a/b pár (gazdaságosabb, de bonyolultabb
+    envelope), kedvező/kedvezőtlen G-alternatíva (pl. 1,0G felhajtás-
+    vizsgálathoz), a hőteher (`model.thermalLoad`) kategóriába sorolása.
+
+92. **Nyírási alaktényező — Cowper (1966) SAJÁT I-szelvény formulája**:
+    egy korábbi, három pontos "nyitott, tudatosan el nem döntött kérdés"
+    listából (ADR-0018 M-V csatolt képlékenység, FCQ alternatív elem, ez a
+    tétel) a legkisebb kockázatú/legkisebb munka, ezért ez lett a
+    következő. Eddig `recommendedShearFactor(shape, nu)` az I-szelvényre
+    (és a vele geometriailag azonosított U-szelvényre, ld. `ui/model/
+    compile.ts` `toShape`) a "nyírást gyakorlatilag a gerinc veszi fel"
+    közelítést (Aweb/A) adta — ν-től függetlenül, `docs/THEORY.md` 10.1
+    korábban ezt explicit "KÉSŐBBI, külön lépés"-ként dokumentálta. ÚJ: a
+    valódi Cowper-formula, `κ = 10(1+ν)(1+3m)² / [(12+72m+150m²+90m³) +
+    ν(11+66m+135m²+90m³) + 30n²(m+m²) + 5νn²(8m+9m²)]`, ahol
+    `m = 2·b·tf/(h·tw)`, `n = b/h` (a TELJES szelvénymagassággal, nem az
+    övközéppontok közti effektív magassággal).
+
+    Forrásolás — ŐSZINTÉN: az eredeti Cowper (1966), J. Appl. Mech. 33(2),
+    335–340 cikk nem volt közvetlenül elérhető; a képlet szövegét Iyer, H.
+    (2005), "The Effects of Shear Deformation in Rectangular and Wide
+    Flange Sections" (MS Thesis, Virginia Tech, eq. 2.18) alapján vettük
+    át — ez a szakdolgozat kifejezetten a Cowper-formula FEA-validálásával
+    foglalkozik, és explicit megállapítja, hogy a TELJES magassággal (nem
+    az eredeti cikk szerinti, övközéppontok közti effektív magassággal)
+    jobb az egyezés (ezt követi a fenti implementáció). A korábban a
+    projektben már használt (rektangulár, kör, cső) Cowper-képletek forrása
+    (Ahmed & Rifai 2021) NEM tartalmazta az I-szelvény formulát — ezt
+    külön kutatás (WebSearch + két PDF letöltése és `pdftotext`/PDF-olvasás
+    útján kézzel ellenőrzött szöveg) igényelte.
+
+    Önellenőrzés (a kód nem hivatkozik rá futásidőben, csak dokumentálja és
+    tesztként is szerepel): m→0 (tf→0, tisztán "gerinc" téglalap-
+    keresztmetszet) határesetben a fenti I-szelvény képlet PONTOSAN a már
+    validált téglalap-formulára (10(1+ν)/(12+11ν)) egyszerűsödik — ez
+    erős belső konzisztencia-jel arra, hogy a képlet átvétele helyes.
+    Kézzel számolt referenciaérték IPE 300-ra (h=300, b=150, tw=7.1,
+    tf=10.7 mm, ν=0.3): κ=0,3857 — az új Cowper-érték és a régi "gerinc
+    veszi fel" közelítés (κ≈0,41) kb. 6%-ban tér el, ami a szakirodalom
+    szerinti várt nagyságrend. Frissített/új tesztek (`section.test.ts`):
+    a fenti IPE 300 referenciaérték, az m→0 önellenőrzés, és a meglévő
+    (0,1] tartomány-teszt (más shapek/ν-k) továbbra is zöld. `docs/
+    THEORY.md` 10.1 és a `properties.ts` fejléce frissítve a forrással és
+    a döntéssel együtt. Az RHS és T-szelvény szándékosan VÁLTOZATLAN
+    maradt (nincs rájuk levezetett/validált Cowper-formula ebben a
+    lépésben). `pnpm --filter @femati/fem-core exec vitest run` (512
+    teszt) és `pnpm typecheck` (mind a 4 csomag) zöld.
+
+93. **ÚJ, kétnyelvű "Gyors kezdés" dokumentum, képernyőképekkel**: a
+    meglévő dokumentáció (THEORY/VALIDATION/ADR-ek) fejlesztői/mérnöki
+    hitelesség-célú, NEM feladat-orientált "hogyan használjam" útmutató —
+    ezt a rést tölti ki `docs/QUICKSTART.hu.md` (elsődleges) és
+    `docs/QUICKSTART.md` (angol fordítás), a `README.md`/`README.hu.md`
+    már bevált nyelv-pár mintáját követve. SZÁNDÉKOSAN rövid (nem teljes
+    referencia): 5 lépés — munkaasztal áttekintése → teher hozzáadása →
+    eredmény-értelmezés (jellemző vs. ULS/SLS Határteher-ellenőrzés) →
+    szelvény-optimalizálás → hova nézzek tovább (nemlineáris futtatás,
+    levezetés-export, Elméletek/Súgó, VALIDATION-SCOPE). 4 db valódi,
+    élesben futó alkalmazásból készült képernyőkép (`docs/img/
+    quickstart-*.jpg`, böngésző-automatizálással, kétnyílású tartó, IPE
+    300, q=30 kN/m + P=20 kN pontteher) — nem makett/vázlat, a képeken
+    látható számok (pl. "Javaslat: HEA 200, kihasználtság 82%") a
+    ténylegesen lefutott modellből származnak. Belinkelve mindkét
+    README "Dokumentáció" táblázatába, első helyen. `pnpm lint` (eslint +
+    design-token + halott CSS ellenőrzés) tiszta.
+
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
 kicsi, egymásra épülő felhasználói kérés sorozata volt.
