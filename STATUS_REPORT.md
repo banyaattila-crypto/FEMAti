@@ -2610,6 +2610,50 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     `archify` `meta.locale` csak `en`/`zh-CN`-t támogat. Belinkelve
     mindkét README-be, a Monorepo-táblázat után.
 
+95. **Földrengés — EN 1998-1 FÜGGŐLEGES komponens** (ADR-0023): a
+    felhasználó kérdésére ("érdemes-e a földrengési kombinációval
+    foglalkozni, vagy parasztvakítás lenne") a válasz — egy TELJES
+    kombináció (AEd nélkül) valóban tartalom nélküli lenne egyetlen 1D
+    gerendán, DE az EN 1998-1 4.3.3.5.2 szerinti FÜGGŐLEGES komponens (nagy
+    fesztávú/konzolos/rideg elemet alátámasztó gerendáknál előírt) valódi,
+    önmagában értelmezhető tartalom, és a MEGLÉVŐ modális megoldóra
+    (ADR-0016) építhető: a szerkezet TÉNYLEGES T₁ sajátperiódusán olvassuk
+    le a tervezési spektrumértéket Svd(T₁)-et, nem egy becsült periódust —
+    ez köti össze a modális analízist a tervezési kombinációval, és ez adja
+    a felhasználó által kért "látványos folyamat" elemet is (a
+    spektrumgörbe + a T₁ pont vizuálisan megjelenik).
+
+    ÚJ `fem-core` `material/verticalSeismicSpectrum.ts`:
+    `verticalElasticSpectrum`/`verticalDesignSpectrum` (EN 1998-1 4 ágas
+    képlete, 3.4. táblázat, η csillapítási korrekció) — forrás: Carvalho
+    (2011, JRC/Lisbon oktatási anyag), mert az eredeti EN 1998-1 szöveg nem
+    volt közvetlenül elérhető (ugyanaz a módszer, mint a Cowper-formulánál,
+    91. pont). ÚJ `ui/model/combinations.ts` `scaleModelForSeismicVariants`
+    (G+ψ₂Q±Ev, ψ₂=0.3 MVP-konstans, két változat envelope-ja) és
+    `designChecks.ts` `computeSeismicUtilization` (M-V kihasználtság, NINCS
+    lehajlás-mező — az EC8 4.3.3.5.2 ULS-jellegű, nem SLS-ellenőrzés). ÚJ
+    `components/SeismicSpectrumChart.tsx` — plain-SVG spektrumgörbe a T₁
+    ponttal megjelölve, ugyanaz a rajzoló-stílus, mint
+    `SectionShapeDiagram.tsx`. ÚJ "Földrengés — függőleges komponens (EC8)"
+    checkbox + ag/g és γI csúszka + spektrum-típus (1/2) váltó a bal
+    panelen (`LeftPanel.tsx`, a "Megoldó" kártyában), és ÚJ "Földrengési
+    (vertikális) ellenőrzés" kártya a jobb panelen.
+
+    **ŐSZINTE KORLÁTOK (ld. ADR-0023 részletesen):** nincs vízszintes/
+    keret-hatás; T₁ csak a szerkezet SAJÁT tömegéből (nem a G+ψ₂Q teljes
+    szeizmikus tömegből — a meglévő tömegmátrix nem kezel teher-eredetű
+    tömeget); nincs talajosztály-bemenet (EC8 szerint ez a függőleges
+    spektrumot nem befolyásolja); qv=1.5 és ψ₂=0.3 fix konstansok.
+
+    Böngészőben ellenőrizve (kétnyílású tartó, IPE 300): T₁=0.036s,
+    Svd(T₁)=0.221g, M-V kihasználtság 32.06% ("megfelel a
+    határértéknek") — a spektrumgörbe és a T₁-jelölő helyesen jelenik meg,
+    konzolhiba nélkül. Új tesztek: `verticalSeismicSpectrum.test.ts` (13
+    teszt, fem-core), `combinations.test.ts`/`designChecks.test.ts`
+    kiegészítve (ui). `pnpm --filter @femati/fem-core exec vitest run`,
+    `pnpm --filter @femati/ui exec vitest run` (117 teszt) és `pnpm lint`
+    (mind a 4 csomag) zöld. `docs/THEORY.md` 20. pont.
+
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
 kicsi, egymásra épülő felhasználói kérés sorozata volt.
