@@ -2654,6 +2654,98 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     `pnpm --filter @femati/ui exec vitest run` (117 teszt) és `pnpm lint`
     (mind a 4 csomag) zöld. `docs/THEORY.md` 20. pont.
 
+96. **Katalógus-adattartalom PRÓZÁJÁNAK fordítása** (a `.source`/`.note`
+    mezők, `UNVERIFIED_WARNING`): a felhasználó explicit visszajelzése
+    ("amikor egy külföldi megnézi a szelvényeket vagy anyagokat, az ott
+    található leírásokat, megjegyzéseket nem érzik majd") nyomán a korábbi
+    döntés ("a `fem-db` katalógus-adattartalom NEM tartozik ide", ld.
+    memória: `project-femati-i18n-progress`) pontosítva: a `name` mező
+    (nemzetközi szabványkód, pl. "IPE 300") VÁLTOZATLAN marad, DE a
+    `.source`/`.note` mezők körülöttük lévő MAGYAR PRÓZÁJA EN nézetben
+    mostantól fordítva jelenik meg. KULCS FELISMERÉS, ami a feladatot
+    ténylegesen kicsivé tette: 125 rekord, de csak 28 EGYEDI
+    `source`-szöveg és 14 EGYEDI `note`-szöveg (sok rekord osztozik
+    ugyanazon a mondaton) — tehát NEM "125 rekord fordítása", hanem "~42
+    mondat fordítása".
+
+    ÚJ `i18n/database.ts` `SOURCE_EN`/`NOTE_EN` lookup-táblák (magyar
+    szöveg kulcs → angol érték) és `catalogText()` helper — hiányzó
+    fordításnál az EREDETI magyar szöveget adja vissza, sosem törik el
+    (egy jövőbeli új katalógus-bejegyzés is biztonságosan viselkedik). A
+    `UNVERIFIED_WARNING` (a diplomaterv szó szerinti idézete, 42. oldal)
+    fordítása a már bevált `quoteNote`-mintát követi (ld.
+    `i18n/historical.ts`, 5c. fázis) — EN nézetben egy külön jegyzet jelzi,
+    hogy a magyar szöveg marad hiteles forrás. `catalog/DatabaseView.tsx`
+    ÉS `panels/LeftPanel.tsx` (bal paneli szelvény/anyag-előnézet) egyaránt
+    ezt a mechanizmust használja.
+
+    ÚJ teljesség-teszt (`i18n/database.test.ts`, 3 teszt): minden
+    JELENLEG használt egyedi `source`/`note` szöveghez van fordítás, a
+    3 puszta szabványkód kivétel (`CODE_ONLY_SOURCES`, pl. "MSZ EN
+    10025-2") ténylegesen előfordul (nincs elavult bejegyzés a
+    kivétellistán). Böngészőben ellenőrizve EN nézetben (UPN 80 — "Source:
+    DIN 1026-1 nominal dimensions... DO NOT USE FOR ACTUAL DESIGN BEFORE
+    VERIFICATION" + a figyelmeztetés + quoteNote; 1.4301 rozsdamentes
+    acél — a hosszú `note` is helyesen fordítva), konzolhiba nélkül.
+    `pnpm --filter @femati/ui exec vitest run` (120 teszt) és `pnpm lint`
+    zöld.
+
+97. **Katalógus-NÉV szórész-fordítása** (`NAME_PHRASE_EN`, a 96. pont
+    folytatása): a felhasználó direkt rákérdezett, hogy a `Kör`,
+    `Körgyűrű`, `U-szelvény`, `szerkezeti acél`, `nagyszilárdságú acél`
+    stb. szándékosan maradtak-e magyarul a `.name` mezőben. Kiderült: NEM
+    volt szándékos döntés, hanem egy korábbi, hibás általánosítás
+    ("a `name` csak nemzetközi szabványkód") — a valóságban a `.name`
+    GYAKRAN kever magyar szót és szabványkódot (pl. "Kör ⌀150", "S235
+    szerkezeti acél", "C25/30 beton (csak rugalmas)"). Felhasználói
+    válasz: "Igen, ha már valami jót akarunk készíteni, akkor azt
+    csináljuk jól!" — explicit instrukció az alaposságra.
+
+    ÚJ `i18n/database.ts` `NAME_PHRASE_EN: ReadonlyArray<[hu,en]>` —
+    TÖMB, nem `Record`, mert a SORREND számít (pl. "Körgyűrű" előbb kell
+    cserélni, mint "Kör", mert "Kör" a "Körgyűrű" szórésze — fordítva
+    hibás "Circlegyűrű" eredményt adna). `catalogName(name, lang)` egy
+    `reduce`-láncban alkalmazza a cserelistát, `lang==='hu'`-nál
+    változatlanul hagyva a nevet.
+
+    Bevezetve MINDEN UI-helyen, ahol `section.name`/`material.name`
+    megjelenik: `catalog/DatabaseView.tsx` (részlet-fejléc + nav-lista +
+    kereső-szűrő), `panels/LeftPanel.tsx` (fastruktúra, szelvény/anyag-
+    előnézet, forrás-jegyzet, optimalizálási javaslat), `canvas/
+    ModelCanvas.tsx` (gerenda-felirat), `derivation/DerivationView.tsx` +
+    `derivationExportData.ts` (képernyő ÉS Word-export), `report/
+    ReportView.tsx` (jegyzőkönyv-táblázat), `data/catalogIcons.tsx` (a
+    Szelvény/Anyag combobox a Toolbar-on — ez a legfeltűnőbb hely).
+
+    Önként bővítve (ugyanazt a célt szolgálja): a `DatabaseView.tsx`
+    `filterGroups` kereső-szűrője EN nézetben MOST MÁR mind az eredeti
+    magyar, mind az angolra fordított név ellen szűr — egy angol
+    anyanyelvű felhasználó "circle" beírására megtalálja a "Kör ⌀150"
+    rekordot.
+
+    Menet közben talált és javított KÉT, a 96. pont hatókörén kívül eső,
+    de ugyanazon elv alapján javítandó rés: `DerivationView.tsx` és
+    `ReportView.tsx` nyers `UNVERIFIED_WARNING` stringet importáltak
+    közvetlenül a `data/catalog.js`-ből `DATABASE[lang].unverifiedWarning`
+    helyett — EN nézetben is magyarul jelent volna meg a figyelmeztetés.
+
+    ÚJ teljesség-teszt (`i18n/database.test.ts`, +1 teszt): minden
+    katalógus-névre ellenőrzi, hogy `catalogName(name, 'en')` után egyik
+    `NAME_PHRASE_EN` magyar szórész sem marad benne — ez egy jövőbeli új
+    katalógus-bejegyzés hiányzó fordítását ÉS a csere-sorrend
+    regresszióját is elkapja.
+
+    Böngészőben végigellenőrizve EN nézetben: Szelvény/Anyag combobox
+    mindkét csoportja (Circle/Tube/Rectangle/U-section, structural/
+    high-strength/stainless steel, aluminum, concrete/timber elastic-only,
+    ductile cast iron — mind helyesen fordítva, a "Körgyűrű"→"Tube"
+    szóütközés sem hibás), a modell-fastruktúra és a gerenda-felirat
+    ("S235 structural steel"), a DatabaseView nav-lista és angol szó
+    szerinti keresés, egy Anyag-részlet (C18 fatimber) forrás + a
+    UNVERIFIED_WARNING + quoteNote + note együtt. `pnpm --filter
+    @femati/ui exec tsc --noEmit`, `pnpm --filter @femati/ui exec vitest
+    run` (121 teszt) és `pnpm lint` (teljes repó) zöld.
+
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
 kicsi, egymásra épülő felhasználói kérés sorozata volt.
