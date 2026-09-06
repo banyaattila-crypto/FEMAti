@@ -1,13 +1,15 @@
 # FEMAti — Állapotjelentés
 
-**Utolsó frissítés:** 2026-09-05
+**Utolsó frissítés:** 2026-09-06
 **Repó:** [banyaattila-crypto/FEMAti](https://github.com/banyaattila-crypto/FEMAti) (privát), `main` ág
-**Utolsó commit:** `4d43d89` — i18n: charts/ mappa teljes fordítása — push-olva
+**Utolsó commit:** `7701603` — docs: eredeti diplomaterv PDF visszaállítása — push-olva
 
-> **A teljes UI i18n terv (0–5c fázis + a `charts/` mappa) 2026-09-05-én
-> lezárult.** Egyetlen dokumentált, nyitva maradt rés maradt (ld. a 88.
-> pont): a `catalog/DatabaseView.tsx` — nem szerepelt egyik fázisban sem,
-> nem sürgős, külön egyeztetendő, ha aktuálissá válik.
+> **A teljes UI i18n terv (0–5c fázis + a `charts/` mappa + a `catalog/
+> DatabaseView.tsx`) 2026-09-06-án LEZÁRULT.** Nincs dokumentált, nyitva
+> maradt i18n-rés (ld. 90. pont). Az eredeti diplomaterv-PDF is
+> visszakerült a repóba, az eredeti (git history szerinti) útvonalán és
+> nevén (ld. 89. pont) — tartalma átvizsgálva, nincs benne más személy
+> adata.
 
 > Ez a dokumentum a projekt PILLANATNYI állapotát rögzíti: mi készült el,
 > milyen minőségi mércével, milyen tudatos hatókör-korlátokkal, és mi van
@@ -2439,6 +2441,50 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     HU-ban visszaváltva. **Ezzel az egyetlen érdemi, nyitva maradt
     i18n-rés a `catalog/DatabaseView.tsx` marad** (nem sürgős, korábban
     külön egyeztetve).
+
+89. **Eredeti diplomaterv-PDF visszaállítása** (`7701603`): a
+    GitHub-publikálási audit (73. pont) nyomán korábban a git historyból
+    (nem törölve, csak a working tree-ből, ld. 74. pont) eltávolított
+    `femati-timoshenko-beam-2026.pdf` sorsáról újragondolás — a
+    force-push-os git-history-purge helyett (amihez a felhasználó
+    explicit jóváhagyása kellett volna) a felhasználó a visszatétel
+    mellett döntött. Ehhez ELŐSZÖR tartalmi átvizsgálás történt
+    (`pdftotext -layout`, a teljes 67 oldal): nincs benne nyilatkozat/
+    eredetiségi oldal, konzulensi/bírálói oldal, aláírás, Neptun-kód,
+    szig.szám, születési dátum vagy lakcím — az egyetlen személyes adat
+    a szerző saját neve a címlapon (ami a repó szerzőjeként amúgy is
+    nyilvános), az irodalomjegyzék pedig kizárólag publikált szakkönyvek
+    hivatkozásait tartalmazza. Ez alapján a fájl visszakerült az EREDETI
+    (git history szerinti) útvonalára és nevére:
+    `packages/ui/public/theory/femati-timoshenko-beam-2026.pdf` (a
+    méret bájtra egyezik az eredetivel). A `docs/THEORY.md` addig törött
+    linkje (`../Diplomaterv%20(BME).pdf`, nem létező útvonal) mostmár
+    erre a helyes útvonalra mutat. Az "A TUDÁS" teljes-PDF UI-fület (74.
+    pont) NEM éledt újra — a fájl csak statikus asset-ként, a
+    `THEORY.md` linkjén keresztül érhető el.
+
+90. **Teljes UI i18n — a `catalog/DatabaseView.tsx` is lezárva**: az
+    utolsó dokumentált i18n-rés (ld. 88. pont záró megjegyzése) bezárva.
+    Új `i18n/database.ts` fordítja a Szelvény- és Anyag-adatbázis
+    böngésző mind a kb. 45 feliratát: fejlécek, keresőmező-placeholder,
+    "Nincs találat.", "Bezárás", méret-címkék (Átmérő/Falvastagság/
+    Magasság/Szélesség/Gerinc- és Övvastagság), a `MaterialDetail`
+    minden mezője (E, ν, G, σY, H′, α, ρ), a beágyazott
+    `SteelThicknessClass` (EN 10025-2 vastagságosztály) és
+    `ConcreteEC2Params` (EC2 σ-ε modell, EN 1992-1-1 3.1.7) panelek —
+    ezek disclaimer-mondatai is —, valamint a `SectionDetail` méret-/
+    számított jellemző-táblái és a "Katalógus vs. számított" eltérés-
+    blokk. A csoport-címkéket (`SECTION_KIND_GROUP`/`MATERIAL_FAMILY_
+    GROUP`) a komponens mostantól a már meglévő, lang-aware
+    `i18n/catalog.ts` (`sectionKindGroupLabel`/`materialFamilyGroupLabel`)
+    függvényein keresztül kapja, HU-only re-export helyett. Explicit
+    hatókör-korlát (nem új döntés, a korábbi i18n-fázisok szabálya):
+    a katalógus-adattartalom (anyag-/szelvénynevek, `*.source`,
+    `*.note`) NEM fordítódik, csak a UI-keret. Böngészőben mindkét
+    nyelven ellenőrizve (Szelvény adatbázis: IPE 100/220 méret- és
+    katalógus-eltérés blokk; Anyag adatbázis: S235 acél vastagságosztály
+    panel, C25/30 beton EC2-panel teljes mezőkészlete). `pnpm check`
+    (mind a 4 csomag) teljes zöld.
 
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több

@@ -29,8 +29,6 @@ import { MaterialSwatch } from '../data/catalogIcons.js';
 import {
   MATERIALS,
   SECTIONS,
-  MATERIAL_FAMILY_GROUP,
-  SECTION_KIND_GROUP,
   UNVERIFIED_WARNING,
   dimensionRowsFor,
   shearModulus,
@@ -41,7 +39,9 @@ import {
 } from '../data/catalog.js';
 import { toShape } from '../model/compile.js';
 import { Formula } from '../derivation/Formula.js';
-import { useAppStore } from '../state/appStore.js';
+import { useAppStore, type Lang } from '../state/appStore.js';
+import { sectionKindGroupLabel, materialFamilyGroupLabel } from '../i18n/catalog.js';
+import { DATABASE } from '../i18n/database.js';
 import type { Formatted } from '../format/numbers.js';
 import './database.css';
 
@@ -93,24 +93,21 @@ const permille = (v: number): Formatted => num(v * 1000, 2, '‰');
  * egyetlen `sigmaY`-t rendel minden rétegnek, ezt a bővítést az E) fázis
  * kötné be ténylegesen a rétegelt magba (ld. `types.ts` `fy1` doc-komment).
  */
-function SteelThicknessClass({ material }: { readonly material: MaterialEntry }): JSX.Element {
+function SteelThicknessClass({ material, lang }: { readonly material: MaterialEntry; readonly lang: Lang }): JSX.Element {
+  const t = DATABASE[lang];
   return (
     <div style={{ marginTop: 'var(--space-4)' }}>
       <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-        Vastagságfüggő folyáshatár-osztály (EN 10025-2)
+        {t.steelThicknessTitle}
       </div>
-      <ResultRow label={`Fy1 (t ≤ ${material.thicknessThreshold} mm)`} formatted={num(material.fy1 as number, 1, 'kN/cm²')} />
-      <ResultRow label={`Fy2 (t > ${material.thicknessThreshold} mm)`} formatted={num(material.fy2 as number, 1, 'kN/cm²')} />
+      <ResultRow label={t.fy1Label(material.thicknessThreshold as number)} formatted={num(material.fy1 as number, 1, 'kN/cm²')} />
+      <ResultRow label={t.fy2Label(material.thicknessThreshold as number)} formatted={num(material.fy2 as number, 1, 'kN/cm²')} />
       <ResultRow label="Fu1" formatted={num(material.fu1 as number, 1, 'kN/cm²')} />
       <ResultRow label="Fu2" formatted={num(material.fu2 as number, 1, 'kN/cm²')} />
       {material.alphaFi !== undefined ? (
-        <ResultRow label="Hőtágulási együttható tűzhatás esetén αfi" formatted={num(material.alphaFi * 1e6, 2, '×10⁻⁶ /°C')} />
+        <ResultRow label={t.fireExpansionCoeff} formatted={num(material.alphaFi * 1e6, 2, '×10⁻⁶ /°C')} />
       ) : null}
-      <NoteBox tone="info">
-        Referencia-adat — a megoldó jelenleg egyetlen folyáshatárt (fentebb) rendel a teljes
-        keresztmetszethez; a vastagságosztály szerinti választás a rétegelt modellben (E) fázis) még
-        nincs bekötve.
-      </NoteBox>
+      <NoteBox tone="info">{t.steelThicknessNote}</NoteBox>
     </div>
   );
 }
@@ -121,34 +118,40 @@ function SteelThicknessClass({ material }: { readonly material: MaterialEntry })
  * acél vastagságosztálynál. `φ(∞,t0)` ÁLTALÁNOS reprezentatív érték, nem
  * projektfüggő (RH, terhelési kor) számítás.
  */
-function ConcreteEC2Params({ material }: { readonly material: MaterialEntry }): JSX.Element {
+function ConcreteEC2Params({ material, lang }: { readonly material: MaterialEntry; readonly lang: Lang }): JSX.Element {
+  const t = DATABASE[lang];
   return (
     <div style={{ marginTop: 'var(--space-4)' }}>
       <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-        EC2 feszültség-alakváltozás modell (EN 1992-1-1 3.1.7)
+        {t.concreteEc2Title}
       </div>
-      <ResultRow label="Jellemző nyomószilárdság fck" formatted={num(material.fck as number, 2, 'kN/cm²')} emphasis="large" />
-      <ResultRow label="Középértékű húzószilárdság fctm" formatted={num(material.fctm as number, 3, 'kN/cm²')} />
-      <ResultRow label="Jellemző húzószilárdság fctk,0.05" formatted={num(material.fctk005 as number, 3, 'kN/cm²')} />
-      <ResultRow label="Rugalmassági modulus tényező γcE" formatted={num(material.gammaCE as number, 2, '')} />
-      <ResultRow label="Végső kúszási tényező φ(∞,t0)" formatted={num(material.phiInfinity as number, 2, '')} />
-      <ResultRow label="Folyási határnyúlás εc1 (nemlineáris modell)" formatted={permille(material.epsC1 as number)} />
-      <ResultRow label="Folyási határnyúlás εc2 (parabola-téglalap)" formatted={permille(material.epsC2 as number)} />
-      <ResultRow label="Szakadási határnyúlás εcu2 (parabola-téglalap)" formatted={permille(material.epsCu2 as number)} />
-      <ResultRow label="Folyási határnyúlás εc3 (bilineáris)" formatted={permille(material.epsC3 as number)} />
-      <ResultRow label="Szakadási határnyúlás εcu3 (bilineáris)" formatted={permille(material.epsCu3 as number)} />
-      <ResultRow label="Nyomószilárdság-csökkentő tényező η" formatted={num(material.eta as number, 2, '')} />
-      <ResultRow label="Parabola-téglalap kitevő n" formatted={num(material.n as number, 1, '')} />
-      <NoteBox tone="info">
-        Referencia-adat — a megoldó jelenleg a rétegelt magban egyszerű, kétegyenes (rugalmas–
-        tökéletesen képlékeny/lineáris keményedő) törvényt használ minden rétegre; az EC2
-        parabola-téglalap modell tényleges bekötése (F) fázis) még nincs implementálva.
-      </NoteBox>
+      <ResultRow label={t.fck} formatted={num(material.fck as number, 2, 'kN/cm²')} emphasis="large" />
+      <ResultRow label={t.fctm} formatted={num(material.fctm as number, 3, 'kN/cm²')} />
+      <ResultRow label={t.fctk005} formatted={num(material.fctk005 as number, 3, 'kN/cm²')} />
+      <ResultRow label={t.gammaCE} formatted={num(material.gammaCE as number, 2, '')} />
+      <ResultRow label={t.phiInfinity} formatted={num(material.phiInfinity as number, 2, '')} />
+      <ResultRow label={t.epsC1} formatted={permille(material.epsC1 as number)} />
+      <ResultRow label={t.epsC2} formatted={permille(material.epsC2 as number)} />
+      <ResultRow label={t.epsCu2} formatted={permille(material.epsCu2 as number)} />
+      <ResultRow label={t.epsC3} formatted={permille(material.epsC3 as number)} />
+      <ResultRow label={t.epsCu3} formatted={permille(material.epsCu3 as number)} />
+      <ResultRow label={t.eta} formatted={num(material.eta as number, 2, '')} />
+      <ResultRow label={t.nExponent} formatted={num(material.n as number, 1, '')} />
+      <NoteBox tone="info">{t.concreteEc2Note}</NoteBox>
     </div>
   );
 }
 
-function MaterialDetail({ material, onClose }: { readonly material: MaterialEntry; readonly onClose: () => void }): JSX.Element {
+function MaterialDetail({
+  material,
+  lang,
+  onClose,
+}: {
+  readonly material: MaterialEntry;
+  readonly lang: Lang;
+  readonly onClose: () => void;
+}): JSX.Element {
+  const t = DATABASE[lang];
   const g = shearModulus(material);
   return (
     <>
@@ -157,11 +160,11 @@ function MaterialDetail({ material, onClose }: { readonly material: MaterialEntr
           <MaterialSwatch family={material.family} />
           <div>
             <h2>{material.name}</h2>
-            <p className="vem-theory__subtitle">{MATERIAL_FAMILY_GROUP[material.family]}</p>
+            <p className="vem-theory__subtitle">{materialFamilyGroupLabel(material.family, lang)}</p>
           </div>
         </div>
         <button type="button" className="vem-btn vem-btn--sm" onClick={onClose}>
-          Bezárás
+          {t.close}
         </button>
       </header>
       <div className="vem-theory__body">
@@ -172,29 +175,27 @@ function MaterialDetail({ material, onClose }: { readonly material: MaterialEntr
 
           <div className="vem-db__columns">
             <div>
-              <ResultRow label="Rugalmassági modulus E" formatted={num(material.e, 0, 'kN/cm²')} emphasis="large" />
-              <ResultRow label="Poisson-tényező ν" formatted={num(material.nu, 2, '')} />
-              <ResultRow label="Nyírási modulus G = E/2(1+ν)" formatted={num(g, 0, 'kN/cm²')} />
+              <ResultRow label={t.elasticModulus} formatted={num(material.e, 0, 'kN/cm²')} emphasis="large" />
+              <ResultRow label={t.poissonRatio} formatted={num(material.nu, 2, '')} />
+              <ResultRow label={t.shearModulusLabel} formatted={num(g, 0, 'kN/cm²')} />
               <Formula tex="G = \dfrac{E}{2(1+\nu)}" />
               {material.sigmaY > 0 ? (
-                <ResultRow label="Folyáshatár σY" formatted={num(material.sigmaY, 1, 'kN/cm²')} emphasis="large" />
+                <ResultRow label={t.yieldStress} formatted={num(material.sigmaY, 1, 'kN/cm²')} emphasis="large" />
               ) : (
-                <NoteBox tone="info">Nincs megadott folyáshatár — az anyag csak rugalmas vizsgálatra alkalmas ebben a katalógusban.</NoteBox>
+                <NoteBox tone="info">{t.noYieldStress}</NoteBox>
               )}
-              {material.hPrime > 0 ? (
-                <ResultRow label="Lineáris keményedés H′" formatted={num(material.hPrime, 0, 'kN/cm²')} />
-              ) : null}
-              <ResultRow label="Hőtágulási együttható α" formatted={num(material.alpha * 1e6, 2, '×10⁻⁶ /°C')} />
-              <ResultRow label="Sűrűség ρ" formatted={num(material.density, 0, 'kg/m³')} />
-              {material.fy1 !== undefined ? <SteelThicknessClass material={material} /> : null}
-              {material.fck !== undefined ? <ConcreteEC2Params material={material} /> : null}
+              {material.hPrime > 0 ? <ResultRow label={t.hardeningModulus} formatted={num(material.hPrime, 0, 'kN/cm²')} /> : null}
+              <ResultRow label={t.thermalExpansion} formatted={num(material.alpha * 1e6, 2, '×10⁻⁶ /°C')} />
+              <ResultRow label={t.density} formatted={num(material.density, 0, 'kg/m³')} />
+              {material.fy1 !== undefined ? <SteelThicknessClass material={material} lang={lang} /> : null}
+              {material.fck !== undefined ? <ConcreteEC2Params material={material} lang={lang} /> : null}
             </div>
           </div>
         </div>
 
         <div style={{ marginTop: 'var(--space-4)' }}>
           <NoteBox tone={material.verified ? 'info' : 'warn'}>
-            Forrás: {material.source}
+            {t.source}: {material.source}
             {material.verified ? '' : ` ${UNVERIFIED_WARNING}`}
           </NoteBox>
           {material.note !== undefined ? (
@@ -213,12 +214,17 @@ function deviationPct(computed: number, catalog: number | undefined): number | n
   return ((computed - catalog) / catalog) * 100;
 }
 
-function DimensionRows({ section }: { readonly section: SectionEntry }): JSX.Element {
+function DimensionRows({ section, lang }: { readonly section: SectionEntry; readonly lang: Lang }): JSX.Element {
   const rows = dimensionRowsFor(section);
+  const t = DATABASE[lang];
   return (
     <>
       {rows.map((r) => (
-        <ResultRow key={r.label} label={r.label} formatted={r.v !== undefined ? num(r.v, 1, 'mm') : { value: '—', unit: '' }} />
+        <ResultRow
+          key={r.label}
+          label={t.dimensionLabel[r.symbol] ?? r.label}
+          formatted={r.v !== undefined ? num(r.v, 1, 'mm') : { value: '—', unit: '' }}
+        />
       ))}
     </>
   );
@@ -245,7 +251,16 @@ function shapeFormulaTex(kind: SectionKind): string {
   }
 }
 
-function SectionDetail({ section, onClose }: { readonly section: SectionEntry; readonly onClose: () => void }): JSX.Element {
+function SectionDetail({
+  section,
+  lang,
+  onClose,
+}: {
+  readonly section: SectionEntry;
+  readonly lang: Lang;
+  readonly onClose: () => void;
+}): JSX.Element {
+  const t = DATABASE[lang];
   const shape = toShape(section);
   const props = geometricProperties(shape);
   const aCm2 = props.area * 1e4;
@@ -263,11 +278,11 @@ function SectionDetail({ section, onClose }: { readonly section: SectionEntry; r
         <div className="vem-theory__header-title">
           <div>
             <h2>{section.name}</h2>
-            <p className="vem-theory__subtitle">{SECTION_KIND_GROUP[section.kind]}</p>
+            <p className="vem-theory__subtitle">{sectionKindGroupLabel(section.kind, lang)}</p>
           </div>
         </div>
         <button type="button" className="vem-btn vem-btn--sm" onClick={onClose}>
-          Bezárás
+          {t.close}
         </button>
       </header>
       <div className="vem-theory__body">
@@ -279,31 +294,25 @@ function SectionDetail({ section, onClose }: { readonly section: SectionEntry; r
           <div className="vem-db__columns">
             <div>
               <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-                Méretek
+                {t.dimensionsSectionTitle}
               </div>
-              <DimensionRows section={section} />
+              <DimensionRows section={section} lang={lang} />
             </div>
             <div>
               <div className="vem-theory__section" style={{ marginTop: 0, paddingTop: 0, borderTop: 'none' }}>
-                Számított jellemzők
+                {t.computedPropertiesTitle}
               </div>
-              <ResultRow label="Terület A" formatted={num(aCm2, 2, 'cm²')} emphasis="large" />
-              <ResultRow label="Másodrendű nyomaték I" formatted={num(iCm4, 0, 'cm⁴')} emphasis="large" />
-              {props.yTop !== undefined ? (
-                <ResultRow label="Súlypont a felső száltól (yTop)" formatted={num(props.yTop * 1e3, 1, 'mm')} />
-              ) : null}
-              {props.yBottom !== undefined ? (
-                <ResultRow label="Súlypont az alsó száltól (yBottom)" formatted={num(props.yBottom * 1e3, 1, 'mm')} />
-              ) : null}
+              <ResultRow label={t.area} formatted={num(aCm2, 2, 'cm²')} emphasis="large" />
+              <ResultRow label={t.inertia} formatted={num(iCm4, 0, 'cm⁴')} emphasis="large" />
+              {props.yTop !== undefined ? <ResultRow label={t.yTop} formatted={num(props.yTop * 1e3, 1, 'mm')} /> : null}
+              {props.yBottom !== undefined ? <ResultRow label={t.yBottom} formatted={num(props.yBottom * 1e3, 1, 'mm')} /> : null}
               <ResultRow
-                label="Rugalmas modulus Wel = I/ymax"
+                label={t.elasticModulusSection}
                 formatted={num(welCm3, 1, 'cm³')}
-                {...(props.yTop !== undefined
-                  ? { title: 'Aszimmetrikus szelvény: ymax a KORMÁNYZÓ (nagyobb, konzervatívabb) szál — max(yTop, yBottom).' }
-                  : {})}
+                {...(props.yTop !== undefined ? { title: t.elasticModulusTooltip } : {})}
               />
-              <ResultRow label="Képlékeny modulus Wpl = 2S₀" formatted={num(wplCm3, 1, 'cm³')} />
-              <ResultRow label="Alaki tényező c = Wpl/Wel" formatted={num(props.shapeFactor, 3, '')} />
+              <ResultRow label={t.plasticModulus} formatted={num(wplCm3, 1, 'cm³')} />
+              <ResultRow label={t.shapeFactor} formatted={num(props.shapeFactor, 3, '')} />
             </div>
           </div>
         </div>
@@ -315,40 +324,37 @@ function SectionDetail({ section, onClose }: { readonly section: SectionEntry; r
 
         {section.aCat !== undefined ? (
           <div className="vem-theory__section" style={{ marginTop: 'var(--space-4)' }}>
-            Katalógus vs. számított
+            {t.catalogVsComputed}
           </div>
         ) : null}
         {section.aCat !== undefined ? (
           <ResultRow
-            label="A: katalógus / eltérés"
+            label={t.catalogDeviation('A')}
             formatted={numWithDeviation(section.aCat, 2, 'cm²', aDev)}
             tone={aDev !== null && Math.abs(aDev) > 5 ? 'warn' : 'neutral'}
           />
         ) : null}
         {section.iCat !== undefined ? (
           <ResultRow
-            label="I: katalógus / eltérés"
+            label={t.catalogDeviation('I')}
             formatted={numWithDeviation(section.iCat, 0, 'cm⁴', iDev)}
             tone={iDev !== null && Math.abs(iDev) > 5 ? 'warn' : 'neutral'}
           />
         ) : null}
         {section.wplCat !== undefined ? (
           <ResultRow
-            label="Wpl: katalógus / eltérés"
+            label={t.catalogDeviation('Wpl')}
             formatted={numWithDeviation(section.wplCat, 1, 'cm³', wplDev)}
             tone={wplDev !== null && Math.abs(wplDev) > 5 ? 'warn' : 'neutral'}
           />
         ) : null}
         {aDev !== null || iDev !== null || wplDev !== null ? (
-          <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 'var(--space-2) 0 0' }}>
-            Az eltérés a névleges kontúrból (lekerekítés nélkül) számolt és a szelvénytáblázat (gyártói,
-            lekerekítéseket is tartalmazó) adata között — a modell mindig a számított értéket használja.
-          </p>
+          <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: 'var(--space-2) 0 0' }}>{t.deviationNote}</p>
         ) : null}
 
         <div style={{ marginTop: 'var(--space-4)' }}>
           <NoteBox tone={section.verified ? 'info' : 'warn'}>
-            Forrás: {section.source}
+            {t.source}: {section.source}
             {section.verified ? '' : ` ${UNVERIFIED_WARNING}`}
           </NoteBox>
         </div>
@@ -365,6 +371,7 @@ export interface DatabaseViewProps {
  * (felhasználói visszajelzés) — de ugyanezt a komponenst példányosítja
  * `kind`-tól függően, hogy a nav/kereső/fejléc-logika ne duplikálódjon. */
 export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
+  const lang = useAppStore((s) => s.lang);
   const open = useAppStore((s) => (kind === 'material' ? s.materialDbOpen : s.sectionDbOpen));
   const setOpen = useAppStore((s) => (kind === 'material' ? s.setMaterialDbOpen : s.setSectionDbOpen));
   const [query, setQuery] = useState('');
@@ -373,10 +380,11 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
 
   if (!open) return null;
   const close = (): void => setOpen(false);
+  const t = DATABASE[lang];
 
   const isMaterial = kind === 'material';
-  const title = isMaterial ? 'Anyag adatbázis' : 'Szelvény adatbázis';
-  const placeholder = isMaterial ? 'Anyag keresése…' : 'Szelvény keresése…';
+  const title = t.title[kind];
+  const placeholder = t.searchPlaceholder[kind];
 
   const filteredMaterials = filterGroups(MATERIALS_BY_FAMILY, MATERIAL_FAMILIES, query);
   const filteredSections = filterGroups(SECTIONS_BY_KIND, SECTION_KINDS, query);
@@ -399,11 +407,11 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
             aria-label={placeholder}
           />
           <div className="vem-db__nav-list">
-            {noResults ? <p className="vem-db__nav-empty">Nincs találat.</p> : null}
+            {noResults ? <p className="vem-db__nav-empty">{t.noResults}</p> : null}
             {isMaterial
               ? MATERIAL_FAMILIES.filter((f) => (filteredMaterials.get(f) ?? []).length > 0).map((family) => (
                   <div key={family}>
-                    <div className="vem-db__nav-subgroup">{MATERIAL_FAMILY_GROUP[family]}</div>
+                    <div className="vem-db__nav-subgroup">{materialFamilyGroupLabel(family, lang)}</div>
                     {(filteredMaterials.get(family) ?? []).map((m) => (
                       <button
                         key={m.id}
@@ -420,7 +428,7 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
                 ))
               : SECTION_KINDS.filter((k) => (filteredSections.get(k) ?? []).length > 0).map((kindGroup) => (
                   <div key={kindGroup}>
-                    <div className="vem-db__nav-subgroup">{SECTION_KIND_GROUP[kindGroup]}</div>
+                    <div className="vem-db__nav-subgroup">{sectionKindGroupLabel(kindGroup, lang)}</div>
                     {(filteredSections.get(kindGroup) ?? []).map((sec) => (
                       <button
                         key={sec.id}
@@ -436,14 +444,14 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
                 ))}
           </div>
           <p className="vem-theory__nav-note">
-            {isMaterial ? `${MATERIALS.length} anyag` : `${SECTIONS.length} szelvény`} · <code>@femati/fem-db</code>
+            {isMaterial ? t.navNoteMaterial(MATERIALS.length) : t.navNoteSection(SECTIONS.length)} · <code>@femati/fem-db</code>
           </p>
         </nav>
         <article className="vem-theory__content">
           {isMaterial ? (
-            <MaterialDetail material={selectedMaterial} onClose={close} />
+            <MaterialDetail material={selectedMaterial} lang={lang} onClose={close} />
           ) : (
-            <SectionDetail section={selectedSection} onClose={close} />
+            <SectionDetail section={selectedSection} lang={lang} onClose={close} />
           )}
         </article>
       </div>
