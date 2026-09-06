@@ -2746,6 +2746,58 @@ felhasználói kérésekre készültek, a projekt éles használatba vétele sor
     @femati/ui exec tsc --noEmit`, `pnpm --filter @femati/ui exec vitest
     run` (121 teszt) és `pnpm lint` (teljes repó) zöld.
 
+98. **GitHub-publikálás előkészítése — professzionális felszín** (README
+    hero-kép után a második lépcső): a felhasználó explicit rákérdezett,
+    hogy az About-menü/verziószám frissítésén kívül mi hiányzik még a
+    (jelenleg PRIVATE) repó publikussá tételéhez. Konkrét, élőben
+    ellenőrzött hiányosságok kerültek elő és lettek javítva:
+    - **Verziószám**: root `package.json` `0.3.3` → **`1.0.0`** (első
+      publikus release — a döntést a projekt érettsége indokolja: ~700
+      teszt, teljes CI, validációs dokumentáció). A `packages/*` almodulok
+      saját `0.1.0` verziója VÁLTOZATLAN maradt (nincsenek külön npm-
+      publikálva, a UI-ban megjelenő `__APP_VERSION__` a root
+      `package.json`-t olvassa build-időben, ld. `packages/ui/vite.
+      config.ts` `readAppVersion()` — tehát a verziófrissítés kód-
+      változtatás nélkül, pusztán a root JSON-ban történt).
+    - Root `package.json` kiegészítve `author`/`homepage`/`repository`/
+      `bugs` mezőkkel (korábban egyik sem volt kitöltve).
+    - **About-dialógus (`i18n/shell.ts` `aboutFeatures`) frissítve**:
+      hiányzott belőle a földrengési (EC8, vertikális komponens)
+      ellenőrzés ÉS a HU/EN nyelvváltás ténye — mindkettő pótolva mindkét
+      nyelven (16→16, szimmetrikusan).
+    - **README teszt-szám frissítve**: "~660 automated tests" → **"~700"**
+      mindkét README-ben — a tényleges futtatott szám most 704 (525
+      fem-core + 25 fem-db + 30 fem-validation + 121 ui, +3 skip), a
+      korábbi szám alulbecslés volt, nem hazugság, de elavult.
+    - **CI badge + License badge + "Live demo" badge/link** mindkét
+      README tetejére (közvetlenül a hero-kép/cím alá) — kiderült, hogy a
+      GitHub repó "Website" mezője már be volt állítva egy élő, működő
+      Vercel-deploy-ra (`femati.vercel.app`, HTTP 200), de ez SEHOL nem
+      volt kiemelve a README szövegében — most egy jól látható "Try it
+      live / Próbáld ki élőben" sor is bekerült.
+    - **GitHub repó "Topics" mezője** (korábban üres) feltöltve
+      (`finite-element-analysis`, `structural-engineering`, `eurocode`,
+      `fem`, `civil-engineering`, `typescript`, `react`, `vitest`) —
+      `gh repo edit --add-topic` paranccsal, ellenőrizve API-lekérdezéssel.
+
+    **NYITVA MARADT, felhasználói/manuális lépést igénylő pontok** (nem
+    automatizálhatók CLI-ből): (1) a GitHub repó "Social preview" képe
+    (Settings → General) — csak a weboldalon állítható be, a friss
+    `docs/img/readme-hero-en.jpg` erre alkalmas lenne; (2) a repó tényleges
+    Private → Public váltása — ez explicit, külön jóváhagyást kap, nem
+    része ennek a pontnak; (3) a `design/` mappa (korai UI-koncepció
+    HTML-ek és képernyőképek) SZÁNDÉKOSAN megmaradt — a `DESIGN-TERV.md`
+    döntési dokumentumként hivatkozik rá, törlése megbontaná a projekt
+    saját "semmi nincs kitalálva/eltitkolva" elvét (ugyanaz az indoklás,
+    ami miatt az eredeti diplomaterv-PDF is megmaradt, ld. memória:
+    `project-femati-github-publish-readiness`).
+
+    Ellenőrizve: `pnpm --filter @femati/ui exec tsc --noEmit`, `pnpm
+    --filter @femati/ui exec vitest run` (121 teszt) és `pnpm lint`
+    (teljes repó) zöld a verziószám-bump és About-szöveg után is.
+    Böngészőben ellenőrizve: a Névjegy dialógus ténylegesen `v1.0.0 · mag:
+    c9ce727`-et mutat, és a földrengés-sor megjelenik a listában.
+
 Ez a szakasz szándékosan RÉSZLETESEBB napló-jellegű, mint a fázis-táblázat
 sorai — mivel ez a munka nem egyetlen, előre megtervezett fázis, hanem több
 kicsi, egymásra épülő felhasználói kérés sorozata volt.
