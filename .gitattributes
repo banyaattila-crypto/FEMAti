@@ -1,0 +1,26 @@
+# A repóban MINDIG LF a sorvégjel, függetlenül attól, ki melyik platformon
+# dolgozik — a `.prettierrc.json` is `"endOfLine": "lf"`-et ír elő. Enélkül egy
+# Windows-os és egy Linux/macOS-es közreműködő diffje teljes fájlokat mutatna
+# módosítottnak.
+* text=auto eol=lf
+
+# Bináris állományok — ezeket a Git ne próbálja szövegként normalizálni.
+*.pdf   binary
+*.doc   binary
+*.docx  binary
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.gif   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+
+# Generált fájl — a diffje zajos, és nem kézzel szerkesztjük.
+docs/VALIDATION.md linguist-generated=true
+
+# A GitHub nyelvi statisztikájából kihagyandó, nem a projekt "kódja".
+design/**   linguist-documentation=true
+docs/**     linguist-documentation=true

@@ -2,4 +2,12 @@ node_modules/
 dist/
 coverage/
 pnpm-lock.yaml
+
+# Generált fájl (a `fem-validation` állítja elő).
 docs/VALIDATION.md
+
+# Kézzel írt, hosszú magyar prózadokumentumok. A Prettier markdown-formázása
+# ízlés kérdése, tartalmi értéket nem ad hozzá, viszont a bekezdés- és
+# listatördelés átírásával elmosná a kézi tagolást és zajos diffeket okozna.
+# A KÓD formázását ez nem érinti — azt a CI kikényszeríti.
+*.md

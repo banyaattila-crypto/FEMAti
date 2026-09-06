@@ -5,9 +5,29 @@ on:
     branches: [main]
   pull_request:
 
+# Legkisebb jogosultság elve (publikálás előtti audit, 2026-09-06, CI-001):
+# a workflow semmit nem ír vissza a repóba, ezért csak olvasásra van szüksége.
+# Enélkül a repó alapértelmezett GITHUB_TOKEN-hatóköre öröklődne — publikus
+# repónál, ahol idegen fork is nyithat PR-t, ez a hardening alapkövetelmény.
+permissions:
+  contents: read
+
+# Egy ágon/PR-en elég a legfrissebb futás; a köztes push-ok futásait megszakítjuk.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
+
+    # A `package.json` `engines` mezője Node >=20-at ígér — ezt MÉRNI is kell,
+    # nem elég állítani (CI-002). A 20 az alsó támogatott határ, a 22 a jelenlegi LTS.
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -15,7 +35,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -28,6 +48,9 @@ jobs:
 
       - name: Lint
         run: pnpm exec eslint .
+
+      - name: Formázás-ellenőrzés
+        run: pnpm exec prettier --check .
 
       - name: Design-token ellenőrzés (nincs nyers hex)
         run: node scripts/check-design-tokens.mjs
@@ -43,3 +66,11 @@ jobs:
 
       - name: Build
         run: pnpm -r build
+
+      # Ismert sérülékenységek jelzése. `continue-on-error`, mert a jelenlegi
+      # találatok mind csak a FEJLESZTŐI eszközláncot érintik (a kész alkalmazás
+      # függőségi fáját nem), és egy külső advisory megjelenése nem törheti el
+      # visszamenőleg egy korábban zöld commit CI-ját.
+      - name: Függőség-audit (tájékoztató)
+        run: pnpm audit --prod
+        continue-on-error: true

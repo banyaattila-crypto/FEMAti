@@ -1,0 +1,29 @@
+version: 2
+
+# Publikálás előtti audit (2026-09-06, SEC-001/CI-002): a repóban a jelenleg
+# ismert sérülékenységek mind a FEJLESZTŐI eszközláncot érintik (vitest → vite →
+# esbuild). Egyszemélyes projektnél a legnagyobb kockázat nem az, hogy nincs
+# javítás, hanem hogy senki nem szól — ezért a figyelést automatizáljuk,
+# HAVI ütemben (heti PR-áradat egy hobbiprojektnél zajjá válik és ignorálódik).
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      # A fejlesztői eszközlánc együtt mozogjon: külön-külön PR-ekben a
+      # vitest/vite/esbuild frissítés úgyis egymásba akadna.
+      dev-toolchain:
+        dependency-type: development
+        patterns:
+          - '*'
+    commit-message:
+      prefix: 'chore(deps)'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: 'chore(ci)'

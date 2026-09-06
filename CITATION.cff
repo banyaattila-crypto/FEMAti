@@ -1,0 +1,54 @@
+cff-version: 1.2.0
+title: >-
+  FEM@ti — Elastic–plastic Timoshenko beam finite element analysis
+message: >-
+  If you use this software in academic work, please cite it using the
+  metadata below. Note that the underlying mechanical model originates
+  from the author's 1996 MSc thesis, referenced separately.
+type: software
+authors:
+  - family-names: Bánya
+    given-names: Attila
+    affiliation: >-
+      Faktum Invest Kft. — formerly Budapest University of Technology
+      and Economics (BME), Faculty of Civil Engineering
+repository-code: 'https://github.com/banyaattila-crypto/FEMAti'
+url: 'https://femati.vercel.app'
+abstract: >-
+  A browser-based, dependency-light finite element program for
+  elastic–plastic analysis of Timoshenko beams. It reimplements the
+  numerical apparatus of a 1996 BME MSc thesis — 3-node quadratic
+  isoparametric beam elements, selective reduced integration against
+  shear locking, a layered (fiber) cross-section model and a
+  Newton–Raphson elastic–plastic solver — with line-by-line
+  traceability from code to the original derivation, and a closed-form
+  validation suite. The original frontal equation solver is preserved
+  as an animated "historical mode" alongside the modern skyline solver.
+  This is research and educational software, not certified design
+  software.
+keywords:
+  - finite element method
+  - Timoshenko beam
+  - elastic-plastic analysis
+  - structural engineering
+  - Eurocode
+  - TypeScript
+license: MIT
+version: 1.0.0
+date-released: '2026-09-06'
+references:
+  - type: thesis
+    title: >-
+      Rugalmas-képlékeny anyagú Timoshenko-féle gerendaszerkezetek
+      numerikus vizsgálata a végeselemes módszer segítségével
+    authors:
+      - family-names: Bánya
+        given-names: Attila
+    thesis-type: MSc thesis
+    institution:
+      name: >-
+        Budapest University of Technology (BME), Faculty of Civil
+        Engineering, Department of Mechanics
+    year: 1996
+    languages:
+      - hun
