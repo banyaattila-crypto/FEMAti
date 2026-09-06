@@ -8,8 +8,9 @@ import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
 import { solveEditableModel } from '../model/compile.js';
-import { scaleModelForSls, scaleModelForUls } from '../model/combinations.js';
-import { computeUtilizations } from '../model/designChecks.js';
+import { scaleModelForSls, scaleModelForUlsVariants, ulsVariantLeadingLoadIds } from '../model/combinations.js';
+import { computeUtilizationsEnveloped } from '../model/designChecks.js';
+import { loadRowLabel } from '../model/loadLabel.js';
 import * as fmt from '../format/numbers.js';
 import { utilizationVerdict } from '../format/utilization.js';
 import { PANELS, VERDICT_LABEL } from '../i18n/panels.js';
@@ -36,17 +37,34 @@ export function RightPanel(): JSX.Element {
   // ellenőrzés" kártya számít a tényleges kombinációkra (felhasználói
   // döntés, 2026-09-04: a napi munkafolyamat nem változik, csak az
   // ellenőrzések input-forrása).
-  const ulsResult = useMemo(() => solveEditableModel(scaleModelForUls(model)).result, [model]);
+  // 2+ egyidejű változó teher esetén nem tudható előre, melyik a "vezető"
+  // (EN 1990 6.10) — ezért mindegyik változatot le kell futtatni és a
+  // legkedvezőtlenebbet venni (`combinations.ts` `scaleModelForUlsVariants`).
+  const ulsResults = useMemo(
+    () =>
+      scaleModelForUlsVariants(model)
+        .map((variant) => solveEditableModel(variant).result)
+        .filter((r): r is NonNullable<typeof r> => r !== null),
+    [model],
+  );
   const slsResult = useMemo(() => solveEditableModel(scaleModelForSls(model)).result, [model]);
 
   // M-V interakció, lehajlás-ellenőrzés, vasbeton ULS — megosztott logika
   // (`model/designChecks.ts`), amit a szelvény-optimalizálás (`model/
   // optimize.ts`) is ugyanígy hív minden jelölt szelvényre, hogy a kettő ne
   // csúszhasson szét egymástól.
-  const utils = ulsResult && slsResult ? computeUtilizations(model, ulsResult, slsResult) : null;
+  const utils = ulsResults.length > 0 && slsResult ? computeUtilizationsEnveloped(model, ulsResults, slsResult) : null;
   const mvVerdict = utilizationVerdict(utils?.mv ?? null);
   const deflectionVerdict = utilizationVerdict(utils?.deflection ?? null);
   const rcVerdict = utilizationVerdict(utils?.rc ?? null);
+
+  // A mértékadó ULS-kombináció M-je és a hozzá tartozó "vezető" teher —
+  // csak tájékoztató kiírás, a fenti %-os ellenőrzések ettől függetlenül
+  // már a helyes envelope-ot használják.
+  const ulsGoverningResult = utils ? ulsResults[utils.ulsGoverningIndex] : null;
+  const leadingLoadId = utils ? (ulsVariantLeadingLoadIds(model)[utils.ulsGoverningIndex] ?? null) : null;
+  const leadingLoad = leadingLoadId !== null ? model.loads.find((l) => l.id === leadingLoadId) : undefined;
+  const leadingLoadLabel = leadingLoad ? loadRowLabel(leadingLoad).label : null;
 
   const materialEntry = findMaterial(model.materialId);
   // fctm a katalógusban kN/cm² (ld. compile.ts `mat.e * 1e4` mintája) — kN/m²-re váltva, hogy Kₑ-vel (m³) szorozva kNm-et adjon.
@@ -147,6 +165,14 @@ export function RightPanel(): JSX.Element {
             formatted={fmt.shear(result?.props.vpl ?? null)}
             title={t.shearCapacityTitle}
           />
+          <ResultRow
+            label={t.ulsGoverningMomentLabel}
+            formatted={fmt.moment(ulsGoverningResult?.extremes.m.value ?? null)}
+            title={t.ulsGoverningMomentTitle}
+          />
+          {leadingLoadLabel !== null ? (
+            <ResultRow label={t.ulsLeadingLoadLabel} formatted={{ value: leadingLoadLabel, unit: '' }} title={t.ulsLeadingLoadTitle} />
+          ) : null}
           <ResultRow
             label={t.mvUtilLabel}
             formatted={fmt.percent(utils?.mv !== null && utils?.mv !== undefined ? utils.mv * 100 : null)}

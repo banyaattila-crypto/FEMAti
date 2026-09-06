@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from './editable.js';
 import { solveEditableModel } from './compile.js';
-import { scaleModelForSls, scaleModelForUls, ULS_GAMMA_Q } from './combinations.js';
-import { computeUtilizations } from './designChecks.js';
+import { scaleModelForSls, scaleModelForUls, scaleModelForUlsVariants, ULS_GAMMA_Q } from './combinations.js';
+import { computeUtilizations, computeUtilizationsEnveloped } from './designChecks.js';
 
 beforeEach(() => resetEntityIds());
 
@@ -73,5 +73,41 @@ describe('computeUtilizations', () => {
     expect(utils.rc).toBeNull();
     expect(utils.deflection).not.toBeNull();
     expect(utils.governing).toBe(utils.deflection);
+  });
+});
+
+describe('computeUtilizationsEnveloped', () => {
+  it('1 db ULS-változatra pontosan a computeUtilizations eredményét adja vissza', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const editable = presetToEditable(preset, 'simple', 6, 8, 'IPE300', 'S235', false, 'selective');
+
+    const { uls, sls } = solveCombos(editable);
+    expect(computeUtilizationsEnveloped(editable, [uls], sls)).toEqual(computeUtilizations(editable, uls, sls));
+  });
+
+  it('2 egyidejű változó teherre a "vezető teher" envelope legalább akkora kihasználtságot ad, mint bármelyik önmagában futtatott változat', () => {
+    const preset = PRESETS.find((p) => p.id === 'simple');
+    if (preset === undefined) throw new Error('simple preset hiányzik');
+    const base = presetToEditable(preset, 'simple', 6, 8, 'IPE300', 'S235', false, 'selective');
+    const secondVariable = { id: 'P2', kind: 'point' as const, x: base.span / 4, p: 20, category: 'variable' as const };
+    const editable = { ...base, loads: [...base.loads, secondVariable] };
+
+    const variants = scaleModelForUlsVariants(editable);
+    expect(variants).toHaveLength(2);
+    const ulsResults = variants.map((v) => {
+      const r = solveEditableModel(v).result;
+      if (r === null) throw new Error('minden változatnak meg kellett volna oldódnia');
+      return r;
+    });
+    const slsResult = solveEditableModel(scaleModelForSls(editable)).result;
+    if (slsResult === null) throw new Error('az SLS-nek meg kellett volna oldódnia');
+
+    const enveloped = computeUtilizationsEnveloped(editable, ulsResults, slsResult);
+    const perVariant = ulsResults.map((uls) => computeUtilizations(editable, uls, slsResult));
+
+    for (const single of perVariant) {
+      expect(enveloped.governing).not.toBeLessThan(single.governing as number);
+    }
   });
 });

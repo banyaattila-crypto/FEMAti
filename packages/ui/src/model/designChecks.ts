@@ -12,6 +12,12 @@
  * 1990 megköveteli. A hívó (`RightPanel.tsx`/`optimize.ts`) felelőssége
  * mindkét kombinációt lefuttatni és idehozni.
  *
+ * 2026-09-06 (ψ₀ kombináció, EN 1990 6.10): 2+ egyidejű `'variable'` teher
+ * esetén nem egy, hanem TÖBB ULS-változat létezik (mindegyik változó teher
+ * sorban "vezető" — ld. `combinations.ts` `scaleModelForUlsVariants`) — ezek
+ * envelope-jára `computeUtilizationsEnveloped` hívandó `computeUtilizations`
+ * helyett.
+ *
  * A repedési nyomaték (`crackingMomentUtilization`) SZÁNDÉKOSAN NINCS itt:
  * a `RightPanel.tsx`-ben is TÁJÉKOZTATÓ jellegű (nem ULS/SLS-kapu, ld. ADR-
  * 0019/ADR-0021), ezért sem a `governing` mezőbe, sem a szelvény-
@@ -34,6 +40,14 @@ export interface DesignUtilizations {
   readonly rcMu: number | null;
   /** A legnagyobb ALKALMAZHATÓ kihasználtság a fentiek közül — null csak akkor, ha egyik sem alkalmazható. */
   readonly governing: number | null;
+  /**
+   * Melyik ULS-kombináció (a hívó `ulsResults`/`scaleModelForUlsVariants`
+   * tömbjének indexe) adta az `mv`/`rc` mértékadó értékét — a hívó ebből
+   * tudja kiírni a mértékadó M/T-t és a "vezető" terhet (`combinations.ts`
+   * `ulsVariantLeadingLoadIds`). `computeUtilizations` (egyetlen kombináció)
+   * esetén mindig 0.
+   */
+  readonly ulsGoverningIndex: number;
 }
 
 /**
@@ -77,5 +91,44 @@ export function computeUtilizations(model: EditableModel, ulsResult: LinearResul
   const applicable = [mv, deflection, rc].filter((v): v is number => v !== null && Number.isFinite(v));
   const governing = applicable.length > 0 ? Math.max(...applicable) : null;
 
-  return { mv, deflection, rc, rcMu, governing };
+  return { mv, deflection, rc, rcMu, governing, ulsGoverningIndex: 0 };
+}
+
+/**
+ * Envelope 2+ egyidejű változó teherre (EN 1990 6.10, `model/combinations.ts`
+ * `scaleModelForUlsVariants`): mindegyik "melyik teher a vezető" változatra
+ * lefuttatja `computeUtilizations`-t, és minden mezőt KÜLÖN a legkedvezőtlenebb
+ * (legnagyobb) értékre envelope-ol — nem ugyanattól a kombinációtól várja el
+ * mindegyik ellenőrzés mértékadó eredményét. 1 elemű `ulsResults` esetén
+ * pontosan `computeUtilizations` eredményét adja vissza.
+ */
+export function computeUtilizationsEnveloped(
+  model: EditableModel,
+  ulsResults: readonly LinearResult[],
+  slsResult: LinearResult,
+): DesignUtilizations {
+  const perCombo = ulsResults.map((uls) => computeUtilizations(model, uls, slsResult));
+  const worstOf = (get: (u: DesignUtilizations) => number | null): number | null => {
+    const values = perCombo.map(get).filter((v): v is number => v !== null && Number.isFinite(v));
+    return values.length > 0 ? Math.max(...values) : null;
+  };
+  // Melyik változat adta az ULS-alapú (mv/rc) mértékadó értéket — a deflection
+  // SLS-ből jön, minden változatnál azonos, ezért nem számít bele.
+  let ulsGoverningIndex = 0;
+  let bestUlsScore = -Infinity;
+  perCombo.forEach((u, i) => {
+    const score = Math.max(u.mv ?? -Infinity, u.rc ?? -Infinity);
+    if (score > bestUlsScore) {
+      bestUlsScore = score;
+      ulsGoverningIndex = i;
+    }
+  });
+  return {
+    mv: worstOf((u) => u.mv),
+    deflection: worstOf((u) => u.deflection),
+    rc: worstOf((u) => u.rc),
+    rcMu: worstOf((u) => u.rcMu),
+    governing: worstOf((u) => u.governing),
+    ulsGoverningIndex,
+  };
 }

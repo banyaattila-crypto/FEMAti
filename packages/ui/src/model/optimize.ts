@@ -16,18 +16,19 @@
  * - A repedési nyomaték (TÁJÉKOZTATÓ jellegű, ld. `designChecks.ts`) nem
  *   számít bele a "megfelel" döntésbe, ugyanúgy, ahogy a jobb panelen sem.
  *
- * 2026-09-04 (teherkombináció): jelöltenként az ULS (1,35G+1,5Q) ÉS az SLS
- * (G+Q) kombinációt is lefuttatja (`model/combinations.ts`) — ugyanaz a két
- * megoldás, amit a `RightPanel.tsx` "Határteher-ellenőrzés" kártyája használ
- * (`model/designChecks.ts` `computeUtilizations`), hogy a javaslat a
+ * 2026-09-04 (teherkombináció): jelöltenként az ULS (EN 1990 6.10, 2+
+ * egyidejű változó teherre több "vezető teher" változat envelope-ja) ÉS az
+ * SLS (G+Q) kombinációt is lefuttatja (`model/combinations.ts`) — ugyanaz,
+ * amit a `RightPanel.tsx` "Határteher-ellenőrzés" kártyája használ
+ * (`model/designChecks.ts` `computeUtilizationsEnveloped`), hogy a javaslat a
  * TÉNYLEGES tervezési teherre legyen "megfelelő", ne a nem faktorozott
  * jellemző teherre.
  */
 import { geometricProperties } from '@femati/fem-core';
 import { SECTIONS, findSection, type SectionKind } from '../data/catalog.js';
 import { solveEditableModel, toShape } from './compile.js';
-import { scaleModelForSls, scaleModelForUls } from './combinations.js';
-import { computeUtilizations } from './designChecks.js';
+import { scaleModelForSls, scaleModelForUlsVariants } from './combinations.js';
+import { computeUtilizationsEnveloped } from './designChecks.js';
 import { utilizationVerdict } from '../format/utilization.js';
 import type { EditableModel } from './editable.js';
 
@@ -65,9 +66,12 @@ export function findSmallestSuitableSection(model: EditableModel): OptimizeResul
     .sort((a, b) => a.area - b.area)
     .map(({ section, area }) => {
       const candidateModel = { ...model, sectionId: section.id };
-      const ulsResult = solveEditableModel(scaleModelForUls(candidateModel)).result;
+      const ulsResults = scaleModelForUlsVariants(candidateModel)
+        .map((variant) => solveEditableModel(variant).result)
+        .filter((r): r is NonNullable<typeof r> => r !== null);
       const slsResult = solveEditableModel(scaleModelForSls(candidateModel)).result;
-      const governing = ulsResult && slsResult ? computeUtilizations(candidateModel, ulsResult, slsResult).governing : null;
+      const governing =
+        ulsResults.length > 0 && slsResult ? computeUtilizationsEnveloped(candidateModel, ulsResults, slsResult).governing : null;
       const ok = governing !== null && utilizationVerdict(governing).tone === 'ok';
       return { sectionId: section.id, name: section.name, area, governing, ok };
     });

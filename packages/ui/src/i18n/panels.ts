@@ -136,6 +136,10 @@ export interface PanelsStrings {
   readonly shapeFactorLabel: string;
   readonly shearCapacityLabel: string;
   readonly shearCapacityTitle: string;
+  readonly ulsGoverningMomentLabel: string;
+  readonly ulsGoverningMomentTitle: string;
+  readonly ulsLeadingLoadLabel: string;
+  readonly ulsLeadingLoadTitle: string;
   readonly mvUtilLabel: string;
   readonly mvUtilTitle: string;
   readonly verdictLabel: string;
@@ -290,6 +294,11 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     shapeFactorLabel: 'alaki tényező c = Mₚ/Mₑ',
     shearCapacityLabel: 'képlékeny nyíróerő-teherbírás Vpl',
     shearCapacityTitle: 'Vpl = κs·A·σY/√3 — az effektív nyírási területből (κs·A), NEM a szabvány Av-jéből (ADR-0018)',
+    ulsGoverningMomentLabel: 'M max (mértékadó ULS-kombináció)',
+    ulsGoverningMomentTitle:
+      '2+ egyidejű változó teher esetén EN 1990 6.10 szerint minden teher sorban "vezető" (γQ=1,5), a többi ψ₀=0,7-tel csökkentett γQ-val — ez a legkedvezőtlenebb (envelope) M ebből',
+    ulsLeadingLoadLabel: 'vezető teher (ULS)',
+    ulsLeadingLoadTitle: 'Melyik teher kapta a teljes γQ=1,5-öt a mértékadó ULS-kombinációban — 0/1 db változó teher esetén nem értelmezhető',
     mvUtilLabel: 'M-V kihasználtság (EN 1993-1-1)',
     mvUtilTitle:
       'EN 1993-1-1 6.2.8 stílusú, UTÓLAGOS ellenőrzés a globális M-max és T-max értékekből, γM0 = 1.00 (ajánlott érték) — ha nem azonos keresztmetszeti helyen lépnek fel, ez egy KONZERVATÍV (biztonság felé téves) becslés, nem pontos helyi érték (ADR-0018, ADR-0021)',
@@ -448,6 +457,11 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     shapeFactorLabel: 'shape factor c = Mₚ/Mₑ',
     shearCapacityLabel: 'plastic shear capacity Vpl',
     shearCapacityTitle: "Vpl = κs·A·σY/√3 — from the effective shear area (κs·A), NOT the code's Av (ADR-0018)",
+    ulsGoverningMomentLabel: 'M max (governing ULS combination)',
+    ulsGoverningMomentTitle:
+      'With 2+ simultaneous variable loads, EN 1990 6.10 takes each load as "leading" in turn (γQ=1.5), the rest reduced by ψ₀=0.7 — this is the worst-case (envelope) M from that',
+    ulsLeadingLoadLabel: 'leading load (ULS)',
+    ulsLeadingLoadTitle: 'Which load got the full γQ=1.5 in the governing ULS combination — not applicable with 0/1 variable loads',
     mvUtilLabel: 'M-V utilization (EN 1993-1-1)',
     mvUtilTitle:
       "An EN 1993-1-1 6.2.8-style POST-HOC check from the global M-max and T-max values, γM0 = 1.00 (recommended value) — if they don't occur at the same cross-section, this is a CONSERVATIVE (safe-sided) estimate, not an exact local value (ADR-0018, ADR-0021)",

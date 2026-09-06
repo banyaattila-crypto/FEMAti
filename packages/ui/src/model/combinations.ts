@@ -48,6 +48,11 @@ function scaleLoad(load: EditableLoad, gammaG: number, gammaQ: number): Editable
  * ULS = 1.35·G + 1.5·Q — a modell egy skálázott másolata (a támaszok,
  * geometria, szelvény, anyag, ágyazások VÁLTOZATLANOK, kizárólag a terhek
  * és az önsúly-szorzó skálázódik).
+ *
+ * FIGYELEM: ez a "minden változó teher egyszerre, teljes γQ-val" változat —
+ * 2+ egyidejű változó teher esetén ez a valós EN 1990 6.10-nél szigorúbb
+ * (biztonság oldali, de túltervező). A helyes kombinációhoz a lenti
+ * `scaleModelForUlsVariants` kell.
  */
 export function scaleModelForUls(model: EditableModel): EditableModel {
   return {
@@ -55,6 +60,56 @@ export function scaleModelForUls(model: EditableModel): EditableModel {
     loads: model.loads.map((l) => scaleLoad(l, ULS_GAMMA_G, ULS_GAMMA_Q)),
     selfWeightFactor: ULS_GAMMA_G,
   };
+}
+
+/**
+ * EN 1990 6.10 — kombinációs (ψ₀) tényező kísérő változó teherre.
+ * MVP: EGY közös érték minden `'variable'` teherre (nincs teherfajta szerinti
+ * tábla — EN 1990 A1.1 melléklet A-C kategóriájú hasznos teher értéke, a
+ * leggyakoribb épületmagasépítési eset).
+ */
+export const ULS_PSI0 = 0.7;
+
+/**
+ * EN 1990 6.10 — ΣγG·G + γQ,1·Qk,1 + Σγq,i·ψ₀·Qk,i: minden `'variable'`
+ * terhet sorban "vezető"-nek (teljes γQ) tekint, a többit ψ₀-val
+ * csökkentett γQ-val — mert nem tudható előre, melyik teher adja a
+ * mértékadó igénybevételt. A hívónak mindegyik változatot le kell futtatnia
+ * és a legkedvezőtlenebbet (envelope) kell vennie — ld.
+ * `designChecks.ts` `computeUtilizationsEnveloped`.
+ *
+ * 1 vagy 0 db `'variable'` teher esetén nincs mit "vezetőnek" választani —
+ * ilyenkor egyetlen elemű tömböt ad vissza, ami megegyezik `scaleModelForUls`
+ * eredményével.
+ */
+function variableLoadIndices(model: EditableModel): readonly number[] {
+  return model.loads.reduce<number[]>((acc, l, i) => (l.category === 'variable' ? [...acc, i] : acc), []);
+}
+
+export function scaleModelForUlsVariants(model: EditableModel): readonly EditableModel[] {
+  const variableIndices = variableLoadIndices(model);
+  if (variableIndices.length <= 1) {
+    return [scaleModelForUls(model)];
+  }
+  return variableIndices.map((leadingIndex) => ({
+    ...model,
+    loads: model.loads.map((l, i) => scaleLoad(l, ULS_GAMMA_G, i === leadingIndex ? ULS_GAMMA_Q : ULS_GAMMA_Q * ULS_PSI0)),
+    selfWeightFactor: ULS_GAMMA_G,
+  }));
+}
+
+/**
+ * Melyik teher volt a "vezető" `scaleModelForUlsVariants` egyes elemeiben,
+ * UGYANOLYAN sorrendben — a hívó (`panels/RightPanel.tsx`) ebből tudja
+ * kiírni, melyik teher adta a mértékadó ULS-kombinációt. 0/1 db `'variable'`
+ * teher esetén nincs "vezető" fogalom, ilyenkor `[null]`.
+ */
+export function ulsVariantLeadingLoadIds(model: EditableModel): readonly (string | null)[] {
+  const variableIndices = variableLoadIndices(model);
+  if (variableIndices.length <= 1) {
+    return [null];
+  }
+  return variableIndices.map((i) => model.loads[i].id);
 }
 
 /**

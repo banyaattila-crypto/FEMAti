@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PRESETS } from '../data/catalog.js';
 import { presetToEditable, resetEntityIds } from './editable.js';
-import { scaleModelForSls, scaleModelForUls, ULS_GAMMA_G, ULS_GAMMA_Q } from './combinations.js';
+import { scaleModelForSls, scaleModelForUls, scaleModelForUlsVariants, ULS_GAMMA_G, ULS_GAMMA_Q, ULS_PSI0 } from './combinations.js';
 
 beforeEach(() => resetEntityIds());
 
@@ -46,6 +46,35 @@ describe('scaleModelForUls', () => {
   it('az önsúly-szorzót γG-re állítja', () => {
     const model = baseModel();
     expect(scaleModelForUls(model).selfWeightFactor).toBe(ULS_GAMMA_G);
+  });
+});
+
+describe('scaleModelForUlsVariants', () => {
+  it('0 vagy 1 db változó teherre egyetlen változatot ad, ami megegyezik a scaleModelForUls eredményével', () => {
+    const model = baseModel(); // 1 db permanent + 1 db variable
+    const variants = scaleModelForUlsVariants(model);
+    expect(variants).toEqual([scaleModelForUls(model)]);
+  });
+
+  it('2 db változó teherre 2 változatot ad, mindegyikben pontosan egy teher kapja a teljes γQ-t, a többi γQ·ψ₀-t', () => {
+    const model = baseModel();
+    const secondVariable = { id: 'P2', kind: 'point' as const, x: model.span / 4, p: 10, category: 'variable' as const };
+    const twoVariable = { ...model, loads: [...model.loads, secondVariable] };
+
+    const variants = scaleModelForUlsVariants(twoVariable);
+    expect(variants).toHaveLength(2);
+
+    for (const variant of variants) {
+      const p1 = variant.loads[1];
+      const p2 = variant.loads[2];
+      if (p1?.kind !== 'point' || p2?.kind !== 'point') throw new Error('a 2. és 3. teher pontteher kell legyen');
+      const scaledByFullGammaQ = [p1.p, p2.p].filter((v) => Math.abs(v - 15 * ULS_GAMMA_Q) < 1e-9 || Math.abs(v - 10 * ULS_GAMMA_Q) < 1e-9);
+      const scaledByPsi0 = [p1.p, p2.p].filter(
+        (v) => Math.abs(v - 15 * ULS_GAMMA_Q * ULS_PSI0) < 1e-9 || Math.abs(v - 10 * ULS_GAMMA_Q * ULS_PSI0) < 1e-9,
+      );
+      expect(scaledByFullGammaQ).toHaveLength(1);
+      expect(scaledByPsi0).toHaveLength(1);
+    }
   });
 });
 
