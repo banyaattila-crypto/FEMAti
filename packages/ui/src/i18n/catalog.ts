@@ -6,8 +6,10 @@
  * fejléc-kommentje szerint), a nyelvfüggő megjelenítést innen kapja.
  *
  * A `fem-db` katalógus-adattartalom (anyag-/szelvénynevek, forrás-idézetek —
- * `material.name`/`section.name`/`*.source`) NEM tartozik ide, explicit
- * felhasználói döntés alapján (ld. memória: `project-femati-i18n-progress`).
+ * `material.name`/`section.name`/`*.source`/`*.note`) NEM ebbe a fájlba
+ * tartozik — az `i18n/database.ts` `catalogName()`/`catalogText()`
+ * fordítja (2026-09-06), a `fem-db` JSON-adat maga TOVÁBBRA IS magyar-only
+ * marad (ld. memória: `project-femati-i18n-progress`).
  */
 import type { Lang } from '../state/appStore.js';
 import type { MaterialFamily, SectionKind } from '@femati/fem-db';

@@ -100,3 +100,11 @@
     flex-direction: column;
   }
 }
+
+/** EN nézetben jelzi, hogy egy lefordított figyelmeztetés/idézet eredetije magyar (ld. `i18n/database.ts` `unverifiedWarningQuoteNote`) — ugyanaz a stílus, mint `historical.css` `.vem-historical__note`. */
+.vem-db__quote-note {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-muted);
+  margin: var(--space-2) 0 0;
+}

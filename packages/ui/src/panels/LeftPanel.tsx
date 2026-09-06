@@ -5,9 +5,10 @@ import { Checkbox, Slider } from '../components/Field.js';
 import { Combobox } from '../components/Combobox.js';
 import { Card, NoteBox } from '../components/Feedback.js';
 import { SectionShapeDiagram } from '../components/SectionShapeDiagram.js';
-import { findMaterial, findSection, dimensionRowsFor, shearModulus, UNVERIFIED_WARNING } from '../data/catalog.js';
+import { findMaterial, findSection, dimensionRowsFor, shearModulus } from '../data/catalog.js';
 import { materialComboOptions } from '../data/catalogIcons.js';
 import { presetDisplayName, sectionKindGroupLabel } from '../i18n/catalog.js';
+import { catalogName, catalogText, DATABASE, SOURCE_EN } from '../i18n/database.js';
 import { compositeSectionStiffness, toShape } from '../model/compile.js';
 import { findSmallestSuitableSection, type OptimizeResult } from '../model/optimize.js';
 import { useAppStore } from '../state/appStore.js';
@@ -480,7 +481,7 @@ export function LeftPanel(): JSX.Element {
   const tree: readonly { label: string; value: string }[] = [
     { label: t.treeGeometryLabel, value: `${fmt.length(model.span).value} ${fmt.length(model.span).unit}` },
     { label: t.treeMaterialLabel, value: material.id },
-    { label: t.treeSectionLabel, value: section.name },
+    { label: t.treeSectionLabel, value: catalogName(section.name, s.lang) },
     { label: t.treeMeshLabel, value: t.elementsValue(model.elementCount) },
     { label: t.treeSolverLabel, value: s.algorithm === 'newton' ? t.newtonLabel : t.modNewtonLabel },
   ];
@@ -518,7 +519,7 @@ export function LeftPanel(): JSX.Element {
           <div className="vem-section-preview">
             <SectionShapeDiagram section={section} />
             <div className="vem-section-preview__figures">
-              <div className="vem-section-preview__name">{section.name}</div>
+              <div className="vem-section-preview__name">{catalogName(section.name, s.lang)}</div>
               {dimensionRowsFor(section).map((r) => (
                 <div key={r.label}>
                   {r.symbol} = {r.v !== undefined ? `${fmt.smallLength(r.v / 1000).value} ${fmt.smallLength(r.v / 1000).unit}` : '—'}
@@ -530,16 +531,16 @@ export function LeftPanel(): JSX.Element {
             </div>
           </div>
           <div className="vem-section-preview__figures" style={{ padding: '0 var(--space-5) var(--space-3)' }}>
-            <div className="vem-section-preview__name">{material.name}</div>
+            <div className="vem-section-preview__name">{catalogName(material.name, s.lang)}</div>
             <div>E = {fmt.stress(material.e * 1e4).value} {fmt.stress(material.e * 1e4).unit}</div>
             <div>G = {fmt.stress(shearModulus(material) * 1e4).value} {fmt.stress(shearModulus(material) * 1e4).unit}</div>
           </div>
           <div style={{ padding: '0 var(--space-5)' }}>
             <NoteBox tone={material.verified && section.verified ? 'info' : 'warn'}>
               {section.aCat !== undefined ? t.layeredNote : t.parametricNote}
-              {!material.verified || !section.verified ? ` ${UNVERIFIED_WARNING}` : ''}
-              {material.verified ? '' : t.materialSourceNote(material.name, material.source)}
-              {section.verified ? '' : t.sectionSourceNote(section.name, section.source)}
+              {!material.verified || !section.verified ? ` ${DATABASE[s.lang].unverifiedWarning}` : ''}
+              {material.verified ? '' : t.materialSourceNote(catalogName(material.name, s.lang), catalogText(material.source, s.lang, SOURCE_EN))}
+              {section.verified ? '' : t.sectionSourceNote(catalogName(section.name, s.lang), catalogText(section.source, s.lang, SOURCE_EN))}
             </NoteBox>
           </div>
           {material.family === 'concrete' && section.kind === 'rect' ? (
@@ -667,7 +668,7 @@ export function LeftPanel(): JSX.Element {
                   <>
                     <NoteBox tone="info">
                       {t.optimizeProposal(
-                        optimizeResult.best.name,
+                        catalogName(optimizeResult.best.name, s.lang),
                         fmt.area(optimizeResult.best.area).value,
                         fmt.area(optimizeResult.best.area).unit,
                         optimizeResult.best.governing !== null ? `${(optimizeResult.best.governing * 100).toFixed(0)}%` : '—',

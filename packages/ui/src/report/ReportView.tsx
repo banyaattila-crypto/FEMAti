@@ -19,8 +19,9 @@
  */
 import './report.css';
 import { crackingMomentUtilization, deflectionUtilization, shearMomentInteraction } from '@femati/fem-core';
-import { findMaterial, findPreset, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
+import { findMaterial, findPreset, findSection } from '../data/catalog.js';
 import { presetDisplayName } from '../i18n/catalog.js';
+import { catalogName, catalogText, DATABASE, SOURCE_EN } from '../i18n/database.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
@@ -135,11 +136,11 @@ export function ReportView(): JSX.Element | null {
                 </tr>
                 <tr>
                   <th>{t.sectionLabel}</th>
-                  <td>{section.name}</td>
+                  <td>{catalogName(section.name, lang)}</td>
                 </tr>
                 <tr>
                   <th>{t.materialLabel}</th>
-                  <td>{material.name}</td>
+                  <td>{catalogName(material.name, lang)}</td>
                 </tr>
                 <tr>
                   <th>{t.selfWeightLabel}</th>
@@ -204,9 +205,13 @@ export function ReportView(): JSX.Element | null {
 
           {catalogUnverified ? (
             <div className="vem-report__note vem-report__note--warn">
-              {UNVERIFIED_WARNING}
-              {!material.verified ? t.materialSourceNote(material.name, material.source) : ''}
-              {!section.verified ? t.sectionSourceNote(section.name, section.source) : ''}
+              {DATABASE[lang].unverifiedWarning}
+              {!material.verified
+                ? t.materialSourceNote(catalogName(material.name, lang), catalogText(material.source, lang, SOURCE_EN))
+                : ''}
+              {!section.verified
+                ? t.sectionSourceNote(catalogName(section.name, lang), catalogText(section.source, lang, SOURCE_EN))
+                : ''}
             </div>
           ) : null}
         </section>

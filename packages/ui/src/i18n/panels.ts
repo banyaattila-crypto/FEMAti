@@ -9,10 +9,12 @@
  * mezőt ad, a `LeftPanel.tsx` az `i18n/catalog.ts` `sectionKindGroupLabel`-
  * jével fordítja (ugyanaz a minta, mint a `UtilizationVerdictCode`-nál).
  *
- * ISMERT, TUDATOS RÉS: a katalógus-eredetű `UNVERIFIED_WARNING`/
- * `material.source`/`section.source` szövegek NEM ide tartoznak — ezek a
- * `fem-db` csomag adattartalma, ami explicit felhasználói döntés alapján
- * KÍVÜL esik ezen az i18n-körön.
+ * A katalógus-eredetű `UNVERIFIED_WARNING`/`material.source`/
+ * `section.source`/`material.name`/`section.name` szövegek NEM ide
+ * tartoznak — a `LeftPanel.tsx` az `i18n/database.ts`
+ * `catalogText()`/`catalogName()`/`DATABASE[lang].unverifiedWarning`
+ * függvényeivel fordítja őket (2026-09-06), a `fem-db` csomag adattartalma
+ * maga TOVÁBBRA IS magyar-only marad.
  */
 import type { Lang } from '../state/appStore.js';
 import type { SupportType } from '../model/editable.js';

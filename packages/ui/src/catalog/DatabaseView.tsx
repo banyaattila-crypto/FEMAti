@@ -19,6 +19,11 @@
  * Ugyanazt az overlay-architektúrát használja, mint a `theory/TheoryView.tsx`
  * (`.vem-theory*` osztályok) — két külön böngésző-nézet, egy közös vizuális
  * nyelv, nem duplikált CSS.
+ *
+ * 2026-09-06: a `.source`/`.note` mezők (és az `UNVERIFIED_WARNING`)
+ * MAGYAR prózáját EN nézetben az `i18n/database.ts` `catalogText()` +
+ * `SOURCE_EN`/`NOTE_EN` fordítja — a katalógus-adat maga (`fem-db` JSON)
+ * VÁLTOZATLANUL magyar marad, a fordítás a UI rétegben történik.
  */
 import { useState } from 'react';
 import { geometricProperties } from '@femati/fem-core';
@@ -29,7 +34,6 @@ import { MaterialSwatch } from '../data/catalogIcons.js';
 import {
   MATERIALS,
   SECTIONS,
-  UNVERIFIED_WARNING,
   dimensionRowsFor,
   shearModulus,
   type MaterialEntry,
@@ -41,7 +45,7 @@ import { toShape } from '../model/compile.js';
 import { Formula } from '../derivation/Formula.js';
 import { useAppStore, type Lang } from '../state/appStore.js';
 import { sectionKindGroupLabel, materialFamilyGroupLabel } from '../i18n/catalog.js';
-import { DATABASE } from '../i18n/database.js';
+import { catalogName, catalogText, DATABASE, NOTE_EN, SOURCE_EN } from '../i18n/database.js';
 import type { Formatted } from '../format/numbers.js';
 import './database.css';
 
@@ -63,17 +67,24 @@ function groupBy<T, K extends string>(items: readonly T[], key: (t: T) => K): Re
   return map;
 }
 
-/** A csoportosított listát a kereső-szöveggel szűri; üres csoportok eltűnnek. */
+/**
+ * A csoportosított listát a kereső-szöveggel szűri; üres csoportok eltűnnek.
+ * `lang`: EN nézetben a FORDÍTOTT névre (`catalogName()`) is illeszkedik —
+ * pl. "circle" rátaláljon a "Kör ⌀150"-re —, nem csak az eredeti magyarra.
+ */
 function filterGroups<T extends { readonly name: string }, K extends string>(
   byGroup: ReadonlyMap<K, readonly T[]>,
   groups: readonly K[],
   query: string,
+  lang: Lang,
 ): ReadonlyMap<K, readonly T[]> {
   const q = query.trim().toLowerCase();
   if (q === '') return byGroup;
   const result = new Map<K, readonly T[]>();
   for (const g of groups) {
-    const filtered = (byGroup.get(g) ?? []).filter((item) => item.name.toLowerCase().includes(q));
+    const filtered = (byGroup.get(g) ?? []).filter(
+      (item) => item.name.toLowerCase().includes(q) || catalogName(item.name, lang).toLowerCase().includes(q),
+    );
     if (filtered.length > 0) result.set(g, filtered);
   }
   return result;
@@ -159,7 +170,7 @@ function MaterialDetail({
         <div className="vem-theory__header-title">
           <MaterialSwatch family={material.family} />
           <div>
-            <h2>{material.name}</h2>
+            <h2>{catalogName(material.name, lang)}</h2>
             <p className="vem-theory__subtitle">{materialFamilyGroupLabel(material.family, lang)}</p>
           </div>
         </div>
@@ -195,12 +206,15 @@ function MaterialDetail({
 
         <div style={{ marginTop: 'var(--space-4)' }}>
           <NoteBox tone={material.verified ? 'info' : 'warn'}>
-            {t.source}: {material.source}
-            {material.verified ? '' : ` ${UNVERIFIED_WARNING}`}
+            {t.source}: {catalogText(material.source, lang, SOURCE_EN)}
+            {material.verified ? '' : ` ${t.unverifiedWarning}`}
           </NoteBox>
+          {!material.verified && t.unverifiedWarningQuoteNote !== '' ? (
+            <p className="vem-db__quote-note">{t.unverifiedWarningQuoteNote}</p>
+          ) : null}
           {material.note !== undefined ? (
             <div style={{ marginTop: 'var(--space-3)' }}>
-              <NoteBox tone="info">{material.note}</NoteBox>
+              <NoteBox tone="info">{catalogText(material.note, lang, NOTE_EN)}</NoteBox>
             </div>
           ) : null}
         </div>
@@ -277,7 +291,7 @@ function SectionDetail({
       <header className="vem-theory__header">
         <div className="vem-theory__header-title">
           <div>
-            <h2>{section.name}</h2>
+            <h2>{catalogName(section.name, lang)}</h2>
             <p className="vem-theory__subtitle">{sectionKindGroupLabel(section.kind, lang)}</p>
           </div>
         </div>
@@ -354,9 +368,12 @@ function SectionDetail({
 
         <div style={{ marginTop: 'var(--space-4)' }}>
           <NoteBox tone={section.verified ? 'info' : 'warn'}>
-            {t.source}: {section.source}
-            {section.verified ? '' : ` ${UNVERIFIED_WARNING}`}
+            {t.source}: {catalogText(section.source, lang, SOURCE_EN)}
+            {section.verified ? '' : ` ${t.unverifiedWarning}`}
           </NoteBox>
+          {!section.verified && t.unverifiedWarningQuoteNote !== '' ? (
+            <p className="vem-db__quote-note">{t.unverifiedWarningQuoteNote}</p>
+          ) : null}
         </div>
       </div>
     </>
@@ -386,8 +403,8 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
   const title = t.title[kind];
   const placeholder = t.searchPlaceholder[kind];
 
-  const filteredMaterials = filterGroups(MATERIALS_BY_FAMILY, MATERIAL_FAMILIES, query);
-  const filteredSections = filterGroups(SECTIONS_BY_KIND, SECTION_KINDS, query);
+  const filteredMaterials = filterGroups(MATERIALS_BY_FAMILY, MATERIAL_FAMILIES, query, lang);
+  const filteredSections = filterGroups(SECTIONS_BY_KIND, SECTION_KINDS, query, lang);
   const noResults = isMaterial ? filteredMaterials.size === 0 : filteredSections.size === 0;
 
   const selectedMaterial = MATERIALS.find((m) => m.id === materialSelection) ?? (MATERIALS[0] as MaterialEntry);
@@ -421,7 +438,7 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
                         onClick={() => setMaterialSelection(m.id)}
                       >
                         <MaterialSwatch family={m.family} />
-                        {m.name}
+                        {catalogName(m.name, lang)}
                       </button>
                     ))}
                   </div>
@@ -437,7 +454,7 @@ export function DatabaseView({ kind }: DatabaseViewProps): JSX.Element | null {
                         aria-current={sectionSelection === sec.id}
                         onClick={() => setSectionSelection(sec.id)}
                       >
-                        {sec.name}
+                        {catalogName(sec.name, lang)}
                       </button>
                     ))}
                   </div>

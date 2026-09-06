@@ -30,6 +30,7 @@ import type { ComboboxOption } from '../components/Combobox.js';
 import { LOAD_COLOR, SUPPORT_COLOR, arrowMarkerId } from '../canvas/marks.js';
 import type { Lang } from '../state/appStore.js';
 import { materialFamilyGroupLabel, presetDisplayName, sectionKindGroupLabel } from '../i18n/catalog.js';
+import { catalogName } from '../i18n/database.js';
 import concreteRef from '../assets/materials/concrete-ref.jpg';
 import timberRef from '../assets/materials/timber-ref.jpg';
 import castironRef from '../assets/materials/castiron-ref.jpg';
@@ -189,7 +190,7 @@ export function MaterialSwatch({ family, size = 16, shape = 'circle' }: Material
 export function sectionComboOptions(lang: Lang): readonly ComboboxOption[] {
   return SECTIONS.map((s) => ({
     value: s.id,
-    label: s.name,
+    label: catalogName(s.name, lang),
     group: sectionKindGroupLabel(s.kind, lang),
     icon: SECTION_ICON[s.kind],
   }));
@@ -203,7 +204,7 @@ export function sectionComboOptions(lang: Lang): readonly ComboboxOption[] {
 export function materialComboOptions(lang: Lang, family?: MaterialFamily): readonly ComboboxOption[] {
   return MATERIALS.filter((m) => family === undefined || m.family === family).map((m) => ({
     value: m.id,
-    label: m.name,
+    label: catalogName(m.name, lang),
     group: materialFamilyGroupLabel(m.family, lang),
     icon: <MaterialSwatch family={m.family} />,
   }));

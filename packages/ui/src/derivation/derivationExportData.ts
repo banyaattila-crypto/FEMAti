@@ -27,6 +27,7 @@ import { SUPPORT_TYPE_LABEL } from '../i18n/panels.js';
 import { REPORT, formatReportDateTime } from '../i18n/report.js';
 import { DERIVATION, type DerivationStrings } from '../i18n/derivation.js';
 import { presetDisplayName } from '../i18n/catalog.js';
+import { catalogName, catalogText, SOURCE_EN } from '../i18n/database.js';
 import {
   bendingGaussTex,
   convergenceTex,
@@ -268,11 +269,11 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
     span: model.span,
     elementCount: model.elementCount,
     integrationLabel: model.integration === 'selective' ? t.integrationSelective : t.integrationFull,
-    sectionName: section.name,
-    sectionSource: section.source,
-    materialName: material.name,
+    sectionName: catalogName(section.name, lang),
+    sectionSource: catalogText(section.source, lang, SOURCE_EN),
+    materialName: catalogName(material.name, lang),
     materialSummary: `E=${(material.e).toFixed(0)} kN/cm², σY=${material.sigmaY > 0 ? material.sigmaY.toFixed(2) : '—'} kN/cm²`,
-    materialSource: material.source,
+    materialSource: catalogText(material.source, lang, SOURCE_EN),
     supportRows: model.supports.map((s) => [s.id, s.x.toFixed(2), SUPPORT_TYPE_LABEL[lang][s.type]]),
     loadRows: model.loads.map((l) => [
       l.id,
@@ -310,7 +311,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
             linear.props.shapeFactor,
           )
         : null,
-    meMpNote: t.meMpNoteElastic(material.name, fixed(linear.props.shapeFactor, 3)),
+    meMpNote: t.meMpNoteElastic(catalogName(material.name, lang), fixed(linear.props.shapeFactor, 3)),
 
     elementLength: elementDerivation.length,
     nodeCount: linear.nodes.length,

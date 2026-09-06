@@ -30,7 +30,7 @@ import {
   elementGlobalNodeIndices,
 } from '@femati/fem-core';
 import './derivation.css';
-import { findMaterial, findPreset, findSection, UNVERIFIED_WARNING } from '../data/catalog.js';
+import { findMaterial, findPreset, findSection } from '../data/catalog.js';
 import { useAppStore } from '../state/appStore.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
@@ -69,6 +69,7 @@ import { SUPPORT_TYPE_LABEL } from '../i18n/panels.js';
 import { REPORT, formatReportDateTime } from '../i18n/report.js';
 import { DERIVATION } from '../i18n/derivation.js';
 import { presetDisplayName } from '../i18n/catalog.js';
+import { catalogName, catalogText, DATABASE, SOURCE_EN } from '../i18n/database.js';
 import type { Lang } from '../state/appStore.js';
 
 function fmtNum(v: number, digits = 4): string {
@@ -221,8 +222,10 @@ export function DerivationView(): JSX.Element | null {
               <tr>
                 <th>{t.sectionLabel}</th>
                 <td>
-                  {section.name}
-                  {!section.verified ? t.sectionSourceSuffixUnverified(section.source) : t.sectionSourceSuffixVerified(section.source)}
+                  {catalogName(section.name, lang)}
+                  {!section.verified
+                    ? t.sectionSourceSuffixUnverified(catalogText(section.source, lang, SOURCE_EN))
+                    : t.sectionSourceSuffixVerified(catalogText(section.source, lang, SOURCE_EN))}
                 </td>
               </tr>
               <tr>
@@ -231,7 +234,7 @@ export function DerivationView(): JSX.Element | null {
                   {t.materialSummary(
                     fmt.stress(material.e * 1e4).value,
                     material.sigmaY > 0 ? `${material.sigmaY.toFixed(2)} kN/cm²` : t.materialElastic,
-                    material.source,
+                    catalogText(material.source, lang, SOURCE_EN),
                   )}
                 </td>
               </tr>
@@ -284,7 +287,7 @@ export function DerivationView(): JSX.Element | null {
             </tbody>
           </table>
           {catalogUnverified ? (
-            <div className="vem-derivation__note vem-derivation__note--warn">{UNVERIFIED_WARNING}</div>
+            <div className="vem-derivation__note vem-derivation__note--warn">{DATABASE[lang].unverifiedWarning}</div>
           ) : null}
         </section>
 
@@ -360,7 +363,7 @@ export function DerivationView(): JSX.Element | null {
             </>
           ) : (
             <p className="vem-derivation__note">
-              {t.meMpNoteElastic(material.name, fmt.shapeFactor(data.linear.props.shapeFactor).value)}
+              {t.meMpNoteElastic(catalogName(material.name, lang), fmt.shapeFactor(data.linear.props.shapeFactor).value)}
             </p>
           )}
           {section.aCat !== undefined && section.iCat !== undefined

@@ -9,8 +9,9 @@
  * a `ReportView.tsx` — egy jelentés ne mondjon mást, mint a munkaasztal.
  *
  * A `material.name`/`section.name`/`*.source` (katalógus-adattartalom) NEM
- * tartozik ide, explicit felhasználói döntés alapján — ez marad magyar
- * mindkét nyelven.
+ * ide tartozik — a `ReportView.tsx` az `i18n/database.ts`
+ * `catalogName()`/`catalogText()` függvényeivel fordítja EN nézetben
+ * (2026-09-06), a `fem-db` JSON-adat maga marad magyar mindkét nyelven.
  */
 import type { Lang } from '../state/appStore.js';
 

@@ -40,6 +40,7 @@ import {
 import * as fmt from '../format/numbers.js';
 import { CANVAS } from '../i18n/canvas.js';
 import { SUPPORT_TYPE_LABEL } from '../i18n/panels.js';
+import { catalogName } from '../i18n/database.js';
 
 /** A GAUSS_3 (STRESS_POINTS) lokális koordinátái — `element/quadrature.ts`-sel egyező sorrendben. */
 const GAUSS_XI: readonly [number, number, number] = [-Math.sqrt(0.6), 0, Math.sqrt(0.6)];
@@ -865,7 +866,7 @@ export function ModelCanvas(): JSX.Element {
               fill="var(--text-muted)"
               style={{ font: "500 15px var(--font-mono)" }}
             >
-              L = {model.span.toFixed(2)} m · {material.name}
+              L = {model.span.toFixed(2)} m · {catalogName(material.name, lang)}
             </text>
           </g>
         </g>
