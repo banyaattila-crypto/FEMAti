@@ -302,7 +302,8 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     selfCheckLabel: 'Önellenőrzés (selfCheck)',
     selfCheckValue: (ok, total, warningSuffix) => `${ok}/${total} ellenőrzés rendben${warningSuffix}`,
     selfCheckWarningSuffix: (n) => `, ${n} figyelmeztetés`,
-    displacementsIntro: (elementId) => `A megoldásból (d = K⁻¹·f) kiolvasott elmozdulások a(z) ${elementId} elem 3 csomópontjára, uₑ = [w₁,φ₁,w₂,φ₂,w₃,φ₃]:`,
+    displacementsIntro: (elementId) =>
+      `A megoldásból (d = K⁻¹·f) kiolvasott elmozdulások a(z) ${elementId} elem 3 csomópontjára, uₑ = [w₁,φ₁,w₂,φ₂,w₃,φ₃]:`,
     displacementsNote:
       'Ez a vektor a 6. pontban κ = B_κ·uₑ és γ = B_γ·uₑ formában adja az igénybevételt — a híd a "megoldás" (ez a pont) és az "eredmény" (6. pont) között.',
 
@@ -315,7 +316,8 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     gaussPointHeader: 'Gauss-pont',
     momentHeader: 'M [kNm]',
     shearHeader: 'T [kN]',
-    elementErrorNote: (pct) => `Elemhatáron a szomszédos elemek extrapolált értékét átlagoljuk, a köztük mért ugrás adja az elemenkénti hibajelzőt (jelenleg ${pct}%) — ld. docs/THEORY.md 6. pont.`,
+    elementErrorNote: (pct) =>
+      `Elemhatáron a szomszédos elemek extrapolált értékét átlagoljuk, a köztük mért ugrás adja az elemenkénti hibajelzőt (jelenleg ${pct}%) — ld. docs/THEORY.md 6. pont.`,
     section6_3Title: '6.3 Gauss-pont → csomópont extrapoláció — a másodfokú (Lagrange-) képlet behelyettesítve',
     section6_3Intro:
       'A 3 Gauss-pont (ξ₁,ξ₂,ξ₃) M-értékén átfektetett másodfokú polinomot kiértékelve ξ=−1-ben és ξ=+1-ben kapjuk az elem SAJÁT (még nem szomszéd-átlagolt) csomóponti extrapolált értékét — ξ=0-ban ez triviálisan a középső Gauss-pont saját értéke (ld. extrapolation.ts fejléce).',
@@ -343,7 +345,7 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     plasticSampleExtreme: 'Teljesen kiírt példa — a legnagyobb |σ_trial|-jal:',
     layerHeader: 'réteg',
     zHeader: 'z [mm]',
-    prevStressHeader: "σ_{r-1} [kN/cm²]",
+    prevStressHeader: 'σ_{r-1} [kN/cm²]',
     dEpsHeader: 'Δε',
     trialStressHeader: 'σ_trial [kN/cm²]',
     rHeader: 'R',
@@ -357,11 +359,13 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     hingeElementHeader: 'Elem',
     hingeXHeader: 'x ≈ [m]',
     noPlasticZone: 'Nem alakult ki képlékeny zóna.',
-    runConverged: (lambda) => `A futás λ = ${lambda}-ig konvergált — ez a beállított csúcs-teherszorzó, NEM feltétlenül a szerkezet valódi határtehere.`,
+    runConverged: (lambda) =>
+      `A futás λ = ${lambda}-ig konvergált — ez a beállított csúcs-teherszorzó, NEM feltétlenül a szerkezet valódi határtehere.`,
     runLimitLoad: (lambda) =>
       `A futás a numerikus határteher közelébe ért (λ ≈ ${lambda}). Ehhez az általános vázhoz nincs kanonikus zárt alakú képlékeny határteher-képlet — konkrét esetekre ld. fem-validation P-03…P-08.`,
     runDiverged: 'A futás megszakadt.',
-    noNonlinearRun: 'Nincs nemlineáris futási eredmény — futtasd a SZÁMÍTÁS gombbal (F5), majd nyisd meg újra a levezetést, hogy ez a pont is megjelenjen.',
+    noNonlinearRun:
+      'Nincs nemlineáris futási eredmény — futtasd a SZÁMÍTÁS gombbal (F5), majd nyisd meg újra a levezetést, hogy ez a pont is megjelenjen.',
 
     propertyHeader: 'Jellemző',
     valueGenericHeader: 'Érték',
@@ -418,7 +422,8 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     section4Title: (elementId) => `4. Full derivation of element ${elementId}`,
     section4Intro: (x1, x2, x3, length, scheme) =>
       `Nodes: x₁ = ${x1} m, x₂ = ${x2} m, x₃ = ${x3} m — length L_e = ${length} m. Integration scheme: ${scheme}.`,
-    section4_1Title: '4.1 Jacobian (the mapping is identical at every ξ, because the element is straight and the middle node is exactly at the midpoint)',
+    section4_1Title:
+      '4.1 Jacobian (the mapping is identical at every ξ, because the element is straight and the middle node is exactly at the midpoint)',
     jacobianNote:
       '(Only the B1 Gauss point value of dN/dξ is used above — J gives the same result for every ξ, because the element is straight and the middle node is exactly at the midpoint.)',
     section4_2Title: '4.2 Bending term — 3-point Gauss integration, FULL, substituted derivation for EVERY point',
@@ -445,7 +450,7 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
 
     section4ATitle: (elementId) => `4A. Mass matrix derivation for element ${elementId} (ADR-0016)`,
     section4AIntro:
-      "Both terms of the mass matrix (translational m', rotary inertia m'ᵩ) are integrated with the SAME, full (3-point Gauss) quadrature — there is no selective scheme, unlike the stiffness matrix (see the elementMass documentation). RESULT ONLY: the eigenvalue solution (Jacobi rotation) does NOT get a step-by-step animated view here (see ADR-0016 \"UI integration\" section) — this point is the element-level mass matrix assembly, not the modal solution.",
+      'Both terms of the mass matrix (translational m\', rotary inertia m\'ᵩ) are integrated with the SAME, full (3-point Gauss) quadrature — there is no selective scheme, unlike the stiffness matrix (see the elementMass documentation). RESULT ONLY: the eigenvalue solution (Jacobi rotation) does NOT get a step-by-step animated view here (see ADR-0016 "UI integration" section) — this point is the element-level mass matrix assembly, not the modal solution.',
     section4A_1Title: '4A.1 Gauss points — N shape functions and the rows scattered to the w/φ DOF slots (nRows)',
     wRowLabel: 'w-row (N_w)',
     phiRowLabel: 'φ-row (N_φ)',
@@ -456,7 +461,8 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
 
     section5Title: '5. Assembly and solution',
     section5_1Title: (elementId) => `5.1 Assembly — where does the Kₑ of element ${elementId} go in the global matrix?`,
-    assemblyIntro: (n1, n2, n3) => `Node numbers in the model (from 0): ${n1}, ${n2}, ${n3} — the global DOF index for every node is 2·i (w) and 2·i+1 (φ), see assembly/dofMap.ts.`,
+    assemblyIntro: (n1, n2, n3) =>
+      `Node numbers in the model (from 0): ${n1}, ${n2}, ${n3} — the global DOF index for every node is 2·i (w) and 2·i+1 (φ), see assembly/dofMap.ts.`,
     localDofHeader: 'Local DOF',
     nodeShortHeader: 'Node',
     roleHeader: 'Role',
@@ -478,7 +484,8 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     selfCheckLabel: 'Self-check',
     selfCheckValue: (ok, total, warningSuffix) => `${ok}/${total} checks passed${warningSuffix}`,
     selfCheckWarningSuffix: (n) => `, ${n} warning${n === 1 ? '' : 's'}`,
-    displacementsIntro: (elementId) => `The displacements read from the solution (d = K⁻¹·f) for the 3 nodes of element ${elementId}, uₑ = [w₁,φ₁,w₂,φ₂,w₃,φ₃]:`,
+    displacementsIntro: (elementId) =>
+      `The displacements read from the solution (d = K⁻¹·f) for the 3 nodes of element ${elementId}, uₑ = [w₁,φ₁,w₂,φ₂,w₃,φ₃]:`,
     displacementsNote:
       'This vector gives the internal forces in section 6 as κ = B_κ·uₑ and γ = B_γ·uₑ — the bridge between the "solution" (this point) and the "result" (section 6).',
 
@@ -486,12 +493,14 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     section6_1Title: '6.1 Internal force recovery — κ = B_κ·uₑ, γ = B_γ·uₑ, M = EI·(κ−κ₀), T = GAs·γ',
     section6_1Intro:
       'From the nodal displacements (section 5.3, uₑ), the curvature (κ) and shear strain (γ) can be recovered at ANY ξ of the element — below, at the same 3 points (STRESS_POINTS = GAUSS_3) where the section actually supplies M/T for the diagram.',
-    kappa0Note: (kappa0) => `κ₀ = ${kappa0} 1/m (the initial curvature from the thermal load, see section 4.7) — this is why the formula for M uses κ−κ₀, not κ alone.`,
+    kappa0Note: (kappa0) =>
+      `κ₀ = ${kappa0} 1/m (the initial curvature from the thermal load, see section 4.7) — this is why the formula for M uses κ−κ₀, not κ alone.`,
     section6_2Title: (elementId) => `6.2 Gauss-point internal forces of element ${elementId} → nodal extrapolation (Diplomaterv 3.1.7.4)`,
     gaussPointHeader: 'Gauss point',
     momentHeader: 'M [kNm]',
     shearHeader: 'T [kN]',
-    elementErrorNote: (pct) => `The extrapolated values of neighboring elements are averaged at the element boundary; the jump measured between them gives the per-element error indicator (currently ${pct}%) — see docs/THEORY.md section 6.`,
+    elementErrorNote: (pct) =>
+      `The extrapolated values of neighboring elements are averaged at the element boundary; the jump measured between them gives the per-element error indicator (currently ${pct}%) — see docs/THEORY.md section 6.`,
     section6_3Title: '6.3 Gauss point → node extrapolation — the quadratic (Lagrange) formula, substituted',
     section6_3Intro:
       "Evaluating the quadratic polynomial fitted to the M-values of the 3 Gauss points (ξ₁,ξ₂,ξ₃) at ξ=−1 and ξ=+1 gives the element's OWN (not yet neighbor-averaged) extrapolated nodal value — at ξ=0 this is trivially the middle Gauss point's own value (see the extrapolation.ts header).",
@@ -519,7 +528,7 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     plasticSampleExtreme: 'Fully written-out example — with the largest |σ_trial|:',
     layerHeader: 'layer',
     zHeader: 'z [mm]',
-    prevStressHeader: "σ_{r-1} [kN/cm²]",
+    prevStressHeader: 'σ_{r-1} [kN/cm²]',
     dEpsHeader: 'Δε',
     trialStressHeader: 'σ_trial [kN/cm²]',
     rHeader: 'R',
@@ -533,7 +542,8 @@ export const DERIVATION: Record<Lang, DerivationStrings> = {
     hingeElementHeader: 'Element',
     hingeXHeader: 'x ≈ [m]',
     noPlasticZone: 'No plastic zone developed.',
-    runConverged: (lambda) => `The run converged to λ = ${lambda} — this is the configured peak load factor, NOT necessarily the structure's true limit load.`,
+    runConverged: (lambda) =>
+      `The run converged to λ = ${lambda} — this is the configured peak load factor, NOT necessarily the structure's true limit load.`,
     runLimitLoad: (lambda) =>
       `The run approached the numerical limit load (λ ≈ ${lambda}). There is no canonical closed-form plastic limit-load formula for this general scheme — see fem-validation P-03…P-08 for specific cases.`,
     runDiverged: 'The run diverged.',

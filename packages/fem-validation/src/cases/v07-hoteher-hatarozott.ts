@@ -44,9 +44,7 @@ export function caseV07(): ValidationCase {
 
   const wRef = (kappa0 / 2) * (L / 2) * (L / 2 - L);
 
-  const checks: ValidationCheck[] = [
-    { label: 'w a középső csomópontban [m]', reference: wRef, computed: mid.w, tolerance: 1e-8, kind: 'relative' },
-  ];
+  const checks: ValidationCheck[] = [{ label: 'w a középső csomópontban [m]', reference: wRef, computed: mid.w, tolerance: 1e-8, kind: 'relative' }];
   for (const el of result.elements) {
     for (const gp of el.gaussPoints) {
       checks.push({

@@ -38,9 +38,7 @@ function expectFrontalMatchesSkyline(model: Model, label: string): void {
     const expected = skyline.displacements[d] ?? 0;
     const actual = frontal.displacements[d] ?? 0;
     const relError = Math.abs(actual - expected) / scale;
-    expect(relError, `${label} — dof ${d}: skyline=${expected}, frontal=${actual}`).toBeLessThan(
-      RELATIVE_TOLERANCE,
-    );
+    expect(relError, `${label} — dof ${d}: skyline=${expected}, frontal=${actual}`).toBeLessThan(RELATIVE_TOLERANCE);
   }
 }
 

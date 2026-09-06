@@ -206,12 +206,8 @@ export function ReportView(): JSX.Element | null {
           {catalogUnverified ? (
             <div className="vem-report__note vem-report__note--warn">
               {DATABASE[lang].unverifiedWarning}
-              {!material.verified
-                ? t.materialSourceNote(catalogName(material.name, lang), catalogText(material.source, lang, SOURCE_EN))
-                : ''}
-              {!section.verified
-                ? t.sectionSourceNote(catalogName(section.name, lang), catalogText(section.source, lang, SOURCE_EN))
-                : ''}
+              {!material.verified ? t.materialSourceNote(catalogName(material.name, lang), catalogText(material.source, lang, SOURCE_EN)) : ''}
+              {!section.verified ? t.sectionSourceNote(catalogName(section.name, lang), catalogText(section.source, lang, SOURCE_EN)) : ''}
             </div>
           ) : null}
         </section>
@@ -299,15 +295,13 @@ export function ReportView(): JSX.Element | null {
                     <tr>
                       <th>M max</th>
                       <td>
-                        {fmt.moment(result.extremes.m.value).value} {fmt.moment(result.extremes.m.value).unit} @{' '}
-                        {result.extremes.m.x.toFixed(2)} m
+                        {fmt.moment(result.extremes.m.value).value} {fmt.moment(result.extremes.m.value).unit} @ {result.extremes.m.x.toFixed(2)} m
                       </td>
                     </tr>
                     <tr>
                       <th>T max</th>
                       <td>
-                        {fmt.shear(result.extremes.t.value).value} {fmt.shear(result.extremes.t.value).unit} @{' '}
-                        {result.extremes.t.x.toFixed(2)} m
+                        {fmt.shear(result.extremes.t.value).value} {fmt.shear(result.extremes.t.value).unit} @ {result.extremes.t.x.toFixed(2)} m
                       </td>
                     </tr>
                   </tbody>
@@ -364,9 +358,7 @@ export function ReportView(): JSX.Element | null {
                   <tr>
                     <th>{t.deflectionCheckLabel}</th>
                     <td className={deflectionVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
-                      {deflectionUtil !== null && Number.isFinite(deflectionUtil)
-                        ? `${fmt.percent(deflectionUtil * 100).value}%`
-                        : fmt.MISSING}
+                      {deflectionUtil !== null && Number.isFinite(deflectionUtil) ? `${fmt.percent(deflectionUtil * 100).value}%` : fmt.MISSING}
                     </td>
                     <td className={deflectionVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
                       {VERDICT_LABEL[lang][deflectionVerdict.code]}
@@ -376,9 +368,7 @@ export function ReportView(): JSX.Element | null {
                     <tr>
                       <th>{t.crackingCheckLabel}</th>
                       <td className={crackingVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
-                        {crackingUtil !== null && Number.isFinite(crackingUtil)
-                          ? `${fmt.percent(crackingUtil * 100).value}%`
-                          : fmt.MISSING}
+                        {crackingUtil !== null && Number.isFinite(crackingUtil) ? `${fmt.percent(crackingUtil * 100).value}%` : fmt.MISSING}
                       </td>
                       <td className={crackingVerdict.tone === 'ok' ? 'vem-report__tone-ok' : 'vem-report__tone-error'}>
                         {VERDICT_LABEL[lang][crackingVerdict.code]}

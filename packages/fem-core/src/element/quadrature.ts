@@ -64,9 +64,7 @@ export function quadratureFor(scheme: 'selective' | 'full'): {
   readonly bending: readonly GaussPoint[];
   readonly shear: readonly GaussPoint[];
 } {
-  return scheme === 'selective'
-    ? { bending: GAUSS_3, shear: GAUSS_2 }
-    : { bending: GAUSS_3, shear: GAUSS_3 };
+  return scheme === 'selective' ? { bending: GAUSS_3, shear: GAUSS_2 } : { bending: GAUSS_3, shear: GAUSS_3 };
 }
 
 /**

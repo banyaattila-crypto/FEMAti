@@ -43,7 +43,9 @@ function SupportsList({ supports }: { readonly supports: readonly EditableSuppor
               onClick={() => select({ kind: 'support', id: sup.id })}
             >
               <SupportIcon type={sup.type} />
-              <span className="vem-item-label">x = {L.toDisplay(sup.x).toFixed(2)} {L.unit}</span>
+              <span className="vem-item-label">
+                x = {L.toDisplay(sup.x).toFixed(2)} {L.unit}
+              </span>
               <span className="vem-item-value">
                 {sup.type === 'spring'
                   ? `k = ${K.toDisplay(sup.k ?? DEFAULT_SPRING_STIFFNESS).toFixed(0)} ${K.unit}`
@@ -81,7 +83,9 @@ function FoundationsList({ foundations }: { readonly foundations: readonly Edita
               {L.toDisplay(f.x1).toFixed(2)}–{L.toDisplay(f.x2).toFixed(2)} {L.unit}
               {f.noTension ? ' · no-tension' : ''}
             </span>
-            <span className="vem-item-value">c = {C.toDisplay(f.c).toFixed(0)} {C.unit}</span>
+            <span className="vem-item-value">
+              c = {C.toDisplay(f.c).toFixed(0)} {C.unit}
+            </span>
           </button>
         ))}
       </div>
@@ -201,11 +205,7 @@ function SelectionSheet(): JSX.Element | null {
               checkbox mögé lenne összevonva, a bepipálás dPhi=0-t is beállítana
               olyan csuklós/görgős támasznál is, ahol a φ szabadságfok EDDIG
               szabad volt — ez hallgatólagosan befogássá alakítaná a támaszt. */}
-          <Checkbox
-            label={t.dzCheckbox}
-            checked={dzEnabled}
-            onChange={(v) => setSupportDisplacement(support.id, v ? 0 : undefined, support.dPhi)}
-          />
+          <Checkbox label={t.dzCheckbox} checked={dzEnabled} onChange={(v) => setSupportDisplacement(support.id, v ? 0 : undefined, support.dPhi)} />
           {dzEnabled ? (
             <Slider
               label={t.dzLabel(SL.unit)}
@@ -297,9 +297,7 @@ function SelectionSheet(): JSX.Element | null {
   return (
     <Card title={t.selectedLoadCardTitle} accent="load">
       <div className="vem-panel__body--padded">
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
-          {t.loadKindLabel[load.kind]}
-        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>{t.loadKindLabel[load.kind]}</div>
         {/* Teherkategória (2026-09-04, EN 1990 teherkombináció) — ULS-nél
             γG=1,35 (állandó) vagy γQ=1,5 (esetleges), ld. `model/
             combinations.ts`. Az önsúlynak NINCS ilyen választója, mert az
@@ -525,15 +523,23 @@ export function LeftPanel(): JSX.Element {
                   {r.symbol} = {r.v !== undefined ? `${fmt.smallLength(r.v / 1000).value} ${fmt.smallLength(r.v / 1000).unit}` : '—'}
                 </div>
               ))}
-              <div>A = {fmt.area(sectionProps.area).value} {fmt.area(sectionProps.area).unit}</div>
-              <div>I = {fmt.inertia(sectionProps.inertia).value} {fmt.inertia(sectionProps.inertia).unit}</div>
+              <div>
+                A = {fmt.area(sectionProps.area).value} {fmt.area(sectionProps.area).unit}
+              </div>
+              <div>
+                I = {fmt.inertia(sectionProps.inertia).value} {fmt.inertia(sectionProps.inertia).unit}
+              </div>
               <div>c = {sectionProps.shapeFactor.toFixed(2)}</div>
             </div>
           </div>
           <div className="vem-section-preview__figures" style={{ padding: '0 var(--space-5) var(--space-3)' }}>
             <div className="vem-section-preview__name">{catalogName(material.name, s.lang)}</div>
-            <div>E = {fmt.stress(material.e * 1e4).value} {fmt.stress(material.e * 1e4).unit}</div>
-            <div>G = {fmt.stress(shearModulus(material) * 1e4).value} {fmt.stress(shearModulus(material) * 1e4).unit}</div>
+            <div>
+              E = {fmt.stress(material.e * 1e4).value} {fmt.stress(material.e * 1e4).unit}
+            </div>
+            <div>
+              G = {fmt.stress(shearModulus(material) * 1e4).value} {fmt.stress(shearModulus(material) * 1e4).unit}
+            </div>
           </div>
           <div style={{ padding: '0 var(--space-5)' }}>
             <NoteBox tone={material.verified && section.verified ? 'info' : 'warn'}>
@@ -585,9 +591,7 @@ export function LeftPanel(): JSX.Element {
                     display={`${SL.toDisplay(model.rebar.cover).toFixed(0)} ${SL.unit}`}
                     editable
                   />
-                  <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
-                    {t.rebarUlsNote}
-                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 4 }}>{t.rebarUlsNote}</div>
                 </>
               ) : null}
             </div>
@@ -635,10 +639,7 @@ export function LeftPanel(): JSX.Element {
                   </div>
                   {compositeStiffness ? (
                     <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)' }}>
-                      {t.compositeEiNote(
-                        (compositeStiffness.ei * 1e-3).toFixed(0),
-                        (material.e * 1e4 * sectionProps.inertia * 1e-3).toFixed(0),
-                      )}
+                      {t.compositeEiNote((compositeStiffness.ei * 1e-3).toFixed(0), (material.e * 1e4 * sectionProps.inertia * 1e-3).toFixed(0))}
                     </div>
                   ) : null}
                   <NoteBox tone="warn">{t.compositeWarnNote}</NoteBox>
@@ -655,11 +656,7 @@ export function LeftPanel(): JSX.Element {
               változtat, és egyetlen terhelési esetre optimalizál (nincs még
               teherkombináció-kezelés a programban). */}
           <div style={{ padding: '0 var(--space-5) var(--space-4)' }}>
-            <button
-              type="button"
-              className="vem-btn vem-btn--sm"
-              onClick={() => setOptimizeResult(findSmallestSuitableSection(model))}
-            >
+            <button type="button" className="vem-btn vem-btn--sm" onClick={() => setOptimizeResult(findSmallestSuitableSection(model))}>
               {t.optimizeButton}
             </button>
             {optimizeResult ? (
@@ -687,7 +684,9 @@ export function LeftPanel(): JSX.Element {
                     </button>
                   </>
                 ) : (
-                  <NoteBox tone="warn">{t.optimizeNoneFound(sectionKindGroupLabel(optimizeResult.kind, s.lang), optimizeResult.candidates.length)}</NoteBox>
+                  <NoteBox tone="warn">
+                    {t.optimizeNoneFound(sectionKindGroupLabel(optimizeResult.kind, s.lang), optimizeResult.candidates.length)}
+                  </NoteBox>
                 )}
                 {model.rebar.enabled ? (
                   <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: 'var(--font-mono)', marginTop: 'var(--space-2)' }}>
@@ -791,9 +790,7 @@ export function LeftPanel(): JSX.Element {
               display={`${F.toDisplay(model.axialForce).toFixed(0)} ${F.unit}`}
               editable
             />
-            {model.axialForce !== 0 ? (
-              <NoteBox tone="warn">{t.pDeltaNote(model.axialForce > 0)}</NoteBox>
-            ) : null}
+            {model.axialForce !== 0 ? <NoteBox tone="warn">{t.pDeltaNote(model.axialForce > 0)}</NoteBox> : null}
             <Checkbox
               label={t.movingLoadCheckbox}
               checked={model.movingLoad.enabled}
@@ -814,11 +811,7 @@ export function LeftPanel(): JSX.Element {
                 <NoteBox tone="info">{t.movingLoadNote}</NoteBox>
               </>
             ) : null}
-            <Checkbox
-              label={t.seismicCheckbox}
-              checked={model.seismic.enabled}
-              onChange={(v) => setSeismic({ ...model.seismic, enabled: v })}
-            />
+            <Checkbox label={t.seismicCheckbox} checked={model.seismic.enabled} onChange={(v) => setSeismic({ ...model.seismic, enabled: v })} />
             {model.seismic.enabled ? (
               <>
                 <Slider
@@ -852,12 +845,8 @@ export function LeftPanel(): JSX.Element {
               </>
             ) : null}
             <Checkbox label={t.showGaussCheckbox} checked={s.showGaussPoints} onChange={s.setShowGaussPoints} />
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-              {t.dofCountText(dofCount)}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>
-              {t.nonlinearAlwaysLayeredNote}
-            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{t.dofCountText(dofCount)}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>{t.nonlinearAlwaysLayeredNote}</div>
           </div>
         </Card>
       </div>

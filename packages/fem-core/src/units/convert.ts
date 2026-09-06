@@ -37,8 +37,7 @@ export const areaFromCm2 = (aCm2: number): SquareMeter => m2(aCm2 * 1e-4);
 export const inertiaFromCm4 = (iCm4: number): QuarticMeter => m4(iCm4 * 1e-8);
 
 /** Rugalmassági / nyírási modulus [kN/cm²] → [kN/m²] */
-export const modulusFromKNPerCm2 = (eKNcm2: number): KiloNewtonPerSquareMeter =>
-  kNpm2(eKNcm2 * 1e4);
+export const modulusFromKNPerCm2 = (eKNcm2: number): KiloNewtonPerSquareMeter => kNpm2(eKNcm2 * 1e4);
 
 /** Eltolódás [mm] → [m] */
 export const lengthFromMm = (mm: number): Meter => m(mm * 1e-3);
@@ -47,8 +46,7 @@ export const lengthFromMm = (mm: number): Meter => m(mm * 1e-3);
 export const lengthFromCm = (cm: number): Meter => m(cm * 1e-2);
 
 /** Sűrűség [kg/m³] → fajsúly [kN/m³]. 1 kg·g = 9.80665 N = 9.80665e-3 kN. */
-export const specificWeightFromDensity = (rhoKgM3: number): KiloNewtonPerCubicMeter =>
-  kNpm3((rhoKgM3 * G_ACCEL) / 1000);
+export const specificWeightFromDensity = (rhoKgM3: number): KiloNewtonPerCubicMeter => kNpm3((rhoKgM3 * G_ACCEL) / 1000);
 
 // ─── Kimenet: belső SI → megjelenítési egység ─────────────────────────────────
 
@@ -74,5 +72,4 @@ export const radToDeg = (r: number): number => (r * 180) / Math.PI;
 export const degToRad = (d: number): number => (d * Math.PI) / 180;
 
 /** Fajsúly [kN/m³] → sűrűség [kg/m³] */
-export const densityFromSpecificWeight = (gamma: KiloNewtonPerCubicMeter): KgPerCubicMeter =>
-  kgpm3(((gamma as number) * 1000) / G_ACCEL);
+export const densityFromSpecificWeight = (gamma: KiloNewtonPerCubicMeter): KgPerCubicMeter => kgpm3(((gamma as number) * 1000) / G_ACCEL);

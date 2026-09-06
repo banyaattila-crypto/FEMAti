@@ -272,7 +272,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
     sectionName: catalogName(section.name, lang),
     sectionSource: catalogText(section.source, lang, SOURCE_EN),
     materialName: catalogName(material.name, lang),
-    materialSummary: `E=${(material.e).toFixed(0)} kN/cm², σY=${material.sigmaY > 0 ? material.sigmaY.toFixed(2) : '—'} kN/cm²`,
+    materialSummary: `E=${material.e.toFixed(0)} kN/cm², σY=${material.sigmaY > 0 ? material.sigmaY.toFixed(2) : '—'} kN/cm²`,
     materialSource: catalogText(material.source, lang, SOURCE_EN),
     supportRows: model.supports.map((s) => [s.id, s.x.toFixed(2), SUPPORT_TYPE_LABEL[lang][s.type]]),
     loadRows: model.loads.map((l) => [
@@ -290,12 +290,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
               : `m = ${l.m1.toFixed(1)}→${l.m2.toFixed(1)} kNm/m, ${l.x1.toFixed(2)}–${l.x2.toFixed(2)} m`,
     ]),
 
-    layerRows: layers.map((l, i) => [
-      String(i + 1),
-      (l.b * 1e3).toFixed(2),
-      (l.t * 1e3).toFixed(2),
-      (l.z * 1e3).toFixed(2),
-    ]),
+    layerRows: layers.map((l, i) => [String(i + 1), (l.b * 1e3).toFixed(2), (l.t * 1e3).toFixed(2), (l.z * 1e3).toFixed(2)]),
     layerSumFormula: layerSumTex(layerA * 1e4, layerI * 1e8),
     me: fixed(linear.props.me, 2),
     mp: fixed(linear.props.mp, 2),
@@ -318,11 +313,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
     dofCount: linear.dofCount,
 
     elementId: elementDerivation.elementId,
-    elementNodeX: [
-      fixed(elementDerivation.nodeX[0], 3),
-      fixed(elementDerivation.nodeX[1], 3),
-      fixed(elementDerivation.nodeX[2], 3),
-    ],
+    elementNodeX: [fixed(elementDerivation.nodeX[0], 3), fixed(elementDerivation.nodeX[1], 3), fixed(elementDerivation.nodeX[2], 3)],
     jacobianFormula: jacobianTex(
       elementDerivation.bendingPoints[0]?.dn ?? [0, 0, 0],
       elementDerivation.nodeX,
@@ -352,21 +343,15 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
     ),
     ei: fixed(elementDerivation.stiffness.ei, 1),
     gas: fixed(elementDerivation.stiffness.gas, 1),
-    keRows: Array.from({ length: 6 }, (_, i) =>
-      Array.from({ length: 6 }, (_, j) => elementDerivation.ke.get(i, j).toExponential(3)).join('  '),
-    ),
+    keRows: Array.from({ length: 6 }, (_, i) => Array.from({ length: 6 }, (_, j) => elementDerivation.ke.get(i, j).toExponential(3)).join('  ')),
     loadFormulas: buildLoadFormulas(ctx.loadDerivation, elementDerivation.stiffness.ei, lang),
-    loadVectorRow: `[${Array.from(elementDerivation.loadVector).map((v) => v.toExponential(3)).join(', ')}]`,
+    loadVectorRow: `[${Array.from(elementDerivation.loadVector)
+      .map((v) => v.toExponential(3))
+      .join(', ')}]`,
 
     massPerLength: fixed(ctx.massDerivation.mass.massPerLength, 4),
     rotaryInertiaPerLength: ctx.massDerivation.mass.rotaryInertiaPerLength.toExponential(4),
-    massRows: ctx.massDerivation.points.map((gp) => [
-      fixed(gp.xi),
-      fixed(gp.w),
-      fixed(gp.n[0]),
-      fixed(gp.n[1]),
-      fixed(gp.n[2]),
-    ]),
+    massRows: ctx.massDerivation.points.map((gp) => [fixed(gp.xi), fixed(gp.w), fixed(gp.n[0]), fixed(gp.n[1]), fixed(gp.n[2])]),
     massFormulas: ctx.massDerivation.points.flatMap((gp, i) =>
       massGaussTex(gp, i, ctx.massDerivation.mass.massPerLength, ctx.massDerivation.mass.rotaryInertiaPerLength, lang),
     ),
@@ -378,9 +363,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
       ctx.massDerivation.me.get(1, 1),
       lang,
     ),
-    meRows: Array.from({ length: 6 }, (_, i) =>
-      Array.from({ length: 6 }, (_, j) => ctx.massDerivation.me.get(i, j).toExponential(3)).join('  '),
-    ),
+    meRows: Array.from({ length: 6 }, (_, i) => Array.from({ length: 6 }, (_, j) => ctx.massDerivation.me.get(i, j).toExponential(3)).join('  ')),
 
     assemblyRows:
       ctx.globalNodeIdx !== undefined
@@ -391,16 +374,15 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
         : [],
     assemblyNote:
       ctx.globalNodeIdx !== undefined
-        ? t.assemblyNote(
-            elementDerivation.ke.get(1, 1).toExponential(3),
-            `${2 * ctx.globalNodeIdx[0] + 1}, ${2 * ctx.globalNodeIdx[0] + 1}`,
-          )
+        ? t.assemblyNote(elementDerivation.ke.get(1, 1).toExponential(3), `${2 * ctx.globalNodeIdx[0] + 1}, ${2 * ctx.globalNodeIdx[0] + 1}`)
         : '',
     boundaryRows: ctx.boundaryRows,
     boundaryNote: linear.strategy === 'elimination' ? t.eliminationNote(linear.dofCount, linear.activeDofCount) : t.penaltyNote,
     ueRow:
       ctx.internalForceDerivation !== undefined
-        ? `uₑ = [${Array.from(ctx.internalForceDerivation.ue).map((v) => v.toExponential(3)).join(', ')}]`
+        ? `uₑ = [${Array.from(ctx.internalForceDerivation.ue)
+            .map((v) => v.toExponential(3))
+            .join(', ')}]`
         : '',
     internalForceFormulas:
       ctx.internalForceDerivation !== undefined
@@ -427,8 +409,7 @@ export function buildDerivationExportData(ctx: DerivationExportContext): Derivat
     strategyLabel: linear.strategy === 'elimination' ? t.strategyLabelElimination : t.strategyLabelPenalty,
     activeDofCount: linear.activeDofCount,
 
-    resultGaussRows:
-      elementResult?.gaussPoints.map((gp, i) => [String(i + 1), fixed(gp.x, 3), fixed(gp.m, 2), fixed(gp.t, 2)]) ?? [],
+    resultGaussRows: elementResult?.gaussPoints.map((gp, i) => [String(i + 1), fixed(gp.x, 3), fixed(gp.m, 2), fixed(gp.t, 2)]) ?? [],
     extrapolationFormulas: (() => {
       const gp0 = elementResult?.gaussPoints[0];
       const gp1 = elementResult?.gaussPoints[1];

@@ -34,11 +34,7 @@ const STIFF: SectionStiffness = {
 
 const STEEL = makeMaterial('S235', 'Acél S235', { e: 2.1e8, density: 7850 });
 
-const uniformNodes = (l: number, x0 = 0): readonly [number, number, number] => [
-  x0,
-  x0 + l / 2,
-  x0 + l,
-];
+const uniformNodes = (l: number, x0 = 0): readonly [number, number, number] => [x0, x0 + l / 2, x0 + l];
 
 function expectRelative(actual: number, expected: number, tol: number): void {
   const denom = Math.abs(expected) > 0 ? Math.abs(expected) : 1;
@@ -46,13 +42,13 @@ function expectRelative(actual: number, expected: number, tol: number): void {
 }
 
 describe('sectionMass — tömeg a fajsúlyból (ADR-0016)', () => {
-  it('a vonalmenti tömeg m\' = γ·A/g', () => {
+  it("a vonalmenti tömeg m' = γ·A/g", () => {
     const mass = sectionMass(STIFF, STEEL);
     const gamma = STEEL.gamma as number; // kN/m³
     expectRelative(mass.massPerLength, (gamma * STIFF.area) / 9.80665, 1e-12);
   });
 
-  it('a forgási tehetetlenség m\'ᵩ = γ·I/g', () => {
+  it("a forgási tehetetlenség m'ᵩ = γ·I/g", () => {
     const mass = sectionMass(STIFF, STEEL);
     const gamma = STEEL.gamma as number;
     expectRelative(mass.rotaryInertiaPerLength, (gamma * STIFF.inertia) / 9.80665, 1e-12);
@@ -134,10 +130,11 @@ describe('elemi tömegmátrix (ADR-0016)', () => {
     const long = elementMass({ nodeX: uniformNodes(4), elementId: 'B' }, mass);
     let sumShort = 0;
     let sumLong = 0;
-    for (const i of [0, 2, 4]) for (const j of [0, 2, 4]) {
-      sumShort += short.get(i, j);
-      sumLong += long.get(i, j);
-    }
+    for (const i of [0, 2, 4])
+      for (const j of [0, 2, 4]) {
+        sumShort += short.get(i, j);
+        sumLong += long.get(i, j);
+      }
     expectRelative(sumLong / sumShort, 2, 1e-12);
   });
 });

@@ -24,12 +24,7 @@ import { validateModel, isRunnable, type Diagnostic } from '../model/validate.js
 import { assemble, type AssembledSystem } from '../assembly/assembler.js';
 import { buildLoadVector, unsupportedLoads } from '../assembly/loadVector.js';
 import type { Model } from '../model/types.js';
-import {
-  elementMaterialData,
-  initialNonlinearState,
-  type ElementMaterialData,
-  type NonlinearStateMap,
-} from './materialState.js';
+import { elementMaterialData, initialNonlinearState, type ElementMaterialData, type NonlinearStateMap } from './materialState.js';
 import { runNewtonRaphsonStep, type NewtonIterationLog, type NonlinearAlgorithm } from './newtonRaphson.js';
 
 export type LoadStepperStatus = 'converged' | 'limit-load-reached' | 'aborted';
@@ -89,9 +84,7 @@ function assertSupportedScope(model: Model): void {
   const withoutThermal = notSupported.filter((l) => l.kind !== 'thermal');
   if (withoutThermal.length > 0) {
     const kinds = [...new Set(withoutThermal.map((l) => l.kind))].join(', ');
-    throw new NonlinearModelError(
-      `A nemlineáris megoldó (P11) NEM támogatja a következő tehertípusokat: ${kinds}.`,
-    );
+    throw new NonlinearModelError(`A nemlineáris megoldó (P11) NEM támogatja a következő tehertípusokat: ${kinds}.`);
   }
   if (model.loads.some((l) => l.kind === 'thermal')) {
     throw new NonlinearModelError(
@@ -120,9 +113,7 @@ function assertSupportedScope(model: Model): void {
 export function runLoadStepper(model: Model, options: LoadStepperOptions): LoadStepperResult {
   const diagnostics = validateModel(model);
   if (!isRunnable(diagnostics)) {
-    throw new NonlinearModelError(
-      `A modell nem futtatható, ${diagnostics.filter((d) => d.severity === 'error').length} hiba miatt.`,
-    );
+    throw new NonlinearModelError(`A modell nem futtatható, ${diagnostics.filter((d) => d.severity === 'error').length} hiba miatt.`);
   }
   assertSupportedScope(model);
 

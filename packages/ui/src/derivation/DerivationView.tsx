@@ -94,9 +94,7 @@ export function DerivationView(): JSX.Element | null {
 
   if (!derivationOpen || data === null) return null;
 
-  const elementId = selectedElementId !== null && data.elementIds.includes(selectedElementId)
-    ? selectedElementId
-    : data.defaultElementId;
+  const elementId = selectedElementId !== null && data.elementIds.includes(selectedElementId) ? selectedElementId : data.defaultElementId;
 
   const preset = findPreset(model.presetId);
   const section = findSection(model.sectionId);
@@ -153,7 +151,6 @@ export function DerivationView(): JSX.Element | null {
     buildDerivationDocx(exportData, lang)
       .then((blob) => downloadBlob(blob, `femati-levezetes-${model.presetId}.docx`))
       .catch((error: unknown) => {
-         
         console.error('A .docx export sikertelen:', error);
       });
   };
@@ -164,11 +161,7 @@ export function DerivationView(): JSX.Element | null {
         <div className="vem-derivation-toolbar__inner" onPointerDown={(e) => e.stopPropagation()}>
           <label>
             {t.derivedElementLabel}
-            <select
-              className="vem-select"
-              value={elementId}
-              onChange={(e) => setSelectedElementId(e.target.value)}
-            >
+            <select className="vem-select" value={elementId} onChange={(e) => setSelectedElementId(e.target.value)}>
               {data.elementIds.map((id) => (
                 <option key={id} value={id}>
                   {id}
@@ -286,9 +279,7 @@ export function DerivationView(): JSX.Element | null {
               ))}
             </tbody>
           </table>
-          {catalogUnverified ? (
-            <div className="vem-derivation__note vem-derivation__note--warn">{DATABASE[lang].unverifiedWarning}</div>
-          ) : null}
+          {catalogUnverified ? <div className="vem-derivation__note vem-derivation__note--warn">{DATABASE[lang].unverifiedWarning}</div> : null}
         </section>
 
         {/* 2. KERESZTMETSZET */}
@@ -357,9 +348,7 @@ export function DerivationView(): JSX.Element | null {
                   data.linear.props.shapeFactor,
                 )}
               />
-              <p className="vem-derivation__note">
-                (W_e = I/y_max, y_max = {(yMaxMm / 10).toFixed(2)} cm; W_p = 2·S₀ = Σ(b_l·t_l·|z_l|).)
-              </p>
+              <p className="vem-derivation__note">(W_e = I/y_max, y_max = {(yMaxMm / 10).toFixed(2)} cm; W_p = 2·S₀ = Σ(b_l·t_l·|z_l|).)</p>
             </>
           ) : (
             <p className="vem-derivation__note">
@@ -374,9 +363,7 @@ export function DerivationView(): JSX.Element | null {
                 return (
                   <p className={`vem-derivation__note${large ? ' vem-derivation__note--warn' : ''}`}>
                     {t.sectionTableDeviation(section.aCat.toFixed(2), devA.toFixed(2), String(section.iCat), devI.toFixed(2))}
-                    {large
-                      ? t.deviationLarge(layers.length, ((model.span > 0 ? (layers[0]?.t ?? 0) : 0) * 1e3).toFixed(1))
-                      : t.deviationSmall}
+                    {large ? t.deviationLarge(layers.length, ((model.span > 0 ? (layers[0]?.t ?? 0) : 0) * 1e3).toFixed(1)) : t.deviationSmall}
                   </p>
                 );
               })()
@@ -484,7 +471,13 @@ export function DerivationView(): JSX.Element | null {
                   <td>{fmtNum(gp.dn[0])}</td>
                   <td>{fmtNum(gp.dn[1])}</td>
                   <td>{fmtNum(gp.dn[2])}</td>
-                  <td>[{Array.from(gp.bRows.kappa).map((v) => fmtNum(v, 3)).join(', ')}]</td>
+                  <td>
+                    [
+                    {Array.from(gp.bRows.kappa)
+                      .map((v) => fmtNum(v, 3))
+                      .join(', ')}
+                    ]
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -513,7 +506,13 @@ export function DerivationView(): JSX.Element | null {
                   <td>{fmtNum(gp.n[0])}</td>
                   <td>{fmtNum(gp.n[1])}</td>
                   <td>{fmtNum(gp.n[2])}</td>
-                  <td>[{Array.from(gp.bRows.gamma).map((v) => fmtNum(v, 3)).join(', ')}]</td>
+                  <td>
+                    [
+                    {Array.from(gp.bRows.gamma)
+                      .map((v) => fmtNum(v, 3))
+                      .join(', ')}
+                    ]
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -569,16 +568,27 @@ export function DerivationView(): JSX.Element | null {
                 <div key={ci}>
                   <h4>{t.distributedLoadHeading(distributedLoadLabel(contribution.kind, t), contribution.loadId, contribution.points.length)}</h4>
                   {contribution.points.map((gp, gi) => (
-                    <FormulaBlock key={gi} lines={distributedLoadGaussTex(gp, gi, contribution.dofOffset === 0 ? '\\text{kN/m}' : '\\text{kNm/m}', lang)} />
+                    <FormulaBlock
+                      key={gi}
+                      lines={distributedLoadGaussTex(gp, gi, contribution.dofOffset === 0 ? '\\text{kN/m}' : '\\text{kNm/m}', lang)}
+                    />
                   ))}
                 </div>
               ))}
 
               {loadDerivation.nodal.map((contribution, ni) => (
                 <div key={ni}>
-                  <h4>{contribution.kind === 'nodal-force' ? t.nodalForceHeading(contribution.loadId) : t.nodalMomentHeading(contribution.loadId)}</h4>
+                  <h4>
+                    {contribution.kind === 'nodal-force' ? t.nodalForceHeading(contribution.loadId) : t.nodalMomentHeading(contribution.loadId)}
+                  </h4>
                   <FormulaBlock
-                    lines={nodalLoadTex(contribution.localNode, contribution.dofOffset, contribution.value, contribution.dofOffset === 0 ? '\\text{kN}' : '\\text{kNm}', lang)}
+                    lines={nodalLoadTex(
+                      contribution.localNode,
+                      contribution.dofOffset,
+                      contribution.value,
+                      contribution.dofOffset === 0 ? '\\text{kN}' : '\\text{kNm}',
+                      lang,
+                    )}
                   />
                 </div>
               ))}
@@ -588,19 +598,30 @@ export function DerivationView(): JSX.Element | null {
                   <h4>{t.thermalLoadHeading}</h4>
                   <p className="vem-derivation__note">{t.thermalKappa0Note(loadDerivation.thermal.kappa0.toExponential(3))}</p>
                   {loadDerivation.thermal.points.map((gp, gi) => (
-                    <FormulaBlock key={gi} lines={thermalLoadGaussTex(gp, gi, elementDerivation.stiffness.ei, loadDerivation.thermal?.kappa0 ?? 0, lang)} />
+                    <FormulaBlock
+                      key={gi}
+                      lines={thermalLoadGaussTex(gp, gi, elementDerivation.stiffness.ei, loadDerivation.thermal?.kappa0 ?? 0, lang)}
+                    />
                   ))}
                 </div>
               ) : null}
 
               <h4>{t.summationHeading}</h4>
               <div className="vem-derivation__matrix">
-                q_e = [{Array.from(loadDerivation.total).map((v) => v.toExponential(3)).join(', ')}]
+                q_e = [
+                {Array.from(loadDerivation.total)
+                  .map((v) => v.toExponential(3))
+                  .join(', ')}
+                ]
               </div>
             </>
           ) : (
             <div className="vem-derivation__matrix">
-              [{Array.from(elementDerivation.loadVector).map((v) => v.toExponential(3)).join(', ')}]
+              [
+              {Array.from(elementDerivation.loadVector)
+                .map((v) => v.toExponential(3))
+                .join(', ')}
+              ]
             </div>
           )}
         </section>
@@ -637,17 +658,26 @@ export function DerivationView(): JSX.Element | null {
                   <td>{fmtNum(gp.n[0])}</td>
                   <td>{fmtNum(gp.n[1])}</td>
                   <td>{fmtNum(gp.n[2])}</td>
-                  <td>[{Array.from(gp.nRows.w).map((v) => fmtNum(v, 3)).join(', ')}]</td>
-                  <td>[{Array.from(gp.nRows.phi).map((v) => fmtNum(v, 3)).join(', ')}]</td>
+                  <td>
+                    [
+                    {Array.from(gp.nRows.w)
+                      .map((v) => fmtNum(v, 3))
+                      .join(', ')}
+                    ]
+                  </td>
+                  <td>
+                    [
+                    {Array.from(gp.nRows.phi)
+                      .map((v) => fmtNum(v, 3))
+                      .join(', ')}
+                    ]
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
           {massDerivation.points.map((gp, i) => (
-            <FormulaBlock
-              key={i}
-              lines={massGaussTex(gp, i, massDerivation.mass.massPerLength, massDerivation.mass.rotaryInertiaPerLength, lang)}
-            />
+            <FormulaBlock key={i} lines={massGaussTex(gp, i, massDerivation.mass.massPerLength, massDerivation.mass.rotaryInertiaPerLength, lang)} />
           ))}
 
           <h3>{t.section4A_2Title}</h3>
@@ -736,9 +766,7 @@ export function DerivationView(): JSX.Element | null {
             </tbody>
           </table>
           <p className="vem-derivation__note">
-            {data.linear.strategy === 'elimination'
-              ? t.eliminationNote(data.linear.dofCount, data.linear.activeDofCount)
-              : t.penaltyNote}
+            {data.linear.strategy === 'elimination' ? t.eliminationNote(data.linear.dofCount, data.linear.activeDofCount) : t.penaltyNote}
           </p>
 
           <h3>{t.section5_3Title}</h3>
@@ -772,7 +800,11 @@ export function DerivationView(): JSX.Element | null {
             <>
               <p>{t.displacementsIntro(elementId)}</p>
               <div className="vem-derivation__matrix">
-                uₑ = [{Array.from(internalForceDerivation.ue).map((v) => v.toExponential(3)).join(', ')}]
+                uₑ = [
+                {Array.from(internalForceDerivation.ue)
+                  .map((v) => v.toExponential(3))
+                  .join(', ')}
+                ]
               </div>
               <p className="vem-derivation__note">{t.displacementsNote}</p>
             </>
@@ -990,12 +1022,7 @@ export function DerivationView(): JSX.Element | null {
 function plasticSampleTitle(sample: PlasticSample, run: NonlinearRun, lang: Lang): string {
   const t = DERIVATION[lang];
   const x = plasticSampleElementX(sample, run);
-  return t.plasticSampleTitle(
-    sample.elementId,
-    sample.gaussIndex + 1,
-    x !== null ? t.plasticSampleXSuffix(x.toFixed(2)) : '',
-    sample.stepIndex + 1,
-  );
+  return t.plasticSampleTitle(sample.elementId, sample.gaussIndex + 1, x !== null ? t.plasticSampleXSuffix(x.toFixed(2)) : '', sample.stepIndex + 1);
 }
 
 export function pickPlasticFormulaSample(rows: readonly PlasticLayerRow[]): PlasticLayerRow | undefined {

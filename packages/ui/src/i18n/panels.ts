@@ -334,7 +334,8 @@ export const PANELS: Record<Lang, PanelsStrings> = {
       'EN 1993-1-1 6.2.8 stílusú, UTÓLAGOS ellenőrzés a globális M-max és T-max értékekből, γM0 = 1.00 (ajánlott érték) — ha nem azonos keresztmetszeti helyen lépnek fel, ez egy KONZERVATÍV (biztonság felé téves) becslés, nem pontos helyi érték (ADR-0018, ADR-0021)',
     verdictLabel: 'verdikt',
     deflectionUtilLabel: 'lehajlás-ellenőrzés (SLS, L/250)',
-    deflectionUtilTitle: 'w max / L a megengedett L/250 arányhoz viszonyítva — anyagfüggetlen, a felhasználó saját ökölszabálya szerinti SLS-ellenőrzés',
+    deflectionUtilTitle:
+      'w max / L a megengedett L/250 arányhoz viszonyítva — anyagfüggetlen, a felhasználó saját ökölszabálya szerinti SLS-ellenőrzés',
     crackingUtilLabel: 'repedési nyomaték Mcr kihasználtsága (EC2, tájékoztató)',
     crackingUtilTitle:
       "M_cr = fctm·Kₑ — TÁJÉKOZTATÓ, SLS-jellegű jelzés arról, mikor lép túl a modell a rugalmas (repedésmentes) tartományon. Ez ÖNMAGÁBAN nem vasbeton ULS teherbírás-ellenőrzés — az a lenti 'Vasbeton ULS' sorban jelenik meg, ha a vasalás be van kapcsolva (ADR-0019, ADR-0021)",
@@ -484,7 +485,7 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     showGaussCheckbox: 'Show Gauss points',
     dofCountText: (n) => `${n} degree${n === 1 ? '' : 's'} of freedom`,
     nonlinearAlwaysLayeredNote:
-      'The nonlinear run (COMPUTE / F5) always uses the layered cross-section model — this is what feeds the cross-section inspector\'s per-layer data.',
+      "The nonlinear run (COMPUTE / F5) always uses the layered cross-section model — this is what feeds the cross-section inspector's per-layer data.",
 
     resultsCardTitle: 'Results',
     wMaxLabel: 'w max (deflection)',
@@ -492,7 +493,8 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     errorEstimateTitle: "The pre-averaging jump in internal force at element boundaries, normalized to the field's extreme value (Thesis 3.1.7.4)",
     dofLabel: 'degrees of freedom',
     reactionsCardTitle: 'Reactions · equilibrium',
-    liftOffNote: (n) => `${n} element${n === 1 ? '' : 's'} lifted off the no-tension foundation (ADR-0022) — the foundation currently exerts no force there.`,
+    liftOffNote: (n) =>
+      `${n} element${n === 1 ? '' : 's'} lifted off the no-tension foundation (ADR-0022) — the foundation currently exerts no force there.`,
     sumFzCheckLabel: 'ΣFz check',
     sumFzTitle: (reactFz, loadsFz, sumFz) => `ΣFz = Σreactions + Σloads = ${reactFz} + ${loadsFz} = ${sumFz} kN (theoretically 0)`,
     sumMyCheckLabel: 'ΣMy check',
@@ -529,14 +531,14 @@ export const PANELS: Record<Lang, PanelsStrings> = {
       'Simplified rectangular stress block (EC2 3.1.7(3)), characteristic (γ=1.0) value, B500B reinforcing steel — the tension side depends on the sign of the global M',
     rcUlsUtilLabel: 'RC ULS utilization',
     rcUlsUtilTitle:
-      "|M-max| / MRd — for the global M-max/M-min extremes, NOT necessarily the most critical cross-section (a conservative estimate, like the other ULS checks)",
+      '|M-max| / MRd — for the global M-max/M-min extremes, NOT necessarily the most critical cross-section (a conservative estimate, like the other ULS checks)',
     computedLoadFactorLabel: 'computed load factor (nonlinear)',
     computedLoadFactorTitle: "The λ actually reached by runLoadStepper — for 'limit-load-reached', the numerical approximation of the ultimate load",
     notRunnablePrefix: (message) => `The model cannot currently be run: ${message}`,
     noComputableModel: 'No computable model (no elements or supports).',
     seismicCardTitle: 'Seismic (vertical) check',
     seismicCardIntro:
-      'EN 1998-1 4.3.3.5.2 — the VERTICAL seismic component, on the G+ψ₂Q±Ev combination (ψ₂=0.3, qv=1.5). Ev comes from the design spectral value Svd(T₁) at the model\'s actual T₁ natural period — there is NO horizontal/frame effect.',
+      "EN 1998-1 4.3.3.5.2 — the VERTICAL seismic component, on the G+ψ₂Q±Ev combination (ψ₂=0.3, qv=1.5). Ev comes from the design spectral value Svd(T₁) at the model's actual T₁ natural period — there is NO horizontal/frame effect.",
     seismicT1Label: 'T₁ (computed natural period)',
     seismicT1Title:
       "From the modal solver (ADR-0016) — from the structure's OWN mass only, instead of the full G+ψ₂Q seismic mass (the model does not handle load-derived mass) — a documented MVP simplification",
@@ -544,7 +546,7 @@ export const PANELS: Record<Lang, PanelsStrings> = {
     seismicSvdLabel: 'Svd(T₁) design spectral value',
     seismicSvdTitle: 'The design spectral value read at T₁ (as a multiple of g) — this is the Ev/(G+ψ₂Q) ratio',
     seismicUtilLabel: 'M-V utilization (G+ψ₂Q±Ev)',
-    seismicUtilTitle: 'The worse (Ev up/down) variant\'s M-V utilization — EN 1993-1-1 6.2.8',
+    seismicUtilTitle: "The worse (Ev up/down) variant's M-V utilization — EN 1993-1-1 6.2.8",
 
     inspectorTitleNoData: 'Cross-section inspector',
     inspectorCloseAria: 'Close cross-section inspector',

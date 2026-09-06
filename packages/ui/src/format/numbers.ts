@@ -155,10 +155,7 @@ export const shearStiffness = makeConvertible({ digits: 0, unit: 'kN', scale: 1 
 export const area = makeConvertible({ digits: 2, unit: 'cm²', scale: 1e4 }, { digits: 2, unit: 'in²', scale: M_TO_IN * M_TO_IN });
 
 /** Másodrendű nyomaték [m⁴] → cm⁴ (SI) / in⁴ (US), SI-ben egész, US-ben 1 tizedes (kisebb számok). */
-export const inertia = makeConvertible(
-  { digits: 0, unit: 'cm⁴', scale: 1e8 },
-  { digits: 1, unit: 'in⁴', scale: M_TO_IN ** 4 },
-);
+export const inertia = makeConvertible({ digits: 0, unit: 'cm⁴', scale: 1e8 }, { digits: 1, unit: 'in⁴', scale: M_TO_IN ** 4 });
 
 /** Feszültség / modulus [kN/m²] → kN/cm² (SI) / ksi (US), 2 tizedes. */
 export const stress = makeConvertible({ digits: 2, unit: 'kN/cm²', scale: 1e-4 }, { digits: 2, unit: 'ksi', scale: KPA_TO_KSI });
@@ -212,10 +209,8 @@ const linearUnit = (unit: string, scale: number): EditableUnit => ({
   toCore: (display) => display / scale,
 });
 
-const editableField =
-  (si: EditableUnit, imperial: EditableUnit) =>
-  (): EditableUnit =>
-    useAppStore.getState().unitSystem === 'imperial' ? imperial : si;
+const editableField = (si: EditableUnit, imperial: EditableUnit) => (): EditableUnit =>
+  useAppStore.getState().unitSystem === 'imperial' ? imperial : si;
 
 /** Hossz (fesztáv, pozíciók) — mag méterben. */
 export const editableLength = editableField(linearUnit('m', 1), linearUnit('ft', M_TO_FT));
@@ -239,10 +234,7 @@ export const editableLinearLoad = editableField(linearUnit('kN/m', 1), linearUni
 export const editableMomentPerLength = editableField(linearUnit('kNm/m', 1), linearUnit('kip·ft/ft', KN_TO_KIP));
 
 /** Rugalmas ágyazási modulus (kN/m²). */
-export const editableFoundationModulus = editableField(
-  linearUnit('kN/m²', 1),
-  linearUnit('kip/ft²', KN_TO_KIP / (M_TO_FT * M_TO_FT)),
-);
+export const editableFoundationModulus = editableField(linearUnit('kN/m²', 1), linearUnit('kip/ft²', KN_TO_KIP / (M_TO_FT * M_TO_FT)));
 
 /**
  * Hőmérséklet — AFFIN átváltás (°F = °C·9/5+32), ezért NEM `linearUnit`:

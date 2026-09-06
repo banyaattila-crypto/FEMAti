@@ -17,14 +17,7 @@
  * folyt, IGEN" ága tetszőleges nagyságú, EGYSZERI (nem-ismétlődő irányú)
  * átlépésre zárt alakban helyes, nem csak kis lépésekre.
  */
-import {
-  INITIAL_LAYER_PLASTIC_STATE,
-  generateLayers,
-  geometricProperties,
-  rect,
-  sectionMoment,
-  updateLayerPlasticState,
-} from '@femati/fem-core';
+import { INITIAL_LAYER_PLASTIC_STATE, generateLayers, geometricProperties, rect, sectionMoment, updateLayerPlasticState } from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 export function caseP09(): ValidationCase {
@@ -64,7 +57,7 @@ export function caseP09(): ValidationCase {
     description:
       'Rugalmas–tökéletesen képlékeny téglalap keresztmetszet M(κ) görbéje a rétegelt (64 réteges) modellel, ' +
       'kézi levezetésű zárt alakhoz hasonlítva öt görbületi szinten (rugalmas, éppen folyó, és három képlékeny pont).',
-    reference: "Diplomaterv 3.4.3, (3.53)-(3.59), 63-65. oldal; a zárt alak klasszikus rugalmas-képlékeny hajlítási eredmény",
+    reference: 'Diplomaterv 3.4.3, (3.53)-(3.59), 63-65. oldal; a zárt alak klasszikus rugalmas-képlékeny hajlítási eredmény',
     checks,
   };
 }

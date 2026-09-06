@@ -168,13 +168,7 @@ export function geometricProperties(shape: SectionShape): GeometricProperties {
   }
 }
 
-function finish(
-  area: number,
-  inertia: number,
-  yMax: number,
-  plasticModulus: number,
-  height: number,
-): GeometricProperties {
+function finish(area: number, inertia: number, yMax: number, plasticModulus: number, height: number): GeometricProperties {
   const elasticModulus = inertia / yMax;
   return {
     area,

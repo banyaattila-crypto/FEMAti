@@ -10,17 +10,7 @@
  * (nem behelyettesítéses) érték-felsorolásokhoz marad (pl. mátrix-sorok,
  * összegzés-vektorok) — ott nincs mit "képletesíteni".
  */
-import {
-  Document,
-  HeadingLevel,
-  Packer,
-  Paragraph,
-  Table,
-  TableCell,
-  TableRow,
-  TextRun,
-  WidthType,
-} from 'docx';
+import { Document, HeadingLevel, Packer, Paragraph, Table, TableCell, TableRow, TextRun, WidthType } from 'docx';
 import type { DerivationExportData, FormulaLine } from './derivationExportData.js';
 import { mathParagraph, mathParagraphs } from './formulaOmml.js';
 import type { Lang } from '../state/appStore.js';
@@ -82,7 +72,9 @@ export function buildDerivationDocx(data: DerivationExportData, lang: Lang = 'hu
   // ── 0/1. Fejléc + Feladat ──────────────────────────────────────────────
   push(
     new Paragraph({ text: t.title, heading: HeadingLevel.TITLE }),
-    para(`${data.presetName} (ref. ${data.presetRef}) · ${data.generatedAt} · v${data.appVersion} · ${lang === 'en' ? 'core' : 'mag'}: ${data.gitCommit}`),
+    para(
+      `${data.presetName} (ref. ${data.presetRef}) · ${data.generatedAt} · v${data.appVersion} · ${lang === 'en' ? 'core' : 'mag'}: ${data.gitCommit}`,
+    ),
     heading(t.section1Title, HeadingLevel.HEADING_1),
     table(
       [t.propertyHeader, t.valueGenericHeader],
@@ -208,7 +200,10 @@ export function buildDerivationDocx(data: DerivationExportData, lang: Lang = 'hu
       ...(data.plastic.convergenceFormula !== null ? mathParagraphs(data.plastic.convergenceFormula) : []),
       heading(data.plastic.sampleTitle, HeadingLevel.HEADING_2),
       ...(data.plastic.sampleFormula !== null ? mathParagraphs(data.plastic.sampleFormula) : []),
-      table([t.layerHeader, t.zHeader, t.prevStressHeader, t.dEpsHeader, t.trialStressHeader, t.rHeader, t.newStressHeader, t.yieldedHeader], data.plastic.layerRows),
+      table(
+        [t.layerHeader, t.zHeader, t.prevStressHeader, t.dEpsHeader, t.trialStressHeader, t.rHeader, t.newStressHeader, t.yieldedHeader],
+        data.plastic.layerRows,
+      ),
       heading(t.hingeSequenceTitle, HeadingLevel.HEADING_2),
       table([t.hingeIndexHeader, t.hingeEventHeader, t.hingeElementHeader, t.hingeXHeader, 'λ'], data.plastic.hingeRows),
     );

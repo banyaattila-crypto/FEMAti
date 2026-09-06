@@ -1,13 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 
-export type SolverStatus =
-  | 'idle'
-  | 'editing'
-  | 'running'
-  | 'converged'
-  | 'limit-load'
-  | 'diverged'
-  | 'error';
+export type SolverStatus = 'idle' | 'editing' | 'running' | 'converged' | 'limit-load' | 'diverged' | 'error';
 
 export interface StatusPillProps {
   readonly status: SolverStatus;
@@ -25,11 +18,7 @@ export interface StatusPillProps {
 export function StatusPill({ status, label, detail }: StatusPillProps): JSX.Element {
   const cls = status === 'editing' ? 'idle' : status;
   return (
-    <span
-      className={`vem-status vem-status--${cls}`}
-      role="status"
-      aria-live={status === 'error' || status === 'diverged' ? 'assertive' : 'polite'}
-    >
+    <span className={`vem-status vem-status--${cls}`} role="status" aria-live={status === 'error' || status === 'diverged' ? 'assertive' : 'polite'}>
       <span className="vem-status__dot" aria-hidden="true" />
       {label}
       {detail ? ` · ${detail}` : ''}
@@ -110,9 +99,7 @@ export interface CardProps {
  * hogy vizuálisan is elkülönüljön.
  */
 export function Card({ title, children, accent }: CardProps): JSX.Element {
-  const style = accent
-    ? ({ '--card-accent': `var(--fam-${accent})` } as CSSProperties & Record<string, string>)
-    : undefined;
+  const style = accent ? ({ '--card-accent': `var(--fam-${accent})` } as CSSProperties & Record<string, string>) : undefined;
   return (
     <section className={accent ? 'vem-card vem-card--accent' : 'vem-card'} style={style}>
       <SectionLabel>{title}</SectionLabel>

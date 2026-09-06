@@ -15,12 +15,7 @@ export type CanvasTool =
   | 'add-distributed-moment-load';
 
 export const SUPPORT_TOOLS: readonly CanvasTool[] = ['add-fixed', 'add-pinned', 'add-roller', 'add-spring', 'add-foundation'];
-export const LOAD_TOOLS: readonly CanvasTool[] = [
-  'add-point-load',
-  'add-moment-load',
-  'add-distributed-load',
-  'add-distributed-moment-load',
-];
+export const LOAD_TOOLS: readonly CanvasTool[] = ['add-point-load', 'add-moment-load', 'add-distributed-load', 'add-distributed-moment-load'];
 
 export interface ToolPaletteProps {
   readonly tool: CanvasTool;

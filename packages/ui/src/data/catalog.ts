@@ -244,14 +244,11 @@ const FALLBACK_PRESET: PresetEntry = {
   ref: 'V-02 / P-05',
 };
 
-export const findMaterial = (id: string): MaterialEntry =>
-  MATERIALS.find((m) => m.id === id) ?? firstOr(MATERIALS, FALLBACK_MATERIAL);
+export const findMaterial = (id: string): MaterialEntry => MATERIALS.find((m) => m.id === id) ?? firstOr(MATERIALS, FALLBACK_MATERIAL);
 
-export const findSection = (id: string): SectionEntry =>
-  SECTIONS.find((s) => s.id === id) ?? firstOr(SECTIONS, FALLBACK_SECTION);
+export const findSection = (id: string): SectionEntry => SECTIONS.find((s) => s.id === id) ?? firstOr(SECTIONS, FALLBACK_SECTION);
 
-export const findPreset = (id: string): PresetEntry =>
-  PRESETS.find((p) => p.id === id) ?? firstOr(PRESETS, FALLBACK_PRESET);
+export const findPreset = (id: string): PresetEntry => PRESETS.find((p) => p.id === id) ?? firstOr(PRESETS, FALLBACK_PRESET);
 
 /**
  * Szelvényfajtánként eltérő méretsor [mm] — közös a bal panel élő

@@ -63,9 +63,7 @@ function roundDeep(value: unknown, digits = 12): unknown {
   }
   if (Array.isArray(value)) return value.map((v) => roundDeep(v, digits));
   if (value !== null && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, roundDeep(v, digits)]),
-    );
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, roundDeep(v, digits)]));
   }
   return value;
 }
@@ -262,11 +260,7 @@ describe('.femati.json séma', () => {
     const base = cantilever(2);
     const model: Model = {
       ...base,
-      loads: [
-        nodalForce('N4', 12.5, 'F1'),
-        distributedForce(0, 5, 3, 7, 'Q1'),
-        thermal(5, 25, 10, 'T1'),
-      ],
+      loads: [nodalForce('N4', 12.5, 'F1'), distributedForce(0, 5, 3, 7, 'Q1'), thermal(5, 25, 10, 'T1')],
     };
     expectRoundTrip(model);
   });

@@ -11,8 +11,5 @@ import { compileModel, solveModalModel, type ModalOutcome } from '../model/compi
 import type { EditableModel } from '../model/editable.js';
 
 export function useModalResult(model: EditableModel, enabled = true): ModalOutcome {
-  return useMemo(
-    () => (enabled ? solveModalModel(model) : { model: compileModel(model), modal: null, error: null }),
-    [model, enabled],
-  );
+  return useMemo(() => (enabled ? solveModalModel(model) : { model: compileModel(model), modal: null, error: null }), [model, enabled]);
 }

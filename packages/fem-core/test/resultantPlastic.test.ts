@@ -23,23 +23,23 @@ describe('yieldFunction', () => {
 });
 
 describe('tangentBendingStiffness', () => {
-  it('EI_T = EI·H\'/(EI+H\')', () => {
+  it("EI_T = EI·H'/(EI+H')", () => {
     const ei = 20000;
     const hPrime = 5000;
     expect(tangentBendingStiffness(ei, hPrime)).toBeCloseTo((ei * hPrime) / (ei + hPrime), 10);
   });
 
-  it('H\'=0 (tökéletesen képlékeny) esetén EI_T=0', () => {
+  it("H'=0 (tökéletesen képlékeny) esetén EI_T=0", () => {
     expect(tangentBendingStiffness(20000, 0)).toBe(0);
   });
 
-  it('nagyon nagy H\' esetén EI_T közelít EI-hez (a keményedés elhanyagolható)', () => {
+  it("nagyon nagy H' esetén EI_T közelít EI-hez (a keményedés elhanyagolható)", () => {
     const ei = 20000;
     expect(tangentBendingStiffness(ei, 1e9)).toBeCloseTo(ei, -1);
   });
 });
 
-describe('updateResultantPlasticState — terhelés-tehermentesítés, H\'=0 (tökéletesen képlékeny)', () => {
+describe("updateResultantPlasticState — terhelés-tehermentesítés, H'=0 (tökéletesen képlékeny)", () => {
   const ei = 20000; // kNm²
   const gas = 8000; // kN
   const m0 = 100; // kNm
@@ -117,7 +117,7 @@ describe('updateResultantPlasticState — terhelés-tehermentesítés, H\'=0 (t�
   });
 });
 
-describe('updateResultantPlasticState — keményedés (H\'>0)', () => {
+describe("updateResultantPlasticState — keményedés (H'>0)", () => {
   const ei = 20000;
   const gas = 8000;
   const m0 = 100;

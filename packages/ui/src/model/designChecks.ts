@@ -102,11 +102,7 @@ export function computeUtilizations(model: EditableModel, ulsResult: LinearResul
  * mindegyik ellenőrzés mértékadó eredményét. 1 elemű `ulsResults` esetén
  * pontosan `computeUtilizations` eredményét adja vissza.
  */
-export function computeUtilizationsEnveloped(
-  model: EditableModel,
-  ulsResults: readonly LinearResult[],
-  slsResult: LinearResult,
-): DesignUtilizations {
+export function computeUtilizationsEnveloped(model: EditableModel, ulsResults: readonly LinearResult[], slsResult: LinearResult): DesignUtilizations {
   const perCombo = ulsResults.map((uls) => computeUtilizations(model, uls, slsResult));
   const worstOf = (get: (u: DesignUtilizations) => number | null): number | null => {
     const values = perCombo.map(get).filter((v): v is number => v !== null && Number.isFinite(v));

@@ -1,16 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildModel,
-  InvalidModelError,
-  makeMaterial,
-  makeSection,
-  norm2,
-  rect,
-  roller,
-  solveModal,
-  uniformMesh,
-  type Model,
-} from '../src/index.js';
+import { buildModel, InvalidModelError, makeMaterial, makeSection, norm2, rect, roller, solveModal, uniformMesh, type Model } from '../src/index.js';
 
 /**
  * ADR-0016, 4. nyitott kérdés: az ELSŐ fizikai validáció — zárt alakú

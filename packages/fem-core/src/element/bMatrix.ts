@@ -55,11 +55,7 @@ export interface BRows {
  * rajtuk keresztül számol. A degenerált-elem ellenőrzés (`j>0`) és a
  * `detJ=j` képlet SZÓ SZERINT ugyanaz, mint `jacobian()`-ben.
  */
-export function bRows(
-  nodeX: readonly [number, number, number],
-  xi: number,
-  elementId = '?',
-): BRows {
+export function bRows(nodeX: readonly [number, number, number], xi: number, elementId = '?'): BRows {
   const { n, dn } = shapeFunctions(xi);
 
   const j = dn[0] * nodeX[0] + dn[1] * nodeX[1] + dn[2] * nodeX[2];
@@ -91,11 +87,7 @@ export function bRows(
  * A teljes 2×6 B mátrix — a levezetés-nézet és a tesztek számára
  * (ADR-0005: a részlépések önállóan hívhatók).
  */
-export function bMatrix(
-  nodeX: readonly [number, number, number],
-  xi: number,
-  elementId = '?',
-): DenseMatrix {
+export function bMatrix(nodeX: readonly [number, number, number], xi: number, elementId = '?'): DenseMatrix {
   const { kappa, gamma } = bRows(nodeX, xi, elementId);
   const b = new DenseMatrix(2, DOF_PER_ELEMENT);
   for (let k = 0; k < DOF_PER_ELEMENT; k++) {
@@ -123,11 +115,7 @@ export interface NRows {
  * interpolál (ld. `shapeFunctions.ts`), ezért a transzlációs és a forgási
  * tehetetlenségi tag nem csatolt (w–φ kereszttag nincs).
  */
-export function nRows(
-  nodeX: readonly [number, number, number],
-  xi: number,
-  elementId = '?',
-): NRows {
+export function nRows(nodeX: readonly [number, number, number], xi: number, elementId = '?'): NRows {
   const { n, dn } = shapeFunctions(xi);
 
   const j = dn[0] * nodeX[0] + dn[1] * nodeX[1] + dn[2] * nodeX[2];

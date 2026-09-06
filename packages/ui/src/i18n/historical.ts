@@ -76,7 +76,7 @@ export const HISTORICAL: Record<Lang, HistoricalStrings> = {
     title: 'FEMAti — Historical mode',
     close: 'Close',
     errorMessage: (error) => `The frontal solver could not solve the current model: ${error}`,
-    subtitle: "The ORIGINAL (1996) frontal algorithm from section 3.1.7.3 of the thesis",
+    subtitle: 'The ORIGINAL (1996) frontal algorithm from section 3.1.7.3 of the thesis',
     svgAriaLabel: 'Front movement',
     legendDone: 'processed element',
     legendCurrent: 'current element',
@@ -101,6 +101,7 @@ export const HISTORICAL: Record<Lang, HistoricalStrings> = {
       'According to the thesis (3.1.7.3, page 44), the program used the frontal algorithm: "it is not the numbering of the nodes but of the members that determines the computation time," and "the assembly of the coefficient matrix and the solution of the equation system are not separated" — element assembly and elimination happened in a SINGLE pass, proceeding element by element. The reason is simple: on machines of that era, memory was the scarce resource, not computation time. The frontal method never keeps the FULL stiffness matrix in memory — only the current "front" (the degrees of freedom not yet eliminated) — so a structure with several hundred degrees of freedom could be solved even on a machine with only a few tens or hundreds of kilobytes of memory, which storing the full matrix would have made impossible.',
     explainParagraph2:
       'What has changed since then: today, memory is practically not a constraint for a 1D beam analysis of this size, but the WIDTH of the front (and thus the work required) depends strongly on the ELEMENT numbering — on a poorly numbered mesh the front can widen unnecessarily. Today\'s Skyline-LDLᵀ solver (see `linalg/skyline.ts`, ADR-0002) instead exploits the band structure ("profile") that results from NODE numbering, and assembles and factorizes the full matrix at once, as a separate step — this is faster on modern machines and simpler to maintain, which is why it remains the production solver in this program. The frontal algorithm appears here ONLY because the original thesis implemented it THIS way — this view exists to document and demonstrate that engineering decision of the time.',
-    quoteNote: 'The two quoted phrases above are translated from the original 1996 Hungarian thesis text for readability — the Hungarian wording in the thesis remains authoritative.',
+    quoteNote:
+      'The two quoted phrases above are translated from the original 1996 Hungarian thesis text for readability — the Hungarian wording in the thesis remains authoritative.',
   },
 };

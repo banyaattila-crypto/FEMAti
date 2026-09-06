@@ -132,12 +132,7 @@ function updateAllStates(
 }
 
 /** A teljes szerkezet belső erővektora (aktív szabadságfokokon) a pillanatnyi állapotból. */
-function assembleInternalForce(
-  system: AssembledSystem,
-  model: Model,
-  states: NonlinearStateMap,
-  u: Float64Array,
-): Float64Array {
+function assembleInternalForce(system: AssembledSystem, model: Model, states: NonlinearStateMap, u: Float64Array): Float64Array {
   const fInt = new Float64Array(system.map.activeDofs);
   const ue = new Float64Array(6);
 
@@ -181,15 +176,8 @@ function buildTangentMatrix(system: AssembledSystem, model: Model, states: Nonli
   for (const e of system.elements) {
     const st = states.get(e.id);
     if (st === undefined) throw new Error(`Hiányzó nemlineáris állapot: "${e.id}".`);
-    const ke: DenseMatrix = elementTangentStiffness(
-      e.nodeX,
-      e.id,
-      st.gaussPoints,
-      e.stiffness.gas,
-      schemeOf(model, e.id),
-    );
-    const keEffective =
-      e.foundationC > 0 ? ke.clone().addScaled(1, foundationMatrix(e.nodeX, e.foundationC, e.id)) : ke;
+    const ke: DenseMatrix = elementTangentStiffness(e.nodeX, e.id, st.gaussPoints, e.stiffness.gas, schemeOf(model, e.id));
+    const keEffective = e.foundationC > 0 ? ke.clone().addScaled(1, foundationMatrix(e.nodeX, e.foundationC, e.id)) : ke;
     k.addBlock(e.activeDofs, keEffective);
   }
 

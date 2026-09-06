@@ -78,10 +78,7 @@ export function solveTransient(model: Model, options: TransientOptions): Transie
   const system = assemble(model, { strategy: 'elimination' });
   const k = system.k.toDense();
   const m = assembleMass(model, system.map, system.elements);
-  const c =
-    options.damping !== undefined
-      ? dampingMatrix(k, m, options.damping)
-      : DenseMatrix.zeros(k.rows, k.cols);
+  const c = options.damping !== undefined ? dampingMatrix(k, m, options.damping) : DenseMatrix.zeros(k.rows, k.cols);
 
   const n = system.map.activeDofs;
 
@@ -135,9 +132,7 @@ export function solveTransient(model: Model, options: TransientOptions): Transie
   let v = v0;
   let a = a0State;
 
-  const steps: TransientStep[] = [
-    { t: 0, displacement: expand(u), velocity: expand(v), acceleration: expand(a) },
-  ];
+  const steps: TransientStep[] = [{ t: 0, displacement: expand(u), velocity: expand(v), acceleration: expand(a) }];
 
   for (let step = 1; step <= options.steps; step++) {
     const t = step * dt;

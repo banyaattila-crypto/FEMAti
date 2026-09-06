@@ -36,15 +36,7 @@ export function Button({
     .join(' ');
 
   return (
-    <button
-      type={type}
-      className={classes}
-      onClick={onClick}
-      disabled={disabled || loading}
-      title={title}
-      aria-label={ariaLabel}
-      aria-busy={loading}
-    >
+    <button type={type} className={classes} onClick={onClick} disabled={disabled || loading} title={title} aria-label={ariaLabel} aria-busy={loading}>
       {loading ? <span className="vem-spinner" aria-hidden="true" /> : null}
       {children}
     </button>
@@ -68,12 +60,7 @@ export interface SegmentedControlProps<T extends string> {
  * Kizáró választás. A DESIGN-TERV 4.1 szerint az aktív szegmens akcentus
  * háttérrel jelenik meg; a választás állapotát `aria-pressed` közli.
  */
-export function SegmentedControl<T extends string>({
-  options,
-  value,
-  onChange,
-  ariaLabel,
-}: SegmentedControlProps<T>): JSX.Element {
+export function SegmentedControl<T extends string>({ options, value, onChange, ariaLabel }: SegmentedControlProps<T>): JSX.Element {
   return (
     <div className="vem-segmented" role="group" aria-label={ariaLabel}>
       {options.map((o) => (

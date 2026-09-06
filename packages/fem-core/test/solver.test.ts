@@ -18,11 +18,7 @@ import {
   InvalidModelError,
   type Model,
 } from '../src/index.js';
-import {
-  cantileverPointLoad,
-  cantileverPointMoment,
-  proppedCantileverPointLoad,
-} from './helpers/timoshenkoBeam.js';
+import { cantileverPointLoad, cantileverPointMoment, proppedCantileverPointLoad } from './helpers/timoshenkoBeam.js';
 import { mustGet } from './helpers/assert.js';
 
 const MAT = makeMaterial('S235', 'Acél S235', { e: 2.1e8, sigmaY: 2.35e5 });
@@ -48,33 +44,34 @@ describe('V-01 — konzol koncentrált végteherrel', () => {
   const P = -10;
   const exact = cantileverPointLoad(EI, GAS, P, L, L);
 
-  it.each([1, 2, 4, 8])(
-    'a lehajlás és elfordulás gépi pontossággal egyezik, %i elemmel (nodálisan pontos)',
-    (n) => {
-      const mesh = uniformMesh(L, n, { sectionId: 'R', materialId: 'S235' });
-      const model = buildModel({
-        nodes: mesh.nodes,
-        elements: mesh.elements,
-        materials: [MAT],
-        sections: [SEC],
-        boundaries: [fixed('N0')],
-        loads: [nodalForce(`N${2 * n}`, P, 'F1')],
-      });
-      const result = solveLinear(model);
-      const tip = mustGet(result.nodes.at(-1));
-      // A pontosság a mátrix méretével (elemszámmal) enyhén romlik a
-      // kondicionáltság miatt (HIBATURESI-POLITIKA 3. pont) — a korlát ezért
-      // n-nel skálázva, nem rögzített abszolút számmal.
-      expect(relErr(tip.w, exact.w)).toBeLessThan(1e-11 * n);
-      expect(relErr(tip.phi, exact.phi)).toBeLessThan(1e-11 * n);
-    },
-  );
+  it.each([1, 2, 4, 8])('a lehajlás és elfordulás gépi pontossággal egyezik, %i elemmel (nodálisan pontos)', (n) => {
+    const mesh = uniformMesh(L, n, { sectionId: 'R', materialId: 'S235' });
+    const model = buildModel({
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce(`N${2 * n}`, P, 'F1')],
+    });
+    const result = solveLinear(model);
+    const tip = mustGet(result.nodes.at(-1));
+    // A pontosság a mátrix méretével (elemszámmal) enyhén romlik a
+    // kondicionáltság miatt (HIBATURESI-POLITIKA 3. pont) — a korlát ezért
+    // n-nel skálázva, nem rögzített abszolút számmal.
+    expect(relErr(tip.w, exact.w)).toBeLessThan(1e-11 * n);
+    expect(relErr(tip.phi, exact.phi)).toBeLessThan(1e-11 * n);
+  });
 
   it('a globális egyensúly gépi pontossággal zárul', () => {
     const mesh = uniformMesh(L, 3, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalForce('N6', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N6', P, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.equilibrium.satisfied).toBe(true);
@@ -85,8 +82,12 @@ describe('V-01 — konzol koncentrált végteherrel', () => {
   it('a befogási reakció pontosan ellensúlyozza a terhet', () => {
     const mesh = uniformMesh(L, 2, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalForce('N4', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N4', P, 'F1')],
     });
     const result = solveLinear(model);
     const reaction = mustGet(result.reactions.find((r) => r.nodeId === 'N0'));
@@ -97,8 +98,12 @@ describe('V-01 — konzol koncentrált végteherrel', () => {
   it('az önellenőrzés hibátlan (errorCount = 0)', () => {
     const mesh = uniformMesh(L, 4, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalForce('N8', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N8', P, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.selfCheck.errorCount).toBe(0);
@@ -115,8 +120,12 @@ describe('V-02 — konzol koncentrált végnyomatékkal', () => {
   it.each([1, 3])('gépi pontossággal egyezik, %i elemmel', (n) => {
     const mesh = uniformMesh(L, n, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalMoment(`N${2 * n}`, M0, 'M1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalMoment(`N${2 * n}`, M0, 'M1')],
     });
     const result = solveLinear(model);
     const tip = mustGet(result.nodes.at(-1));
@@ -127,8 +136,12 @@ describe('V-02 — konzol koncentrált végnyomatékkal', () => {
   it('tiszta nyomatéki tehernél a nyíróerő minden Gauss-pontban zérus', () => {
     const mesh = uniformMesh(L, 2, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalMoment('N4', M0, 'M1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalMoment('N4', M0, 'M1')],
     });
     const result = solveLinear(model);
     for (const el of result.elements) {
@@ -150,8 +163,12 @@ describe('V-03 — kéttámaszú tartó középen ható teherrel', () => {
   it.each([2, 4, 6])('a középső lehajlás gépi pontossággal egyezik, %i elemmel', (n) => {
     const mesh = uniformMesh(L, n, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [pinned('N0'), pinned(`N${2 * n}`)], loads: [nodalForce(`N${n}`, P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [pinned('N0'), pinned(`N${2 * n}`)],
+      loads: [nodalForce(`N${n}`, P, 'F1')],
     });
     const result = solveLinear(model);
     const mid = mustGet(result.nodes.find((x) => x.nodeId === `N${n}`));
@@ -161,8 +178,12 @@ describe('V-03 — kéttámaszú tartó középen ható teherrel', () => {
   it('a két reakció egyenlő és összegük a terhet ellensúlyozza', () => {
     const mesh = uniformMesh(L, 4, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [pinned('N0'), pinned('N8')], loads: [nodalForce('N4', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [pinned('N0'), pinned('N8')],
+      loads: [nodalForce('N4', P, 'F1')],
     });
     const result = solveLinear(model);
     const r0 = mustGet(result.reactions.find((r) => r.nodeId === 'N0'));
@@ -175,8 +196,12 @@ describe('V-03 — kéttámaszú tartó középen ható teherrel', () => {
   it('az elfordulás a tartó két felén ellentétes előjelű (antimetria)', () => {
     const mesh = uniformMesh(L, 4, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [pinned('N0'), pinned('N8')], loads: [nodalForce('N4', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [pinned('N0'), pinned('N8')],
+      loads: [nodalForce('N4', P, 'F1')],
     });
     const result = solveLinear(model);
     const left = mustGet(result.nodes.find((x) => x.nodeId === 'N2')).phi;
@@ -197,8 +222,12 @@ describe('V-04 — befogott-görgős tartó, statikailag határozatlan', () => {
     const n = 6;
     const mesh = uniformMesh(L, n, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0'), pinned(`N${2 * n}`)], loads: [nodalForce(`N${n}`, P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0'), pinned(`N${2 * n}`)],
+      loads: [nodalForce(`N${n}`, P, 'F1')],
     });
     const result = solveLinear(model);
     for (const node of result.nodes) {
@@ -213,8 +242,12 @@ describe('V-04 — befogott-görgős tartó, statikailag határozatlan', () => {
     const n = 6;
     const mesh = uniformMesh(L, n, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0'), pinned(`N${2 * n}`)], loads: [nodalForce(`N${n}`, P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0'), pinned(`N${2 * n}`)],
+      loads: [nodalForce(`N${n}`, P, 'F1')],
     });
     const result = solveLinear(model);
     const rGorgo = mustGet(result.reactions.find((r) => r.nodeId === `N${2 * n}`));
@@ -225,8 +258,12 @@ describe('V-04 — befogott-görgős tartó, statikailag határozatlan', () => {
     const n = 4;
     const mesh = uniformMesh(L, n, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0'), pinned(`N${2 * n}`)], loads: [nodalForce(`N${n}`, P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0'), pinned(`N${2 * n}`)],
+      loads: [nodalForce(`N${n}`, P, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.equilibrium.satisfied).toBe(true);
@@ -244,8 +281,12 @@ describe('V-05 — rugós támasz: egyensúly és a reakció előjele', () => {
     const P = -10;
     const mesh = uniformMesh(L, 2, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [springSupport('N0', k), pinned('N4')], loads: [nodalForce('N2', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [springSupport('N0', k), pinned('N4')],
+      loads: [nodalForce('N2', P, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.equilibrium.satisfied).toBe(true);
@@ -264,8 +305,12 @@ describe('V-05 — rugós támasz: egyensúly és a reakció előjele', () => {
     const P = -10;
     const mesh = uniformMesh(L, 2, { sectionId: 'R', materialId: 'S235' });
     const rigid = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [pinned('N0'), pinned('N4')], loads: [nodalForce('N2', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [pinned('N0'), pinned('N4')],
+      loads: [nodalForce('N2', P, 'F1')],
     });
     const softSpring = buildModel({
       ...rigid,
@@ -287,8 +332,13 @@ describe('V-06 — rugalmas ágyazat: az ágyazat felveszi a teljes terhet', () 
     const P = -20;
     const mesh = uniformMesh(L, 6, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [], foundations: [foundation(0, L, 8000)], loads: [nodalForce('N6', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [],
+      foundations: [foundation(0, L, 8000)],
+      loads: [nodalForce('N6', P, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.equilibrium.satisfied).toBe(true);
@@ -302,8 +352,13 @@ describe('V-06 — rugalmas ágyazat: az ágyazat felveszi a teljes terhet', () 
     const P = -20;
     const mesh = uniformMesh(L, 6, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], foundations: [foundation(0, L, 8000)], loads: [nodalForce('N12', P, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      foundations: [foundation(0, L, 8000)],
+      loads: [nodalForce('N12', P, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.equilibrium.satisfied).toBe(true);
@@ -317,8 +372,12 @@ describe('elimination vs penalty — konzisztencia', () => {
   it('a két stratégia gyakorlatilag azonos elmozdulást ad (a penalty véges merevsége határáig)', () => {
     const mesh = uniformMesh(4, 2, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalForce('N4', -10, 'F1'), nodalMoment('N2', 5, 'M1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N4', -10, 'F1'), nodalMoment('N2', 5, 'M1')],
     });
     const elim = solveLinear(model, { strategy: 'elimination' });
     const pen = solveLinear(model, { strategy: 'penalty' });
@@ -332,8 +391,12 @@ describe('elimination vs penalty — konzisztencia', () => {
   it('mindkét stratégia egyensúlya gépi pontossággal zár, önellenőrzés hibátlan', () => {
     const mesh = uniformMesh(4, 2, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalForce('N4', -10, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N4', -10, 'F1')],
     });
     for (const strategy of ['elimination', 'penalty'] as const) {
       const result = solveLinear(model, { strategy });
@@ -349,7 +412,10 @@ describe('érvénytelen modell és mechanizmus', () => {
   it('validáció szerint hibás modellre InvalidModelError-t dob', () => {
     const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
     const noSupport: Model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
       boundaries: [],
     });
     expect(() => solveLinear(noSupport)).toThrow(InvalidModelError);
@@ -358,7 +424,10 @@ describe('érvénytelen modell és mechanizmus', () => {
   it('egyetlen csuklós támasz (nincs elforduláskorlátozás) mechanizmust jelez', () => {
     const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
       boundaries: [pinned('N0')],
     });
     try {
@@ -400,7 +469,10 @@ describe('P5 — hőteher (V-07 jellegű, statikailag határozott eset)', () => 
     const tBottom = 25;
     const mesh = uniformMesh(L, 4, { sectionId: 'R', materialId: THERMAL_MAT.id as string });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [THERMAL_MAT], sections: [SEC],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [THERMAL_MAT],
+      sections: [SEC],
       boundaries: [pinned('N0'), pinned(`N${mesh.nodes.length - 1}`)],
       loads: [thermal(tTop, tBottom, 0, 'T1')],
     });
@@ -439,7 +511,10 @@ describe('P5 — nincs figyelmeztetés támogatott terheknél', () => {
   it('megoszló teher esetén NINCS figyelmeztetés (a P5 óta támogatott)', () => {
     const mesh = uniformMesh(4, 2, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
       boundaries: [fixed('N0')],
       loads: [distributedForce(0, 4, -5, -5, 'Q1')],
     });
@@ -450,8 +525,12 @@ describe('P5 — nincs figyelmeztetés támogatott terheknél', () => {
   it('csak támogatott terheknél nincs figyelmeztetés', () => {
     const mesh = uniformMesh(4, 2, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalForce('N4', -10, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N4', -10, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.warnings).toEqual([]);
@@ -462,8 +541,12 @@ describe('keresztmetszeti jellemzők a kimenetben (SectionProps)', () => {
   it('Mₑ és Mp a σY-ból számítódik', () => {
     const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalForce('N2', -1, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N2', -1, 'F1')],
     });
     const result = solveLinear(model);
     const sigmaY = MAT.sigmaY as number;
@@ -477,7 +560,10 @@ describe('keresztmetszeti jellemzők a kimenetben (SectionProps)', () => {
     const model = buildModel({
       nodes: mesh.nodes,
       elements: mesh.elements.map((e) => ({ ...e, materialId: 'X' as never })),
-      materials: [noYield], sections: [SEC], boundaries: [fixed('N0')], loads: [nodalForce('N2', -1, 'F1')],
+      materials: [noYield],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N2', -1, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.props.me).toBeNull();
@@ -487,8 +573,12 @@ describe('keresztmetszeti jellemzők a kimenetben (SectionProps)', () => {
   it('Vpl = κs·A·σY/√3 a kimenetben (ADR-0018)', () => {
     const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
     const model = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], loads: [nodalForce('N2', -1, 'F1')],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N2', -1, 'F1')],
     });
     const result = solveLinear(model);
     const sigmaY = MAT.sigmaY as number;
@@ -503,7 +593,10 @@ describe('keresztmetszeti jellemzők a kimenetben (SectionProps)', () => {
     const model = buildModel({
       nodes: mesh.nodes,
       elements: mesh.elements.map((e) => ({ ...e, materialId: 'X' as never })),
-      materials: [noYield], sections: [SEC], boundaries: [fixed('N0')], loads: [nodalForce('N2', -1, 'F1')],
+      materials: [noYield],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      loads: [nodalForce('N2', -1, 'F1')],
     });
     const result = solveLinear(model);
     expect(result.props.vpl).toBeNull();

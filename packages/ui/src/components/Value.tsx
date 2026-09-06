@@ -13,11 +13,7 @@ export interface ValueDisplayProps {
  * elem: az érték az elsődleges szöveg, az egység tompított — így az egység
  * nem versenyez a számmal.
  */
-export function ValueDisplay({
-  formatted,
-  emphasis = 'normal',
-  tone = 'neutral',
-}: ValueDisplayProps): JSX.Element {
+export function ValueDisplay({ formatted, emphasis = 'normal', tone = 'neutral' }: ValueDisplayProps): JSX.Element {
   const classes = [
     'vem-value',
     emphasis === 'large' ? 'vem-value--large' : '',
@@ -44,13 +40,7 @@ export interface ResultRowProps {
 }
 
 /** Az eredménypanelek alap-primitívje: címke balra, érték + egység jobbra. */
-export function ResultRow({
-  label,
-  formatted,
-  tone = 'neutral',
-  emphasis = 'normal',
-  title,
-}: ResultRowProps): JSX.Element {
+export function ResultRow({ label, formatted, tone = 'neutral', emphasis = 'normal', title }: ResultRowProps): JSX.Element {
   return (
     <div className="vem-result-row">
       <span className="vem-result-row__label-group">

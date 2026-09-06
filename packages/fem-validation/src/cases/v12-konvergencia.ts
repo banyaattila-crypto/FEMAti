@@ -85,8 +85,7 @@ export function caseV12(): ValidationCase {
   const L = 6;
   const q = -8;
   const x0 = 3.7; // fix fizikai hely, szándékosan NEM esik egybe csomóponttal egyik hálónál sem
-  const wExact = (x: number): number =>
-    (q * (x ** 4 - 2 * L * x ** 3 + L ** 3 * x)) / (24 * ei) + (q * x * (L - x)) / (2 * gas);
+  const wExact = (x: number): number => (q * (x ** 4 - 2 * L * x ** 3 + L ** 3 * x)) / (24 * ei) + (q * x * (L - x)) / (2 * gas);
   const wRef = wExact(x0);
 
   const material = makeMaterial('S235', 'Acél S235', { e: E, sigmaY: 2.35e5 });

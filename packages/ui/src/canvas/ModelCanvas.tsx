@@ -13,7 +13,13 @@ import { useModelStore, type Selection } from '../state/modelStore.js';
 import { useAppStore } from '../state/appStore.js';
 import { useNonlinearStore } from '../state/nonlinearStore.js';
 import { useLiveResult } from '../solve/useLiveResult.js';
-import { DEFAULT_DISTRIBUTED_MOMENT, DEFAULT_FOUNDATION_STIFFNESS, DEFAULT_SPRING_STIFFNESS, snapToNode, type SupportType } from '../model/editable.js';
+import {
+  DEFAULT_DISTRIBUTED_MOMENT,
+  DEFAULT_FOUNDATION_STIFFNESS,
+  DEFAULT_SPRING_STIFFNESS,
+  snapToNode,
+  type SupportType,
+} from '../model/editable.js';
 import { combinedSteps, elementPlasticity, nodalDisplacements } from '../model/nonlinear.js';
 import { jetColor } from '../charts/colormap.js';
 import {
@@ -29,14 +35,7 @@ import {
   SupportMark,
 } from './marks.js';
 import { ToolPalette } from './ToolPalette.js';
-import {
-  AXIS_X0,
-  AXIS_X1,
-  AXIS_Y as AXIS_Y_BASE,
-  VIEW_HEIGHT as VIEW_HEIGHT_BASE,
-  VIEW_WIDTH,
-  createModelTransform,
-} from './useModelTransform.js';
+import { AXIS_X0, AXIS_X1, AXIS_Y as AXIS_Y_BASE, VIEW_HEIGHT as VIEW_HEIGHT_BASE, VIEW_WIDTH, createModelTransform } from './useModelTransform.js';
 import * as fmt from '../format/numbers.js';
 import { CANVAS } from '../i18n/canvas.js';
 import { SUPPORT_TYPE_LABEL } from '../i18n/panels.js';
@@ -127,12 +126,8 @@ export function ModelCanvas(): JSX.Element {
   }, []);
   const axisY = (AXIS_Y_BASE / VIEW_HEIGHT_BASE) * viewH;
 
-  const nonlinearNodalW = nonlinearRun && currentNonlinearStep
-    ? nodalDisplacements(nonlinearRun.system, currentNonlinearStep.u)
-    : null;
-  const nonlinearMaxW = nonlinearNodalW
-    ? nonlinearNodalW.reduce((m, n) => Math.max(m, Math.abs(n.w)), 0)
-    : 0;
+  const nonlinearNodalW = nonlinearRun && currentNonlinearStep ? nodalDisplacements(nonlinearRun.system, currentNonlinearStep.u) : null;
+  const nonlinearMaxW = nonlinearNodalW ? nonlinearNodalW.reduce((m, n) => Math.max(m, Math.abs(n.w)), 0) : 0;
 
   const t = createModelTransform({
     span: model.span,
@@ -161,50 +156,47 @@ export function ModelCanvas(): JSX.Element {
     [camera],
   );
 
-  const toMeters = useCallback(
-    (contentX: number): number => ((contentX - AXIS_X0) / (AXIS_X1 - AXIS_X0)) * model.span,
-    [model.span],
-  );
+  const toMeters = useCallback((contentX: number): number => ((contentX - AXIS_X0) / (AXIS_X1 - AXIS_X0)) * model.span, [model.span]);
 
   const clampMeters = useCallback((x: number): number => Math.min(Math.max(x, 0), model.span), [model.span]);
 
   // ─── Zoom/pan ────────────────────────────────────────────────────────────
-  const onWheel = useCallback(
-    (e: React.WheelEvent<SVGSVGElement>): void => {
-      e.preventDefault();
-      const svg = svgRef.current;
-      if (svg === null) return;
-      const ctm = svg.getScreenCTM();
-      if (ctm === null) return;
-      const inv = ctm.inverse();
-      const pt = svg.createSVGPoint();
-      pt.x = e.clientX;
-      pt.y = e.clientY;
-      const p = pt.matrixTransform(inv);
-      setCamera((c) => {
-        const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-        const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, c.scale * factor));
-        const tx = p.x - (nextScale / c.scale) * (p.x - c.tx);
-        const ty = p.y - (nextScale / c.scale) * (p.y - c.ty);
-        return { scale: nextScale, tx, ty };
-      });
-    },
-    [],
-  );
+  const onWheel = useCallback((e: React.WheelEvent<SVGSVGElement>): void => {
+    e.preventDefault();
+    const svg = svgRef.current;
+    if (svg === null) return;
+    const ctm = svg.getScreenCTM();
+    if (ctm === null) return;
+    const inv = ctm.inverse();
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const p = pt.matrixTransform(inv);
+    setCamera((c) => {
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, c.scale * factor));
+      const tx = p.x - (nextScale / c.scale) * (p.x - c.tx);
+      const ty = p.y - (nextScale / c.scale) * (p.y - c.ty);
+      return { scale: nextScale, tx, ty };
+    });
+  }, []);
 
   const resetView = useCallback(() => setCamera(IDLE_CAMERA), []);
 
   /** Nagyítás/kicsinyítés a vászon közepére rögzítve (gombos vezérlés — a görgő-zoom mellett). */
-  const zoomBy = useCallback((factor: number) => {
-    setCamera((c) => {
-      const cx = VIEW_WIDTH / 2;
-      const cy = viewH / 2;
-      const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, c.scale * factor));
-      const tx = cx - (nextScale / c.scale) * (cx - c.tx);
-      const ty = cy - (nextScale / c.scale) * (cy - c.ty);
-      return { scale: nextScale, tx, ty };
-    });
-  }, [viewH]);
+  const zoomBy = useCallback(
+    (factor: number) => {
+      setCamera((c) => {
+        const cx = VIEW_WIDTH / 2;
+        const cy = viewH / 2;
+        const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, c.scale * factor));
+        const tx = cx - (nextScale / c.scale) * (cx - c.tx);
+        const ty = cy - (nextScale / c.scale) * (cy - c.ty);
+        return { scale: nextScale, tx, ty };
+      });
+    },
+    [viewH],
+  );
 
   // ─── Kattintás/húzás a háttéren (üres tartón) ───────────────────────────
   const onBackgroundPointerDown = useCallback(
@@ -349,12 +341,9 @@ export function ModelCanvas(): JSX.Element {
     [tool, select],
   );
 
-  const isSelected = (sel: Selection): boolean =>
-    selection !== null && selection.kind === sel.kind && selection.id === sel.id;
+  const isSelected = (sel: Selection): boolean => selection !== null && selection.kind === sel.kind && selection.id === sel.id;
 
-  const elementBoundaries = Array.from({ length: model.elementCount + 1 }, (_, i) =>
-    t.sx((i * model.span) / model.elementCount),
-  );
+  const elementBoundaries = Array.from({ length: model.elementCount + 1 }, (_, i) => t.sx((i * model.span) / model.elementCount));
 
   const deformedNodes = nonlinearNodalW ?? result?.nodes ?? null;
   const deformedPath = deformedNodes
@@ -465,13 +454,7 @@ export function ModelCanvas(): JSX.Element {
         <button type="button" className="vem-btn vem-btn--sm" onClick={resetView} title={t18.resetViewTitle}>
           {t18.resetViewLabel}
         </button>
-        <button
-          type="button"
-          className="vem-btn vem-btn--sm"
-          onClick={removeSelected}
-          disabled={selection === null}
-          title={t18.deleteTitle}
-        >
+        <button type="button" className="vem-btn vem-btn--sm" onClick={removeSelected} disabled={selection === null} title={t18.deleteTitle}>
           {t18.deleteLabel}
         </button>
         <button
@@ -530,7 +513,15 @@ export function ModelCanvas(): JSX.Element {
             <>
               <defs>
                 {axisHeatGradients.map((g) => (
-                  <linearGradient key={g.elementId} id={`vem-axis-heat-${g.elementId}`} gradientUnits="userSpaceOnUse" x1={g.x1} y1={axisY} x2={g.x2} y2={axisY}>
+                  <linearGradient
+                    key={g.elementId}
+                    id={`vem-axis-heat-${g.elementId}`}
+                    gradientUnits="userSpaceOnUse"
+                    x1={g.x1}
+                    y1={axisY}
+                    x2={g.x2}
+                    y2={axisY}
+                  >
                     {g.stops.map((s, i) => (
                       <stop key={i} offset={s.offset} stopColor={s.color} />
                     ))}
@@ -666,10 +657,7 @@ export function ModelCanvas(): JSX.Element {
                 return (
                   <g key={r.nodeId} aria-hidden="true">
                     <line x1={rx} y1={tailY} x2={rx} y2={headY} stroke="var(--sem-error)" strokeWidth={1.6} />
-                    <path
-                      d={`M${rx},${headY} L${rx - 3.2},${headY + 6 * headSign} L${rx + 3.2},${headY + 6 * headSign} Z`}
-                      fill="var(--sem-error)"
-                    />
+                    <path d={`M${rx},${headY} L${rx - 3.2},${headY + 6 * headSign} L${rx + 3.2},${headY + 6 * headSign} Z`} fill="var(--sem-error)" />
                     <text x={rx + 6} y={farY + 6} fontSize={13} fontWeight={600} fontFamily="var(--font-mono)" fill="var(--sem-error)">
                       R<tspan fontSize={9.5} dy={3}>{`z${i + 1}`}</tspan>
                       <tspan dy={-3}>{` = ${fmt.force(r.fz).value} ${fmt.force(r.fz).unit}`}</tspan>
@@ -688,9 +676,7 @@ export function ModelCanvas(): JSX.Element {
               const x1 = t.sx(load.x1 + shift);
               const x2 = t.sx(load.x2 + shift);
               const uniform = Math.abs(load.q1 - load.q2) < 1e-9;
-              const qLabel = uniform
-                ? `q = ${load.q1.toFixed(1)} kN/m`
-                : `q = ${load.q1.toFixed(1)}→${load.q2.toFixed(1)} kN/m`;
+              const qLabel = uniform ? `q = ${load.q1.toFixed(1)} kN/m` : `q = ${load.q1.toFixed(1)}→${load.q2.toFixed(1)} kN/m`;
               return (
                 <g
                   key={load.id}
@@ -708,9 +694,7 @@ export function ModelCanvas(): JSX.Element {
                   }}
                   style={{ cursor: tool === 'select' ? 'move' : 'crosshair', outline: 'none' }}
                 >
-                  {selected ? (
-                    <rect x={x1 - 4} y={axisY - 34} width={x2 - x1 + 8} height={38} fill="var(--accent-a10)" />
-                  ) : null}
+                  {selected ? <rect x={x1 - 4} y={axisY - 34} width={x2 - x1 + 8} height={38} fill="var(--accent-a10)" /> : null}
                   <DistributedLoad x1={x1} x2={x2} y={axisY} q1={load.q1} q2={load.q2} label={qLabel} />
                 </g>
               );
@@ -721,9 +705,7 @@ export function ModelCanvas(): JSX.Element {
               const x1 = t.sx(load.x1 + shift);
               const x2 = t.sx(load.x2 + shift);
               const uniform = Math.abs(load.m1 - load.m2) < 1e-9;
-              const mLabel = uniform
-                ? `m = ${load.m1.toFixed(1)} kNm/m`
-                : `m = ${load.m1.toFixed(1)}→${load.m2.toFixed(1)} kNm/m`;
+              const mLabel = uniform ? `m = ${load.m1.toFixed(1)} kNm/m` : `m = ${load.m1.toFixed(1)}→${load.m2.toFixed(1)} kNm/m`;
               return (
                 <g
                   key={load.id}
@@ -741,9 +723,7 @@ export function ModelCanvas(): JSX.Element {
                   }}
                   style={{ cursor: tool === 'select' ? 'move' : 'crosshair', outline: 'none' }}
                 >
-                  {selected ? (
-                    <rect x={x1 - 4} y={axisY - 46} width={x2 - x1 + 8} height={40} fill="var(--accent-a10)" />
-                  ) : null}
+                  {selected ? <rect x={x1 - 4} y={axisY - 46} width={x2 - x1 + 8} height={40} fill="var(--accent-a10)" /> : null}
                   <DistributedMomentLoad x1={x1} x2={x2} y={axisY} label={mLabel} />
                 </g>
               );
@@ -820,9 +800,7 @@ export function ModelCanvas(): JSX.Element {
                 }}
                 style={{ cursor: tool === 'select' ? 'move' : 'crosshair', outline: 'none' }}
               >
-                {selected ? (
-                  <rect x={x1 - 4} y={axisY} width={x2 - x1 + 8} height={34} fill="var(--accent-a10)" />
-                ) : null}
+                {selected ? <rect x={x1 - 4} y={axisY} width={x2 - x1 + 8} height={34} fill="var(--accent-a10)" /> : null}
                 <Foundation x1={x1} x2={x2} y={axisY} label={`c = ${f.c.toFixed(0)} kN/m²`} />
               </g>
             );
@@ -864,7 +842,7 @@ export function ModelCanvas(): JSX.Element {
               y={axisY + 90}
               textAnchor="middle"
               fill="var(--text-muted)"
-              style={{ font: "500 15px var(--font-mono)" }}
+              style={{ font: '500 15px var(--font-mono)' }}
             >
               L = {model.span.toFixed(2)} m · {catalogName(material.name, lang)}
             </text>

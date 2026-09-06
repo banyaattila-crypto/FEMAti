@@ -7,16 +7,7 @@
  * lépésenként LEGFELJEBB egyszer épít tangenciális merevségi mátrixot, a
  * teljes Newton minden (nem utolsó) iterációban.
  */
-import {
-  buildModel,
-  fixed,
-  makeMaterial,
-  makeSection,
-  nodalForce,
-  rect,
-  runLoadStepper,
-  uniformMesh,
-} from '@femati/fem-core';
+import { buildModel, fixed, makeMaterial, makeSection, nodalForce, rect, runLoadStepper, uniformMesh } from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 export function caseP15(): ValidationCase {

@@ -33,9 +33,7 @@ export function exportSvgElementsCombined(svgs: readonly SVGSVGElement[], filena
   const heights = svgs.map((s) => s.viewBox.baseVal.height || s.clientHeight || 140);
   const totalHeight = heights.reduce((a, b) => a + b, 0);
 
-  const parts: string[] = [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${totalHeight}">`,
-  ];
+  const parts: string[] = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${totalHeight}">`];
   let offsetY = 0;
   for (let i = 0; i < svgs.length; i++) {
     const svg = svgs[i];

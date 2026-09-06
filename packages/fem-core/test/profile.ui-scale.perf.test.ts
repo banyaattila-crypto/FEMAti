@@ -55,7 +55,6 @@ describe.skipIf(!RUN)('P16 kontroll — UI-méretű modell (100 elem, 32 réteg)
     });
     const totalMs = performance.now() - t0;
 
-     
     console.log(
       `\n[P16 UI-MÉRETŰ KONTROLL]\n` +
         `  DOF: ${model.nodes.length * 2}, elemek: ${model.elements.length}\n` +

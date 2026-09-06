@@ -6,18 +6,7 @@
  * (nagy rugóállandó a diagonálison), ezért a tűrés lazább, mint egy elvileg
  * egzakt azonosságnál: 1e−6 relatív.
  */
-import {
-  buildModel,
-  DEFAULT_PENALTY,
-  fixed,
-  makeMaterial,
-  makeSection,
-  nodalForce,
-  pinned,
-  rect,
-  solveLinear,
-  uniformMesh,
-} from '@femati/fem-core';
+import { buildModel, DEFAULT_PENALTY, fixed, makeMaterial, makeSection, nodalForce, pinned, rect, solveLinear, uniformMesh } from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 export function caseV11(): ValidationCase {

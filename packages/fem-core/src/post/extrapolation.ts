@@ -17,11 +17,7 @@
  */
 
 /** Lagrange-interpoláció/extrapoláció 3 (xi, érték) párból egy tetszőleges ξ helyre. */
-export function lagrangeAt(
-  values: readonly [number, number, number],
-  xis: readonly [number, number, number],
-  xi: number,
-): number {
+export function lagrangeAt(values: readonly [number, number, number], xis: readonly [number, number, number], xi: number): number {
   let sum = 0;
   for (let i = 0; i < 3; i++) {
     let term = values[i] ?? 0;
@@ -41,11 +37,7 @@ export function extrapolateElementToNodes(
   gaussValues: readonly [number, number, number],
   gaussXi: readonly [number, number, number],
 ): readonly [number, number, number] {
-  return [
-    lagrangeAt(gaussValues, gaussXi, -1),
-    lagrangeAt(gaussValues, gaussXi, 0),
-    lagrangeAt(gaussValues, gaussXi, 1),
-  ];
+  return [lagrangeAt(gaussValues, gaussXi, -1), lagrangeAt(gaussValues, gaussXi, 0), lagrangeAt(gaussValues, gaussXi, 1)];
 }
 
 export interface AveragedField {

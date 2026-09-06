@@ -18,7 +18,14 @@
  *    modellből számított axiális erő (N) közel nulla, míg a rugalmas
  *    súlyponton NEM az — ez maga a "tengely elmozdulásának" bizonyítéka.
  */
-import { plasticMomentCapacity, generateLayers, geometricProperties, rect, updateLayerPlasticState, INITIAL_LAYER_PLASTIC_STATE } from '@femati/fem-core';
+import {
+  plasticMomentCapacity,
+  generateLayers,
+  geometricProperties,
+  rect,
+  updateLayerPlasticState,
+  INITIAL_LAYER_PLASTIC_STATE,
+} from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 interface Block {
@@ -156,8 +163,7 @@ function caseP13NeutralAxisShift(): readonly ValidationCheck[] {
 
   return [
     {
-      label:
-        'N(rugalmas súlypont, z=0)/N_max ERŐSEN nullától eltérő (legalább 10%, a tengely NEM ott van)',
+      label: 'N(rugalmas súlypont, z=0)/N_max ERŐSEN nullától eltérő (legalább 10%, a tengely NEM ott van)',
       reference: elasticCentroidImbalanceRatio,
       computed: elasticCentroidImbalanceRatio,
       tolerance: 0,

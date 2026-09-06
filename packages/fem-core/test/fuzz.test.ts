@@ -199,9 +199,7 @@ describe('P16 fuzz-teszt — lineáris megoldó (10 000 véletlen érvényes mod
           result.reactions.flatMap((r) => [r.fz, r.my]),
           'reakciók',
         );
-        expect(result.equilibrium.satisfied, `ΣFz=${result.equilibrium.sumFz}, ΣMy=${result.equilibrium.sumMy}`).toBe(
-          true,
-        );
+        expect(result.equilibrium.satisfied, `ΣFz=${result.equilibrium.sumFz}, ΣMy=${result.equilibrium.sumMy}`).toBe(true);
       }),
       { numRuns: 10_000 },
     );

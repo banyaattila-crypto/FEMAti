@@ -21,13 +21,7 @@ import { shapeFunctions } from '../element/shapeFunctions.js';
 import { jacobian } from '../element/jacobian.js';
 import { elementGeometricStiffness, elementStiffness } from '../element/timoshenko3.js';
 import { sectionStiffness, type SectionStiffness } from '../element/constitutive.js';
-import {
-  buildDofMap,
-  elementActiveDofs,
-  elementDofs,
-  type ConstraintStrategy,
-  type DofMap,
-} from './dofMap.js';
+import { buildDofMap, elementActiveDofs, elementDofs, type ConstraintStrategy, type DofMap } from './dofMap.js';
 import type { ElasticFoundation, Element, Model } from '../model/types.js';
 
 /** A diplomaterv 3.1.7.3 pontjában javasolt penalty-rugóállandó [kN/m]. */
@@ -94,12 +88,7 @@ export interface AssembledSystem {
 }
 
 /** Az elemek előkészítése: geometria feloldása és a Kₑ mátrixok előállítása. */
-export function prepareElements(
-  model: Model,
-  map: DofMap,
-  axialForce = 0,
-  excludedFoundationElementIds?: ReadonlySet<string>,
-): PreparedElement[] {
+export function prepareElements(model: Model, map: DofMap, axialForce = 0, excludedFoundationElementIds?: ReadonlySet<string>): PreparedElement[] {
   const materials = new Map(model.materials.map((m) => [m.id as string, m]));
   const sections = new Map(model.sections.map((s) => [s.id as string, s]));
   const lookup = (id: string): ReturnType<typeof materials.get> => materials.get(id);
@@ -116,16 +105,10 @@ export function prepareElements(
     const material = materials.get(element.materialId as string);
     const section = sections.get(element.sectionId as string);
     if (!material || !section) {
-      throw new DimensionError(
-        `A(z) "${element.id}" elem anyaga vagy keresztmetszete nem oldható fel.`,
-      );
+      throw new DimensionError(`A(z) "${element.id}" elem anyaga vagy keresztmetszete nem oldható fel.`);
     }
 
-    const nodeX: [number, number, number] = [
-      map.nodeX[nodeIndices[0]] ?? 0,
-      map.nodeX[nodeIndices[1]] ?? 0,
-      map.nodeX[nodeIndices[2]] ?? 0,
-    ];
+    const nodeX: [number, number, number] = [map.nodeX[nodeIndices[0]] ?? 0, map.nodeX[nodeIndices[1]] ?? 0, map.nodeX[nodeIndices[2]] ?? 0];
 
     const stiffness = sectionStiffness(section, material, lookup as never);
     const elementId = element.id as string;
@@ -143,10 +126,7 @@ export function prepareElements(
     // `elementGeometricStiffness()` fejléce. Pozitív N (nyomóerő) csökkenti a
     // hajlítási merevséget, ezért a Kg₀ kernel MÍNUSZ N-nel szorozva adódik hozzá.
     if (axialForce !== 0) {
-      keEffective = (keEffective === ke ? keEffective.clone() : keEffective).addScaled(
-        -axialForce,
-        elementGeometricStiffness({ nodeX, elementId }),
-      );
+      keEffective = (keEffective === ke ? keEffective.clone() : keEffective).addScaled(-axialForce, elementGeometricStiffness({ nodeX, elementId }));
     }
 
     return {
@@ -170,11 +150,7 @@ export function prepareElements(
  *   K_ágy = ∫ Nᵀ·c·N dx
  * Csak a `w` szabadságfokokra hat.
  */
-export function foundationMatrix(
-  nodeX: readonly [number, number, number],
-  c: number,
-  elementId: string,
-): DenseMatrix {
+export function foundationMatrix(nodeX: readonly [number, number, number], c: number, elementId: string): DenseMatrix {
   const k = new DenseMatrix(6, 6);
   for (const gp of GAUSS_3) {
     const { n } = shapeFunctions(gp.xi);
@@ -190,10 +166,7 @@ export function foundationMatrix(
 }
 
 /** Az elemre eső ágyazási tényező (az ágyazat átfedő szakaszaiból). */
-function foundationFor(
-  foundations: readonly ElasticFoundation[],
-  nodeX: readonly [number, number, number],
-): number {
+function foundationFor(foundations: readonly ElasticFoundation[], nodeX: readonly [number, number, number]): number {
   const x1 = Math.min(nodeX[0], nodeX[2]);
   const x2 = Math.max(nodeX[0], nodeX[2]);
   const length = x2 - x1;

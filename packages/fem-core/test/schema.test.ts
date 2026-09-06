@@ -41,9 +41,7 @@ function roundDeep(value: unknown, digits = 12): unknown {
   }
   if (Array.isArray(value)) return value.map((v) => roundDeep(v, digits));
   if (value !== null && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, roundDeep(v, digits)]),
-    );
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, roundDeep(v, digits)]));
   }
   return value;
 }
@@ -157,8 +155,7 @@ describe('.femati.json — keresztmetszet-típusok', () => {
 
   it('cső', () => expectRoundTrip(withSection(makeSection('T1', 'Cső ⌀200×10', tube(0.2, 0.01)))));
 
-  it('I-szelvény', () =>
-    expectRoundTrip(withSection(makeSection('I1', 'IPE 300', iProfile(0.3, 0.15, 0.0071, 0.0107)))));
+  it('I-szelvény', () => expectRoundTrip(withSection(makeSection('I1', 'IPE 300', iProfile(0.3, 0.15, 0.0071, 0.0107)))));
 
   it('rétegelt, anyaghivatkozással', () => {
     const layered = makeLayeredSection(

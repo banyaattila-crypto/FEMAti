@@ -192,7 +192,8 @@ export function App(): JSX.Element {
           s.setActiveDiagram(solverSettings.activeDiagram);
           s.setStatus('editing', t.statusLoaded(file.name));
         } catch (error) {
-          const message = error instanceof ModelFileError ? formatModelFileError(error.info, s.lang) : error instanceof Error ? error.message : String(error);
+          const message =
+            error instanceof ModelFileError ? formatModelFileError(error.info, s.lang) : error instanceof Error ? error.message : String(error);
           s.setStatus('error', t.statusLoadFailed(message));
         }
       };
@@ -381,20 +382,10 @@ export function App(): JSX.Element {
         <MenuBar menus={menus} />
         <div className="vem-chrome__spacer" />
         <div className="vem-lang-switch" role="group" aria-label="Nyelv / Language">
-          <button
-            type="button"
-            className="vem-lang-switch-btn"
-            aria-pressed={s.lang === 'hu'}
-            onClick={() => s.setLang('hu')}
-          >
+          <button type="button" className="vem-lang-switch-btn" aria-pressed={s.lang === 'hu'} onClick={() => s.setLang('hu')}>
             HU
           </button>
-          <button
-            type="button"
-            className="vem-lang-switch-btn"
-            aria-pressed={s.lang === 'en'}
-            onClick={() => s.setLang('en')}
-          >
+          <button type="button" className="vem-lang-switch-btn" aria-pressed={s.lang === 'en'} onClick={() => s.setLang('en')}>
             EN
           </button>
         </div>

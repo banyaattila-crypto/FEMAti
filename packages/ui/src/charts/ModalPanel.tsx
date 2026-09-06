@@ -37,22 +37,14 @@ export function ModalPanel({ outcome, activeMode, onActiveModeChange, span, lang
     );
   }
   if (outcome.modal === null || outcome.modal.modes.length === 0) {
-    return (
-      <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        {t.modalNoResult}
-      </div>
-    );
+    return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>{t.modalNoResult}</div>;
   }
 
   const { modal, model } = outcome;
   const modeIndex = Math.min(activeMode, modal.modes.length - 1);
   const mode = modal.modes[modeIndex];
   if (mode === undefined) {
-    return (
-      <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        {t.modalNoResult}
-      </div>
-    );
+    return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>{t.modalNoResult}</div>;
   }
 
   const xs = model.nodes.map((n) => n.x as number);

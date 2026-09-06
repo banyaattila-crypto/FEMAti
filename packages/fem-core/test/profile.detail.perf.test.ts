@@ -145,7 +145,6 @@ describe.skipIf(!RUN)('P16 profilozás — szakaszonkénti bontás', () => {
     // tehervektor összeállítása a lépés elején, egyszer.
     const estimatedStepTotal = perStep + 2 * perIteration + perLoadVector;
 
-     
     console.log(
       `\n[P16 RÉSZLETES PROFIL] (${REPS} ismétlés átlaga, DOF=${system.map.activeDofs}, elem=${system.elements.length}, réteg/elem=32)\n` +
         `  Kₑ-összeállítás (elementTangentStiffness × ${system.elements.length} elem): ${(tKeLoop / REPS).toFixed(2)} ms\n` +

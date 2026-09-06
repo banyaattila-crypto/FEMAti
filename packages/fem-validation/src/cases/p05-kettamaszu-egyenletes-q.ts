@@ -59,9 +59,7 @@ export function caseP05(): ValidationCase {
   return {
     id: 'P-05',
     title: 'Kéttámaszú tartó, egyenletes q — határteher',
-    description:
-      'Statikailag határozott kéttámaszú tartó egyenletes megoszló teherrel, egyetlen ' +
-      'képlékeny csukló a középső keresztmetszetnél.',
+    description: 'Statikailag határozott kéttámaszú tartó egyenletes megoszló teherrel, egyetlen ' + 'képlékeny csukló a középső keresztmetszetnél.',
     reference: 'MASTER-PROMPT-TERV 3.2 táblázat (P-05)',
     checks,
   };

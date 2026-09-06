@@ -68,8 +68,7 @@ export function caseP03(): ValidationCase {
     id: 'P-03',
     title: 'Konzol, végponti P — határteher',
     description:
-      'Statikailag határozott konzol, egyetlen képlékeny csukló a befogásnál. ' +
-      'A számított határteher az utolsó konvergált teherlépcsőből.',
+      'Statikailag határozott konzol, egyetlen képlékeny csukló a befogásnál. ' + 'A számított határteher az utolsó konvergált teherlépcsőből.',
     reference: 'MASTER-PROMPT-TERV 3.2 táblázat (P-03)',
     checks,
   };

@@ -339,11 +339,26 @@ function parseSolverSettings(v: unknown): SolverSettingsFile {
   if (v === undefined) return DEFAULT_SOLVER_SETTINGS;
   const o = record(v, 'solverSettings');
   const algorithm = str(o, 'algorithm', 'solverSettings');
-  assert(ALGORITHMS.includes(algorithm as SolverAlgorithm), { code: 'invalid-enum-value', where: 'solverSettings', key: 'algorithm', value: algorithm });
+  assert(ALGORITHMS.includes(algorithm as SolverAlgorithm), {
+    code: 'invalid-enum-value',
+    where: 'solverSettings',
+    key: 'algorithm',
+    value: algorithm,
+  });
   const loadHistory = str(o, 'loadHistory', 'solverSettings');
-  assert(LOAD_HISTORIES.includes(loadHistory as LoadHistoryMode), { code: 'invalid-enum-value', where: 'solverSettings', key: 'loadHistory', value: loadHistory });
+  assert(LOAD_HISTORIES.includes(loadHistory as LoadHistoryMode), {
+    code: 'invalid-enum-value',
+    where: 'solverSettings',
+    key: 'loadHistory',
+    value: loadHistory,
+  });
   const activeDiagram = str(o, 'activeDiagram', 'solverSettings');
-  assert(DIAGRAM_TABS.includes(activeDiagram as DiagramTab), { code: 'invalid-enum-value', where: 'solverSettings', key: 'activeDiagram', value: activeDiagram });
+  assert(DIAGRAM_TABS.includes(activeDiagram as DiagramTab), {
+    code: 'invalid-enum-value',
+    where: 'solverSettings',
+    key: 'activeDiagram',
+    value: activeDiagram,
+  });
   return {
     algorithm: algorithm as SolverAlgorithm,
     loadHistory: loadHistory as LoadHistoryMode,
@@ -384,7 +399,12 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
   const model = record(file.model, 'model');
 
   const integration = str(model, 'integration', 'model');
-  assert(integration === 'selective' || integration === 'full', { code: 'invalid-enum-value', where: 'model', key: 'integration', value: integration });
+  assert(integration === 'selective' || integration === 'full', {
+    code: 'invalid-enum-value',
+    where: 'model',
+    key: 'integration',
+    value: integration,
+  });
 
   const thermalRaw = model.thermalLoad;
   const thermalLoad =
@@ -392,7 +412,12 @@ export function parseEditableModelFile(text: string): ParsedModelFile {
       ? DEFAULT_THERMAL_LOAD
       : (() => {
           const t = record(thermalRaw, 'model.thermalLoad');
-          return { enabled: bool(t, 'enabled', 'model.thermalLoad'), tRef: num(t, 'tRef', 'model.thermalLoad'), tTop: num(t, 'tTop', 'model.thermalLoad'), tBottom: num(t, 'tBottom', 'model.thermalLoad') };
+          return {
+            enabled: bool(t, 'enabled', 'model.thermalLoad'),
+            tRef: num(t, 'tRef', 'model.thermalLoad'),
+            tTop: num(t, 'tTop', 'model.thermalLoad'),
+            tBottom: num(t, 'tBottom', 'model.thermalLoad'),
+          };
         })();
 
   // 2026-09-03: ÚJ mező (vasbeton ULS-ellenőrzés) — a korábbi (ma előtti)

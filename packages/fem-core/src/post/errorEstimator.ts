@@ -48,14 +48,8 @@ export function estimateElementError(
     const leftOwn = values[0];
     const rightOwn = values[2];
 
-    const jumpLeft =
-      (averaged.contributingElements[leftNode] ?? 0) > 1
-        ? 2 * Math.abs(leftOwn - (averaged.nodal[leftNode] ?? 0))
-        : 0;
-    const jumpRight =
-      (averaged.contributingElements[rightNode] ?? 0) > 1
-        ? 2 * Math.abs(rightOwn - (averaged.nodal[rightNode] ?? 0))
-        : 0;
+    const jumpLeft = (averaged.contributingElements[leftNode] ?? 0) > 1 ? 2 * Math.abs(leftOwn - (averaged.nodal[leftNode] ?? 0)) : 0;
+    const jumpRight = (averaged.contributingElements[rightNode] ?? 0) > 1 ? 2 * Math.abs(rightOwn - (averaged.nodal[rightNode] ?? 0)) : 0;
 
     errorEstimate[e] = (Math.max(jumpLeft, jumpRight) / scale) * 100;
   }

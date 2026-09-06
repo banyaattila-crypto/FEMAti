@@ -35,7 +35,9 @@ describe('formulaOmml — LaTeX → valódi OOXML Word-képlet', () => {
 
   it('\\left(...\\right)-et zárójel-csoportként kezeli, a tartalom nem vész el', async () => {
     const xml = await documentXmlOf([
-      mathParagraph('K_e[\\varphi_1,\\varphi_1] = \\sum\\left(EI\\cdot|J|\\cdot w\\cdot B_\\kappa[1]^2\\right) + \\sum\\left(GA_s\\cdot|J|\\cdot w\\cdot B_\\gamma[1]^2\\right)'),
+      mathParagraph(
+        'K_e[\\varphi_1,\\varphi_1] = \\sum\\left(EI\\cdot|J|\\cdot w\\cdot B_\\kappa[1]^2\\right) + \\sum\\left(GA_s\\cdot|J|\\cdot w\\cdot B_\\gamma[1]^2\\right)',
+      ),
     ]);
     expect(xml).toContain('EI');
     expect(xml).toContain('GA');

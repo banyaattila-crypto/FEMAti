@@ -32,13 +32,7 @@ export interface BeamPoint {
 }
 
 /** Konzol (befogva x=0-nál) elmozdulása/elfordulása x-ben, P teherből b-nél. */
-export function cantileverPointLoad(
-  ei: number,
-  gas: number,
-  p: number,
-  b: number,
-  x: number,
-): BeamPoint {
+export function cantileverPointLoad(ei: number, gas: number, p: number, b: number, x: number): BeamPoint {
   if (x <= b) {
     const phi = (p / ei) * (b * x - (x * x) / 2);
     const w = (p / ei) * ((b * x * x) / 2 - (x * x * x) / 6) + (p * x) / gas;
@@ -50,12 +44,7 @@ export function cantileverPointLoad(
 }
 
 /** Konzol elmozdulása/elfordulása x-ben, M0 végnyomatékból (b-nél ható koncentrált nyomaték). */
-export function cantileverPointMoment(
-  ei: number,
-  m0: number,
-  b: number,
-  x: number,
-): BeamPoint {
+export function cantileverPointMoment(ei: number, m0: number, b: number, x: number): BeamPoint {
   // Tiszta nyomatékból nincs nyíróerő, tehát a nyírási alakváltozás zérus:
   // κ(x) = M0/EI állandó a befogás és b közt, utána zérus.
   if (x <= b) {

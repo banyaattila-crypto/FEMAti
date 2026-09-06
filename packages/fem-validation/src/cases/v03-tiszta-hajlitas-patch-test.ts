@@ -10,17 +10,7 @@
  * Tűrés: gépi pontosság (1e−12), mert az állapot egzaktul benne van az
  * elem interpolációs terében.
  */
-import {
-  buildModel,
-  fixed,
-  makeMaterial,
-  makeSection,
-  nodalMoment,
-  rect,
-  solveLinear,
-  uniformMesh,
-  type LinearResult,
-} from '@femati/fem-core';
+import { buildModel, fixed, makeMaterial, makeSection, nodalMoment, rect, solveLinear, uniformMesh, type LinearResult } from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 export function caseV03(): ValidationCase {

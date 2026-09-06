@@ -74,21 +74,9 @@ export function EnvelopeChart({ result, span, lang = 'hu' }: EnvelopeChartProps)
         style={{ width: '100%', flex: '1 1 auto' }}
       >
         <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={PAD_T + innerH} stroke="var(--border-medium)" strokeWidth={1} />
-        <line
-          x1={PAD_L}
-          y1={PAD_T + innerH / 2}
-          x2={PAD_L + innerW}
-          y2={PAD_T + innerH / 2}
-          stroke="var(--border-medium)"
-          strokeWidth={1}
-        />
+        <line x1={PAD_L} y1={PAD_T + innerH / 2} x2={PAD_L + innerW} y2={PAD_T + innerH / 2} stroke="var(--border-medium)" strokeWidth={1} />
         <path d={bandPath} fill="var(--tab-envelope)" opacity={0.28} />
-        <path
-          d={maxPath}
-          fill="none"
-          stroke="var(--tab-envelope)"
-          strokeWidth={2}
-        />
+        <path d={maxPath} fill="none" stroke="var(--tab-envelope)" strokeWidth={2} />
         <path d={minPath} fill="none" stroke="var(--tab-envelope)" strokeWidth={2} strokeDasharray="5 3" />
       </svg>
     </div>

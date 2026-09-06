@@ -9,16 +9,7 @@
  * GYAKORLATILAG függetlennek kell lennie — csak a Newton-tolerancia szintjén
  * térhet el.
  */
-import {
-  buildModel,
-  fixed,
-  makeMaterial,
-  makeSection,
-  nodalForce,
-  rect,
-  runLoadStepper,
-  uniformMesh,
-} from '@femati/fem-core';
+import { buildModel, fixed, makeMaterial, makeSection, nodalForce, rect, runLoadStepper, uniformMesh } from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 export function caseP14(): ValidationCase {

@@ -127,14 +127,24 @@ const sectionSchema = z.discriminatedUnion('kind', [
     id: idString,
     name: z.string().min(1),
     shape: shapeSchema,
-    shearFactor: z.number().finite().positive().max(1).default(5 / 6),
+    shearFactor: z
+      .number()
+      .finite()
+      .positive()
+      .max(1)
+      .default(5 / 6),
   }),
   z.object({
     kind: z.literal('layered'),
     id: idString,
     name: z.string().min(1),
     layers: z.array(layerSchema).min(1),
-    shearFactor: z.number().finite().positive().max(1).default(5 / 6),
+    shearFactor: z
+      .number()
+      .finite()
+      .positive()
+      .max(1)
+      .default(5 / 6),
     includeLayerOwnInertia: z.boolean().default(false),
   }),
 ]);
@@ -348,9 +358,7 @@ const toLoad = (f: LoadFile): Load => {
         tTop: degC(f.tTop),
         tBottom: degC(f.tBottom),
       };
-      return f.elementIds !== undefined
-        ? { ...base, elementIds: f.elementIds.map((e) => elementId(e)) }
-        : base;
+      return f.elementIds !== undefined ? { ...base, elementIds: f.elementIds.map((e) => elementId(e)) } : base;
     }
     case 'support-displacement': {
       const base = {
@@ -542,9 +550,7 @@ export function serializeModel(model: Model): ModelFile {
             tTop: l.tTop as number,
             tBottom: l.tBottom as number,
           };
-          return l.elementIds !== undefined
-            ? { ...base, elementIds: l.elementIds.map((e) => e as string) }
-            : base;
+          return l.elementIds !== undefined ? { ...base, elementIds: l.elementIds.map((e) => e as string) } : base;
         }
         case 'support-displacement': {
           const base = {
@@ -575,5 +581,4 @@ export function serializeModel(model: Model): ModelFile {
 }
 
 /** A modell JSON szöveggé alakítása. */
-export const serializeModelJson = (model: Model, indent = 2): string =>
-  JSON.stringify(serializeModel(model), null, indent);
+export const serializeModelJson = (model: Model, indent = 2): string => JSON.stringify(serializeModel(model), null, indent);

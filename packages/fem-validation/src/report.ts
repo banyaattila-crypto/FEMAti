@@ -27,8 +27,7 @@ export function generateValidationReport(cases: readonly ValidationCase[], gener
   lines.push(`Generálva: ${generatedAt.toISOString()}`);
   lines.push('');
   lines.push(
-    `**Összesítés:** ${cases.length} eset, ${total} ellenőrzés, ` +
-      `${allGreen ? 'MIND ZÖLD ✅' : `${failedCases.length} eset ELBUKOTT ❌`}.`,
+    `**Összesítés:** ${cases.length} eset, ${total} ellenőrzés, ` + `${allGreen ? 'MIND ZÖLD ✅' : `${failedCases.length} eset ELBUKOTT ❌`}.`,
   );
   lines.push('');
 

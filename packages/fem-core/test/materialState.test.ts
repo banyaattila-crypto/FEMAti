@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  elementMaterialData,
-  initialNonlinearState,
-  isGaussPointYielded,
-  updateGaussPointState,
-} from '../src/solver/materialState.js';
+import { elementMaterialData, initialNonlinearState, isGaussPointYielded, updateGaussPointState } from '../src/solver/materialState.js';
 import {
   buildModel,
   fixed,

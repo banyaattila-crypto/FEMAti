@@ -354,8 +354,7 @@ export const DATABASE: Record<Lang, DatabaseStrings> = {
     catalogDeviation: (symbol) => `${symbol}: catalog / deviation`,
     deviationNote:
       'The deviation is between the value computed from the nominal contour (no fillets) and the section table value (manufacturer data, including fillets) — the model always uses the computed value.',
-    unverifiedWarning:
-      'The property values of the cross-sections found in the database are indicative only — verify the values before first use!',
+    unverifiedWarning: 'The property values of the cross-sections found in the database are indicative only — verify the values before first use!',
     unverifiedWarningQuoteNote:
       'This warning is translated from the original 1996 Hungarian thesis text (p. 42) for readability — the Hungarian wording remains authoritative.',
   },

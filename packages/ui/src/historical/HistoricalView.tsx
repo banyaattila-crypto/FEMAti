@@ -217,13 +217,7 @@ export function HistoricalView(): JSX.Element | null {
           </span>
           <div className="vem-segmented" role="group" aria-label={t.speedGroupAria}>
             {SPEEDS.map((v) => (
-              <button
-                key={v}
-                type="button"
-                className="vem-segmented__item"
-                aria-pressed={speed === v}
-                onClick={() => setSpeed(v)}
-              >
+              <button key={v} type="button" className="vem-segmented__item" aria-pressed={speed === v} onClick={() => setSpeed(v)}>
                 {v}×
               </button>
             ))}

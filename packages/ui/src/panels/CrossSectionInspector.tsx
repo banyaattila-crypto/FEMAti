@@ -122,10 +122,14 @@ export function CrossSectionInspector(): JSX.Element | null {
     <div className="vem-inspector-overlay" onPointerDown={closeInspector}>
       <div className="vem-inspector" style={{ width: PANEL_W }} onPointerDown={(e) => e.stopPropagation()}>
         <div className="vem-inspector__header">
-          <span>
-            {t.inspectorTitle(elementId, gaussIndex + 1, preparedElement ? preparedElement.nodeX[1].toFixed(2) : null)}
-          </span>
-          <button type="button" className="vem-btn vem-btn--sm" onClick={closeInspector} title={t.inspectorCloseTitle} aria-label={t.inspectorCloseAria}>
+          <span>{t.inspectorTitle(elementId, gaussIndex + 1, preparedElement ? preparedElement.nodeX[1].toFixed(2) : null)}</span>
+          <button
+            type="button"
+            className="vem-btn vem-btn--sm"
+            onClick={closeInspector}
+            title={t.inspectorCloseTitle}
+            aria-label={t.inspectorCloseAria}
+          >
             ✕
           </button>
         </div>
@@ -140,15 +144,16 @@ export function CrossSectionInspector(): JSX.Element | null {
 
           <div>
             <div className="vem-section-label-sm">{t.layerProfileSectionTitle}</div>
-            <svg
-              viewBox={`0 0 ${svgW} ${svgH}`}
-              width={svgW}
-              height={svgH}
-              role="img"
-              aria-label={t.layerProfileSvgAria}
-            >
+            <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} role="img" aria-label={t.layerProfileSvgAria}>
               {/* σ-tengely: skála-vonal + 3 jelölő (bal: max nyomás, közép: 0, jobb: max húzás). */}
-              <line x1={barCx - barHalfW} y1={TOP_MARGIN - 10} x2={barCx + barHalfW} y2={TOP_MARGIN - 10} stroke="var(--border-medium)" strokeWidth={1} />
+              <line
+                x1={barCx - barHalfW}
+                y1={TOP_MARGIN - 10}
+                x2={barCx + barHalfW}
+                y2={TOP_MARGIN - 10}
+                stroke="var(--border-medium)"
+                strokeWidth={1}
+              />
               {[barCx - barHalfW, barCx, barCx + barHalfW].map((tx, i) => (
                 <line key={i} x1={tx} y1={TOP_MARGIN - 13} x2={tx} y2={TOP_MARGIN - 7} stroke="var(--border-medium)" strokeWidth={1} />
               ))}
@@ -166,7 +171,14 @@ export function CrossSectionInspector(): JSX.Element | null {
               <text x={LEFT_MARGIN - 6} y={TOP_MARGIN + 3} textAnchor="end" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
                 {(zTop * 1e3).toFixed(0)} mm
               </text>
-              <text x={LEFT_MARGIN - 6} y={TOP_MARGIN + barPlotH} textAnchor="end" fontSize={9} fontFamily="var(--font-mono)" fill="var(--text-faint)">
+              <text
+                x={LEFT_MARGIN - 6}
+                y={TOP_MARGIN + barPlotH}
+                textAnchor="end"
+                fontSize={9}
+                fontFamily="var(--font-mono)"
+                fill="var(--text-faint)"
+              >
                 {(zBottom * 1e3).toFixed(0)} mm
               </text>
 

@@ -9,16 +9,7 @@
  * a nyírási résszel együtt) — ezért a tűrés szigorú (1e−8 relatív), jóval
  * szorosabb, mint egy diszkretizációs hibával terhelt esetnél lenne.
  */
-import {
-  buildModel,
-  fixed,
-  makeMaterial,
-  makeSection,
-  nodalForce,
-  rect,
-  solveLinear,
-  uniformMesh,
-} from '@femati/fem-core';
+import { buildModel, fixed, makeMaterial, makeSection, nodalForce, rect, solveLinear, uniformMesh } from '@femati/fem-core';
 import type { ValidationCase } from '../types.js';
 
 export function caseV01(): ValidationCase {

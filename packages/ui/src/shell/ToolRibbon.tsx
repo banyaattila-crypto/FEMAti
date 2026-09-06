@@ -26,7 +26,17 @@ interface ToolDef {
 
 function Icon({ color, children }: { readonly color: string; readonly children: ReactNode }): JSX.Element {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" stroke={color} fill="none" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      stroke={color}
+      fill="none"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       {children}
     </svg>
   );
@@ -176,22 +186,10 @@ export function ToolRibbon(): JSX.Element {
   return (
     <div className="vem-ribbon">
       <div className="vem-ribbon__tabs" role="tablist" aria-label={t.ribbonTabsAria}>
-        <button
-          type="button"
-          role="tab"
-          className="vem-tab"
-          aria-selected={activeTab === 'loads'}
-          onClick={() => setManualTab('loads')}
-        >
+        <button type="button" role="tab" className="vem-tab" aria-selected={activeTab === 'loads'} onClick={() => setManualTab('loads')}>
           {t.ribbonLoadsTab}
         </button>
-        <button
-          type="button"
-          role="tab"
-          className="vem-tab"
-          aria-selected={activeTab === 'supports'}
-          onClick={() => setManualTab('supports')}
-        >
+        <button type="button" role="tab" className="vem-tab" aria-selected={activeTab === 'supports'} onClick={() => setManualTab('supports')}>
           {t.ribbonSupportsTab}
         </button>
       </div>

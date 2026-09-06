@@ -120,7 +120,6 @@ input[type='range'] {
   font-variant-numeric: tabular-nums;
 }
 
-
 @keyframes vem-spin {
   to {
     transform: rotate(360deg);

@@ -22,9 +22,7 @@ export interface ComboboxProps {
 }
 
 /** Stabil csoportosítás — ld. `Field.tsx` `groupOptions` (ugyanaz az elv). */
-function groupOptions(
-  options: readonly ComboboxOption[],
-): readonly (readonly [string | undefined, readonly ComboboxOption[]])[] {
+function groupOptions(options: readonly ComboboxOption[]): readonly (readonly [string | undefined, readonly ComboboxOption[]])[] {
   const order: (string | undefined)[] = [];
   const buckets = new Map<string | undefined, ComboboxOption[]>();
   for (const o of options) {
@@ -111,13 +109,7 @@ export function Combobox({ options, value, onChange, ariaLabel, disabled = false
 
       {open ? (
         <>
-          <div
-            id={listId}
-            role="listbox"
-            aria-label={ariaLabel}
-            className="vem-combobox__panel"
-            tabIndex={-1}
-          >
+          <div id={listId} role="listbox" aria-label={ariaLabel} className="vem-combobox__panel" tabIndex={-1}>
             {groups.map(([group, groupOptions]) => (
               <div key={group ?? '—'}>
                 {group !== undefined ? <div className="vem-combobox__group-label">{group}</div> : null}

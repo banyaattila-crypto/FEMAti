@@ -107,12 +107,7 @@ export function makeMaterial(id: string, name: string, p: MaterialProps): Materi
 /** Sűrűségből fajsúly [kN/m³] — kényelmi újraexport a builder-felhasználóknak. */
 export const densityToGamma = (rho: number): number => specificWeightFromDensity(kgpm3(rho) as number) as number;
 
-export function makeSection(
-  id: string,
-  name: string,
-  shape: SectionShape,
-  shearFactor = RECT_SHEAR_FACTOR,
-): ParametricSection {
+export function makeSection(id: string, name: string, shape: SectionShape, shearFactor = RECT_SHEAR_FACTOR): ParametricSection {
   return {
     id: sectionId(id),
     name,
@@ -237,13 +232,7 @@ export const nodalMoment = (node: string, my: number, id?: string): Load => ({
   my: kNm(my),
 });
 
-export const distributedForce = (
-  x1: number,
-  x2: number,
-  q1: number,
-  q2 = q1,
-  id?: string,
-): Load => ({
+export const distributedForce = (x1: number, x2: number, q1: number, q2 = q1, id?: string): Load => ({
   id: loadId(id ?? nextLoadId('Q')),
   kind: 'distributed-force',
   x1: m(x1),
@@ -253,14 +242,7 @@ export const distributedForce = (
   shape: 'linear',
 });
 
-export const parabolicForce = (
-  x1: number,
-  x2: number,
-  q1: number,
-  qMid: number,
-  q2: number,
-  id?: string,
-): Load => ({
+export const parabolicForce = (x1: number, x2: number, q1: number, qMid: number, q2: number, id?: string): Load => ({
   id: loadId(id ?? nextLoadId('QP')),
   kind: 'distributed-force',
   x1: m(x1),
@@ -271,13 +253,7 @@ export const parabolicForce = (
   qMid: kNpm(qMid),
 });
 
-export const distributedMoment = (
-  x1: number,
-  x2: number,
-  m1: number,
-  m2 = m1,
-  id?: string,
-): Load => ({
+export const distributedMoment = (x1: number, x2: number, m1: number, m2 = m1, id?: string): Load => ({
   id: loadId(id ?? nextLoadId('MQ')),
   kind: 'distributed-moment',
   x1: m(x1),

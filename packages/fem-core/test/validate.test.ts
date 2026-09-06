@@ -229,21 +229,15 @@ describe('keresztmetszet-geometria', () => {
   };
 
   it('nem pozitív téglalap-méretet elutasít', () => {
-    expect(codes(withSection(makeSection('R1', 'Rossz', rect(0, 0.4))))).toContain(
-      'INVALID_DIMENSION',
-    );
+    expect(codes(withSection(makeSection('R1', 'Rossz', rect(0, 0.4))))).toContain('INVALID_DIMENSION');
   });
 
   it('nem pozitív átmérőt elutasít', () => {
-    expect(codes(withSection(makeSection('R1', 'Rossz kör', circle(-1))))).toContain(
-      'INVALID_DIMENSION',
-    );
+    expect(codes(withSection(makeSection('R1', 'Rossz kör', circle(-1))))).toContain('INVALID_DIMENSION');
   });
 
   it('a cső falvastagsága nem lehet a sugárnál nagyobb', () => {
-    expect(codes(withSection(makeSection('R1', 'Rossz cső', tube(0.2, 0.15))))).toContain(
-      'INVALID_DIMENSION',
-    );
+    expect(codes(withSection(makeSection('R1', 'Rossz cső', tube(0.2, 0.15))))).toContain('INVALID_DIMENSION');
   });
 
   it('érvényes csövet elfogad', () => {
@@ -252,9 +246,7 @@ describe('keresztmetszet-geometria', () => {
   });
 
   it('a zárt szelvény (RHS) falvastagsága nem töltheti ki a belső üreget', () => {
-    expect(codes(withSection(makeSection('R1', 'Rossz RHS', rhs(0.2, 0.1, 0.06))))).toContain(
-      'INVALID_DIMENSION',
-    );
+    expect(codes(withSection(makeSection('R1', 'Rossz RHS', rhs(0.2, 0.1, 0.06))))).toContain('INVALID_DIMENSION');
   });
 
   it('érvényes zárt szelvényt (RHS) elfogad', () => {
@@ -263,9 +255,7 @@ describe('keresztmetszet-geometria', () => {
   });
 
   it('a T-szelvény öve nem lehet a teljes magasságnál nagyobb/egyenlő', () => {
-    expect(codes(withSection(makeSection('R1', 'Rossz T', tProfile(0.2, 0.1, 0.01, 0.25))))).toContain(
-      'INVALID_DIMENSION',
-    );
+    expect(codes(withSection(makeSection('R1', 'Rossz T', tProfile(0.2, 0.1, 0.01, 0.25))))).toContain('INVALID_DIMENSION');
   });
 
   it('érvényes T-szelvényt elfogad', () => {
@@ -274,9 +264,7 @@ describe('keresztmetszet-geometria', () => {
   });
 
   it('az I-szelvény övei nem fedhetik el a gerincet', () => {
-    expect(
-      codes(withSection(makeSection('R1', 'Rossz I', iProfile(0.2, 0.1, 0.006, 0.12)))),
-    ).toContain('INVALID_DIMENSION');
+    expect(codes(withSection(makeSection('R1', 'Rossz I', iProfile(0.2, 0.1, 0.006, 0.12))))).toContain('INVALID_DIMENSION');
   });
 
   it('érvényes I-szelvényt elfogad', () => {
@@ -285,9 +273,7 @@ describe('keresztmetszet-geometria', () => {
   });
 
   it('tartományon kívüli nyírási alaktényezőt elutasít', () => {
-    expect(codes(withSection(makeSection('R1', 'Rossz κs', rect(0.2, 0.4), 1.5)))).toContain(
-      'INVALID_SHEAR_FACTOR',
-    );
+    expect(codes(withSection(makeSection('R1', 'Rossz κs', rect(0.2, 0.4), 1.5)))).toContain('INVALID_SHEAR_FACTOR');
   });
 });
 
@@ -302,9 +288,7 @@ describe('rétegelt keresztmetszet', () => {
   });
 
   it('nem pozitív rétegméretet elutasít', () => {
-    expect(
-      codes(withLayers(makeLayeredSection('R1', 'Rossz', [{ b: 0.2, t: 0, z: 0 }]))),
-    ).toContain('INVALID_LAYER');
+    expect(codes(withLayers(makeLayeredSection('R1', 'Rossz', [{ b: 0.2, t: 0, z: 0 }])))).toContain('INVALID_LAYER');
   });
 
   it('hézagra figyelmeztet, de nem utasítja el', () => {
@@ -386,9 +370,7 @@ describe('terhek', () => {
 
   it('üres támaszmozgásra figyelmeztet', () => {
     const m = base();
-    expect(codes({ ...m, loads: [supportDisplacement('N0')] })).toContain(
-      'EMPTY_SUPPORT_DISPLACEMENT',
-    );
+    expect(codes({ ...m, loads: [supportDisplacement('N0')] })).toContain('EMPTY_SUPPORT_DISPLACEMENT');
   });
 
   it('valós támaszmozgást elfogad', () => {
@@ -401,16 +383,12 @@ describe('terhek', () => {
 describe('tehertörténet', () => {
   it('üres tehertörténetet elutasít', () => {
     const m = base();
-    expect(codes({ ...m, history: { lambdaTargets: [], stepsPerTarget: 1 } })).toContain(
-      'EMPTY_HISTORY',
-    );
+    expect(codes({ ...m, history: { lambdaTargets: [], stepsPerTarget: 1 } })).toContain('EMPTY_HISTORY');
   });
 
   it('érvénytelen lépésszámot elutasít', () => {
     const m = base();
-    expect(codes({ ...m, history: { lambdaTargets: [1], stepsPerTarget: 0 } })).toContain(
-      'INVALID_STEPS',
-    );
+    expect(codes({ ...m, history: { lambdaTargets: [1], stepsPerTarget: 0 } })).toContain('INVALID_STEPS');
   });
 });
 

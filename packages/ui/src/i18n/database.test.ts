@@ -47,9 +47,7 @@ describe('katalógus name szórész-fordítás (NAME_PHRASE_EN) — teljesség-e
     // Ha ez elbukik: vagy egy ÚJ magyar szórész jelent meg egy katalógus-névben
     // (pótolni kell NAME_PHRASE_EN-ben), vagy a helyettesítési sorrend hibás
     // (pl. "Kör" előbb cserélődik, mint "Körgyűrű").
-    const leftovers = allEntries
-      .map((e) => catalogName(e.name, 'en'))
-      .filter((translated) => NAME_PHRASE_EN.some(([hu]) => translated.includes(hu)));
+    const leftovers = allEntries.map((e) => catalogName(e.name, 'en')).filter((translated) => NAME_PHRASE_EN.some(([hu]) => translated.includes(hu)));
     expect(leftovers).toEqual([]);
   });
 });

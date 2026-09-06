@@ -146,12 +146,7 @@ export interface ElementMassDerivation {
   readonly me: DenseMatrix;
 }
 
-function massGaussStep(
-  nodeX: readonly [number, number, number],
-  xi: number,
-  w: number,
-  elementId: string,
-): MassGaussStepDetail {
+function massGaussStep(nodeX: readonly [number, number, number], xi: number, w: number, elementId: string): MassGaussStepDetail {
   const { n } = shapeFunctions(xi);
   return { xi, w, n, jacobian: jacobian(nodeX, xi, elementId), nRows: nRows(nodeX, xi, elementId) };
 }

@@ -61,9 +61,7 @@ export function caseP07(): ValidationCase {
   return {
     id: 'P-07',
     title: 'Kétoldalt befogott tartó, középen P — határteher',
-    description:
-      'Statikailag határozatlan (3 csuklós mechanizmus: mindkét befogás + a teher alatt), ' +
-      'a csuklók fokozatosan alakulnak ki.',
+    description: 'Statikailag határozatlan (3 csuklós mechanizmus: mindkét befogás + a teher alatt), ' + 'a csuklók fokozatosan alakulnak ki.',
     reference: 'MASTER-PROMPT-TERV 3.2 táblázat (P-07)',
     checks,
   };

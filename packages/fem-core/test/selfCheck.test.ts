@@ -22,13 +22,10 @@ const STIFF: SectionStiffness = {
 
 const nodes: readonly [number, number, number] = [0, 2, 4];
 
-const runChecks = (k: DenseMatrix): ReturnType<typeof checkElementStiffness> =>
-  checkElementStiffness(k, rigidBodyModes(nodes), 'E0');
+const runChecks = (k: DenseMatrix): ReturnType<typeof checkElementStiffness> => checkElementStiffness(k, rigidBodyModes(nodes), 'E0');
 
-const byId = (
-  results: ReturnType<typeof checkElementStiffness>,
-  id: string,
-): (typeof results)[number] | undefined => results.find((r) => r.id === id);
+const byId = (results: ReturnType<typeof checkElementStiffness>, id: string): (typeof results)[number] | undefined =>
+  results.find((r) => r.id === id);
 
 describe('önellenőrzés — ép elemi merevségi mátrix', () => {
   const k = elementStiffness({ nodeX: nodes, elementId: 'E0' }, STIFF);

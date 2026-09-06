@@ -299,14 +299,7 @@ export interface SupportDisplacement {
   readonly dPhi?: Radian;
 }
 
-export type Load =
-  | NodalForce
-  | NodalMoment
-  | DistributedForce
-  | DistributedMoment
-  | SelfWeight
-  | ThermalLoad
-  | SupportDisplacement;
+export type Load = NodalForce | NodalMoment | DistributedForce | DistributedMoment | SelfWeight | ThermalLoad | SupportDisplacement;
 
 export type LoadKind = Load['kind'];
 

@@ -96,7 +96,6 @@ describe.skipIf(!RUN)('P16 profilozás — 5000 DOF, 100 teherlépcső, 32 réte
     const totalSteps = result.steps.length + result.rejectedAttempts.length;
     const totalMs = tSolve - t0;
 
-     
     console.log(
       `\n[P16 PROFIL]\n` +
         `  DOF: ${model.nodes.length * 2}\n` +
@@ -109,9 +108,18 @@ describe.skipIf(!RUN)('P16 profilozás — 5000 DOF, 100 teherlépcső, 32 réte
         `  GC: ${gcCount} esemény, összesen ${gcTimeMs.toFixed(1)} ms (${((gcTimeMs / (tSolve - tBuild)) * 100).toFixed(1)}% a megoldási időből)\n` +
         `  TELJES: ${totalMs.toFixed(1)} ms (${(totalMs / 1000).toFixed(2)} s)\n` +
         `  célszám (<10s): ${totalMs < 10000 ? 'TELJESÜL' : 'NEM TELJESÜL'}\n` +
-        `  lépésidők (ms): első 5: [${stepTimes.slice(0, 5).map((v) => v.toFixed(1)).join(', ')}]` +
-        ` · középső 5 (45-50): [${stepTimes.slice(45, 50).map((v) => v.toFixed(1)).join(', ')}]` +
-        ` · utolsó 5: [${stepTimes.slice(-5).map((v) => v.toFixed(1)).join(', ')}]\n`,
+        `  lépésidők (ms): első 5: [${stepTimes
+          .slice(0, 5)
+          .map((v) => v.toFixed(1))
+          .join(', ')}]` +
+        ` · középső 5 (45-50): [${stepTimes
+          .slice(45, 50)
+          .map((v) => v.toFixed(1))
+          .join(', ')}]` +
+        ` · utolsó 5: [${stepTimes
+          .slice(-5)
+          .map((v) => v.toFixed(1))
+          .join(', ')}]\n`,
     );
   }, 120_000);
 });

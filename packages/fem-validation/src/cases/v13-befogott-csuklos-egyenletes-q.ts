@@ -37,17 +37,7 @@
  * tizedesjegyig), ami a saját levezetést és a cikk táblázatát is
  * kölcsönösen megerősíti.
  */
-import {
-  buildModel,
-  distributedForce,
-  fixed,
-  makeMaterial,
-  makeSection,
-  pinned,
-  rect,
-  solveLinear,
-  uniformMesh,
-} from '@femati/fem-core';
+import { buildModel, distributedForce, fixed, makeMaterial, makeSection, pinned, rect, solveLinear, uniformMesh } from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 export function caseV13(): ValidationCase {

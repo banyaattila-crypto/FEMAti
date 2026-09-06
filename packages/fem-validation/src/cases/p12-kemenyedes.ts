@@ -11,9 +11,9 @@ import type { ValidationCase, ValidationCheck } from '../types.js';
 export function caseP12(): ValidationCase {
   const ei = 20000; // kNm²
   const cases: readonly { readonly hPrime: number; readonly label: string }[] = [
-    { hPrime: 5000, label: 'H\' = 5000 kNm²' },
-    { hPrime: 20000, label: 'H\' = EI (fele akkora tangens)' },
-    { hPrime: 0, label: 'H\' = 0 (tökéletesen képlékeny)' },
+    { hPrime: 5000, label: "H' = 5000 kNm²" },
+    { hPrime: 20000, label: "H' = EI (fele akkora tangens)" },
+    { hPrime: 0, label: "H' = 0 (tökéletesen képlékeny)" },
   ];
 
   const checks: ValidationCheck[] = cases.map((c) => {
@@ -30,7 +30,7 @@ export function caseP12(): ValidationCase {
   return {
     id: 'P-12',
     title: 'Keményedés — egytengelyű ellenőrzés',
-    description: 'EI_T = EI·H\'/(EI+H\') zárt alakban, H\' = 0-nál EI_T = 0.',
+    description: "EI_T = EI·H'/(EI+H') zárt alakban, H' = 0-nál EI_T = 0.",
     reference: 'Diplomaterv (3.50)–(3.51), 63. oldal',
     checks,
   };

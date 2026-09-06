@@ -137,10 +137,7 @@ export function elementDofs(nodeIndices: readonly [number, number, number]): Int
 }
 
 /** Az elem hat AKTÍV szabadságfok-indexe (−1 a megkötöttekre). */
-export function elementActiveDofs(
-  map: DofMap,
-  nodeIndices: readonly [number, number, number],
-): Int32Array {
+export function elementActiveDofs(map: DofMap, nodeIndices: readonly [number, number, number]): Int32Array {
   const global = elementDofs(nodeIndices);
   const out = new Int32Array(6);
   for (let i = 0; i < 6; i++) out[i] = map.activeIndex[global[i]] ?? -1;

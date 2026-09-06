@@ -78,15 +78,7 @@ export function ConvergencePanel({ run, activeStep, lang = 'hu' }: ConvergencePa
               {step.iterations.map((it, ii) => {
                 const cx = x0 + ((ii + 0.5) / Math.max(1, step.iterations.length)) * groupW;
                 const cy = sy(it.residualPercent);
-                return (
-                  <circle
-                    key={ii}
-                    cx={cx}
-                    cy={cy}
-                    r={2.2}
-                    fill={it.stiffnessRebuilt ? 'var(--accent)' : 'var(--text-faint)'}
-                  />
-                );
+                return <circle key={ii} cx={cx} cy={cy} r={2.2} fill={it.stiffnessRebuilt ? 'var(--accent)' : 'var(--text-faint)'} />;
               })}
               {si % Math.max(1, Math.round(steps.length / 8)) === 0 ? (
                 <text x={x0} y={CONVERGENCE_HEIGHT - 6} fill="var(--text-faint)" style={{ font: '400 13px var(--font-mono)' }}>
@@ -98,15 +90,7 @@ export function ConvergencePanel({ run, activeStep, lang = 'hu' }: ConvergencePa
         })}
 
         {/* tolerancia-küszöb vízszintes vonala */}
-        <line
-          x1={PAD_L}
-          y1={sy(1e-4)}
-          x2={PAD_L + innerW}
-          y2={sy(1e-4)}
-          stroke="var(--sem-ok)"
-          strokeWidth={1}
-          strokeDasharray="2 2"
-        />
+        <line x1={PAD_L} y1={sy(1e-4)} x2={PAD_L + innerW} y2={sy(1e-4)} stroke="var(--sem-ok)" strokeWidth={1} strokeDasharray="2 2" />
       </svg>
 
       <div style={{ padding: '0 var(--space-6) var(--space-4)', fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>

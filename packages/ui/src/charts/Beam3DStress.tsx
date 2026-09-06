@@ -70,7 +70,7 @@ function signRunMidpoints(span: number, sigmaAt: (x: number) => number): readonl
       runs.push({ start: i, end: i, positive });
     }
   }
-  return runs.map((r) => ({ t: ((r.start + r.end + 1) / 2) / SEGMENTS, positive: r.positive }));
+  return runs.map((r) => ({ t: (r.start + r.end + 1) / 2 / SEGMENTS, positive: r.positive }));
 }
 
 /** Kis kontrasztos +/− glifa a lapon — sötét alátétkorong, hogy bármelyik jet-színen olvasható maradjon. */
@@ -78,7 +78,15 @@ function SignGlyph({ x, y, positive }: { readonly x: number; readonly y: number;
   return (
     <g>
       <circle cx={x} cy={y} r={7} fill="var(--surface-app)" fillOpacity={0.78} stroke="var(--border-medium)" strokeWidth={0.5} />
-      <text x={x} y={y + 3.5} textAnchor="middle" fontSize={11} fontWeight={700} fontFamily="var(--font-mono)" fill={positive ? 'var(--sem-plastic)' : 'var(--sem-load)'}>
+      <text
+        x={x}
+        y={y + 3.5}
+        textAnchor="middle"
+        fontSize={11}
+        fontWeight={700}
+        fontFamily="var(--font-mono)"
+        fill={positive ? 'var(--sem-plastic)' : 'var(--sem-load)'}
+      >
         {positive ? '+' : '−'}
       </text>
     </g>

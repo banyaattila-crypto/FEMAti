@@ -128,9 +128,7 @@ describe('alaki tényező c = Mp/Mₑ — Diplomaterv 4. táblázat (54. oldal)'
 
     // Még vékonyabb fal → közelebb a határértékhez (a közelítés konzisztens).
     const thinner = geometricProperties(tube(1.0, 0.0001));
-    expect(permille(thinner.shapeFactor, 4 / Math.PI)).toBeLessThan(
-      permille(thin.shapeFactor, 4 / Math.PI),
-    );
+    expect(permille(thinner.shapeFactor, 4 / Math.PI)).toBeLessThan(permille(thin.shapeFactor, 4 / Math.PI));
   });
 
   it('vastagfalú cső alaki tényezője a tömör kör felé tart', () => {
@@ -386,14 +384,9 @@ describe('merevségi jellemzők (EI, GAs)', () => {
       { b: 0.2, t: 0.2, z: 0, materialId: 'SOFT' },
       { b: 0.2, t: 0.1, z: 0.15, materialId: 'HARD' },
     ];
-    const lookup = (id: string): typeof soft | undefined =>
-      id === 'HARD' ? hard : id === 'SOFT' ? soft : undefined;
+    const lookup = (id: string): typeof soft | undefined => (id === 'HARD' ? hard : id === 'SOFT' ? soft : undefined);
 
-    const s = sectionStiffness(
-      makeLayeredSection('L', 'Kompozit', layers),
-      soft,
-      lookup as never,
-    );
+    const s = sectionStiffness(makeLayeredSection('L', 'Kompozit', layers), soft, lookup as never);
 
     // A kemény övek dominálnak: EI >> a homogén lágy eset EI-je
     const homogeneous = sectionStiffness(makeLayeredSection('L2', 'Lágy', layers), soft);

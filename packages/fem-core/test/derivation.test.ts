@@ -180,7 +180,11 @@ describe('deriveElementLoadVector — bit-azonosság a tehervektor terhenkénti 
   it('a modell mindkét terhét (megoszló erő + önsúly) megtalálja legalább egy elemen', () => {
     const found = model.elements.some((element) => {
       const derived = deriveElementLoadVector(model, element.id as unknown as string);
-      return derived !== undefined && derived.distributed.some((d) => d.kind === 'distributed-force') && derived.distributed.some((d) => d.kind === 'self-weight');
+      return (
+        derived !== undefined &&
+        derived.distributed.some((d) => d.kind === 'distributed-force') &&
+        derived.distributed.some((d) => d.kind === 'self-weight')
+      );
     });
     expect(found).toBe(true);
   });
@@ -277,15 +281,7 @@ describe('deriveLayerStep — bit-azonosság a nemlineáris megoldóval', () => 
     if (layer === undefined) throw new Error('nincs réteg');
 
     const dKappa = curGp.kappa - prevGp.kappa;
-    const derived = deriveLayerStep(
-      layerIndex,
-      layer.z as number,
-      MAT.e as number,
-      MAT.sigmaY as number,
-      0,
-      prevLayerState,
-      dKappa,
-    );
+    const derived = deriveLayerStep(layerIndex, layer.z as number, MAT.e as number, MAT.sigmaY as number, 0, prevLayerState, dKappa);
 
     // A σ ugyanazzal a függvénnyel, ugyanazon bemenetekkel számol, mint a
     // solver (ADR-0005) — gépi pontosságig (relatív ~1e-12) egyezik. Az

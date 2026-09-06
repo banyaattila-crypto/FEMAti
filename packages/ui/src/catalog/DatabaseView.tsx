@@ -115,9 +115,7 @@ function SteelThicknessClass({ material, lang }: { readonly material: MaterialEn
       <ResultRow label={t.fy2Label(material.thicknessThreshold as number)} formatted={num(material.fy2 as number, 1, 'kN/cm²')} />
       <ResultRow label="Fu1" formatted={num(material.fu1 as number, 1, 'kN/cm²')} />
       <ResultRow label="Fu2" formatted={num(material.fu2 as number, 1, 'kN/cm²')} />
-      {material.alphaFi !== undefined ? (
-        <ResultRow label={t.fireExpansionCoeff} formatted={num(material.alphaFi * 1e6, 2, '×10⁻⁶ /°C')} />
-      ) : null}
+      {material.alphaFi !== undefined ? <ResultRow label={t.fireExpansionCoeff} formatted={num(material.alphaFi * 1e6, 2, '×10⁻⁶ /°C')} /> : null}
       <NoteBox tone="info">{t.steelThicknessNote}</NoteBox>
     </div>
   );
@@ -209,9 +207,7 @@ function MaterialDetail({
             {t.source}: {catalogText(material.source, lang, SOURCE_EN)}
             {material.verified ? '' : ` ${t.unverifiedWarning}`}
           </NoteBox>
-          {!material.verified && t.unverifiedWarningQuoteNote !== '' ? (
-            <p className="vem-db__quote-note">{t.unverifiedWarningQuoteNote}</p>
-          ) : null}
+          {!material.verified && t.unverifiedWarningQuoteNote !== '' ? <p className="vem-db__quote-note">{t.unverifiedWarningQuoteNote}</p> : null}
           {material.note !== undefined ? (
             <div style={{ marginTop: 'var(--space-3)' }}>
               <NoteBox tone="info">{catalogText(material.note, lang, NOTE_EN)}</NoteBox>
@@ -371,9 +367,7 @@ function SectionDetail({
             {t.source}: {catalogText(section.source, lang, SOURCE_EN)}
             {section.verified ? '' : ` ${t.unverifiedWarning}`}
           </NoteBox>
-          {!section.verified && t.unverifiedWarningQuoteNote !== '' ? (
-            <p className="vem-db__quote-note">{t.unverifiedWarningQuoteNote}</p>
-          ) : null}
+          {!section.verified && t.unverifiedWarningQuoteNote !== '' ? <p className="vem-db__quote-note">{t.unverifiedWarningQuoteNote}</p> : null}
         </div>
       </div>
     </>

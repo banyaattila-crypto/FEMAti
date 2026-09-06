@@ -71,7 +71,17 @@ function HDim({ y, x1, x2, label }: { readonly y: number; readonly x1: number; r
 }
 
 /** Rövid vezetővonalas jelölő (tw/tf/t) — a kontúr egy pontjától egy külső feliratig. */
-function Leader({ from, to, label, anchor }: { readonly from: readonly [number, number]; readonly to: readonly [number, number]; readonly label: string; readonly anchor: 'start' | 'end' }): JSX.Element {
+function Leader({
+  from,
+  to,
+  label,
+  anchor,
+}: {
+  readonly from: readonly [number, number];
+  readonly to: readonly [number, number];
+  readonly label: string;
+  readonly anchor: 'start' | 'end';
+}): JSX.Element {
   return (
     <g aria-hidden="true">
       <line x1={from[0]} y1={from[1]} x2={to[0]} y2={to[1]} stroke={DIM_STROKE} strokeWidth={0.5} />

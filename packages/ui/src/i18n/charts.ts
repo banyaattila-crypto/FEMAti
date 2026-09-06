@@ -95,9 +95,11 @@ export const CHARTS: Record<Lang, ChartsStrings> = {
     envelopeNotComputable: 'A burkolóábra nem számítható — a modell jelenlegi állapotában nem futtatható.',
     modelNotRunnable: 'A modell jelenleg nem futtatható — nincs mit ábrázolni.',
     noComputationResult: 'Nincs számítási eredmény.',
-    utilizationNeedsYield: 'A kihasználtsági térképhez folyáshatárral (σY) rendelkező anyag szükséges — a jelenlegi anyagnak nincs megadva képlékeny teherbírása.',
+    utilizationNeedsYield:
+      'A kihasználtsági térképhez folyáshatárral (σY) rendelkező anyag szükséges — a jelenlegi anyagnak nincs megadva képlékeny teherbírása.',
     utilizationChartTitle: 'M-V kihasználtság',
-    utilizationCaption: 'M-V kihasználtság (EN 1993-1-1 6.2.8) a gerenda mentén — 100% fölött a keresztmetszet túllépi a redukált teherbírást (200%-nál a skála levágva)',
+    utilizationCaption:
+      'M-V kihasználtság (EN 1993-1-1 6.2.8) a gerenda mentén — 100% fölött a keresztmetszet túllépi a redukált teherbírást (200%-nál a skála levágva)',
     sectionHoverHint: 'metszet: mozgasd az egeret a diagramon',
     downloadSvgTitle: 'Az aktív diagram SVG letöltése',
 
@@ -154,9 +156,11 @@ export const CHARTS: Record<Lang, ChartsStrings> = {
     envelopeNotComputable: 'The envelope cannot be computed — the model is not runnable in its current state.',
     modelNotRunnable: 'The model cannot currently be solved — nothing to plot.',
     noComputationResult: 'No computation result.',
-    utilizationNeedsYield: 'The utilization map needs a material with a defined yield strength (σY) — the current material has no plastic capacity defined.',
+    utilizationNeedsYield:
+      'The utilization map needs a material with a defined yield strength (σY) — the current material has no plastic capacity defined.',
     utilizationChartTitle: 'M-V utilization',
-    utilizationCaption: 'M-V utilization (EN 1993-1-1 6.2.8) along the beam — above 100% the section exceeds the reduced capacity (scale clipped at 200%)',
+    utilizationCaption:
+      'M-V utilization (EN 1993-1-1 6.2.8) along the beam — above 100% the section exceeds the reduced capacity (scale clipped at 200%)',
     sectionHoverHint: 'section: move the mouse over the diagram',
     downloadSvgTitle: 'Download the active diagram as SVG',
 

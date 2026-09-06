@@ -62,11 +62,7 @@ export function MenuBar({ menus }: MenuBarProps): JSX.Element {
                     }}
                   >
                     {item.label}
-                    {item.shortcut ? (
-                      <span style={{ float: 'right', opacity: 0.6, marginLeft: 16 }}>
-                        {item.shortcut}
-                      </span>
-                    ) : null}
+                    {item.shortcut ? <span style={{ float: 'right', opacity: 0.6, marginLeft: 16 }}>{item.shortcut}</span> : null}
                   </button>
                   {item.separatorAfter === true ? <div className="vem-menu__separator" /> : null}
                 </div>
@@ -75,9 +71,7 @@ export function MenuBar({ menus }: MenuBarProps): JSX.Element {
           ) : null}
         </div>
       ))}
-      {openIndex !== null ? (
-        <div className="vem-menu__scrim" onClick={() => setOpenIndex(null)} aria-hidden="true" />
-      ) : null}
+      {openIndex !== null ? <div className="vem-menu__scrim" onClick={() => setOpenIndex(null)} aria-hidden="true" /> : null}
     </div>
   );
 }

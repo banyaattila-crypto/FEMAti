@@ -18,17 +18,7 @@ export interface SliderProps {
   readonly editable?: boolean;
 }
 
-export function Slider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-  display,
-  disabled = false,
-  editable = false,
-}: SliderProps): JSX.Element {
+export function Slider({ label, value, min, max, step, onChange, display, disabled = false, editable = false }: SliderProps): JSX.Element {
   const id = useId();
   return (
     <div className="vem-slider">
@@ -177,22 +167,10 @@ function OptionEl({ o }: { readonly o: SelectOption }): JSX.Element {
   );
 }
 
-export function Select({
-  options,
-  value,
-  onChange,
-  ariaLabel,
-  disabled = false,
-}: SelectProps): JSX.Element {
+export function Select({ options, value, onChange, ariaLabel, disabled = false }: SelectProps): JSX.Element {
   const hasGroups = options.some((o) => o.group !== undefined);
   return (
-    <select
-      className="vem-select"
-      value={value}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      onChange={(e) => onChange(e.target.value)}
-    >
+    <select className="vem-select" value={value} disabled={disabled} aria-label={ariaLabel} onChange={(e) => onChange(e.target.value)}>
       {hasGroups
         ? groupOptions(options).map(([group, groupOptions]) =>
             group === undefined ? (

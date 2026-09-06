@@ -117,9 +117,7 @@ describe('runLoadStepper — rétegelt (fiber) szelvény, teljes megoldás', () 
     expect(result.status).toBe('converged');
     const lastStep = mustGet(result.steps.at(-1));
     const firstElementState = mustGet(lastStep.states.get(mustGet(result.system.elements[0]).id));
-    const someLayerYielded = firstElementState.gaussPoints.some(
-      (gp) => gp.kind === 'layered' && gp.layers.some((l) => l.yielded),
-    );
+    const someLayerYielded = firstElementState.gaussPoints.some((gp) => gp.kind === 'layered' && gp.layers.some((l) => l.yielded));
     expect(someLayerYielded).toBe(true);
   });
 });

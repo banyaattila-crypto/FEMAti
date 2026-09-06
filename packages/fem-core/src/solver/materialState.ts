@@ -12,16 +12,8 @@
  */
 import { sectionStiffness } from '../element/constitutive.js';
 import { concreteStress, isConcreteYielded } from '../material/concreteEC2.js';
-import {
-  INITIAL_LAYER_PLASTIC_STATE,
-  updateLayerPlasticState,
-  type LayerPlasticState,
-} from '../material/elastoPlastic1D.js';
-import {
-  INITIAL_RESULTANT_PLASTIC_STATE,
-  updateResultantPlasticState,
-  type ResultantPlasticState,
-} from '../material/resultantPlastic.js';
+import { INITIAL_LAYER_PLASTIC_STATE, updateLayerPlasticState, type LayerPlasticState } from '../material/elastoPlastic1D.js';
+import { INITIAL_RESULTANT_PLASTIC_STATE, updateResultantPlasticState, type ResultantPlasticState } from '../material/resultantPlastic.js';
 import type { Element, Material, MaterialId, Model } from '../model/types.js';
 
 /** Egy réteg EC2 beton-paraméterei — csak akkor van, ha a réteg anyaga beton (F fázis). */
@@ -56,12 +48,7 @@ export interface LayerMaterialData {
  */
 function resolveLayerSigmaY(material: Material, plateThickness: number | undefined): number {
   const uniform = material.sigmaY !== undefined ? (material.sigmaY as number) : ELASTIC_SIGMA_Y;
-  if (
-    material.fy1 === undefined ||
-    material.fy2 === undefined ||
-    material.thicknessThreshold === undefined ||
-    plateThickness === undefined
-  ) {
+  if (material.fy1 === undefined || material.fy2 === undefined || material.thicknessThreshold === undefined || plateThickness === undefined) {
     return uniform;
   }
   return plateThickness > (material.thicknessThreshold as number) ? (material.fy2 as number) : (material.fy1 as number);
@@ -117,10 +104,7 @@ export function elementMaterialData(model: Model, element: Element): ElementMate
     const layerMaterial = l.materialId !== undefined ? (lookup(l.materialId) ?? material) : material;
     const plateThickness = l.plateThickness as number | undefined;
     const concrete: ConcreteLayerParams | undefined =
-      layerMaterial.fck !== undefined &&
-      layerMaterial.epsC2 !== undefined &&
-      layerMaterial.epsCu2 !== undefined &&
-      layerMaterial.n !== undefined
+      layerMaterial.fck !== undefined && layerMaterial.epsC2 !== undefined && layerMaterial.epsCu2 !== undefined && layerMaterial.n !== undefined
         ? {
             fck: layerMaterial.fck as number,
             epsC2: layerMaterial.epsC2 as number,
@@ -184,10 +168,7 @@ function initialGaussPointState(data: ElementMaterialData): GaussPointState {
 }
 
 /** A teljes szerkezet TERHELETLEN kezdőállapota (a nemlineáris futás elején). */
-export function initialNonlinearState(
-  elementIds: readonly string[],
-  materialData: ReadonlyMap<string, ElementMaterialData>,
-): NonlinearStateMap {
+export function initialNonlinearState(elementIds: readonly string[], materialData: ReadonlyMap<string, ElementMaterialData>): NonlinearStateMap {
   const map = new Map<string, ElementNonlinearState>();
   for (const id of elementIds) {
     const data = materialData.get(id);

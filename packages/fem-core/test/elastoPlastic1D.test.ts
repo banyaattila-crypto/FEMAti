@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  INITIAL_LAYER_PLASTIC_STATE,
-  updateLayerPlasticState,
-} from '../src/material/elastoPlastic1D.js';
+import { INITIAL_LAYER_PLASTIC_STATE, updateLayerPlasticState } from '../src/material/elastoPlastic1D.js';
 
 describe('updateLayerPlasticState — rugalmas tartomány', () => {
   it('még nem folyt, NEM lépi át a folyási határt: σ = E·ε, R=0, yielded=false', () => {
@@ -47,7 +44,7 @@ describe('updateLayerPlasticState — még nem folyt, ÁTLÉPI a folyási határ
     expect(r.r).toBeCloseTo(0, 6);
   });
 
-  it('ASZIMMETRIKUS átlépés H\'>0-nál: a végeredmény a zárt alakú radial-return képlettel egyezik', () => {
+  it("ASZIMMETRIKUS átlépés H'>0-nál: a végeredmény a zárt alakú radial-return képlettel egyezik", () => {
     // Ez a regressziós teszt közvetlenül a P-11 fem-validation eset által
     // felfedezett hibát célozza: H'=0-nál a σ a fennsíkra vetül R-től
     // FÜGGETLENÜL (ezért az a teszt nem tudta megkülönböztetni a hibás és a
@@ -83,7 +80,7 @@ describe('updateLayerPlasticState — már megfolyt, terhelés folytatódik (R=1
     expect(second.state.yielded).toBe(true);
   });
 
-  it('keményedésnél (H\'>0) a feszültség a tangens modulussal nő tovább', () => {
+  it("keményedésnél (H'>0) a feszültség a tangens modulussal nő tovább", () => {
     const e = 2e8;
     const sigmaY = 2.35e5;
     const hPrime = 5e7;
@@ -144,7 +141,7 @@ describe("updateLayerPlasticState — degenerált eset: H' ≤ -E (lágyulás, E
   });
 });
 
-describe('updateLayerPlasticState — teljes ciklus zárt alakú ellenőrzése (H\'=0)', () => {
+describe("updateLayerPlasticState — teljes ciklus zárt alakú ellenőrzése (H'=0)", () => {
   it('terhelés-tehermentesítés-újraterhelés a rugalmas–tökéletesen képlékeny modellt adja vissza', () => {
     const e = 2e8;
     const sigmaY = 2.35e5;

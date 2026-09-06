@@ -43,17 +43,7 @@ export function SupportMark({ x, y, type }: SupportMarkProps): JSX.Element {
         <line x1={x} y1={y - h} x2={x} y2={y + h} stroke={color} strokeWidth={2.2} />
         {Array.from({ length: 7 }, (_, i) => {
           const yy = y - h + (i * 2 * h) / 6;
-          return (
-            <line
-              key={i}
-              x1={x}
-              y1={yy}
-              x2={x - w}
-              y2={yy + w}
-              stroke={color}
-              strokeWidth={1.1}
-            />
-          );
+          return <line key={i} x1={x} y1={yy} x2={x - w} y2={yy + w} stroke={color} strokeWidth={1.1} />;
         })}
       </g>
     );
@@ -90,14 +80,7 @@ export function SupportMark({ x, y, type }: SupportMarkProps): JSX.Element {
           <circle cx={x + s * 0.5} cy={y + s * 1.5 + 3.5} r={3.2} fill="none" stroke={color} strokeWidth={1.2} />
         </>
       ) : (
-        <line
-          x1={x - s * 1.3}
-          y1={y + s * 1.5 + 2}
-          x2={x + s * 1.3}
-          y2={y + s * 1.5 + 2}
-          stroke={color}
-          strokeWidth={1.6}
-        />
+        <line x1={x - s * 1.3} y1={y + s * 1.5 + 2} x2={x + s * 1.3} y2={y + s * 1.5 + 2} stroke={color} strokeWidth={1.6} />
       )}
     </g>
   );
@@ -139,12 +122,7 @@ export function DistributedLoad({
   const topAt = (t: number): number => y - heightAt(t);
   return (
     <g>
-      <path
-        d={`M${x1},${topAt(0)} L${x2},${topAt(1)}`}
-        stroke={color}
-        strokeWidth={1.4}
-        fill="none"
-      />
+      <path d={`M${x1},${topAt(0)} L${x2},${topAt(1)}`} stroke={color} strokeWidth={1.4} fill="none" />
       {Array.from({ length: n + 1 }, (_, i) => {
         const t = i / n;
         const xx = x1 + t * width;
@@ -167,7 +145,7 @@ export function DistributedLoad({
         y={Math.min(topAt(0), topAt(1)) - 7}
         textAnchor="middle"
         fill="var(--text-muted)"
-        style={{ font: "500 15px var(--font-mono)" }}
+        style={{ font: '500 15px var(--font-mono)' }}
       >
         {label}
       </text>
@@ -203,13 +181,7 @@ export function MomentLoad({ x, y, label, radius = 15, color = LOAD_COLOR.moment
         fill="none"
         markerEnd={`url(#${arrowMarkerId('moment')})`}
       />
-      <text
-        x={x}
-        y={cy - radius - 6}
-        textAnchor="middle"
-        fill="var(--text-muted)"
-        style={{ font: "500 15px var(--font-mono)" }}
-      >
+      <text x={x} y={cy - radius - 6} textAnchor="middle" fill="var(--text-muted)" style={{ font: '500 15px var(--font-mono)' }}>
         {label}
       </text>
     </g>
@@ -227,21 +199,8 @@ export interface PointLoadProps {
 export function PointLoad({ x, y, label, height = 46, color = LOAD_COLOR.point }: PointLoadProps): JSX.Element {
   return (
     <g>
-      <line
-        x1={x}
-        y1={y - height}
-        x2={x}
-        y2={y - 4}
-        stroke={color}
-        strokeWidth={2}
-        markerEnd={`url(#${arrowMarkerId('point')})`}
-      />
-      <text
-        x={x + 7}
-        y={y - height + 11}
-        fill="var(--text-muted)"
-        style={{ font: "500 15px var(--font-mono)" }}
-      >
+      <line x1={x} y1={y - height} x2={x} y2={y - 4} stroke={color} strokeWidth={2} markerEnd={`url(#${arrowMarkerId('point')})`} />
+      <text x={x + 7} y={y - height + 11} fill="var(--text-muted)" style={{ font: '500 15px var(--font-mono)' }}>
         {label}
       </text>
     </g>
@@ -287,7 +246,7 @@ export function DistributedMomentLoad({ x1, x2, y, label, color = LOAD_COLOR['di
           />
         );
       })}
-      <text x={(x1 + x2) / 2} y={cy - radius - 6} textAnchor="middle" fill="var(--text-muted)" style={{ font: "500 15px var(--font-mono)" }}>
+      <text x={(x1 + x2) / 2} y={cy - radius - 6} textAnchor="middle" fill="var(--text-muted)" style={{ font: '500 15px var(--font-mono)' }}>
         {label}
       </text>
     </g>
@@ -312,7 +271,7 @@ export function Foundation({ x1, x2, y, label }: FoundationProps): JSX.Element {
         const xx = x1 + (i * (x2 - x1)) / n;
         return <line key={i} x1={xx} y1={y + 2} x2={xx - 5} y2={y + 2 + depth} stroke={FOUNDATION_COLOR} strokeWidth={1} />;
       })}
-      <text x={(x1 + x2) / 2} y={y + 2 + depth + 14} textAnchor="middle" fill="var(--text-muted)" style={{ font: "500 13px var(--font-mono)" }}>
+      <text x={(x1 + x2) / 2} y={y + 2 + depth + 14} textAnchor="middle" fill="var(--text-muted)" style={{ font: '500 13px var(--font-mono)' }}>
         {label}
       </text>
     </g>
@@ -351,16 +310,7 @@ export function CanvasDefs(): JSX.Element {
           dobozán, `ModelCanvas.tsx`. */}
 
       {(Object.keys(LOAD_COLOR) as LoadColorKind[]).map((kind) => (
-        <marker
-          key={kind}
-          id={arrowMarkerId(kind)}
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="5"
-          markerWidth="5"
-          markerHeight="5"
-          orient="auto"
-        >
+        <marker key={kind} id={arrowMarkerId(kind)} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
           <path d="M0,1 L9,5 L0,9 z" fill={LOAD_COLOR[kind]} />
         </marker>
       ))}

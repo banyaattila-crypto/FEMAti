@@ -203,8 +203,7 @@ export function checkElementStiffness(
     tolerance: 0,
     unit: '',
     detail:
-      'Minden szabadságfoknak pozitív saját merevséggel kell rendelkeznie. ' +
-      'Nem pozitív átlós elem hiányzó merevségre vagy előjelhibára utal.',
+      'Minden szabadságfoknak pozitív saját merevséggel kell rendelkeznie. ' + 'Nem pozitív átlós elem hiányzó merevségre vagy előjelhibára utal.',
     ...entity,
   });
 
@@ -221,11 +220,10 @@ export function checkElementStiffness(
         relative,
         SELF_CHECK_TOLERANCE.rigidBody,
         index === 0
-          ? 'A tartó merev eltolása nem termelhet belső erőt. Ha mégis, a B mátrix ' +
-            'vagy az integrálás hibás.'
+          ? 'A tartó merev eltolása nem termelhet belső erőt. Ha mégis, a B mátrix ' + 'vagy az integrálás hibás.'
           : 'A merev elforduláshoz Timoshenko-gerendán w = a + b·x és φ = b tartozik, ' +
-            'ekkor κ = 0 és γ = φ − dw/dx = 0. Ha ez energiát termel, az előjel-konvenció ' +
-            'vagy a nyírási tag hibás.',
+              'ekkor κ = 0 és γ = φ − dw/dx = 0. Ha ez energiát termel, az előjel-konvenció ' +
+              'vagy a nyírási tag hibás.',
         { reference: 'Diplomaterv 3.1 egyenlet', ...entity },
       ),
     );

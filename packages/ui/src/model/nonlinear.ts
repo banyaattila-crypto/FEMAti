@@ -195,11 +195,7 @@ export function compileLayeredModel(editable: EditableModel): Model {
   });
   const nodeAt = (x: number): string => nodeIdAt(x, editable.span, editable.elementCount);
   const boundaries = editable.supports.map((s) =>
-    s.type === 'fixed'
-      ? fixed(nodeAt(s.x))
-      : s.type === 'spring'
-        ? springSupport(nodeAt(s.x), s.k ?? DEFAULT_SPRING_STIFFNESS)
-        : pinned(nodeAt(s.x)),
+    s.type === 'fixed' ? fixed(nodeAt(s.x)) : s.type === 'spring' ? springSupport(nodeAt(s.x), s.k ?? DEFAULT_SPRING_STIFFNESS) : pinned(nodeAt(s.x)),
   );
   const supportDisplacements = editable.supports
     .filter((s) => s.dz !== undefined || s.dPhi !== undefined)

@@ -30,12 +30,7 @@ export interface RayleighDamping {
  * tényezőből (ζ₁ az ω₁-en, ζ₂ az ω₂-n) — a ζₙ = α/(2ωₙ) + β·ωₙ/2
  * egyenletrendszer 2×2-es megoldása.
  */
-export function rayleighFromModalDamping(
-  omega1: number,
-  zeta1: number,
-  omega2: number,
-  zeta2: number,
-): RayleighDamping {
+export function rayleighFromModalDamping(omega1: number, zeta1: number, omega2: number, zeta2: number): RayleighDamping {
   const a11 = 1 / (2 * omega1);
   const a12 = omega1 / 2;
   const a21 = 1 / (2 * omega2);

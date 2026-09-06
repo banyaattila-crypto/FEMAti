@@ -74,7 +74,10 @@ describe('buildDofMap', () => {
   it('csuklós támasz csak a w DOF-ot köti meg', () => {
     const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
     const m = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
       boundaries: [pinned('N0')],
     });
     const map = buildDofMap(m);
@@ -142,7 +145,10 @@ describe('assemble — a kompilált merevségi mátrix', () => {
   it('rugós támasz növeli az érintett átlós elemet', () => {
     const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
     const withoutSpring = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
       boundaries: [pinned('N0'), pinned('N2')],
     });
     const withSpring: Model = {
@@ -168,11 +174,18 @@ describe('assemble — a kompilált merevségi mátrix', () => {
   it('rugalmas ágyazat csak a w-w blokkokra hat', () => {
     const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
     const withFoundation = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
-      boundaries: [fixed('N0')], foundations: [foundation(0, 4, 8000)],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
+      foundations: [foundation(0, 4, 8000)],
     });
     const without = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
       boundaries: [fixed('N0')],
     });
     const sysF = assemble(withFoundation);
@@ -220,7 +233,9 @@ describe('assemble — a kompilált merevségi mátrix', () => {
     const bad = buildModel({
       nodes: mesh.nodes,
       elements: mesh.elements.map((e) => ({ ...e, sectionId: 'NINCS' as never })),
-      materials: [MAT], sections: [SEC], boundaries: [fixed('N0')],
+      materials: [MAT],
+      sections: [SEC],
+      boundaries: [fixed('N0')],
     });
     expect(() => assemble(bad)).toThrow(DimensionError);
   });
@@ -228,7 +243,10 @@ describe('assemble — a kompilált merevségi mátrix', () => {
   it('mechanizmusra SingularMatrixError-t dob megoldáskor', () => {
     const mesh = uniformMesh(4, 1, { sectionId: 'R', materialId: 'S235' });
     const mechanism = buildModel({
-      nodes: mesh.nodes, elements: mesh.elements, materials: [MAT], sections: [SEC],
+      nodes: mesh.nodes,
+      elements: mesh.elements,
+      materials: [MAT],
+      sections: [SEC],
       boundaries: [], // nincs megtámasztás — szabad test
     });
     const sys = assemble(mechanism);

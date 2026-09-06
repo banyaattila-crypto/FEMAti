@@ -16,12 +16,7 @@ import { Slider } from '../components/Field.js';
 import { useModelStore } from '../state/modelStore.js';
 import { useAppStore } from '../state/appStore.js';
 import { useDynamicStore } from '../state/dynamicStore.js';
-import {
-  DEFAULT_DYNAMIC_SETTINGS,
-  runDynamicEditableModel,
-  type DynamicSettings,
-  type ExcitationKind,
-} from '../model/dynamicRun.js';
+import { DEFAULT_DYNAMIC_SETTINGS, runDynamicEditableModel, type DynamicSettings, type ExcitationKind } from '../model/dynamicRun.js';
 import { TransientChart, TRANSIENT_CHART_HEIGHT, type TransientQuantity } from './TransientChart.js';
 import { CHARTS } from '../i18n/charts.js';
 import { SHELL } from '../i18n/shell.js';
@@ -197,13 +192,9 @@ export function DynamicPanel(): JSX.Element {
       </div>
 
       {error !== null ? (
-        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-          {t.dynamicRunFailed(error)}
-        </div>
+        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>{t.dynamicRunFailed(error)}</div>
       ) : run === null ? (
-        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
-          {t.noDynamicResult}
-        </div>
+        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>{t.noDynamicResult}</div>
       ) : (
         <div style={{ flex: 1, minHeight: 0, height: TRANSIENT_CHART_HEIGHT }}>
           <TransientChart run={run} quantity={quantity} lang={lang} />

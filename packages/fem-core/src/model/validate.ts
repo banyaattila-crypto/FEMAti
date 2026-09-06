@@ -93,10 +93,7 @@ function checkReferences(model: Model, out: Diagnostic[]): void {
   }
 
   for (const l of model.loads) {
-    if (
-      (l.kind === 'nodal-force' || l.kind === 'nodal-moment' || l.kind === 'support-displacement') &&
-      !nodeIds.has(l.nodeId as string)
-    ) {
+    if ((l.kind === 'nodal-force' || l.kind === 'nodal-moment' || l.kind === 'support-displacement') && !nodeIds.has(l.nodeId as string)) {
       out.push(
         err('MISSING_NODE', `A(z) "${l.id}" teher nem létező csomópontra hivatkozik: "${l.nodeId}".`, {
           kind: 'teher',
@@ -167,8 +164,7 @@ function checkElementGeometry(model: Model, out: Diagnostic[]): void {
         out.push(
           warn(
             'DISTORTED_ELEMENT',
-            `A(z) "${e.id}" elem középső csomópontja erősen eltolt (${(rel * 100).toFixed(0)}%). ` +
-              `Ez rontja a numerikus pontosságot.`,
+            `A(z) "${e.id}" elem középső csomópontja erősen eltolt (${(rel * 100).toFixed(0)}%). ` + `Ez rontja a numerikus pontosságot.`,
             { kind: 'elem', id: e.id as string },
           ),
         );
@@ -260,27 +256,13 @@ function checkMaterials(model: Model, out: Diagnostic[]): void {
     }
     const nu = m.nu as number;
     if (nu < 0 || nu >= 0.5) {
-      out.push(
-        warn(
-          'UNUSUAL_NU',
-          `A(z) "${m.name}" anyag Poisson-tényezője szokatlan (ν = ${nu}). ` +
-            `Szokásos tartomány: 0 ≤ ν < 0.5.`,
-          id,
-        ),
-      );
+      out.push(warn('UNUSUAL_NU', `A(z) "${m.name}" anyag Poisson-tényezője szokatlan (ν = ${nu}). ` + `Szokásos tartomány: 0 ≤ ν < 0.5.`, id));
     }
     if (m.sigmaY !== undefined && (m.sigmaY as number) <= 0) {
       out.push(err('INVALID_SIGMA_Y', `A(z) "${m.name}" anyag folyáshatára nem pozitív.`, id));
     }
     if (m.hPrime !== undefined && (m.hPrime as number) < 0) {
-      out.push(
-        err(
-          'NEGATIVE_HARDENING',
-          `A(z) "${m.name}" anyag keményedési paramétere negatív (lágyulás). ` +
-            `Ezt a mag nem támogatja.`,
-          id,
-        ),
-      );
+      out.push(err('NEGATIVE_HARDENING', `A(z) "${m.name}" anyag keményedési paramétere negatív (lágyulás). ` + `Ezt a mag nem támogatja.`, id));
     }
   }
 }
@@ -288,22 +270,18 @@ function checkMaterials(model: Model, out: Diagnostic[]): void {
 /** Rétegelt keresztmetszet: hézag- és átfedésmentesség. */
 function checkLayers(layers: readonly Layer[], sectionName: string, id: string, out: Diagnostic[]): void {
   if (layers.length === 0) {
-    out.push(err('EMPTY_SECTION', `A(z) "${sectionName}" rétegelt keresztmetszetnek nincs rétege.`, {
-      kind: 'keresztmetszet',
-      id,
-    }));
+    out.push(
+      err('EMPTY_SECTION', `A(z) "${sectionName}" rétegelt keresztmetszetnek nincs rétege.`, {
+        kind: 'keresztmetszet',
+        id,
+      }),
+    );
     return;
   }
 
   for (const [i, l] of layers.entries()) {
     if ((l.b as number) <= 0 || (l.t as number) <= 0) {
-      out.push(
-        err(
-          'INVALID_LAYER',
-          `A(z) "${sectionName}" keresztmetszet ${i + 1}. rétegének mérete nem pozitív.`,
-          { kind: 'keresztmetszet', id },
-        ),
-      );
+      out.push(err('INVALID_LAYER', `A(z) "${sectionName}" keresztmetszet ${i + 1}. rétegének mérete nem pozitív.`, { kind: 'keresztmetszet', id }));
     }
   }
 
@@ -320,19 +298,16 @@ function checkLayers(layers: readonly Layer[], sectionName: string, id: string, 
     const gap = curBottom - prevTop;
     if (gap > eps) {
       out.push(
-        warn(
-          'LAYER_GAP',
-          `A(z) "${sectionName}" keresztmetszet ${i}. és ${i + 1}. rétege között ` +
-            `${(gap * 1000).toFixed(3)} mm hézag van.`,
-          { kind: 'keresztmetszet', id },
-        ),
+        warn('LAYER_GAP', `A(z) "${sectionName}" keresztmetszet ${i}. és ${i + 1}. rétege között ` + `${(gap * 1000).toFixed(3)} mm hézag van.`, {
+          kind: 'keresztmetszet',
+          id,
+        }),
       );
     } else if (gap < -eps) {
       out.push(
         err(
           'LAYER_OVERLAP',
-          `A(z) "${sectionName}" keresztmetszet ${i}. és ${i + 1}. rétege ` +
-            `${(-gap * 1000).toFixed(3)} mm-en átfedi egymást.`,
+          `A(z) "${sectionName}" keresztmetszet ${i}. és ${i + 1}. rétege ` + `${(-gap * 1000).toFixed(3)} mm-en átfedi egymást.`,
           { kind: 'keresztmetszet', id },
         ),
       );
@@ -365,11 +340,10 @@ function checkSections(model: Model, out: Diagnostic[]): void {
     const id = s.id as string;
     if ((s.shearFactor as number) <= 0 || (s.shearFactor as number) > 1) {
       out.push(
-        err(
-          'INVALID_SHEAR_FACTOR',
-          `A(z) "${s.name}" keresztmetszet nyírási alaktényezője kívül esik a (0, 1] tartományon.`,
-          { kind: 'keresztmetszet', id },
-        ),
+        err('INVALID_SHEAR_FACTOR', `A(z) "${s.name}" keresztmetszet nyírási alaktényezője kívül esik a (0, 1] tartományon.`, {
+          kind: 'keresztmetszet',
+          id,
+        }),
       );
     }
     if (s.kind === 'layered') {
@@ -400,9 +374,7 @@ function checkShape(s: Extract<Section, { kind: 'parametric' }>, out: Diagnostic
       positive(sh.d as number, 'átmérő');
       positive(sh.t as number, 'falvastagság');
       if ((sh.t as number) >= (sh.d as number) / 2) {
-        out.push(
-          err('INVALID_DIMENSION', `A(z) "${s.name}" cső falvastagsága nem lehet a sugárnál nagyobb.`, id),
-        );
+        out.push(err('INVALID_DIMENSION', `A(z) "${s.name}" cső falvastagsága nem lehet a sugárnál nagyobb.`, id));
       }
       break;
     case 'i-profile':
@@ -419,9 +391,7 @@ function checkShape(s: Extract<Section, { kind: 'parametric' }>, out: Diagnostic
       positive(sh.b as number, 'szélesség');
       positive(sh.t as number, 'falvastagság');
       if (2 * (sh.t as number) >= Math.min(sh.h as number, sh.b as number)) {
-        out.push(
-          err('INVALID_DIMENSION', `A(z) "${s.name}" zárt szelvény falvastagsága kitölti a belső üreget.`, id),
-        );
+        out.push(err('INVALID_DIMENSION', `A(z) "${s.name}" zárt szelvény falvastagsága kitölti a belső üreget.`, id));
       }
       break;
     case 't-profile':
@@ -451,19 +421,11 @@ function checkLoads(model: Model, out: Diagnostic[]): void {
         out.push(err('INVALID_LOAD_RANGE', `A(z) "${l.id}" megoszló teher kezdőpontja nem kisebb a végpontjánál.`, id));
       }
       if (x1 < xMin - 1e-9 || x2 > xMax + 1e-9) {
-        out.push(
-          err(
-            'LOAD_OUT_OF_RANGE',
-            `A(z) "${l.id}" megoszló teher kilóg a szerkezetből (${x1}…${x2}, tartó: ${xMin}…${xMax}).`,
-            id,
-          ),
-        );
+        out.push(err('LOAD_OUT_OF_RANGE', `A(z) "${l.id}" megoszló teher kilóg a szerkezetből (${x1}…${x2}, tartó: ${xMin}…${xMax}).`, id));
       }
     }
     if (l.kind === 'distributed-force' && l.shape === 'parabolic' && l.qMid === undefined) {
-      out.push(
-        err('MISSING_QMID', `A(z) "${l.id}" parabolikus megoszló tehernél hiányzik a felezőponti intenzitás.`, id),
-      );
+      out.push(err('MISSING_QMID', `A(z) "${l.id}" parabolikus megoszló tehernél hiányzik a felezőponti intenzitás.`, id));
     }
     if (l.kind === 'thermal') {
       const top = l.tTop as number;
@@ -504,13 +466,9 @@ function checkMeshContinuity(model: Model, out: Diagnostic[]): void {
   for (let i = 1; i < spans.length; i++) {
     const gap = spans[i][0] - spans[i - 1][1];
     if (gap > 1e-9) {
-      out.push(
-        err('MESH_GAP', `Hézag a végeselem-hálóban: x = ${spans[i - 1][1]} és x = ${spans[i][0]} között.`),
-      );
+      out.push(err('MESH_GAP', `Hézag a végeselem-hálóban: x = ${spans[i - 1][1]} és x = ${spans[i][0]} között.`));
     } else if (gap < -1e-9) {
-      out.push(
-        err('MESH_OVERLAP', `Átfedő végeselemek: x = ${spans[i][0]} és x = ${spans[i - 1][1]} között.`),
-      );
+      out.push(err('MESH_OVERLAP', `Átfedő végeselemek: x = ${spans[i][0]} és x = ${spans[i - 1][1]} között.`));
     }
   }
 }
@@ -544,5 +502,4 @@ export function validateModel(model: Model): Diagnostic[] {
 }
 
 /** Igaz, ha a modell futtatható (nincs hiba súlyosságú diagnosztika). */
-export const isRunnable = (diagnostics: readonly Diagnostic[]): boolean =>
-  !diagnostics.some((d) => d.severity === 'error');
+export const isRunnable = (diagnostics: readonly Diagnostic[]): boolean => !diagnostics.some((d) => d.severity === 'error');

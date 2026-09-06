@@ -88,16 +88,7 @@ export interface ModelState {
 
 function initialModel(): EditableModel {
   const preset = findPreset(DEFAULT_PRESET_ID);
-  return presetToEditable(
-    preset,
-    DEFAULT_PRESET_ID,
-    12,
-    16,
-    DEFAULT_SECTION_ID,
-    DEFAULT_MATERIAL_ID,
-    false,
-    'selective',
-  );
+  return presetToEditable(preset, DEFAULT_PRESET_ID, 12, 16, DEFAULT_SECTION_ID, DEFAULT_MATERIAL_ID, false, 'selective');
 }
 
 export const useModelStore = create<ModelState>()((set, get) => {
@@ -163,9 +154,7 @@ export const useModelStore = create<ModelState>()((set, get) => {
       edit((d) => {
         d.elementCount = v;
         d.supports = d.supports.map((s) => ({ ...s, x: snapToNode(s.x, d.span, v) }));
-        d.loads = d.loads.map((l) =>
-          l.kind === 'point' || l.kind === 'moment' ? { ...l, x: snapToNode(l.x, d.span, v) } : l,
-        );
+        d.loads = d.loads.map((l) => (l.kind === 'point' || l.kind === 'moment' ? { ...l, x: snapToNode(l.x, d.span, v) } : l));
       }),
 
     setSectionId: (id) => edit((d) => void (d.sectionId = id)),

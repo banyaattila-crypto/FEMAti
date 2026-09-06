@@ -92,13 +92,7 @@ function plasticStep(
  * Egy réteg állapotfrissítése egy (Newton–Raphson-)lépésben, a MASTER-PROMPT-TERV
  * 1.8 döntési táblázatának négy ága szerint (ld. a fájl fejlécét).
  */
-export function updateLayerPlasticState(
-  state: LayerPlasticState,
-  e: number,
-  sigmaY: number,
-  hPrime: number,
-  dEps: number,
-): LayerPlasticStepResult {
+export function updateLayerPlasticState(state: LayerPlasticState, e: number, sigmaY: number, hPrime: number, dEps: number): LayerPlasticStepResult {
   const dSigmaTrial = e * dEps;
   const sigmaTrial = state.sigma + dSigmaTrial;
   const currentLimit = sigmaY + hPrime * state.epsPEff;

@@ -23,12 +23,7 @@ import {
   type SelfCheckLevel,
   type SelfCheckReport,
 } from '../diagnostics/selfCheck.js';
-import {
-  assemble,
-  foundationMatrix,
-  type AssembledSystem,
-  type PreparedElement,
-} from '../assembly/assembler.js';
+import { assemble, foundationMatrix, type AssembledSystem, type PreparedElement } from '../assembly/assembler.js';
 import { buildLoadVector, elementKappa0, unsupportedLoads } from '../assembly/loadVector.js';
 import { describeDof, type ConstraintStrategy } from '../assembly/dofMap.js';
 import { plasticShearCapacity } from '../material/shearMomentInteraction.js';
@@ -181,10 +176,7 @@ export class InvalidModelError extends Error {
 
   constructor(diagnostics: readonly Diagnostic[]) {
     const errors = diagnostics.filter((d) => d.severity === 'error');
-    super(
-      `A modell nem futtatható, ${errors.length} hiba miatt:\n` +
-        errors.map((d) => `  · ${d.message}`).join('\n'),
-    );
+    super(`A modell nem futtatható, ${errors.length} hiba miatt:\n` + errors.map((d) => `  · ${d.message}`).join('\n'));
     this.diagnostics = diagnostics;
   }
 }
@@ -228,12 +220,7 @@ function internalElementForces(system: AssembledSystem, u: Float64Array): Float6
  * önellenőrzésének alapja — ott mindennek benne kell lennie, ami ténylegesen
  * hozzájárul a K mátrixhoz.
  */
-function internalCombinedForces(
-  system: AssembledSystem,
-  model: Model,
-  u: Float64Array,
-  fintElements: Float64Array,
-): Float64Array {
+function internalCombinedForces(system: AssembledSystem, model: Model, u: Float64Array, fintElements: Float64Array): Float64Array {
   const { map, elements } = system;
   const fint = Float64Array.from(fintElements);
   const ue = new Float64Array(6);
@@ -256,11 +243,7 @@ function internalCombinedForces(
 }
 
 /** Az egyensúly ellenőrzése: Σ(teher + reakció) = 0 erőre és nyomatékra. */
-function checkEquilibrium(
-  system: AssembledSystem,
-  loads: Float64Array,
-  reactions: Float64Array,
-): EquilibriumCheck {
+function checkEquilibrium(system: AssembledSystem, loads: Float64Array, reactions: Float64Array): EquilibriumCheck {
   const { map } = system;
   let sumFz = 0;
   let sumMy = 0;
@@ -297,9 +280,7 @@ function checkEquilibrium(
     sumMy,
     relativeFz,
     relativeMy,
-    satisfied:
-      relativeFz <= SELF_CHECK_TOLERANCE.equilibrium &&
-      relativeMy <= SELF_CHECK_TOLERANCE.equilibrium,
+    satisfied: relativeFz <= SELF_CHECK_TOLERANCE.equilibrium && relativeMy <= SELF_CHECK_TOLERANCE.equilibrium,
   };
 }
 
@@ -315,12 +296,7 @@ function checkEquilibrium(
 /** A hibajelző még nem áll rendelkezésre — azt csak az extrapoláció UTÁN lehet kiszámítani. */
 type ElementGaussPoints = Omit<ElementResult, 'errorEstimate'>;
 
-function elementResults(
-  elements: readonly PreparedElement[],
-  u: Float64Array,
-  model: Model,
-  scale: number,
-): ElementGaussPoints[] {
+function elementResults(elements: readonly PreparedElement[], u: Float64Array, model: Model, scale: number): ElementGaussPoints[] {
   const ue = new Float64Array(6);
   const materials = new Map(model.materials.map((m) => [m.id as string, m]));
   const elementById = new Map(model.elements.map((e) => [e.id as string, e]));
@@ -330,10 +306,7 @@ function elementResults(
 
     const sourceElement = elementById.get(e.id);
     const material = sourceElement ? materials.get(sourceElement.materialId as string) : undefined;
-    const kappa0 =
-      sourceElement && material
-        ? scale * elementKappa0(model, sourceElement, material.alpha as number, e.stiffness.height)
-        : 0;
+    const kappa0 = sourceElement && material ? scale * elementKappa0(model, sourceElement, material.alpha as number, e.stiffness.height) : 0;
 
     const gaussPoints = STRESS_POINTS.map((gp): GaussPointResult => {
       const f = internalForces({ nodeX: e.nodeX, elementId: e.id }, e.stiffness, ue, gp.xi, kappa0);
@@ -361,11 +334,7 @@ function extrapolateStressField(
   fieldExtreme: number,
   nodeCount: number,
 ): { readonly nodal: Float64Array; readonly errorEstimate: Float64Array } {
-  const gaussXi: readonly [number, number, number] = [
-    STRESS_POINTS[0]?.xi ?? 0,
-    STRESS_POINTS[1]?.xi ?? 0,
-    STRESS_POINTS[2]?.xi ?? 0,
-  ];
+  const gaussXi: readonly [number, number, number] = [STRESS_POINTS[0]?.xi ?? 0, STRESS_POINTS[1]?.xi ?? 0, STRESS_POINTS[2]?.xi ?? 0];
   const elementNodeIndices = elements.map((e) => e.nodeIndices);
   const elementNodalValues = results.map((r) => {
     const values = r.gaussPoints.map(select);
@@ -410,17 +379,13 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
     ...(options.strategy !== undefined ? { strategy: options.strategy } : {}),
     ...(options.penalty !== undefined ? { penalty: options.penalty } : {}),
     ...(options.axialForce !== undefined ? { axialForce: options.axialForce } : {}),
-    ...(options.excludedFoundationElementIds !== undefined
-      ? { excludedFoundationElementIds: options.excludedFoundationElementIds }
-      : {}),
+    ...(options.excludedFoundationElementIds !== undefined ? { excludedFoundationElementIds: options.excludedFoundationElementIds } : {}),
   });
 
   const collector = new SelfCheckCollector(options.selfCheck ?? 'full');
   if (collector.enabled) {
     for (const e of system.elements) {
-      collector.addAll(
-        checkElementStiffness(e.ke, rigidBodyModes(e.nodeX), e.id, 4, collector.fullEnabled),
-      );
+      collector.addAll(checkElementStiffness(e.ke, rigidBodyModes(e.nodeX), e.id, 4, collector.fullEnabled));
     }
   }
 
@@ -501,11 +466,7 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
 
   const reactions: Reaction[] = [];
   for (let i = 0; i < system.map.nodeCount; i++) {
-    const supported =
-      system.map.prescribed[2 * i] === 1 ||
-      system.map.prescribed[2 * i + 1] === 1 ||
-      springNodes.has(i) ||
-      foundationNodes.has(i);
+    const supported = system.map.prescribed[2 * i] === 1 || system.map.prescribed[2 * i + 1] === 1 || springNodes.has(i) || foundationNodes.has(i);
     if (!supported) continue;
     const nodeId = system.map.nodeIds[i];
     if (nodeId === undefined) continue;
@@ -548,8 +509,7 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
     measured: equilibrium.relativeMy,
     tolerance: SELF_CHECK_TOLERANCE.equilibrium,
     unit: '',
-    detail:
-      'A terhek és reakciók nyomatéka az origóra elvileg pontosan kiegyenlíti egymást.',
+    detail: 'A terhek és reakciók nyomatéka az origóra elvileg pontosan kiegyenlíti egymást.',
     reference: 'Diplomaterv 3.1.7',
   });
 
@@ -585,20 +545,8 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
 
   // Extrapoláció a csomópontokba, elemhatáron átlagolva, elemenkénti
   // hibajelzővel (Diplomaterv 3.1.7.4, 46. oldal; P6).
-  const mField = extrapolateStressField(
-    rawResults,
-    system.elements,
-    (gp) => gp.m,
-    mExtremeGauss.value,
-    system.map.nodeCount,
-  );
-  const tField = extrapolateStressField(
-    rawResults,
-    system.elements,
-    (gp) => gp.t,
-    tExtremeGauss.value,
-    system.map.nodeCount,
-  );
+  const mField = extrapolateStressField(rawResults, system.elements, (gp) => gp.m, mExtremeGauss.value, system.map.nodeCount);
+  const tField = extrapolateStressField(rawResults, system.elements, (gp) => gp.t, tExtremeGauss.value, system.map.nodeCount);
 
   const results: ElementResult[] = rawResults.map((r, idx) => ({
     ...r,
@@ -635,10 +583,7 @@ export function solveLinear(model: Model, options: SolveOptions = {}): LinearRes
     shapeFactor: stiffness?.shapeFactor ?? 0,
     me: sigmaY !== null && stiffness ? sigmaY * stiffness.elasticModulus : null,
     mp: sigmaY !== null && stiffness ? sigmaY * stiffness.plasticModulus : null,
-    vpl:
-      sigmaY !== null && stiffness && material
-        ? plasticShearCapacity(sigmaY, stiffness.gas / (material.g as number))
-        : null,
+    vpl: sigmaY !== null && stiffness && material ? plasticShearCapacity(sigmaY, stiffness.gas / (material.g as number)) : null,
   };
 
   return {
@@ -729,7 +674,7 @@ function elementLiftedOff(model: Model, elementId: string, wByNode: ReadonlyMap<
   const el = model.elements.find((e) => e.id === elementId);
   if (el === undefined) return false;
   const ws = el.nodes.map((id) => wByNode.get(id as string) ?? 0);
-  const avg = (ws.reduce((s, v) => s + v, 0)) / ws.length;
+  const avg = ws.reduce((s, v) => s + v, 0) / ws.length;
   return avg < 0;
 }
 

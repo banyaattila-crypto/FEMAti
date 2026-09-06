@@ -82,11 +82,7 @@ function buildElementContexts(model: Model, map: DofMap): ElementContext[] {
     const idx = element.nodes.map((id) => map.nodeIndex.get(id as string));
     if (idx.some((i) => i === undefined)) continue;
     const nodeIndices = idx as [number, number, number];
-    const nodeX: [number, number, number] = [
-      map.nodeX[nodeIndices[0]] ?? 0,
-      map.nodeX[nodeIndices[1]] ?? 0,
-      map.nodeX[nodeIndices[2]] ?? 0,
-    ];
+    const nodeX: [number, number, number] = [map.nodeX[nodeIndices[0]] ?? 0, map.nodeX[nodeIndices[1]] ?? 0, map.nodeX[nodeIndices[2]] ?? 0];
     out.push({ element, nodeX, nodeIndices });
   }
   return out;
@@ -365,8 +361,8 @@ export function elementLoadVector(model: Model, elementId: string, scale = 1): F
 export function buildLoadVector(model: Model, map: DofMap, scale = 1): LoadVectors {
   const full = new Float64Array(map.totalDofs);
 
-  const needsElements = model.loads.some((l) =>
-    l.kind === 'distributed-force' || l.kind === 'distributed-moment' || l.kind === 'self-weight' || l.kind === 'thermal',
+  const needsElements = model.loads.some(
+    (l) => l.kind === 'distributed-force' || l.kind === 'distributed-moment' || l.kind === 'self-weight' || l.kind === 'thermal',
   );
   const contexts = needsElements ? buildElementContexts(model, map) : [];
   const materials = new Map<string, Material>(model.materials.map((m) => [m.id as string, m]));
@@ -418,16 +414,7 @@ export function buildLoadVector(model: Model, map: DofMap, scale = 1): LoadVecto
       }
       case 'distributed-moment': {
         for (const ctx of contexts) {
-          const fe = reduceDistributed(
-            ctx,
-            load.x1 as number,
-            load.x2 as number,
-            load.m1 as number,
-            load.m2 as number,
-            'linear',
-            undefined,
-            1,
-          );
+          const fe = reduceDistributed(ctx, load.x1 as number, load.x2 as number, load.m1 as number, load.m2 as number, 'linear', undefined, 1);
           addElementVector(full, ctx, fe, scale);
         }
         break;

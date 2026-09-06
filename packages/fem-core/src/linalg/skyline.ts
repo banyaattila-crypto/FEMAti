@@ -313,10 +313,7 @@ export class SkylineMatrix {
 
   private assertNotFactorized(): void {
     if (this.factorized) {
-      throw new Error(
-        'A mátrix már faktorizált: az együtthatók nem módosíthatók. ' +
-          'Új terhelési lépéshez építsen új mátrixot.',
-      );
+      throw new Error('A mátrix már faktorizált: az együtthatók nem módosíthatók. ' + 'Új terhelési lépéshez építsen új mátrixot.');
     }
   }
 }

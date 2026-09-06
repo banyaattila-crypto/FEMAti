@@ -55,11 +55,7 @@ function addOuterProduct(k: DenseMatrix, row: Float64Array, factor: number): voi
  * @param stiffness EI és GAs
  * @param scheme integrálási séma
  */
-export function elementStiffness(
-  geom: ElementGeometry,
-  stiffness: SectionStiffness,
-  scheme: IntegrationScheme = 'selective',
-): DenseMatrix {
+export function elementStiffness(geom: ElementGeometry, stiffness: SectionStiffness, scheme: IntegrationScheme = 'selective'): DenseMatrix {
   const k = new DenseMatrix(DOF_PER_ELEMENT, DOF_PER_ELEMENT);
   const rules = quadratureFor(scheme);
 
@@ -181,9 +177,7 @@ export function internalForces(
  * Ezekre `Kₑ·u = 0` kell teljesüljön — ez az elem egyik legerősebb
  * önellenőrzése (lásd `selfCheck.ts`).
  */
-export function rigidBodyModes(
-  nodeX: readonly [number, number, number],
-): readonly Float64Array[] {
+export function rigidBodyModes(nodeX: readonly [number, number, number]): readonly Float64Array[] {
   // 1) tiszta eltolás: w = 1, φ = 0
   const translation = Float64Array.from([1, 0, 1, 0, 1, 0]);
   // 2) merev elfordulás: w = x, φ = 1

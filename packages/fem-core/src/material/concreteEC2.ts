@@ -65,13 +65,7 @@ export interface ConcreteStressResult {
  * @param epsCu2 szakadási (zúzódási) határnyúlás [-] (pozitív érték, pl. 0.0035)
  * @param n a parabola-téglalap modell kitevője [-] (pl. 2.0)
  */
-export function concreteStress(
-  eps: number,
-  fck: number,
-  epsC2: number,
-  epsCu2: number,
-  n: number,
-): ConcreteStressResult {
+export function concreteStress(eps: number, fck: number, epsC2: number, epsCu2: number, n: number): ConcreteStressResult {
   if (eps >= 0) {
     return { sigma: 0, tangentE: 0 }; // húzás — repedt keresztmetszet, nincs húzószilárdság
   }

@@ -23,9 +23,7 @@ export interface BeamFigureProps {
 
 export function BeamFigure({ model }: BeamFigureProps): JSX.Element {
   const sx = (x: number): number => AXIS_X0 + (x / model.span) * (AXIS_X1 - AXIS_X0);
-  const elementBoundaries = Array.from({ length: model.elementCount + 1 }, (_, i) =>
-    sx((i * model.span) / model.elementCount),
-  );
+  const elementBoundaries = Array.from({ length: model.elementCount + 1 }, (_, i) => sx((i * model.span) / model.elementCount));
 
   return (
     <svg
@@ -80,13 +78,7 @@ export function BeamFigure({ model }: BeamFigureProps): JSX.Element {
         <line x1={AXIS_X0} y1={AXIS_Y + 56} x2={AXIS_X1} y2={AXIS_Y + 56} stroke="var(--text-faint)" strokeWidth={0.8} />
         <line x1={AXIS_X0} y1={AXIS_Y + 50} x2={AXIS_X0} y2={AXIS_Y + 62} stroke="var(--text-faint)" strokeWidth={0.8} />
         <line x1={AXIS_X1} y1={AXIS_Y + 50} x2={AXIS_X1} y2={AXIS_Y + 62} stroke="var(--text-faint)" strokeWidth={0.8} />
-        <text
-          x={(AXIS_X0 + AXIS_X1) / 2}
-          y={AXIS_Y + 50}
-          textAnchor="middle"
-          fill="var(--text-muted)"
-          style={{ font: '500 12px var(--font-mono)' }}
-        >
+        <text x={(AXIS_X0 + AXIS_X1) / 2} y={AXIS_Y + 50} textAnchor="middle" fill="var(--text-muted)" style={{ font: '500 12px var(--font-mono)' }}>
           L = {fmt.length(model.span).value} m
         </text>
       </g>

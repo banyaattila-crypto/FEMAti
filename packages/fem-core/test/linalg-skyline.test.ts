@@ -101,7 +101,10 @@ describe('profil-tárolás', () => {
   });
 
   it('az átlagos frontszélesség a profil mérőszáma', () => {
-    const band = SkylineMatrix.fromConnectivity(10, Array.from({ length: 9 }, (_, i) => [i, i + 1]));
+    const band = SkylineMatrix.fromConnectivity(
+      10,
+      Array.from({ length: 9 }, (_, i) => [i, i + 1]),
+    );
     expect(band.meanBandwidth).toBeLessThan(SkylineMatrix.full(10).meanBandwidth);
   });
 });

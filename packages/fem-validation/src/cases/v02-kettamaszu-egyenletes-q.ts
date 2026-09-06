@@ -7,16 +7,7 @@
  * teherrel, V-01), ezért ez DISZKRETIZÁCIÓS hiba — a tűrés ezért lazább
  * (1e−4, 8 elemmel), a táblázat szerint.
  */
-import {
-  buildModel,
-  distributedForce,
-  makeMaterial,
-  makeSection,
-  pinned,
-  rect,
-  solveLinear,
-  uniformMesh,
-} from '@femati/fem-core';
+import { buildModel, distributedForce, makeMaterial, makeSection, pinned, rect, solveLinear, uniformMesh } from '@femati/fem-core';
 import type { ValidationCase } from '../types.js';
 
 export function caseV02(): ValidationCase {

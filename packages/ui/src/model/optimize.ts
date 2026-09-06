@@ -70,8 +70,7 @@ export function findSmallestSuitableSection(model: EditableModel): OptimizeResul
         .map((variant) => solveEditableModel(variant).result)
         .filter((r): r is NonNullable<typeof r> => r !== null);
       const slsResult = solveEditableModel(scaleModelForSls(candidateModel)).result;
-      const governing =
-        ulsResults.length > 0 && slsResult ? computeUtilizationsEnveloped(candidateModel, ulsResults, slsResult).governing : null;
+      const governing = ulsResults.length > 0 && slsResult ? computeUtilizationsEnveloped(candidateModel, ulsResults, slsResult).governing : null;
       const ok = governing !== null && utilizationVerdict(governing).tone === 'ok';
       return { sectionId: section.id, name: section.name, area, governing, ok };
     });

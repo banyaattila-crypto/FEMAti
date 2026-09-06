@@ -77,7 +77,15 @@ export function SeismicSpectrumChart({ input, behaviorFactor, t1, width, height 
 
       {t1Clamped !== null && t1Value !== null ? (
         <g aria-hidden="true">
-          <line x1={x(t1Clamped)} y1={y(t1Value)} x2={x(t1Clamped)} y2={baseline} stroke="var(--sem-plastic)" strokeWidth={0.8} strokeDasharray="3 2" />
+          <line
+            x1={x(t1Clamped)}
+            y1={y(t1Value)}
+            x2={x(t1Clamped)}
+            y2={baseline}
+            stroke="var(--sem-plastic)"
+            strokeWidth={0.8}
+            strokeDasharray="3 2"
+          />
           <circle cx={x(t1Clamped)} cy={y(t1Value)} r={3} fill="var(--sem-plastic)" />
           <text x={x(t1Clamped)} y={baseline + 12} fontSize={8} fontFamily="var(--font-mono)" fill={AXIS_TEXT} textAnchor="middle">
             T₁={t1Clamped.toFixed(2)}s

@@ -162,11 +162,8 @@ function buildCompositeSection(editable: EditableModel): { section: Section; mat
     materialId: concrete.id as unknown as string,
   }));
 
-  const sumEA =
-    steelLayers.reduce((s, l) => s + steelE * l.b * l.t, 0) + slabLayers.reduce((s, l) => s + concreteE * l.b * l.t, 0);
-  const sumEAz =
-    steelLayers.reduce((s, l) => s + steelE * l.b * l.t * l.z, 0) +
-    slabLayers.reduce((s, l) => s + concreteE * l.b * l.t * l.z, 0);
+  const sumEA = steelLayers.reduce((s, l) => s + steelE * l.b * l.t, 0) + slabLayers.reduce((s, l) => s + concreteE * l.b * l.t, 0);
+  const sumEAz = steelLayers.reduce((s, l) => s + steelE * l.b * l.t * l.z, 0) + slabLayers.reduce((s, l) => s + concreteE * l.b * l.t * l.z, 0);
   const zBar = sumEAz / sumEA;
   const centeredLayers = [...steelLayers, ...slabLayers].map((l) => ({ ...l, z: l.z - zBar }));
 
@@ -216,11 +213,7 @@ export function compileModel(editable: EditableModel): Model {
   const nodeAt = (x: number): string => nodeIdAt(x, editable.span, editable.elementCount);
 
   const boundaries = editable.supports.map((s) =>
-    s.type === 'fixed'
-      ? fixed(nodeAt(s.x))
-      : s.type === 'spring'
-        ? springSupport(nodeAt(s.x), s.k ?? DEFAULT_SPRING_STIFFNESS)
-        : pinned(nodeAt(s.x)),
+    s.type === 'fixed' ? fixed(nodeAt(s.x)) : s.type === 'spring' ? springSupport(nodeAt(s.x), s.k ?? DEFAULT_SPRING_STIFFNESS) : pinned(nodeAt(s.x)),
   );
 
   // Előírt támaszmozgás (dz/dPhi) — a Boundary MELLETT egy külön Load, csak

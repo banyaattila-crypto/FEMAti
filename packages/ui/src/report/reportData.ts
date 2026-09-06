@@ -4,12 +4,7 @@
  * dolgozza fel a kimenetét. A szétválasztás azért fontos, mert ez a modul
  * unit-tesztelhető a DOM/böngésző nélkül (ld. `reportData.test.ts`).
  */
-import {
-  combinedSteps,
-  computeHingeMarkers,
-  findPreparedElement,
-  type NonlinearRun,
-} from '../model/nonlinear.js';
+import { combinedSteps, computeHingeMarkers, findPreparedElement, type NonlinearRun } from '../model/nonlinear.js';
 
 export interface ReportHinge {
   readonly stepIndex: number;

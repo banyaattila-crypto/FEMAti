@@ -121,11 +121,7 @@ export function Toolbar(): JSX.Element {
         />
       </Cell>
 
-      <Cell
-        caption={t.toolbarLoadHistory}
-        hint={s.loadHistory === 'unloading' ? `λ→${s.peakLambda.toFixed(2)}→0` : undefined}
-        minWidth={205}
-      >
+      <Cell caption={t.toolbarLoadHistory} hint={s.loadHistory === 'unloading' ? `λ→${s.peakLambda.toFixed(2)}→0` : undefined} minWidth={205}>
         <SegmentedControl
           ariaLabel={t.loadHistoryAria}
           value={s.loadHistory}

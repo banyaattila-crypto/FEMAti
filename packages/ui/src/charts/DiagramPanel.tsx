@@ -60,18 +60,10 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
 
   if (activeDiagram === 'load-displacement' || activeDiagram === 'convergence') {
     if (nonlinearError !== null) {
-      return (
-        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-          {t.nonlinearRunFailed(nonlinearError)}
-        </div>
-      );
+      return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>{t.nonlinearRunFailed(nonlinearError)}</div>;
     }
     if (nonlinearRun === null) {
-      return (
-        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
-          {t.noNonlinearResult}
-        </div>
-      );
+      return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>{t.noNonlinearResult}</div>;
     }
     return (
       <div style={{ width: '100%', height: activeDiagram === 'load-displacement' ? LD_CHART_HEIGHT : CONVERGENCE_HEIGHT }}>
@@ -86,18 +78,10 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
 
   if (activeDiagram === 'envelope') {
     if (!model.movingLoad.enabled) {
-      return (
-        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
-          {t.enableMovingLoadHint}
-        </div>
-      );
+      return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>{t.enableMovingLoadHint}</div>;
     }
     if (envelope === null) {
-      return (
-        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-          {t.envelopeNotComputable}
-        </div>
-      );
+      return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>{t.envelopeNotComputable}</div>;
     }
     return (
       <div style={{ width: '100%', height: ENVELOPE_CHART_HEIGHT }}>
@@ -107,18 +91,10 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
   }
 
   if (error !== null) {
-    return (
-      <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        {t.modelNotRunnable}
-      </div>
-    );
+    return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>{t.modelNotRunnable}</div>;
   }
   if (result === null) {
-    return (
-      <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>
-        {t.noComputationResult}
-      </div>
-    );
+    return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-muted)' }}>{t.noComputationResult}</div>;
   }
 
   if (activeDiagram === 'utilization') {
@@ -132,11 +108,7 @@ export function DiagramPanel({ activeDiagram, momentFlip }: DiagramPanelProps): 
     // legkritikusabb keresztmetszet, nem csak hogy mennyi a legrosszabb.
     const { mp, vpl } = result.props;
     if (mp === null || vpl === null) {
-      return (
-        <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>
-          {t.utilizationNeedsYield}
-        </div>
-      );
+      return <div style={{ padding: 'var(--space-5)', fontSize: 12, color: 'var(--text-faint)' }}>{t.utilizationNeedsYield}</div>;
     }
     const uXs = result.nodes.map((n) => n.x);
     // 200%-nál felül elvágva: egy Vpl-t is meghaladó, numerikusan végtelen

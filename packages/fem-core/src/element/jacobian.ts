@@ -34,11 +34,7 @@ export interface JacobianValues {
  * @param elementId hibaüzenethez
  * @throws DegenerateElementError ha |J| ≤ 0 — a leképezés nem megfordítható
  */
-export function jacobian(
-  nodeX: readonly [number, number, number],
-  xi: number,
-  elementId = '?',
-): JacobianValues {
+export function jacobian(nodeX: readonly [number, number, number], xi: number, elementId = '?'): JacobianValues {
   const { n, dn } = shapeFunctions(xi);
 
   const j = dn[0] * nodeX[0] + dn[1] * nodeX[1] + dn[2] * nodeX[2];
@@ -69,5 +65,4 @@ export function shapeDerivativesX(
 }
 
 /** Az elem hossza a szélső csomópontok távolságából. */
-export const elementLength = (nodeX: readonly [number, number, number]): number =>
-  Math.abs(nodeX[2] - nodeX[0]);
+export const elementLength = (nodeX: readonly [number, number, number]): number => Math.abs(nodeX[2] - nodeX[0]);

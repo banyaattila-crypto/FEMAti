@@ -172,9 +172,7 @@ export function DiagramChart({
         ))}
 
         {/* analitikus referencia */}
-        {analyticPath ? (
-          <path d={analyticPath} fill="none" stroke="var(--sem-analytic)" strokeWidth={1.4} strokeDasharray="5 3" />
-        ) : null}
+        {analyticPath ? <path d={analyticPath} fill="none" stroke="var(--sem-analytic)" strokeWidth={1.4} strokeDasharray="5 3" /> : null}
 
         {/* kitöltés + kontúr — hőtérkép-színezve a mező nagysága szerint */}
         {areaPath ? <path d={areaPath} fill={`url(#${gradientId})`} opacity={0.55} /> : null}

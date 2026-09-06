@@ -134,11 +134,7 @@ export function RightPanel(): JSX.Element {
           <ResultRow label="EI" formatted={fmt.bendingStiffness(result?.props.ei ?? null)} />
           <ResultRow label="GAs" formatted={fmt.shearStiffness(result?.props.gas ?? null)} />
           <ResultRow label={t.dofLabel} formatted={fmt.count(result?.dofCount ?? null, 'DOF')} />
-          <ResultRow
-            label={t.errorEstimateLabel}
-            formatted={fmt.percent(result?.errorEstimate ?? null)}
-            title={t.errorEstimateTitle}
-          />
+          <ResultRow label={t.errorEstimateLabel} formatted={fmt.percent(result?.errorEstimate ?? null)} title={t.errorEstimateTitle} />
         </Card>
 
         <Card title={t.reactionsCardTitle} accent="results">
@@ -152,9 +148,7 @@ export function RightPanel(): JSX.Element {
               használnak — ugyanaz a támasz mindkét helyen ugyanazt az
               indexet kapja. */}
           {result
-            ? result.reactions.map((r, i) => (
-                <ResultRow key={r.nodeId} label={`Rz${i + 1} (x = ${r.x.toFixed(2)} m)`} formatted={fmt.force(r.fz)} />
-              ))
+            ? result.reactions.map((r, i) => <ResultRow key={r.nodeId} label={`Rz${i + 1} (x = ${r.x.toFixed(2)} m)`} formatted={fmt.force(r.fz)} />)
             : model.supports.map((s, i) => <ResultRow key={s.id} label={`Rz${i + 1} (x = ${s.x.toFixed(2)} m)`} formatted={fmt.force(null)} />)}
           <ResultRow
             label={t.sumFzCheckLabel}
@@ -174,22 +168,10 @@ export function RightPanel(): JSX.Element {
           <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
             <NoteBox tone="info">{t.ulsSlsNote}</NoteBox>
           </div>
-          <ResultRow
-            label={t.elasticCapacityLabel}
-            formatted={fmt.moment(result?.props.me ?? null)}
-            title={t.elasticCapacityTitle}
-          />
-          <ResultRow
-            label={t.plasticCapacityLabel}
-            formatted={fmt.moment(result?.props.mp ?? null)}
-            title={t.plasticCapacityTitle}
-          />
+          <ResultRow label={t.elasticCapacityLabel} formatted={fmt.moment(result?.props.me ?? null)} title={t.elasticCapacityTitle} />
+          <ResultRow label={t.plasticCapacityLabel} formatted={fmt.moment(result?.props.mp ?? null)} title={t.plasticCapacityTitle} />
           <ResultRow label={t.shapeFactorLabel} formatted={fmt.shapeFactor(result?.props.shapeFactor ?? null)} />
-          <ResultRow
-            label={t.shearCapacityLabel}
-            formatted={fmt.shear(result?.props.vpl ?? null)}
-            title={t.shearCapacityTitle}
-          />
+          <ResultRow label={t.shearCapacityLabel} formatted={fmt.shear(result?.props.vpl ?? null)} title={t.shearCapacityTitle} />
           <ResultRow
             label={t.ulsGoverningMomentLabel}
             formatted={fmt.moment(ulsGoverningResult?.extremes.m.value ?? null)}
@@ -205,14 +187,12 @@ export function RightPanel(): JSX.Element {
             emphasis="large"
             title={t.mvUtilTitle}
           />
-          <ResultRow
-            label={t.verdictLabel}
-            formatted={{ value: VERDICT_LABEL[lang][mvVerdict.code], unit: '' }}
-            tone={mvVerdict.tone}
-          />
+          <ResultRow label={t.verdictLabel} formatted={{ value: VERDICT_LABEL[lang][mvVerdict.code], unit: '' }} tone={mvVerdict.tone} />
           <ResultRow
             label={t.deflectionUtilLabel}
-            formatted={fmt.percent(utils?.deflection !== null && utils?.deflection !== undefined && Number.isFinite(utils.deflection) ? utils.deflection * 100 : null)}
+            formatted={fmt.percent(
+              utils?.deflection !== null && utils?.deflection !== undefined && Number.isFinite(utils.deflection) ? utils.deflection * 100 : null,
+            )}
             tone={deflectionVerdict.tone}
             emphasis="large"
             title={t.deflectionUtilTitle}
@@ -241,11 +221,7 @@ export function RightPanel(): JSX.Element {
           ) : null}
           {utils?.rcMu !== null && utils?.rcMu !== undefined ? (
             <>
-              <ResultRow
-                label={t.rcUlsCapacityLabel}
-                formatted={fmt.moment(utils.rcMu)}
-                title={t.rcUlsCapacityTitle}
-              />
+              <ResultRow label={t.rcUlsCapacityLabel} formatted={fmt.moment(utils.rcMu)} title={t.rcUlsCapacityTitle} />
               <ResultRow
                 label={t.rcUlsUtilLabel}
                 formatted={fmt.percent(utils.rc !== null && Number.isFinite(utils.rc) ? utils.rc * 100 : null)}
@@ -278,12 +254,18 @@ export function RightPanel(): JSX.Element {
                 <ResultRow label={t.seismicSvdLabel} formatted={fmt.spectralValue(svd)} title={t.seismicSvdTitle} />
                 <ResultRow
                   label={t.seismicUtilLabel}
-                  formatted={fmt.percent(seismicUtil?.governing !== null && seismicUtil?.governing !== undefined ? seismicUtil.governing * 100 : null)}
+                  formatted={fmt.percent(
+                    seismicUtil?.governing !== null && seismicUtil?.governing !== undefined ? seismicUtil.governing * 100 : null,
+                  )}
                   tone={seismicVerdict.tone}
                   emphasis="large"
                   title={t.seismicUtilTitle}
                 />
-                <ResultRow label={t.verdictLabel} formatted={{ value: VERDICT_LABEL[lang][seismicVerdict.code], unit: '' }} tone={seismicVerdict.tone} />
+                <ResultRow
+                  label={t.verdictLabel}
+                  formatted={{ value: VERDICT_LABEL[lang][seismicVerdict.code], unit: '' }}
+                  tone={seismicVerdict.tone}
+                />
               </>
             ) : (
               <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
@@ -294,9 +276,7 @@ export function RightPanel(): JSX.Element {
         ) : null}
 
         {error !== null ? <NoteBox tone="error">{t.notRunnablePrefix(error)}</NoteBox> : null}
-        {result === null && error === null ? (
-          <NoteBox tone="warn">{t.noComputableModel}</NoteBox>
-        ) : null}
+        {result === null && error === null ? <NoteBox tone="warn">{t.noComputableModel}</NoteBox> : null}
       </div>
     </aside>
   );

@@ -25,16 +25,7 @@
  *   eredménye egyenlő mezőkre, egyetlen támaszsüllyedésre (magnitúdóban
  *   egyezik számos tankönyvi forrással).
  */
-import {
-  buildModel,
-  makeMaterial,
-  makeSection,
-  pinned,
-  rect,
-  solveLinear,
-  supportDisplacement,
-  uniformMesh,
-} from '@femati/fem-core';
+import { buildModel, makeMaterial, makeSection, pinned, rect, solveLinear, supportDisplacement, uniformMesh } from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 export function caseV09(): ValidationCase {

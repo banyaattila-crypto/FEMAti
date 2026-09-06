@@ -52,9 +52,7 @@ export function Timeline(): JSX.Element {
   if (run === null || total === 0) {
     return (
       <div className="vem-timeline" aria-label={t.timelineAria}>
-        <span className="vem-timeline__empty">
-          {t.timelineEmpty}
-        </span>
+        <span className="vem-timeline__empty">{t.timelineEmpty}</span>
       </div>
     );
   }
@@ -109,11 +107,7 @@ export function Timeline(): JSX.Element {
               key={i}
               className={`vem-timeline__mark vem-timeline__mark--${m.kind}`}
               style={{ left: `${(m.stepIndex / Math.max(1, total - 1)) * 100}%` }}
-              title={
-                m.kind === 'first-yield'
-                  ? t.timelineFirstYield(m.elementId)
-                  : t.timelineFullHinge(m.elementId)
-              }
+              title={m.kind === 'first-yield' ? t.timelineFirstYield(m.elementId) : t.timelineFullHinge(m.elementId)}
             />
           ))}
         </div>
@@ -126,14 +120,7 @@ export function Timeline(): JSX.Element {
 
       <div className="vem-segmented" role="group" aria-label={t.timelineSpeedAria}>
         {SPEEDS.map((v) => (
-          <button
-            key={v}
-            type="button"
-            className="vem-segmented__item"
-            aria-pressed={speed === v}
-            onClick={() => setSpeed(v)}
-            title={`${v}×`}
-          >
+          <button key={v} type="button" className="vem-segmented__item" aria-pressed={speed === v} onClick={() => setSpeed(v)} title={`${v}×`}>
             {v}×
           </button>
         ))}

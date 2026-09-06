@@ -29,11 +29,7 @@ import type { Model } from '../model/types.js';
  * @param map a `assemble()`-ből származó szabadságfok-térkép
  * @param elements a `assemble()`-ből származó, előkészített elemek
  */
-export function assembleMass(
-  model: Model,
-  map: DofMap,
-  elements: readonly PreparedElement[],
-): DenseMatrix {
+export function assembleMass(model: Model, map: DofMap, elements: readonly PreparedElement[]): DenseMatrix {
   const materials = new Map(model.materials.map((mat) => [mat.id as string, mat]));
   const elementById = new Map(model.elements.map((e) => [e.id as string, e]));
 

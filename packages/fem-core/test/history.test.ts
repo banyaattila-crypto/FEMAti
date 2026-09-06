@@ -1,15 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  buildModel,
-  fixed,
-  makeMaterial,
-  makeSection,
-  nodalForce,
-  rect,
-  resetLoadIds,
-  solveLinear,
-  uniformMesh,
-} from '../src/index.js';
+import { buildModel, fixed, makeMaterial, makeSection, nodalForce, rect, resetLoadIds, solveLinear, uniformMesh } from '../src/index.js';
 import { computeLoadHistory, displacementsAtStep } from '../src/post/history.js';
 
 const MAT = makeMaterial('S235', 'Acél S235', { e: 2.1e8, sigmaY: 2.35e5 });

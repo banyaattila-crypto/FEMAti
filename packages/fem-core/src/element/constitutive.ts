@@ -48,11 +48,7 @@ export type MaterialLookup = (id: MaterialId) => Material | undefined;
  * @param material az elem alapanyaga
  * @param lookup rétegenkénti anyagfeloldó; rétegelt szelvénynél kell
  */
-export function sectionStiffness(
-  section: Section,
-  material: Material,
-  lookup?: MaterialLookup,
-): SectionStiffness {
+export function sectionStiffness(section: Section, material: Material, lookup?: MaterialLookup): SectionStiffness {
   const e = material.e as number;
   const g = material.g as number;
   const ks = section.shearFactor as number;
@@ -90,8 +86,7 @@ export function sectionStiffness(
     const t = layer.t as number;
     const z = layer.z as number;
 
-    const layerMaterial =
-      layer.materialId !== undefined ? (lookup?.(layer.materialId) ?? material) : material;
+    const layerMaterial = layer.materialId !== undefined ? (lookup?.(layer.materialId) ?? material) : material;
     const el = layerMaterial.e as number;
     const gl = layerMaterial.g as number;
 

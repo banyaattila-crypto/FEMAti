@@ -74,12 +74,7 @@ describe('formulaLatex', () => {
     const forceGp = internalForceDerivation.points[0];
     if (forceGp === undefined) throw new Error('nincs Gauss-pont');
     renderAll(
-      thermalLoadGaussTex(
-        { xi: forceGp.xi, w: 1, detJ: 1, bKappa: forceGp.bKappa, contribution: [0, 0, 0, 0, 0, 0] },
-        0,
-        derived.stiffness.ei,
-        1e-4,
-      ),
+      thermalLoadGaussTex({ xi: forceGp.xi, w: 1, detJ: 1, bKappa: forceGp.bKappa, contribution: [0, 0, 0, 0, 0, 0] }, 0, derived.stiffness.ei, 1e-4),
     );
 
     const xis: readonly [number, number, number] = [

@@ -63,9 +63,7 @@ describe('solveLinear — axialForce (P-Δ)', () => {
     const nEuler = (Math.PI ** 2 * EI) / 6 ** 2;
     const w0 = Math.abs(solveLinear(model).extremes.w.value);
 
-    const ratios = [0.5, 0.7, 0.9].map(
-      (frac) => Math.abs(solveLinear(model, { axialForce: frac * nEuler }).extremes.w.value) / w0,
-    );
+    const ratios = [0.5, 0.7, 0.9].map((frac) => Math.abs(solveLinear(model, { axialForce: frac * nEuler }).extremes.w.value) / w0);
 
     expect(ratios[0]).toBeGreaterThan(1);
     expect(ratios[1]).toBeGreaterThan(ratios[0] as number);

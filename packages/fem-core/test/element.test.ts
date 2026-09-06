@@ -48,11 +48,7 @@ const STIFF: SectionStiffness = {
   shapeFactor: 1.5,
 };
 
-const uniformNodes = (l: number, x0 = 0): readonly [number, number, number] => [
-  x0,
-  x0 + l / 2,
-  x0 + l,
-];
+const uniformNodes = (l: number, x0 = 0): readonly [number, number, number] => [x0, x0 + l / 2, x0 + l];
 
 // ─── Alakfüggvények ───────────────────────────────────────────────────────────
 
@@ -280,9 +276,7 @@ describe('B mátrix (Diplomaterv 3.14)', () => {
     const nodes = uniformNodes(6, 1);
     const kappa0 = 0.002;
     // Tiszta hajlítás: w = κ·x²/2, φ = κ·x  →  κ = const, γ = 0
-    const u = Float64Array.from(
-      nodes.flatMap((x) => [(kappa0 * x * x) / 2, kappa0 * x]),
-    );
+    const u = Float64Array.from(nodes.flatMap((x) => [(kappa0 * x * x) / 2, kappa0 * x]));
     for (const xi of [-1, -0.6, 0, 0.4, 1]) {
       const s = strains(nodes, u, xi);
       expect(s.kappa).toBeCloseTo(kappa0, 12);
@@ -327,10 +321,7 @@ describe('elemi merevségi mátrix (Diplomaterv 3.24–3.26)', () => {
 
   it('a merevség lineárisan skálázódik EI-vel a tiszta hajlítási módusban', () => {
     const k1 = elementStiffness({ nodeX: nodes, elementId: 'E0' }, STIFF);
-    const k2 = elementStiffness(
-      { nodeX: nodes, elementId: 'E0' },
-      { ...STIFF, ei: STIFF.ei * 2, gas: STIFF.gas * 2 },
-    );
+    const k2 = elementStiffness({ nodeX: nodes, elementId: 'E0' }, { ...STIFF, ei: STIFF.ei * 2, gas: STIFF.gas * 2 });
     // A Kₑ lineáris EI-ben és GAs-ban → a kétszerezés egzaktul kétszerez.
     for (let i = 0; i < 36; i++) expectRelative(k2.data[i], 2 * k1.data[i], 1e-14);
   });
@@ -382,23 +373,20 @@ describe('elemi merevségi mátrix (Diplomaterv 3.24–3.26)', () => {
    * Gauss-súly a szelektív sémánál láthatatlan (a 2 pontos szabály mindkét
    * súlya 1), a teljes sémánál viszont 1.5-szörös hibát okoz.
    */
-  it.each(['selective', 'full'] as const)(
-    'tiszta nyírási energia: ½·GAs·γ²·L (%s integrálás)',
-    (scheme) => {
-      const l = 4;
-      const nodesE = uniformNodes(l);
-      const gamma0 = 0.002;
-      const u = Float64Array.from(nodesE.flatMap((x) => [-gamma0 * x, 0]));
-      const k = elementStiffness({ nodeX: nodesE, elementId: 'E0' }, STIFF, scheme);
+  it.each(['selective', 'full'] as const)('tiszta nyírási energia: ½·GAs·γ²·L (%s integrálás)', (scheme) => {
+    const l = 4;
+    const nodesE = uniformNodes(l);
+    const gamma0 = 0.002;
+    const u = Float64Array.from(nodesE.flatMap((x) => [-gamma0 * x, 0]));
+    const k = elementStiffness({ nodeX: nodesE, elementId: 'E0' }, STIFF, scheme);
 
-      const ku = k.multiplyVector(u);
-      let energy = 0;
-      for (let i = 0; i < 6; i++) energy += 0.5 * u[i] * (ku[i] ?? 0);
+    const ku = k.multiplyVector(u);
+    let energy = 0;
+    for (let i = 0; i < 6; i++) energy += 0.5 * u[i] * (ku[i] ?? 0);
 
-      // γ konstans → bármely kvadratúra egzakt. Gépi pontosság jár.
-      expectRelative(energy, 0.5 * STIFF.gas * gamma0 * gamma0 * l, 1e-13);
-    },
-  );
+    // γ konstans → bármely kvadratúra egzakt. Gépi pontosság jár.
+    expectRelative(energy, 0.5 * STIFF.gas * gamma0 * gamma0 * l, 1e-13);
+  });
 
   /**
    * A teljes integrálású séma nyírási tagja független numerikus referenciával:
@@ -521,8 +509,7 @@ describe('záródási jelenség — a szelektív integrálás indoklása', () =>
    * származtatva. A tényező (10·ε) mérésből származik, nem utólagos igazítás:
    * L/h = 100 mellett a mért hiba 3.2e-12, a korlát 2.2e-11.
    */
-  const conditioningLimit = (slenderness: number): number =>
-    Math.max(1e-13, 10 * Number.EPSILON * slenderness ** 2);
+  const conditioningLimit = (slenderness: number): number => Math.max(1e-13, 10 * Number.EPSILON * slenderness ** 2);
 
   it.each([5, 20, 100])('szelektív integrálás L/h = %i mellett is pontos', (s) => {
     // A tiszta hajlítási módust az elem egzaktul ábrázolja: az arány pontosan 1,

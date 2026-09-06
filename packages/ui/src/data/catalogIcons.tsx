@@ -18,14 +18,7 @@
  * (acél/rozsdamentes/alumínium) nincs fénykép, azok maradnak procedurálisak.
  */
 import { useId, type ReactNode } from 'react';
-import {
-  MATERIALS,
-  PRESETS,
-  SECTIONS,
-  type MaterialFamily,
-  type PresetEntry,
-  type SectionKind,
-} from './catalog.js';
+import { MATERIALS, PRESETS, SECTIONS, type MaterialFamily, type PresetEntry, type SectionKind } from './catalog.js';
 import type { ComboboxOption } from '../components/Combobox.js';
 import { LOAD_COLOR, SUPPORT_COLOR, arrowMarkerId } from '../canvas/marks.js';
 import type { Lang } from '../state/appStore.js';
@@ -168,9 +161,7 @@ export function MaterialSwatch({ family, size = 16, shape = 'circle' }: Material
     <svg viewBox="0 0 16 16" width={size} height={size}>
       <defs>
         <MaterialFill family={family} defsId={defsId} />
-        <clipPath id={clipId}>
-          {isSquare ? <rect x="0.5" y="0.5" width="15" height="15" rx="2.2" /> : <circle cx="8" cy="8" r="6" />}
-        </clipPath>
+        <clipPath id={clipId}>{isSquare ? <rect x="0.5" y="0.5" width="15" height="15" rx="2.2" /> : <circle cx="8" cy="8" r="6" />}</clipPath>
       </defs>
       {isSquare ? (
         <rect x="0.5" y="0.5" width="15" height="15" rx="2.2" fill={`url(#${defsId})`} stroke="var(--border-strong)" strokeWidth="0.6" />

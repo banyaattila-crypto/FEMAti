@@ -179,9 +179,7 @@ export function keDiagonalTex(
   const total = [...bendingTerms, ...shearTerms].reduce((s, t) => s + t.term, 0);
   return [
     `K_e[\\varphi_1,\\varphi_1] = \\sum\\left(EI\\cdot|J|\\cdot w\\cdot B_\\kappa[1]^2\\right) + \\sum\\left(GA_s\\cdot|J|\\cdot w\\cdot B_\\gamma[1]^2\\right)`,
-    ...[...bendingTerms, ...shearTerms].map(
-      (t) => `${t.label}:\\quad ${f(t.factor, 2)}\\cdot(${paren(t.b, 3)})^2 = ${f(t.term, 2)}`,
-    ),
+    ...[...bendingTerms, ...shearTerms].map((t) => `${t.label}:\\quad ${f(t.factor, 2)}\\cdot(${paren(t.b, 3)})^2 = ${f(t.term, 2)}`),
     `\\sum = ${f(total, 2)}\\quad (K_e[1,1]\\text{ ${W[lang].finalMatrix}}: ${f(keValue, 2)})`,
   ];
 }
@@ -303,8 +301,12 @@ export function internalForceTex(
 ): readonly string[] {
   return [
     `\\text{${W[lang].gaussPoint} } ${index + 1}:\\ \\xi=${f(xi)},\\ x=${f(x, 3)}\\ \\text{m}`,
-    `\\kappa = B_\\kappa\\cdot u_e = [${Array.from(bKappa).map((v) => f(v, 3)).join(',\\ ')}]\\cdot u_e = ${kappa.toExponential(3)}\\ \\tfrac{1}{\\text{m}}`,
-    `\\gamma = B_\\gamma\\cdot u_e = [${Array.from(bGamma).map((v) => f(v, 3)).join(',\\ ')}]\\cdot u_e = ${gamma.toExponential(3)}`,
+    `\\kappa = B_\\kappa\\cdot u_e = [${Array.from(bKappa)
+      .map((v) => f(v, 3))
+      .join(',\\ ')}]\\cdot u_e = ${kappa.toExponential(3)}\\ \\tfrac{1}{\\text{m}}`,
+    `\\gamma = B_\\gamma\\cdot u_e = [${Array.from(bGamma)
+      .map((v) => f(v, 3))
+      .join(',\\ ')}]\\cdot u_e = ${gamma.toExponential(3)}`,
     `M = EI\\cdot(\\kappa-\\kappa_0) = ${f(ei, 1)}\\cdot(${kappa.toExponential(3)}-${kappa0.toExponential(3)}) = ${f(m, 3)}\\ \\text{kNm}`,
     `T = GA_s\\cdot\\gamma = ${f(gas, 1)}\\cdot ${gamma.toExponential(3)} = ${f(t, 3)}\\ \\text{kN}`,
   ];
@@ -377,10 +379,7 @@ export function convergenceTex(
 
 /** A rétegelt A és I összegzése — LaTeX sorok. */
 export function layerSumTex(aCm2: number, iCm4: number): readonly string[] {
-  return [
-    `A = \\sum b_l\\cdot t_l = ${f(aCm2, 2)}\\ \\text{cm}^2`,
-    `I = \\sum b_l\\cdot z_l^2\\cdot t_l = ${f(iCm4, 0)}\\ \\text{cm}^4`,
-  ];
+  return [`A = \\sum b_l\\cdot t_l = ${f(aCm2, 2)}\\ \\text{cm}^2`, `I = \\sum b_l\\cdot z_l^2\\cdot t_l = ${f(iCm4, 0)}\\ \\text{cm}^4`];
 }
 
 /** A Mₑ/Mₚ/c behelyettesített levezetése — LaTeX sorok. */

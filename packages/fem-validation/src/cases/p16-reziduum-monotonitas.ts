@@ -6,16 +6,7 @@
  * 5. pont: "a megoldónak a konvergencia rendjét is naplóznia kell"). Ha a
  * tangenciális merevségi mátrix hibás, ez a monotonitás jellemzően megtörik.
  */
-import {
-  buildModel,
-  fixed,
-  makeMaterial,
-  makeSection,
-  nodalForce,
-  rect,
-  runLoadStepper,
-  uniformMesh,
-} from '@femati/fem-core';
+import { buildModel, fixed, makeMaterial, makeSection, nodalForce, rect, runLoadStepper, uniformMesh } from '@femati/fem-core';
 import type { ValidationCase, ValidationCheck } from '../types.js';
 
 export function caseP16(): ValidationCase {

@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  DenseMatrix,
-  NotPositiveDefiniteError,
-  cholesky,
-  generalizedSymmetricEigen,
-  jacobiEigenSymmetric,
-  norm2,
-} from '../src/index.js';
+import { DenseMatrix, NotPositiveDefiniteError, cholesky, generalizedSymmetricEigen, jacobiEigenSymmetric, norm2 } from '../src/index.js';
 
 /**
  * ADR-0016, 2. nyitott kérdés: sajátérték-megoldó a modális analízishez.
