@@ -142,6 +142,18 @@ properties).
 The app's "Elméletek" (Theories) menu exposes the same content directly in
 the application, typeset with KaTeX.
 
+## Privacy
+
+**Your model never leaves your browser.** All computation is client-side — there is no
+backend, no upload, no account, and no synchronization. Fonts are self-hosted, so the
+page contacts no third-party CDN.
+
+The hosted demo at [femati.vercel.app](https://femati.vercel.app) uses Vercel Web
+Analytics to count visits: **no cookies, no `localStorage`, no cross-site tracking, no
+personal identification** — page, referrer, country and device type only. It sees
+nothing about your model, inputs or results. If you build and run the project yourself,
+it makes no outbound requests at all. See [`SECURITY.md`](SECURITY.md) for details.
+
 ## License
 
 [MIT](LICENSE)

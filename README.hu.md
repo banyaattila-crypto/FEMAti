@@ -132,6 +132,18 @@ katalógus-adatot a `fem-core` számított jellemzői ellen ellenőrzi).
 A felület "Elméletek" menüje ugyanezeket a tartalmakat közvetlenül az
 alkalmazásban, KaTeX-szel szedett képletekkel is elérhetővé teszi.
 
+## Adatvédelem
+
+**A modelled soha nem hagyja el a böngésződet.** Minden számítás kliensoldali — nincs
+backend, nincs feltöltés, nincs fiók, nincs szinkronizálás. A betűtípusokat magunk
+szolgáljuk ki, így az oldal harmadik feles CDN-t sem szólít meg.
+
+A [femati.vercel.app](https://femati.vercel.app) demón Vercel Web Analytics méri a
+látogatottságot: **süti nélkül, `localStorage` nélkül, keresztoldali követés nélkül,
+személyazonosítás nélkül** — kizárólag oldal, hivatkozó, ország és eszköztípus szinten.
+A modelledről, a bemenetekről és az eredményekről semmit nem lát. Ha magadnak buildeled
+és futtatod, egyáltalán nem indít kimenő kérést. Részletek: [`SECURITY.md`](SECURITY.md).
+
 ## Licenc
 
 [MIT](LICENSE)

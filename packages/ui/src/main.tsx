@@ -2,6 +2,18 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
+/**
+ * Vercel Web Analytics (2026-09-06) — a nyilvános demó látogatottságának
+ * mérése. SZÁNDÉKOSAN ez a legkevésbé tolakodó változat, ami egyáltalán
+ * megválaszolja a "használja-e valaki?" kérdést:
+ * - nincs süti és nincs localStorage-írás,
+ * - nincs keresztoldali (cross-site) követés, nincs hirdetési azonosító,
+ * - nem személyazonosít: oldalletöltés, hivatkozó, ország és eszköztípus szintű,
+ * - a MODELL és MINDEN SZÁMÍTÁSI ADAT továbbra is kizárólag a böngészőben marad,
+ *   semmilyen mérnöki tartalom nem hagyja el a gépet.
+ * Ld. `SECURITY.md` (Adatkezelés) — ott ez pontosan ki van mondva.
+ */
+import { Analytics } from '@vercel/analytics/react';
 
 // Betűtípusok ÖNÁLLÓ kiszolgálása (publikálás előtti audit, 2026-09-06, PRIV-001).
 // Korábban az `index.html` a Google Fonts CDN-ről töltötte őket, ami MINDEN
@@ -35,6 +47,7 @@ createRoot(host).render(
   <StrictMode>
     <ErrorBoundary>
       <App />
+      <Analytics />
     </ErrorBoundary>
   </StrictMode>,
 );

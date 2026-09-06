@@ -5,9 +5,16 @@
 ## Threat model — what this project actually is
 
 FEM@ti is a **fully client-side application**: it has no backend, no database, no
-authentication, no server-side component, and it sends no data anywhere. Every
-calculation runs in the visitor's browser, and models stay on the user's own machine.
-The only outbound network request the page makes is for web fonts.
+authentication and no server-side component. Every calculation runs in the visitor's
+browser, and **models and calculation data never leave the user's machine** — there is
+no upload, no sync, no account.
+
+Fonts are self-hosted (no third-party CDN). The hosted demo at `femati.vercel.app`
+runs **Vercel Web Analytics**, which counts page views without cookies, without
+`localStorage`, without cross-site tracking and without identifying individuals — it
+records page, referrer, country and device type only. It sees **nothing** about your
+model, your inputs or your results. The GitHub repository itself ships no analytics:
+if you build and run it yourself, it makes no outbound requests at all.
 
 This means the classic web-application attack surface (authentication, authorization,
 injection, SSRF, CSRF, rate limiting) largely does not exist here. The realistic
@@ -76,9 +83,17 @@ validated.
 ## Fenyegetettségi modell
 
 A FEM@ti **teljesen kliensoldali** alkalmazás: nincs backendje, adatbázisa,
-hitelesítése, semmilyen szerveroldali komponense, és nem küld adatot sehová. Minden
-számítás a látogató böngészőjében fut, a modellek a felhasználó gépén maradnak. Az
-oldal egyetlen kimenő hálózati kérése a betűtípusokért megy.
+hitelesítése, semmilyen szerveroldali komponense. Minden számítás a látogató
+böngészőjében fut, és **a modell, illetve minden számítási adat a felhasználó gépén
+marad** — nincs feltöltés, nincs szinkronizálás, nincs fiók.
+
+A betűtípusokat saját magunk szolgáljuk ki (nincs harmadik feles CDN). A
+`femati.vercel.app` címen futó demón **Vercel Web Analytics** mér: süti nélkül,
+`localStorage` nélkül, keresztoldali követés nélkül és személyazonosítás nélkül —
+kizárólag oldalletöltést, hivatkozót, országot és eszköztípust rögzít. A modellről,
+a bemenetekről és az eredményekről **semmit** nem lát. Maga a GitHub-repó nem
+tartalmaz analitikát külön beállítás nélkül: ha magadnak buildeled és futtatod,
+egyáltalán nem indít kimenő kérést.
 
 Emiatt a klasszikus webes támadási felület (hitelesítés, jogosultság, injekció, SSRF,
 CSRF) itt érdemben nem létezik. A ténylegesen releváns területek:
