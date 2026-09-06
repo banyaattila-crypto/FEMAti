@@ -222,6 +222,13 @@ export function App(): JSX.Element {
     [],
   );
 
+  // A böngésző-fül címe és a <html lang> statikus (`index.html`), build-időben
+  // rögzített szöveg — enélkül nyelvváltás után is a kezdeti nyelven maradna.
+  useEffect(() => {
+    document.title = `FEM@ti — ${t.subtitle}`;
+    document.documentElement.lang = s.lang;
+  }, [s.lang, t.subtitle]);
+
   const openDerivation = useCallback((): void => {
     s.setDerivationOpen(true);
   }, [s]);

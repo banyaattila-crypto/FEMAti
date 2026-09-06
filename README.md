@@ -18,12 +18,9 @@ TypeScript-based, validated FEA program.
 > a Hungarian engineering thesis. This README exists so an English-speaking
 > visitor can understand what the project does and judge its engineering/
 > software quality without reading Hungarian. The application's own user
-> interface has a full HU/EN switch (header, top right, as of 2026-09-05) —
-> if you run it, you can work entirely in English; the physics notation
-> (M, T, w, φ, E, G, I, A) was always standard and language-independent
-> regardless. Catalog data (material/section names and sources) and a few
-> secondary chart/diagram panels remain Hungarian-only in both UI languages
-> for now.
+> interface has a full HU/EN switch (header, top right) and **opens in
+> English by default** — the physics notation (M, T, w, φ, E, G, I, A) was
+> always standard and language-independent regardless.
 
 ---
 

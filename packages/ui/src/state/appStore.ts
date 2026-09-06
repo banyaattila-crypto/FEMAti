@@ -40,11 +40,12 @@ function hasSeenWelcome(): boolean {
 /** A teljes felület nyelve (2026-09-05, i18n-bevezetés) — globális, `localStorage`-perzisztált. */
 export type Lang = 'hu' | 'en';
 
+/** Első látogatáskor (nincs mentett preferencia) az ANGOL az alapértelmezett — publikus, nemzetközi közönségnek szánt telepítés (ld. memória: github-publish-readiness). Explicit elmentett 'hu' preferencia továbbra is megmarad. */
 function readStoredLang(): Lang {
   try {
-    return localStorage.getItem(LANG_STORAGE_KEY) === 'en' ? 'en' : 'hu';
+    return localStorage.getItem(LANG_STORAGE_KEY) === 'hu' ? 'hu' : 'en';
   } catch {
-    return 'hu';
+    return 'en';
   }
 }
 
