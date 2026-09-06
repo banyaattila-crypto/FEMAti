@@ -287,11 +287,34 @@ vékonyfalú cső: κ = 2·(1+ν)  / (4+3·ν)
 
 Mindhárom ν=0-nál a korábbi, konstans érték határesetét adja vissza
 (téglalap: 5/6; cső: 1/2, ami egybeesett a korábbi, hardcodeolt
-konstanssal is). **Az I-szelvényre (és U-szelvényre) VÁLTOZATLANUL** a
-korábbi, egyszerűbb "a nyírást gyakorlatilag a gerinc veszi fel" közelítés
-(Aweb/A) marad érvényben — Cowper saját I-szelvény formulája jóval
-bonyolultabb (öv/gerinc arányoktól függő), ennek levezetése/validálása egy
-KÉSŐBBI, külön lépés lenne.
+konstanssal is).
+
+**MEGVALÓSÍTVA (2026-09-06): I-szelvény (és a vele geometriailag
+azonosított U-szelvény, ld. `ui/model/compile.ts` `toShape` fejléce) —
+Cowper (1966) SAJÁT, öv/gerinc-arányoktól függő formulája**, felváltva a
+korábbi "a nyírást gyakorlatilag a gerinc veszi fel" közelítést (Aweb/A):
+
+```
+κ = 10·(1+ν)·(1+3m)² / [(12+72m+150m²+90m³) + ν·(11+66m+135m²+90m³)
+    + 30n²·(m+m²) + 5ν·n²·(8m+9m²)]
+ahol m = 2·b·tf/(h·tw), n = b/h (h = TELJES szelvénymagasság)
+```
+
+Forrás: Cowper, G. R. (1966), "The Shear Coefficient in Timoshenko's Beam
+Theory", J. Appl. Mech. 33(2), 335–340 — a képlet szövegét, mivel az
+eredeti cikk nem volt közvetlenül elérhető, Iyer, H. (2005), "The Effects
+of Shear Deformation in Rectangular and Wide Flange Sections" (MS Thesis,
+Virginia Tech, eq. 2.18) alapján vettük át. Iyer (2005) végeselemes
+összevetése szerint a TELJES magassággal (h) — NEM az övközéppontok közti
+effektív magassággal, amit Cowper eredeti cikke javasolt — jobb egyezést
+ad; ezt a projekt is követi. Önellenőrzés: m→0 (tf→0, tisztán "gerinc"
+téglalap) határesetben a fenti képlet PONTOSAN a téglalap-formulára
+egyszerűsödik (10(1+ν)/(12+11ν)) — ez a belső konzisztencia erősíti a
+képlet helyes átvételét.
+
+Az RHS és T-szelvény VÁLTOZATLANUL a korábbi, egyszerűbb "a nyírást
+gyakorlatilag a (függőleges) fal/gerinc veszi fel" közelítésnél marad —
+ezekre nincs a projektben levezetett/validált Cowper-formula.
 
 A `nu` paraméter KÖTELEZŐ (nincs hallgatólagos alapértelmezés) —
 `recommendedShearFactor(shape, nu)` szignatúrával, hogy a hívó ne
@@ -299,8 +322,10 @@ felejtse el megadni a tényleges anyag Poisson-tényezőjét (ADR-0001 elve:
 explicit dimenzió-/paraméter-ellenőrzés a publikus belépési pontokon).
 
 **Teszt:** `section.test.ts` "nyírási alaktényező" leírásblokk — a ν=0
-határeset egyezése a korábbi konstansokkal, a ν=0.3 Cowper-érték,
-és minden alak/ν-kombinációra a (0,1] tartományba esés.
+határeset egyezése a korábbi konstansokkal, a ν=0.3 Cowper-érték
+(téglalap, kör, I-szelvény — utóbbi kézzel számolt IPE 300 referenciával),
+az I-szelvény m→0 önellenőrzése, és minden alak/ν-kombinációra a (0,1]
+tartományba esés.
 
 ---
 

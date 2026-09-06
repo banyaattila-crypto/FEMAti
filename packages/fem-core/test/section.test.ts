@@ -220,8 +220,18 @@ describe('nyírási alaktényező — Cowper (1966), Poisson-tényezőtől függ
     expect(recommendedShearFactor(tube(0.3, 0.02), 0)).toBeCloseTo(0.5, 12);
   });
 
-  it('I-szelvénynél a gerinc arányából (IPE 300 ≈ 0.41) — NEM Cowper-formula, ν-től független', () => {
-    expect(recommendedShearFactor(iProfile(0.3, 0.15, 0.0071, 0.0107), 0.3)).toBeCloseTo(0.41, 2);
+  it('I-szelvénynél Cowper (1966) saját, öv/gerinc-arányoktól függő formuláját adja (IPE 300, ν=0.3)', () => {
+    // Iyer (2005, Virginia Tech MS Thesis, eq. 2.18) alapján — kézzel számolt
+    // referenciaérték, ld. `properties.ts` `recommendedShearFactor` fejléce.
+    expect(recommendedShearFactor(iProfile(0.3, 0.15, 0.0071, 0.0107), 0.3)).toBeCloseTo(0.3857, 4);
+  });
+
+  it('I-szelvénynél m→0 (tf→0, tisztán "gerinc" téglalap) határesetben PONTOSAN a téglalap-formulára egyszerűsödik', () => {
+    // Önellenőrzés — a Cowper I-szelvény formula belső konzisztenciája,
+    // ld. `properties.ts` fejléce.
+    const tinyFlange = iProfile(0.3, 0.15, 0.0071, 1e-9);
+    const rectFallback = (10 * 1.3) / (12 + 11 * 0.3);
+    expect(recommendedShearFactor(tinyFlange, 0.3)).toBeCloseTo(rectFallback, 6);
   });
 
   it('zárt szelvénynél (RHS) a két oldalfal arányából — NEM Cowper-formula, ν-től független', () => {

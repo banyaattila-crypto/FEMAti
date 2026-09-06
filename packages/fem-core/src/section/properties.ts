@@ -201,11 +201,30 @@ function finish(
  * `RECT_SHEAR_FACTOR`) — ez a bővítés tehát nem ELLENTMOND a korábbi
  * értéknek, hanem egy hiányzó paraméterrel (ν) finomítja.
  *
- * Az I-szelvényre Cowper saját formulája jóval bonyolultabb (öv/gerinc
- * arányoktól függő, nem zárt egytagú kifejezés) — a projekt itt TUDATOSAN
- * megmarad a korábbi, egyszerűbb "a nyírást gyakorlatilag a gerinc veszi
- * fel" közelítésnél (Aweb/A), amíg egy jövőbeli lépés nem vezeti le/
- * validálja a pontos Cowper I-szelvény formulát.
+ * I-szelvény (és a vele geometriailag azonosított U-szelvény, ld.
+ * `ui/model/compile.ts` `toShape` fejléce) — Cowper (1966) SAJÁT,
+ * öv/gerinc-arányoktól függő formulája (2026-09-06, korábban itt a
+ * "nyírást gyakorlatilag a gerinc veszi fel" közelítés (Aweb/A) állt):
+ *
+ *   κ = 10·(1+ν)·(1+3m)² / [(12+72m+150m²+90m³) + ν·(11+66m+135m²+90m³)
+ *       + 30n²·(m+m²) + 5ν·n²·(8m+9m²)]
+ *   ahol m = 2·b·tf/(h·tw), n = b/h (h = TELJES szelvénymagasság)
+ *
+ * Forrás: Cowper, G. R. (1966), "The Shear Coefficient in Timoshenko's
+ * Beam Theory", J. Appl. Mech. 33(2), 335–340 — a képlet szövegét Iyer, H.
+ * (2005), "The Effects of Shear Deformation in Rectangular and Wide
+ * Flange Sections" (MS Thesis, Virginia Tech, eq. 2.18) alapján vettük át
+ * és ellenőriztük, mert az eredeti Cowper-cikk nem volt közvetlenül
+ * elérhető. Iyer (2005) 4. fejezete (VEM-összevetés) szerint a TELJES
+ * magassággal (h) — NEM az övközéppontok közti effektív magassággal, amit
+ * Cowper eredeti cikke javasolt — jobb egyezést ad a végeselemes
+ * eredménnyel; ezt a projekt is követi.
+ *
+ * ÖNELLENŐRZÉS (a kód nem hivatkozik rá futásidőben, csak dokumentálja):
+ * m→0 (tf→0, tisztán "gerinc" négyszög-keresztmetszet) határesetben a
+ * fenti képlet PONTOSAN a fenti téglalap-formulára egyszerűsödik
+ * (10(1+ν)/(12+11ν)) — ez a belső konzisztencia erősíti a képlet helyes
+ * átvételét. Lásd `section.test.ts`.
  *
  * A modellben explicit megadott `shearFactor` élvez elsőbbséget; ez a
  * függvény csak javaslatot ad új szelvény felvételekor / az alapértelmezés
@@ -223,19 +242,27 @@ export function recommendedShearFactor(shape: SectionShape, nu: number): number 
     case 'tube':
       return (2 * (1 + nu)) / (4 + 3 * nu);
     case 'i-profile': {
-      // Közelítés: a nyírást gyakorlatilag a gerinc veszi fel (NEM Cowper-formula).
+      // Cowper (1966) saját I-szelvény formulája — ld. a fenti fejléc
+      // forrásmegjelölését és önellenőrzését (m→0 → téglalap-formula).
       const h = shape.h as number;
       const b = shape.b as number;
       const tw = shape.tw as number;
       const tf = shape.tf as number;
-      const area = 2 * b * tf + (h - 2 * tf) * tw;
-      return (h * tw) / area;
+      const m = (2 * b * tf) / (h * tw);
+      const n = b / h;
+      const m2 = m * m;
+      const m3 = m2 * m;
+      const numerator = 10 * (1 + nu) * (1 + 3 * m) ** 2;
+      const denominator =
+        12 + 72 * m + 150 * m2 + 90 * m3 + nu * (11 + 66 * m + 135 * m2 + 90 * m3) + 30 * n * n * (m + m2) + 5 * nu * n * n * (8 * m + 9 * m2);
+      return numerator / denominator;
     }
 
     case 'rhs': {
-      // Ugyanaz a közelítés, mint az i-profile ágnál (NEM Cowper-formula) —
-      // a nyírást a két FÜGGŐLEGES oldalfal veszi fel, az alsó/felső fal
-      // ehhez elhanyagolható járulékot ad.
+      // Közelítés (NEM Cowper-formula, azzal ellentétben, hogy az i-profile
+      // ág fentebb már Cowper saját képletét használja) — a nyírást a két
+      // FÜGGŐLEGES oldalfal veszi fel, az alsó/felső fal ehhez elhanyagolható
+      // járulékot ad.
       const h = shape.h as number;
       const b = shape.b as number;
       const t = shape.t as number;
@@ -244,8 +271,8 @@ export function recommendedShearFactor(shape: SectionShape, nu: number): number 
     }
 
     case 't-profile': {
-      // Ugyanaz a közelítés, mint az i-profile/rhs ágnál (NEM Cowper-formula)
-      // — a nyírást gyakorlatilag a gerinc veszi fel.
+      // Ugyanaz a közelítés, mint az rhs ágnál (NEM Cowper-formula) — a
+      // nyírást gyakorlatilag a gerinc veszi fel.
       const h = shape.h as number;
       const b = shape.b as number;
       const tw = shape.tw as number;
