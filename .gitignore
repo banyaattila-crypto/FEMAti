@@ -22,3 +22,9 @@ audit/
 # nincsenek a publikus repóban (ld. memória: github-publish-readiness).
 FEM@ti-Timoshenko beam (2026).doc
 FEM@ti-Timoshenko beam (2026).pdf
+
+# Az archify diagram-generator vizualis ellenorzo artefaktumai (kepernyokepek
+# tobb felbontasban/temaban + jelentes). Generalt QA-kimenet, ugyanaz a logika,
+# mint a coverage/-nel: a forras (design/femati-architecture.json) es a kesz
+# abra (docs/architecture.html) van kovetve, az ellenorzo kepek nem.
+*.visual-check.*

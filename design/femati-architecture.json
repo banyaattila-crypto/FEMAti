@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "FEM@ti rendszerarchitektúra",
+    "output": "femati-architecture2.html",
+    "quality_profile": "showcase",
+    "viewBox": [1380, 720],
+    "repository": {
+      "url": "https://github.com/banyaattila-crypto/FEMAti",
+      "revision": "609d7d78225813af43ece749d5b10871b6ecb457"
+    }
+  },
+  "components": [
+    {
+      "id": "felhasznalo",
+      "type": "external",
+      "label": "Mérnök / hallgató",
+      "sublabel": "Böngésző",
+      "pos": [30, 250],
+      "size": [150, 66],
+      "sources": [{ "path": "README.hu.md", "label": "Felhasználási cél" }]
+    },
+    {
+      "id": "vercel",
+      "type": "cloud",
+      "label": "Vercel",
+      "sublabel": "Statikus webalkalmazás",
+      "pos": [245, 250],
+      "size": [160, 66],
+      "sources": [{ "path": "package.json", "label": "Élő alkalmazás" }]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "React + Vite UI",
+      "sublabel": "CAE munkaasztal",
+      "tag": "@femati/ui",
+      "pos": [535, 250],
+      "size": [170, 72],
+      "sources": [
+        { "path": "packages/ui/package.json", "label": "Csomag" },
+        { "path": "packages/ui/src/App.tsx", "label": "Alkalmazáshéj" }
+      ]
+    },
+    {
+      "id": "katalogus",
+      "type": "database",
+      "label": "Anyag- és szelvénykatalógus",
+      "sublabel": "Forrás és ellenőrzöttség",
+      "tag": "@femati/fem-db",
+      "pos": [535, 50],
+      "size": [210, 76],
+      "sources": [
+        { "path": "packages/fem-db/src/materials.json", "label": "Anyagadatok" },
+        { "path": "packages/fem-db/src/sections.json", "label": "Szelvényadatok" }
+      ]
+    },
+    {
+      "id": "modell",
+      "type": "frontend",
+      "label": "Modellállapot és fordítás",
+      "sublabel": "Zustand · terhek · kombinációk",
+      "pos": [815, 250],
+      "size": [190, 72],
+      "sources": [
+        { "path": "packages/ui/src/state/modelStore.ts", "label": "Modellállapot" },
+        { "path": "packages/ui/src/model/compile.ts", "label": "Magbemenet" }
+      ]
+    },
+    {
+      "id": "mag",
+      "type": "backend",
+      "label": "Timoshenko FEM-mag",
+      "sublabel": "Összeállítás · megoldók",
+      "tag": "@femati/fem-core",
+      "pos": [1120, 250],
+      "size": [215, 76],
+      "sources": [
+        { "path": "packages/fem-core/src/index.ts", "label": "Publikus API" },
+        { "path": "packages/fem-core/src/solver/index.ts", "label": "Megoldók" }
+      ]
+    },
+    {
+      "id": "eredmenyek",
+      "type": "frontend",
+      "label": "Eredmények és export",
+      "sublabel": "Diagramok · jegyzőkönyv · DOCX/PDF",
+      "pos": [1120, 450],
+      "size": [215, 76],
+      "sources": [
+        { "path": "packages/ui/src/report/ReportView.tsx", "label": "Jegyzőkönyv" },
+        { "path": "packages/ui/src/derivation/docxExport.ts", "label": "DOCX export" }
+      ]
+    },
+    {
+      "id": "validacio",
+      "type": "security",
+      "label": "Analitikus validáció",
+      "sublabel": "Zárt alakú és kézi referenciaesetek",
+      "tag": "@femati/fem-validation",
+      "pos": [815, 450],
+      "size": [205, 76],
+      "sources": [
+        { "path": "packages/fem-validation/src/cases/index.ts", "label": "Referenciaesetek" },
+        { "path": "docs/VALIDATION-SCOPE.hu.md", "label": "Hatókör" }
+      ]
+    },
+    {
+      "id": "dokumentacio",
+      "type": "external",
+      "label": "Elmélet és ADR-ek",
+      "sublabel": "Képletek · konvenciók · döntések",
+      "pos": [535, 450],
+      "size": [190, 76],
+      "sources": [
+        { "path": "docs/THEORY.md", "label": "Elmélet" },
+        { "path": "docs/ADR/0002-skyline-vs-frontalis.md", "label": "Döntési napló" }
+      ]
+    },
+    {
+      "id": "ci",
+      "type": "cloud",
+      "label": "GitHub Actions CI",
+      "sublabel": "Node 20/22 · pnpm",
+      "pos": [835, 600],
+      "size": [165, 72],
+      "sources": [{ "path": ".github/workflows/ci.yml", "label": "Ellenőrzési lánc" }]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Produkció: minden modelladat és számítás a böngészőben marad",
+      "wraps": ["ui", "katalogus", "modell", "mag", "eredmenyek"],
+      "pad": 22
+    },
+    {
+      "kind": "security-group",
+      "label": "Fejlesztési bizonyítás és nyomonkövethetőség",
+      "wraps": ["ci", "dokumentacio", "validacio"],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "id": "eleres",
+      "from": "felhasznalo",
+      "to": "vercel",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "statikus_bundle",
+      "from": "vercel",
+      "to": "ui",
+      "label": "statikus bundle",
+      "variant": "emphasis"
+    },
+    {
+      "id": "szerkesztes",
+      "from": "ui",
+      "to": "modell",
+      "label": "modell és beállítások",
+      "variant": "emphasis",
+      "labelAt": [760, 340]
+    },
+    {
+      "id": "katalogusadat",
+      "from": "katalogus",
+      "to": "modell",
+      "label": "anyag- és szelvényadat",
+      "variant": "default"
+    },
+    {
+      "id": "szamitas",
+      "from": "modell",
+      "to": "mag",
+      "label": "modell + teheresetek",
+      "variant": "emphasis"
+    },
+    {
+      "id": "feldolgozas",
+      "from": "mag",
+      "to": "eredmenyek",
+      "label": "elmozdulás · igénybevétel · állapot",
+      "variant": "emphasis",
+      "labelAt": [1228, 345]
+    },
+    {
+      "id": "referencia",
+      "from": "dokumentacio",
+      "to": "validacio",
+      "label": "képletek és konvenciók",
+      "variant": "dashed",
+      "labelAt": [770, 540]
+    },
+    {
+      "id": "ellenorzes",
+      "from": "validacio",
+      "to": "mag",
+      "label": "referenciaeredmények ellen",
+      "variant": "security"
+    },
+    {
+      "id": "ci_lanc",
+      "from": "ci",
+      "to": "validacio",
+      "label": "typecheck · lint · teszt · build",
+      "variant": "security"
+    }
+  ]
+}
