@@ -6,6 +6,13 @@ pnpm-lock.yaml
 # Generált fájl (a `fem-validation` állítja elő).
 docs/VALIDATION.md
 
+# Generátor-kimenetek: az architektúra-ábrát az archify állítja elő, a design/
+# `.dc.html`-ek pedig tervezőeszköz-exportok. Egyiket sem szerkesztjük kézzel,
+# és a Prettierrel való átformázásuk minden újragenerálásnál hatalmas, értelmetlen
+# diffet okozna (a docs/architecture.html önmagában ~700 kB).
+docs/architecture.html
+design/*.dc.html
+
 # Kézzel írt, hosszú magyar prózadokumentumok. A Prettier markdown-formázása
 # ízlés kérdése, tartalmi értéket nem ad hozzá, viszont a bekezdés- és
 # listatördelés átírásával elmosná a kézi tagolást és zajos diffeket okozna.
